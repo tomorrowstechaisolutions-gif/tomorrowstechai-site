@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -6,8 +7,14 @@ export function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 bg-[color:var(--color-cyan)]" />
+            <div className="flex items-center gap-3 mb-4">
+              <Image
+                src="/logo.png"
+                alt="TomorrowsTech AI"
+                width={32}
+                height={32}
+                className="rounded-sm"
+              />
               <span className="font-medium tracking-wide text-[15px]">
                 TOMORROWS<span className="text-[color:var(--color-cyan)]">TECH</span> AI
               </span>
@@ -43,7 +50,7 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="border-t border-[color:var(--color-border)] mt-10 pt-6 flex justify-between items-center text-xs text-[color:var(--color-text-muted)] font-mono uppercase tracking-wider">
+        <div className="border-t border-[color:var(--color-border)] mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-[color:var(--color-text-muted)] font-mono uppercase tracking-wider">
           <div>© 2026 TomorrowsTech AI Solutions</div>
           <div className="text-[color:var(--color-cyan)]">Propose · Never Act</div>
           <div>Build · v0.1</div>
