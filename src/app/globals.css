@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #07090E;
+  --color-surface: #0F1620;
+  --color-surface-2: #131C28;
+  --color-border: #1A2533;
+  --color-border-subtle: #15202B;
+  --color-text: #E8EEF5;
+  --color-text-secondary: #7A8A9A;
+  --color-text-muted: #4A5868;
+  --color-cyan: #00D9FF;
+  --color-cyan-soft: #38B9D6;
+  --color-cyan-deep: #0E7C95;
+  --color-amber: #F5A623;
+  --color-success: #00D68F;
+  --color-danger: #E55353;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(0, 217, 255, 0.04) 0px, transparent 600px),
+    radial-gradient(circle at 80% 100%, rgba(245, 166, 35, 0.03) 0px, transparent 600px);
+  background-attachment: fixed;
+}
+
+.grid-overlay {
+  position: relative;
+}
+
+.grid-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(26, 37, 51, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 37, 51, 0.4) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.classification-bar {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #5A6B7D;
+  background: #131C28;
+  border-bottom: 0.5px solid #1A2533;
+  text-align: center;
+  padding: 6px 0;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--color-cyan);
+  color: var(--color-bg);
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+  background: #38E5FF;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 500;
+  border: 0.5px solid var(--color-border);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-cyan);
+  color: var(--color-cyan);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-cyan);
+}
+
+.eyebrow-muted {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: 6px;
+  padding: 24px;
+  transition: border-color 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--color-cyan-deep);
+}
+
+.card-accent {
+  border-left: 2px solid var(--color-cyan);
+}
+
+.prose-blog {
+  color: var(--color-text);
+  font-size: 17px;
+  line-height: 1.75;
+  max-width: 720px;
+}
+
+.prose-blog h2 {
+  font-size: 28px;
+  font-weight: 500;
+  margin-top: 48px;
+  margin-bottom: 16px;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.prose-blog h3 {
+  font-size: 20px;
+  font-weight: 500;
+  margin-top: 32px;
+  margin-bottom: 12px;
+  color: var(--color-text);
+}
+
+.prose-blog p {
+  margin-bottom: 18px;
+}
+
+.prose-blog strong {
+  color: var(--color-cyan);
+  font-weight: 500;
+}
+
+.prose-blog a {
+  color: var(--color-cyan);
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 217, 255, 0.3);
+  text-underline-offset: 4px;
+}
+
+.prose-blog a:hover {
+  text-decoration-color: var(--color-cyan);
+}
+
+.prose-blog ul {
+  margin-bottom: 18px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.prose-blog ul li {
+  position: relative;
+  padding-left: 24px;
+  margin-bottom: 8px;
+}
+
+.prose-blog ul li::before {
+  content: "->";
+  color: var(--color-cyan);
+  position: absolute;
+  left: 0;
+  font-family: var(--font-mono);
+}
+
+.prose-blog blockquote {
+  border-left: 2px solid var(--color-cyan);
+  padding-left: 20px;
+  margin: 32px 0;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
