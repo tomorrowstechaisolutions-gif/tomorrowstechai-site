@@ -6,6 +6,7 @@ export type Post = {
   readTime: string;
   tags: string[];
   body: string;
+  image?: string;
 };
 
 export const posts: Post[] = [
@@ -17,6 +18,7 @@ export const posts: Post[] = [
       "For two decades, my job was finding the answer hidden in the spreadsheet. Claude's MCP integration just changed what's possible for operations teams running on Smartsheet.",
     readTime: "6 min read",
     tags: ["Smartsheet", "Claude AI", "MCP", "Operations"],
+    image: "/blog/smartsheet-claude-mcp.png",
     body: `For most of my career running telecom and infrastructure programs, my job was finding the answer hidden in the spreadsheet.
 
 Which crew is approved to work in this market? Pull the contractor master sheet, filter, cross-reference compliance, check capacity, look up mobilization lead time.
@@ -94,6 +96,7 @@ That's where we work. If your team is running operations through Smartsheet and 
       "A lot of people hear the term AI and immediately think of chatbots, public tools, or content generation. A private AI business unit is something different.",
     readTime: "4 min read",
     tags: ["Business AI", "Internal Tools", "Nexus One", "Private AI Business Unit"],
+    image: "/blog/what-a-private-ai-business-unit-actually-does.png",
     body: `A lot of people hear the term AI and immediately think of chatbots, public tools, or content generation.
 
 But a private AI business unit is something different.
@@ -134,6 +137,7 @@ For companies that want to move beyond surface-level AI use, that is where the r
       "Broken workflows do not always look dramatic. They often look like delays, rework, confusion, and wasted payroll. That is where businesses quietly lose money.",
     readTime: "5 min read",
     tags: ["Approvals", "Broken Workflows", "Business Operations", "Process Improvement", "Workflow Automation"],
+    image: "/blog/hidden-cost-of-broken-workflows.png",
     body: `Broken workflows do not always look dramatic. They often look like delays, rework, confusion, and wasted payroll. That is where businesses quietly lose money.
 
 A broken workflow does not always announce itself.
@@ -180,6 +184,7 @@ That is why broken workflows should not be treated like minor annoyances. In man
       "Most companies assume the answer to operational problems is adding another tool. But the real issue is usually that the business has become too scattered to see clearly.",
     readTime: "5 min read",
     tags: ["Business Systems", "Command Center", "Leadership", "Operations", "Visibility"],
+    image: "/blog/why-companies-need-a-command-center.png",
     body: `Most companies assume the answer to operational problems is adding another tool.
 
 Another app. Another platform. Another report. Another place for information to live.
@@ -216,6 +221,7 @@ In a lot of cases, what the business really needs is a command center built arou
       "Too many companies are diving into AI without a clear strategy. The biggest mistake? Implementing AI without a business-driven approach. AI should solve real problems, not just be a shiny new tool.",
     readTime: "6 min read",
     tags: ["AI Adoption", "AI Strategy", "Business AI", "AI Implementation"],
+    image: "/blog/1-ai-mistake-businesses-make.png",
     body: `Artificial Intelligence (AI) is no longer a futuristic concept — it's here, and businesses are racing to adopt it. But there's a problem.
 
 Too many companies are diving into AI without a clear strategy. They're chasing trends, investing in AI tools without defined objectives, and expecting magic. The result? Wasted budgets, failed projects, and frustrated teams.
@@ -275,6 +281,7 @@ If you're looking to future-proof your business with AI, let's talk.`,
       "AI is the ultimate game-changer for project management and startups. Companies slow to adopt will find themselves outpaced by competitors who embrace it. The early movers will dominate.",
     readTime: "5 min read",
     tags: ["AI Adoption", "AI Project Management", "Automation Strategies", "Business AI", "Future of AI"],
+    image: "/blog/why-ai-isnt-optional.webp",
     body: `AI isn't coming — it's here. And those who embrace it now will lead the next wave of innovation.
 
 For years, businesses have relied on manual decision-making, outdated workflows, and gut instinct. But in a world where speed, precision, and adaptability define success, AI is the ultimate game-changer — especially in project management and startups.

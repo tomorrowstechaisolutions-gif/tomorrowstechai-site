@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { posts } from "@/content/posts";
 
 export default function Home() {
@@ -98,8 +99,19 @@ export default function Home() {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="card hover:border-[color:var(--color-cyan-deep)] block"
+              className="card hover:border-[color:var(--color-cyan-deep)] block group overflow-hidden"
             >
+              {post.image && (
+                <div className="relative w-full aspect-[16/9] -mx-6 -mt-6 mb-4 overflow-hidden border-b border-[color:var(--color-border)]">
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 360px"
+                    className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                  />
+                </div>
+              )}
               <div className="eyebrow-muted mb-3">{post.date}</div>
               <h3 className="text-lg font-medium leading-snug mb-2">{post.title}</h3>
               <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getPostBySlug, posts } from "@/content/posts";
 
@@ -22,6 +23,13 @@ export async function generateMetadata({
       description: post.excerpt,
       type: "article",
       publishedTime: post.date,
+      images: post.image ? [{ url: post.image }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: post.image ? [post.image] : undefined,
     },
   };
 }
@@ -66,6 +74,21 @@ export default async function BlogPostPage({
           ))}
         </div>
       </section>
+
+      {post.image && (
+        <section className="max-w-3xl mx-auto px-6 pt-2 pb-4">
+          <div className="relative w-full aspect-[16/9] overflow-hidden rounded border border-[color:var(--color-border)]">
+            <Image
+              src={post.image}
+              alt={post.title}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 720px"
+              className="object-cover"
+            />
+          </div>
+        </section>
+      )}
 
       <section className="max-w-3xl mx-auto px-6 py-10">
         <div className="prose-blog">

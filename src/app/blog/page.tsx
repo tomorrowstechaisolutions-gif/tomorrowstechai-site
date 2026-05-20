@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { posts } from "@/content/posts";
 
 export const metadata = {
@@ -28,6 +29,17 @@ export default function BlogPage() {
               href={`/blog/${post.slug}`}
               className="block border-b border-[color:var(--color-border)] py-8 hover:bg-[color:var(--color-surface)]/40 transition-colors -mx-6 px-6 group"
             >
+              {post.image && (
+                <div className="relative w-full aspect-[16/9] mb-5 overflow-hidden rounded border border-[color:var(--color-border)]">
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 720px"
+                    className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-3 mb-3 text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
                 <span>{post.date}</span>
                 <span>·</span>
