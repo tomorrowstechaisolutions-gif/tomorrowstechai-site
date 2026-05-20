@@ -85,7 +85,7 @@ export default function Home() {
             href="https://www.youtube.com/@TomorrowsTechAISolution"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-[color:var(--color-cyan)] hover:underline whitespace-nowrap"
+            className="text-sm text-[color:var(--color-cyan)] hover:underline whitespace-nowrap py-2 -my-2 inline-block"
           >
             Full channel →
           </a>
@@ -148,7 +148,7 @@ export default function Home() {
                   <span>3-tier action plan based on your score</span>
                 </li>
               </ul>
-              <Link href="/operations-audit" className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline">
+              <Link href="/operations-audit" className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline py-2 -my-2 inline-block">
                 Get the checklist →
               </Link>
             </div>
@@ -205,7 +205,7 @@ export default function Home() {
         <div className="mt-8 text-center">
           <Link
             href="/work"
-            className="text-sm text-[color:var(--color-cyan)] hover:underline font-mono uppercase tracking-widest"
+            className="text-sm text-[color:var(--color-cyan)] hover:underline font-mono uppercase tracking-widest py-2 -my-2 inline-block"
           >
             See the work →
           </Link>
@@ -218,7 +218,7 @@ export default function Home() {
             <div className="eyebrow-muted mb-3">Latest insights</div>
             <h2 className="text-3xl font-medium tracking-tight">From the field.</h2>
           </div>
-          <Link href="/blog" className="text-sm text-[color:var(--color-cyan)] hover:underline">
+          <Link href="/blog" className="text-sm text-[color:var(--color-cyan)] hover:underline py-2 -my-2 inline-block">
             All posts →
           </Link>
         </div>

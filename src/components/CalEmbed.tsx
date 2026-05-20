@@ -39,11 +39,11 @@ export function CalEmbed() {
   }, []);
 
   return (
-    <div className="rounded-lg overflow-hidden border border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
+    <div className="rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg)] min-h-[1100px] md:min-h-[720px] overflow-hidden">
       <Cal
         namespace="discovery"
         calLink={CAL_LINK}
-        style={{ width: "100%", height: "700px", overflow: "hidden" }}
+        style={{ width: "100%", height: "100%", minHeight: "1100px", overflow: "visible" }}
         config={{ layout: "month_view", theme: "dark" }}
       />
     </div>
