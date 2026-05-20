@@ -3,12 +3,12 @@ import Link from "next/link";
 export const metadata = {
   title: "Services",
   description:
-    "AI Command Centers, Smartsheet consulting, custom AI app development, local AI deployment, and program management consulting for operations-heavy businesses.",
+    "AI Command Centers, Smartsheet consulting, custom AI app development, local AI deployment, program management consulting, and custom website design & build for operations-heavy businesses.",
   alternates: { canonical: "/services" },
   openGraph: {
     title: "Services · TomorrowsTech AI",
     description:
-      "Seven service lines for operations-heavy businesses. AI command centers, Smartsheet, custom AI apps, local AI, automation, PMO consulting.",
+      "Eight service lines for operations-heavy businesses. AI command centers, Smartsheet, custom AI apps, websites, local AI, automation, PMO consulting.",
     url: "https://tomorrowstechai.com/services",
     type: "website",
   },
@@ -50,6 +50,11 @@ const services = [
     title: "Program Management Consulting",
     body: "Drawing on 18 years running real telecom and infrastructure programs. We help leadership teams design PMO structures, scheduling discipline, and operational governance.",
   },
+  {
+    tag: "08",
+    title: "Website Design & Build",
+    body: "Custom-coded business websites on Next.js + Vercel — the same modern stack powering our own site. Fast, secure, SEO-ready out of the box, mobile-first by default. Not WordPress. Not a drag-and-drop builder. A real site that loads in under a second and ranks on Google.",
+  },
 ];
 
 export default function ServicesPage() {
@@ -61,7 +66,7 @@ export default function ServicesPage() {
           AI for the operations teams that actually run the work.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6 max-w-3xl">
-          Seven service lines. One philosophy: operational clarity, not AI for
+          Eight service lines. One philosophy: operational clarity, not AI for
           AI&apos;s sake. Built by operators who&apos;ve lived inside the chaos for
           two decades.
         </p>
