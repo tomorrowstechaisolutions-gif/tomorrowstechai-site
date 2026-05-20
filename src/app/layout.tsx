@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatWidget } from "@/components/ChatWidget";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -123,6 +124,7 @@ export default function RootLayout({
         <Footer />
         <ChatWidget />
       </body>
+      <GoogleAnalytics gaId="G-1N0MZPDTF5" />
     </html>
   );
 }

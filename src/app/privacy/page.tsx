@@ -81,7 +81,8 @@ export default function PrivacyPage() {
               We don&apos;t use your data to train AI models on your behalf.
             </li>
             <li>
-              We don&apos;t track you across other websites with cookies or pixels.
+              We don&apos;t use advertising or remarketing cookies. Our analytics
+              setup measures aggregate traffic only.
             </li>
             <li>
               We don&apos;t send marketing emails to people who haven&apos;t
@@ -113,6 +114,21 @@ export default function PrivacyPage() {
               served by YouTube via the privacy-friendly{" "}
               <code>youtube-nocookie.com</code> domain. No tracking cookies are
               set unless you press play.
+            </li>
+            <li>
+              <strong>Google Analytics 4</strong> — measures aggregate site
+              traffic so we know which pages are useful and where visitors
+              come from. We do not enable Google&apos;s advertising or
+              cross-site tracking features. Analytics data is processed by
+              Google under{" "}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                their privacy policy
+              </a>
+              .
             </li>
           </ul>
 
