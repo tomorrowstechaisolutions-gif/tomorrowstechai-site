@@ -44,7 +44,7 @@ OWN PRODUCTS:
 
 CLIENT WORK:
 - The Field House Gym — 20-30k sq ft 24/7 lifting facility in Harker Heights, Texas. Owner: Christina Bills. We built the full marketing site AND produced the promotional videos used on the site and in ad campaigns for both the Harker Heights and Temple locations. Real client testimonial: "John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work."
-- Mintline Wellness — wellness practice site in Belton/Temple, Texas
+- Mintline Wellness — wellness practice site in Belton/Temple, Texas. Founder: Dr. Marlow Griggs, MD. Real client testimonial: "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using TomorrowsTech AI again."
 - More projects in pipeline
 
 ADDITIONAL CAPABILITIES NOT YET LISTED AS FORMAL SERVICES:

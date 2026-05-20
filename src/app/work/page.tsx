@@ -98,6 +98,10 @@ const clientWork: Project[] = [
     tags: ["Client build", "Wellness", "Lead capture"],
     href: "https://mintlinewellness.com",
     hrefLabel: "Visit Mintline",
+    testimonial:
+      "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using TomorrowsTech AI again.",
+    testimonialAuthor: "Dr. Marlow Griggs, MD",
+    testimonialRole: "Founder, Mintline Wellness",
   },
 ];
 
