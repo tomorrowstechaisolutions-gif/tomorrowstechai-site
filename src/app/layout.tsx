@@ -130,6 +130,18 @@ const organizationJsonLd = {
     sameAs: "https://www.linkedin.com/in/johnhockinson/",
   },
   priceRange: "$$$",
+  address: {
+    "@type": "PostalAddress",
+    addressRegion: "TX",
+    addressCountry: "US",
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "Customer Service",
+    email: "john@tomorrowstechai.com",
+    url: "https://tomorrowstechai.com/contact",
+    availableLanguage: "English",
+  },
   areaServed: {
     "@type": "Country",
     name: "United States",
