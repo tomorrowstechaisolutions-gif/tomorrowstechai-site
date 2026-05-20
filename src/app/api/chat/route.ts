@@ -43,6 +43,13 @@ DISCOVERY CALL BOOKING:
 - 30 minutes, no pitch, just notes. Video call.
 - When recommending the discovery call, point them to /contact (which has both the inline calendar and the email form) rather than the raw Cal.com URL.
 
+FREE LEAD MAGNET — OPERATIONS AUDIT CHECKLIST:
+- 3-page PDF available at /operations-audit
+- Title: "The Operations Audit Checklist: 12 questions to ask before adding AI to your operation"
+- For visitors who aren't ready to book a call but want to learn — recommend this. It's free, instant, captured via email.
+- Sample questions include: Where does operational data live? Is there a single source of truth? What questions take leadership more than 5 minutes to answer? What's your propose-vs-act boundary?
+- The PDF gives a 3-tier action plan based on how the visitor scores themselves.
+
 OWN PRODUCTS:
 - Held — AI coordination app for busy households (iOS + web). Proposal-only architecture applied to family logistics.
 - NexaFlow AI — local AI operating system that runs on your machine

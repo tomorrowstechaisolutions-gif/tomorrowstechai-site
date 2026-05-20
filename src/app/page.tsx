@@ -122,6 +122,73 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="md:flex md:items-start md:justify-between gap-10">
+            <div className="md:max-w-xl mb-6 md:mb-0">
+              <div className="eyebrow-muted mb-3">● Free download</div>
+              <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-3">
+                12 questions to ask before adding AI to your operation.
+              </h2>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-5">
+                Most AI integrations fail before they start. Not because the AI isn&apos;t smart enough — because the underlying operations aren&apos;t ready for it. This 3-page checklist is the one we walk through with every new client.
+              </p>
+              <ul className="space-y-1.5 text-sm text-[color:var(--color-text-secondary)] mb-6">
+                <li className="flex items-start gap-2">
+                  <span className="text-[color:var(--color-cyan)] mt-0.5">→</span>
+                  <span>The 12 questions — organized by foundation area</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[color:var(--color-cyan)] mt-0.5">→</span>
+                  <span>Score yourself in 5 minutes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[color:var(--color-cyan)] mt-0.5">→</span>
+                  <span>3-tier action plan based on your score</span>
+                </li>
+              </ul>
+              <Link href="/operations-audit" className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline">
+                Get the checklist →
+              </Link>
+            </div>
+            <div className="md:w-80 shrink-0">
+              <div className="card border-2 border-[color:var(--color-cyan-deep)]/40 p-5 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[color:var(--color-cyan)]" />
+                <div className="font-mono text-xs tracking-widest text-[color:var(--color-cyan)] uppercase mb-2">
+                  ● PDF · 3 pages
+                </div>
+                <div className="text-lg font-medium leading-tight mb-1">
+                  The Operations Audit Checklist
+                </div>
+                <div className="text-xs text-[color:var(--color-text-muted)] font-mono uppercase tracking-widest mb-4">
+                  By John Hockinson
+                </div>
+                <div className="space-y-1.5 text-xs text-[color:var(--color-text-secondary)] leading-relaxed mb-4">
+                  <div className="border-b border-[color:var(--color-border-subtle)] pb-1.5">
+                    <span className="font-mono text-[color:var(--color-cyan)] mr-2">01.</span>
+                    Where does each piece of operational data live today?
+                  </div>
+                  <div className="border-b border-[color:var(--color-border-subtle)] pb-1.5">
+                    <span className="font-mono text-[color:var(--color-cyan)] mr-2">02.</span>
+                    Is there a single source of truth — or three?
+                  </div>
+                  <div className="border-b border-[color:var(--color-border-subtle)] pb-1.5">
+                    <span className="font-mono text-[color:var(--color-cyan)] mr-2">03.</span>
+                    What questions take more than 5 minutes to answer?
+                  </div>
+                  <div className="text-[color:var(--color-text-muted)] italic pt-1">
+                    + 9 more in the full PDF
+                  </div>
+                </div>
+                <Link href="/operations-audit" className="btn-primary text-xs w-full justify-center">
+                  Download free →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="max-w-4xl mx-auto px-6 py-20">
         <div className="eyebrow-muted mb-6 text-center">● From a client</div>
         <blockquote className="text-center">

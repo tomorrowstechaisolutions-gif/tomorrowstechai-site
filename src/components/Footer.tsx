@@ -33,6 +33,7 @@ export function Footer() {
               <li><Link href="/about" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">About</Link></li>
               <li><Link href="/blog" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Blog</Link></li>
               <li><Link href="/faq" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">FAQ</Link></li>
+              <li><Link href="/operations-audit" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Free checklist</Link></li>
               <li><Link href="/contact" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Contact</Link></li>
             </ul>
           </div>
