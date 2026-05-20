@@ -45,11 +45,13 @@ export default function ContactPage() {
             label="LinkedIn"
             value="John C. Hockinson"
             href="https://www.linkedin.com/in/johnhockinson/"
+            external
           />
           <DirectChannel
             label="YouTube"
-            value="@tomorrowstek"
-            href="https://www.youtube.com/@tomorrowstek"
+            value="@TomorrowsTechAISolution"
+            href="https://www.youtube.com/@TomorrowsTechAISolution"
+            external
           />
         </div>
       </section>
@@ -61,13 +63,20 @@ function DirectChannel({
   label,
   value,
   href,
+  external,
 }: {
   label: string;
   value: string;
   href: string;
+  external?: boolean;
 }) {
   return (
-    <a href={href} className="card hover:border-[color:var(--color-cyan-deep)] block">
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      className="card hover:border-[color:var(--color-cyan-deep)] block"
+    >
       <div className="eyebrow-muted mb-2">{label}</div>
       <div className="text-[color:var(--color-cyan)] text-[15px]">{value}</div>
     </a>
