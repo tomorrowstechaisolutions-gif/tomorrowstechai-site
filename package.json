@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.32.1",
     "@calcom/embed-react": "^1.5.0",
     "@next/third-parties": "^16.2.6",
+    "@vercel/speed-insights": "^1.1.0",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
