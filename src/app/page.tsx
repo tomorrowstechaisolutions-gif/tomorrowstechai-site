@@ -67,6 +67,42 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="flex items-baseline justify-between mb-10">
+          <div>
+            <div className="eyebrow-muted mb-3">● Watch us build</div>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-2xl">
+              See it in action.
+            </h2>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-3 max-w-2xl">
+              Short walkthroughs of the dashboards and AI systems we&apos;re shipping. Real screens. Real business operations.
+            </p>
+          </div>
+          <a
+            href="https://www.youtube.com/@TomorrowsTechAISolution"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-[color:var(--color-cyan)] hover:underline whitespace-nowrap"
+          >
+            Full channel →
+          </a>
+        </div>
+        <div className="grid md:grid-cols-2 gap-5">
+          <VideoCard
+            id="WhoYhmM7YAo"
+            title="AI Business Dashboard Preview"
+            subtitle="My Smart Business Operating System"
+            duration="4:01"
+          />
+          <VideoCard
+            id="vzZxRRrRoH0"
+            title="Private AI Business Assistant"
+            subtitle="For Real Company Operations"
+            duration="1:28"
+          />
+        </div>
+      </section>
+
       <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
         <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="eyebrow-muted mb-3">Who we work with</div>
@@ -182,6 +218,44 @@ function IndustryItem({ name }: { name: string }) {
     <div className="flex items-center gap-3 py-3 border-b border-[color:var(--color-border-subtle)]">
       <div className="w-1.5 h-1.5 bg-[color:var(--color-cyan)]" />
       <span className="text-[color:var(--color-text)]">{name}</span>
+    </div>
+  );
+}
+
+function VideoCard({
+  id,
+  title,
+  subtitle,
+  duration,
+}: {
+  id: string;
+  title: string;
+  subtitle: string;
+  duration: string;
+}) {
+  return (
+    <div className="card overflow-hidden p-0">
+      <div className="relative w-full aspect-video bg-black">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${id}`}
+          title={title}
+          loading="lazy"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 w-full h-full"
+        />
+      </div>
+      <div className="p-5">
+        <div className="flex items-baseline gap-3 mb-1">
+          <span className="font-mono text-xs text-[color:var(--color-cyan)] tracking-widest">
+            {duration}
+          </span>
+        </div>
+        <h3 className="text-lg font-medium mb-1">{title}</h3>
+        <div className="text-sm text-[color:var(--color-text-secondary)]">
+          {subtitle}
+        </div>
+      </div>
     </div>
   );
 }

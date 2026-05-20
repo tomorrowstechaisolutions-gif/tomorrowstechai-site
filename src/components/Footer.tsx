@@ -45,7 +45,7 @@ export function Footer() {
             <div className="eyebrow-muted mb-4">Connect</div>
             <ul className="space-y-2 text-sm">
               <li><a href="https://www.linkedin.com/in/johnhockinson/" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">LinkedIn</a></li>
-              <li><a href="https://www.youtube.com/@tomorrowstek" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">YouTube</a></li>
+              <li><a href="https://www.youtube.com/@TomorrowsTechAISolution" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">YouTube</a></li>
               <li><Link href="/contact" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Contact</Link></li>
             </ul>
           </div>
