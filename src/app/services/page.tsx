@@ -3,85 +3,44 @@ import Link from "next/link";
 export const metadata = {
   title: "Services",
   description:
-    "Command Centers, Workflow Packages, AI Business Units, and Private On-Site AI Infrastructure for operations-heavy businesses. We design custom AI systems that bring operations, automation, and data into one clear command environment.",
+    "AI Command Centers, Smartsheet consulting, custom AI app development, local AI deployment, and program management consulting for operations-heavy businesses.",
 };
 
-const signatureSystems = [
+const services = [
   {
-    n: "01",
-    title: "Command Centers",
-    tag: "Signature System",
-    body: "Custom business visibility hubs built to unify reporting, metrics, accountability, and leadership oversight. One place to see what's moving, what's stuck, and what needs attention — without digging through disconnected systems.",
-    bullets: [
-      "Crew, fleet, and compliance dashboards",
-      "Real-time visibility across departments",
-      "One source of truth your executives can actually trust",
-      "Smartsheet-first, AI-enabled",
-    ],
+    tag: "01",
+    title: "AI Command Centers",
+    body: "Smartsheet workflows, crew/fleet/compliance dashboards, real-time visibility across departments. One source of truth your executives can actually trust. Built field-up, not boardroom-down.",
   },
   {
-    n: "02",
-    title: "Workflow Packages",
-    tag: "Signature System",
-    body: "Forms, approvals, reporting flows, and automation systems designed around how your business actually operates. Move information cleanly from one stage to the next. Reduce manual handoffs. Catch mistakes early.",
-    bullets: [
-      "Field-to-office workflow design",
-      "Approvals + reporting + billing automation",
-      "Process automation built around real operations",
-      "Drag-eliminating handoffs and follow-up",
-    ],
+    tag: "02",
+    title: "Smartsheet Consulting & Build-out",
+    body: "From contractor master sheets with scheduling violation detection to PMO governance templates that scale across projects. P6-style scheduling rigor translated into Smartsheet-native systems.",
   },
   {
-    n: "03",
-    title: "AI Business Units · Nexus One",
-    tag: "Signature System",
-    body: "Private AI-ready business systems built to support smarter decisions, better internal tools, and faster execution. A dedicated AI environment for the way your business actually runs — not just public chatbot tooling.",
-    bullets: [
-      "Custom agents and internal automation",
-      "Reporting support and process assistance",
-      "Designed for business use, not just public use",
-      "Maintained and expanded over time",
-    ],
-  },
-];
-
-const onSiteAI = {
-  n: "04",
-  title: "Private On-Site AI Infrastructure",
-  tag: "Hardware Offering",
-  body: "When privacy and control matter, we build and deliver dedicated AI hardware for your business. On-premises infrastructure with the performance to actually run modern models — your data never trains someone else's models.",
-  specs: [
-    { label: "CPU", value: "AMD Ryzen 9 7950X · 16 cores" },
-    { label: "GPU", value: "NVIDIA RTX 4090 · 24GB VRAM" },
-    { label: "Memory", value: "64GB DDR5 RAM" },
-    { label: "Deployment", value: "On-premises, your control" },
-  ],
-};
-
-const process = [
-  {
-    n: "01",
-    title: "Business Discovery",
-    tags: ["Workflow Review", "Business Goals"],
-    body: "We listen first. Walk your operations end-to-end. Identify the friction, the bottlenecks, the silent profit leaks. Where the work actually breaks down.",
+    tag: "03",
+    title: "Custom AI Workflow Design",
+    body: "AI workflows built around how your business actually works, not how generic tools think it should. Smartsheet-first, Claude-enabled, field-tested. Operations first, AI second.",
   },
   {
-    n: "02",
-    title: "System Design",
-    tags: ["System Planning", "Solution Mapping"],
-    body: "We map the right mix of command centers, workflows, management systems, and AI tools to support how your business actually runs. Design before code.",
+    tag: "04",
+    title: "Custom AI App Development",
+    body: "TypeScript + Next.js + Vercel + Neon. The same stack we use to build Held. Production-ready apps for internal operations, customer portals, or net-new products.",
   },
   {
-    n: "03",
-    title: "Build & Deployment",
-    tags: ["System Build", "Deployment Setup", "Process Automation"],
-    body: "We build your forms, approvals, automations, dashboards, and connected systems, then deploy everything into a clean operating environment your team can actually use.",
+    tag: "05",
+    title: "Local AI Deployment",
+    body: "NexaFlow AI-style: local LLM platforms that run on your machine. Online or offline, your data stays private. No training someone else's models on your operational secrets.",
   },
   {
-    n: "04",
-    title: "Ongoing Support",
-    tags: ["System Support", "Continuous Improvement"],
-    body: "We stay involved to maintain, improve, and expand your systems over time so they keep performing as your business grows. Not handed off and forgotten.",
+    tag: "06",
+    title: "Operations Automation",
+    body: "Field-to-office workflows that start with crews capturing information on their phone and flow through operations, reporting, approvals, billing, and customer invoicing.",
+  },
+  {
+    tag: "07",
+    title: "Program Management Consulting",
+    body: "Drawing on 18 years running real telecom and infrastructure programs. We help leadership teams design PMO structures, scheduling discipline, and operational governance.",
   },
 ];
 
@@ -91,104 +50,50 @@ export default function ServicesPage() {
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
         <div className="eyebrow mb-6">● Services</div>
         <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1] max-w-4xl">
-          We build intelligent systems for modern business.
+          AI for the operations teams that actually run the work.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6 max-w-3xl">
-          Three signature systems plus on-premises AI infrastructure. Built around how your business actually runs — not how generic tools think it should.
+          Seven service lines. One philosophy: operational clarity, not AI for
+          AI&apos;s sake. Built by operators who&apos;ve lived inside the chaos for
+          two decades.
         </p>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 pb-12">
-        <div className="eyebrow-muted mb-3">Signature Systems</div>
-        <h2 className="text-3xl font-medium tracking-tight mb-10 max-w-2xl">
-          The core of the Tomorrowstek ecosystem.
-        </h2>
-        <div className="grid gap-5">
-          {signatureSystems.map((s) => (
-            <div key={s.n} className="card p-8">
-              <div className="md:flex md:items-start md:gap-10">
-                <div className="md:w-1/3 mb-4 md:mb-0">
-                  <div className="flex items-baseline gap-3 mb-2">
-                    <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">{s.n}</span>
-                    <span className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">{s.tag}</span>
-                  </div>
-                  <h3 className="text-2xl font-medium">{s.title}</h3>
-                </div>
-                <div className="md:w-2/3">
-                  <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-4">
-                    {s.body}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {s.bullets.map((b) => (
-                      <li key={b} className="flex items-start gap-2 text-sm">
-                        <span className="text-[color:var(--color-cyan)] mt-0.5">→</span>
-                        <span className="text-[color:var(--color-text)]">{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <div className="grid md:grid-cols-2 gap-5">
+          {services.map((s) => (
+            <div key={s.tag} className="card">
+              <div className="flex items-baseline gap-4 mb-3">
+                <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">
+                  {s.tag}
+                </span>
+                <h2 className="text-xl font-medium">{s.title}</h2>
               </div>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px]">
+                {s.body}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <div className="card card-accent p-8">
-          <div className="md:flex md:items-start md:gap-10">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">{onSiteAI.n}</span>
-                <span className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-amber)]">{onSiteAI.tag}</span>
-              </div>
-              <h3 className="text-2xl font-medium">{onSiteAI.title}</h3>
-            </div>
-            <div className="md:w-2/3">
-              <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-5">
-                {onSiteAI.body}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {onSiteAI.specs.map((s) => (
-                  <div key={s.label} className="border border-[color:var(--color-border)] rounded px-3 py-2">
-                    <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">{s.label}</div>
-                    <div className="text-sm text-[color:var(--color-text)] mt-1 font-mono">{s.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40 mt-12">
+      <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
         <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="eyebrow-muted mb-3">How it works</div>
+          <div className="eyebrow-muted mb-3">How we work</div>
           <h2 className="text-3xl font-medium tracking-tight mb-10 max-w-2xl">
-            How Tomorrowstek builds your business system.
+            Five phases. Predictable. No mystery.
           </h2>
-          <p className="text-[color:var(--color-text-secondary)] leading-relaxed max-w-3xl mb-12">
-            We start by understanding how your business actually runs. Then we build the right mix of command centers, workflows, management systems, and AI tools to support it. Four phases. Predictable. No mystery.
-          </p>
-          <div className="grid md:grid-cols-2 gap-5">
-            {process.map((p) => (
-              <div key={p.n} className="card">
-                <div className="flex items-baseline gap-3 mb-3">
-                  <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">{p.n}</span>
-                  <h3 className="text-lg font-medium">{p.title}</h3>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {p.tags.map((t) => (
-                    <span key={t} className="text-xs font-mono tracking-wider text-[color:var(--color-text-muted)] border border-[color:var(--color-border)] px-2 py-0.5 rounded">{t}</span>
-                  ))}
-                </div>
-                <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">{p.body}</p>
-              </div>
-            ))}
+          <div className="grid md:grid-cols-5 gap-5">
+            <Phase n="01" title="Discovery" body="We listen first. Map the operational chaos. Identify the highest-leverage starting point." />
+            <Phase n="02" title="Foundation" body="Clean the data architecture. AI on top of disorganized sheets gives disorganized answers." />
+            <Phase n="03" title="Build" body="Read-only queries first. Trust through accuracy before write access." />
+            <Phase n="04" title="Boundary" body="Define propose-vs-act explicitly. Where AI suggests. Where humans decide. Hardest part — most important." />
+            <Phase n="05" title="Scale" body="One workflow at a time. Low-stakes writes first. Trust pattern, then expand." />
           </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
+      <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="card card-accent text-center md:text-left md:flex md:items-center md:justify-between gap-10 p-10">
           <div>
             <div className="eyebrow mb-3">● Open for new engagements</div>
@@ -205,5 +110,19 @@ export default function ServicesPage() {
         </div>
       </section>
     </>
+  );
+}
+
+function Phase({ n, title, body }: { n: string; title: string; body: string }) {
+  return (
+    <div>
+      <div className="font-mono text-sm text-[color:var(--color-cyan)] tracking-widest mb-2">
+        {n}
+      </div>
+      <h3 className="text-base font-medium mb-2">{title}</h3>
+      <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
+        {body}
+      </p>
+    </div>
   );
 }

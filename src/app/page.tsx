@@ -1,24 +1,6 @@
 import Link from "next/link";
 import { posts } from "@/content/posts";
 
-const signatureSystems = [
-  {
-    n: "01",
-    title: "Command Centers",
-    body: "Custom business visibility hubs that unify reporting, metrics, accountability, and leadership oversight. One place to see what's moving, what's stuck, and what needs attention.",
-  },
-  {
-    n: "02",
-    title: "Workflow Packages",
-    body: "Forms, approvals, reporting flows, and automation systems designed around how your business actually operates. Cleanly move information from one stage to the next.",
-  },
-  {
-    n: "03",
-    title: "AI Business Units · Nexus One",
-    body: "Private AI-ready business systems built for smarter decisions, better internal tools, and faster execution. Designed for business use, not just public chatbot tooling.",
-  },
-];
-
 export default function Home() {
   const latestPosts = posts.slice(0, 3);
 
@@ -26,13 +8,16 @@ export default function Home() {
     <>
       <section className="relative grid-overlay overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 pt-24 pb-20 relative z-10">
-          <div className="eyebrow mb-6">● Intelligent systems for modern business</div>
+          <div className="eyebrow mb-6">● AI for construction · field ops · contractors</div>
           <h1 className="text-5xl md:text-6xl font-medium leading-[1.05] tracking-tight max-w-4xl">
-            We build intelligent systems for{" "}
-            <span className="text-[color:var(--color-cyan)]">modern business.</span>
+            We build the systems your{" "}
+            <span className="text-[color:var(--color-cyan)]">PMs wish existed.</span>
           </h1>
           <p className="text-xl text-[color:var(--color-text-secondary)] mt-6 max-w-2xl leading-relaxed">
-            Command centers, workflow systems, and private AI business units that bring operations, automation, and data into one clear command environment. Built around how your business actually runs.
+            AI command centers, Smartsheet workflows, and custom AI systems for
+            construction, contractors, field operations, and service businesses.
+            Operations first. AI second. Built by operators who&apos;ve lived
+            inside the chaos.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link href="/contact" className="btn-primary">
@@ -44,46 +29,40 @@ export default function Home() {
           </div>
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
             <Stat label="Years in operations" value="18" />
-            <Stat label="Signature systems" value="3" />
-            <Stat label="On-prem AI ready" value="Yes" />
+            <Stat label="Programs delivered" value="100s" />
+            <Stat label="Smartsheet-first" value="Yes" />
             <Stat label="Propose, never act" value="Always" />
           </div>
         </div>
       </section>
 
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="eyebrow-muted mb-3">Signature Systems</div>
-        <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-3 max-w-2xl">
-          The core of the Tomorrowstek ecosystem.
+        <div className="eyebrow-muted mb-3">What we build</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-12 max-w-2xl">
+          Operational clarity, powered by AI.
         </h2>
-        <p className="text-[color:var(--color-text-secondary)] leading-relaxed max-w-2xl mb-12">
-          Three productized systems built around how operations-heavy businesses actually run. Plus on-premises AI infrastructure when privacy and control matter.
-        </p>
-        <div className="grid md:grid-cols-3 gap-5">
-          {signatureSystems.map((s) => (
-            <div key={s.n} className="card">
-              <div className="flex items-baseline gap-3 mb-3">
-                <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">{s.n}</span>
-                <h3 className="text-lg font-medium">{s.title}</h3>
-              </div>
-              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">{s.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5">
-          <Link href="/services" className="card card-accent flex items-center justify-between gap-6 hover:border-[color:var(--color-cyan)]">
-            <div>
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">04</span>
-                <span className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-amber)]">Hardware Offering</span>
-              </div>
-              <h3 className="text-lg font-medium mb-1">Private On-Site AI Infrastructure</h3>
-              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
-                Dedicated AI hardware delivered to your business. On-premises, your data never trains someone else&apos;s models.
-              </p>
-            </div>
-            <span className="text-[color:var(--color-cyan)] font-mono text-sm whitespace-nowrap">View specs →</span>
-          </Link>
+        <div className="grid md:grid-cols-2 gap-5">
+          <BuildCard
+            tag="Service"
+            title="AI Command Centers"
+            body="Smartsheet workflows, crew/fleet/compliance dashboards, real-time visibility across departments. One source of truth your executives can actually trust."
+          />
+          <BuildCard
+            tag="Product"
+            title="Held"
+            body="AI-powered coordination app for busy households, now on iOS. Built around one principle: AI proposes, you decide. Nothing changes without approval."
+            href="https://myheldapp.com"
+          />
+          <BuildCard
+            tag="Product"
+            title="NexaFlow AI"
+            body="Local AI operating system that runs on your machine. Online or offline, your data stays private. Your data isn't training someone else's models."
+          />
+          <BuildCard
+            tag="Service"
+            title="Custom AI Workflows"
+            body="Built around how your business actually works, not how generic tools think it should. Field-tested, Smartsheet-first, AI-enabled."
+          />
         </div>
       </section>
 
@@ -91,14 +70,14 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="eyebrow-muted mb-3">Who we work with</div>
           <h2 className="text-3xl font-medium tracking-tight mb-10 max-w-2xl">
-            Operations-heavy businesses that need clarity.
+            Industries drowning in spreadsheets and email chains.
           </h2>
           <div className="grid md:grid-cols-3 gap-5">
             <IndustryItem name="Construction" />
             <IndustryItem name="Telecom & infrastructure" />
             <IndustryItem name="Field operations" />
             <IndustryItem name="Contractor management" />
-            <IndustryItem name="Real estate investment" />
+            <IndustryItem name="Service businesses" />
             <IndustryItem name="Operations-heavy SMBs" />
           </div>
         </div>
@@ -160,6 +139,30 @@ function Stat({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
+}
+
+function BuildCard({
+  tag,
+  title,
+  body,
+  href,
+}: {
+  tag: string;
+  title: string;
+  body: string;
+  href?: string;
+}) {
+  const content = (
+    <>
+      <div className="eyebrow-muted mb-3">{tag}</div>
+      <h3 className="text-xl font-medium mb-3">{title}</h3>
+      <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px]">{body}</p>
+    </>
+  );
+  if (href) {
+    return <a href={href} className="card block group">{content}</a>;
+  }
+  return <div className="card">{content}</div>;
 }
 
 function IndustryItem({ name }: { name: string }) {
