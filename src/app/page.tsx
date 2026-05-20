@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { posts } from "@/content/posts";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { LazyYouTube } from "@/components/LazyYouTube";
 
 export default function Home() {
   const latestPosts = posts.slice(0, 3);
@@ -346,14 +347,7 @@ function VideoCard({
   return (
     <div className="card overflow-hidden p-0">
       <div className="relative w-full aspect-video bg-black">
-        <iframe
-          src={`https://www.youtube-nocookie.com/embed/${id}`}
-          title={title}
-          loading="lazy"
-          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 w-full h-full"
-        />
+        <LazyYouTube id={id} title={title} />
       </div>
       <div className="p-5">
         <div className="flex items-baseline gap-3 mb-1">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { LazyYouTube } from "@/components/LazyYouTube";
 
 export const metadata = {
   title: "Work",
@@ -205,14 +206,7 @@ function ProjectCard({ project }: { project: Project }) {
             {project.videos.map((v) => (
               <div key={v.id}>
                 <div className="relative w-full aspect-video bg-black rounded overflow-hidden border border-[color:var(--color-border)]">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${v.id}`}
-                    title={v.title}
-                    loading="lazy"
-                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="absolute inset-0 w-full h-full"
-                  />
+                  <LazyYouTube id={v.id} title={v.title} />
                 </div>
                 <div className="text-xs text-[color:var(--color-text-muted)] font-mono mt-2 tracking-wider">
                   {v.title}
