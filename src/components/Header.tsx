@@ -20,6 +20,7 @@ export function Header() {
         </Link>
         <nav className="flex items-center gap-7 text-sm">
           <Link href="/services" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">Services</Link>
+          <Link href="/work" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">Work</Link>
           <Link href="/about" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">About</Link>
           <Link href="/blog" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">Blog</Link>
           <Link href="/contact" className="btn-primary">Book a call →</Link>
