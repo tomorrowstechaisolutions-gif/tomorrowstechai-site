@@ -3,37 +3,16 @@ import Link from "next/link";
 export const metadata = {
   title: "About",
   description:
-    "Founded by John Hockinson with Dr. Marlow Griggs, MD and Abbas Koteish, PMP. Operations veterans building AI systems for the operations teams they came from.",
+    "Founded by John Hockinson, an operations veteran with 18 years building telecom and infrastructure programs. Now building AI systems for the operations teams he came from.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About · TomorrowsTech AI",
     description:
-      "Founded by John Hockinson with Dr. Marlow Griggs and Abbas Koteish — 18 years inside operations, now building the systems we wished existed.",
+      "Founded by John Hockinson — 18 years inside operations, now building the systems we wished existed.",
     url: "https://tomorrowstechai.com/about",
     type: "website",
   },
 };
-
-const team = [
-  {
-    name: "John C. Hockinson",
-    role: "Founder & Chief AI Officer",
-    body: "Systems architect and technology strategist. 18 years inside telecom and infrastructure programs informs every system we ship. Drives the technology vision and the build itself.",
-    initials: "JH",
-  },
-  {
-    name: "Dr. Marlow Griggs, MD",
-    role: "Chief Strategy & Innovation Officer",
-    body: "Strategic leader who keeps the technology grounded in practical business reality. Brings the outside-the-tech-bubble perspective that ensures every system we ship actually fits how businesses run.",
-    initials: "MG",
-  },
-  {
-    name: "Abbas Koteish, PMP",
-    role: "Director of Program Delivery",
-    body: "Delivery leader focused on turning strategy into organized execution. Abbas ensures every system we build is practical, scalable, and aligned with real business goals — not just a great idea on a whiteboard.",
-    initials: "AK",
-  },
-];
 
 export default function AboutPage() {
   return (
@@ -41,21 +20,19 @@ export default function AboutPage() {
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-12">
         <div className="eyebrow mb-6">● About TomorrowsTech AI</div>
         <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1] mb-6">
-          18 years inside operations. Now building the systems we wished
+          18 years inside operations. Now building the systems I wished
           existed.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed">
           TomorrowsTech AI was founded by John Hockinson — a program manager
-          who spent two decades running telecom and infrastructure programs —
-          alongside Dr. Marlow Griggs and Abbas Koteish. Three operators who
-          watched the same operational chaos repeat at every level, and
-          decided to build the systems that could fix it.
+          who spent two decades running telecom and infrastructure programs,
+          and watched the same operational chaos repeat at every level.
         </p>
       </section>
 
       <section className="max-w-3xl mx-auto px-6 pb-16">
         <div className="prose-blog">
-          <h2>The problem we saw</h2>
+          <h2>The problem I saw</h2>
           <p>
             Scattered documents. Tribal knowledge. Duplicate spreadsheets.
             Outdated processes. No clean source of truth.
@@ -102,34 +79,7 @@ export default function AboutPage() {
           <p>
             AI is leverage. Never autopilot.
           </p>
-        </div>
-      </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="eyebrow-muted mb-3">Who&apos;s behind TomorrowsTech AI</div>
-        <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-3 max-w-2xl">
-          The team building the systems.
-        </h2>
-        <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-12 max-w-2xl">
-          Three founders. One philosophy: build the operational foundation
-          right before bolting on AI.
-        </p>
-        <div className="grid md:grid-cols-3 gap-5">
-          {team.map((member) => (
-            <div key={member.name} className="card">
-              <div className="w-14 h-14 rounded-full bg-[color:var(--color-cyan-deep)]/30 border border-[color:var(--color-cyan)]/40 flex items-center justify-center mb-4">
-                <span className="font-mono text-[color:var(--color-cyan)] text-base tracking-widest">{member.initials}</span>
-              </div>
-              <h3 className="text-lg font-medium mb-1">{member.name}</h3>
-              <div className="eyebrow-muted mb-4">{member.role}</div>
-              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">{member.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="max-w-3xl mx-auto px-6 pb-16">
-        <div className="prose-blog">
           <h2>Our products</h2>
           <p>
             Alongside our consulting work, we&apos;ve built our own products
