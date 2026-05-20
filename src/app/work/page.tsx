@@ -4,12 +4,12 @@ import Image from "next/image";
 export const metadata = {
   title: "Work",
   description:
-    "Selected work from TomorrowsTech AI — websites, apps, and brands we've shipped. Mintline Wellness, Held, TomorrowsTek, and more.",
+    "Selected work from TomorrowsTech AI — websites, apps, and brands we've shipped. The Field House Gym, Mintline Wellness, Held, TomorrowsTek, and more.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · TomorrowsTech AI",
     description:
-      "Websites, apps, and brands we've shipped. Wellness practices, productivity apps, and media businesses.",
+      "Websites, apps, and brands we've shipped. Gyms, wellness practices, productivity apps, and media businesses.",
     url: "https://tomorrowstechai.com/work",
     type: "website",
   },
@@ -24,6 +24,9 @@ type Project = {
   tags: string[];
   href: string;
   hrefLabel: string;
+  testimonial?: string;
+  testimonialAuthor?: string;
+  testimonialRole?: string;
 };
 
 const ownWork: Project[] = [
@@ -60,6 +63,16 @@ const ownWork: Project[] = [
 ];
 
 const clientWork: Project[] = [
+  {
+    slug: "field-house-gym",
+    title: "The Field House Gym",
+    tagline: "The best 24/7 gym in Harker Heights.",
+    body: "Custom-built marketing site for a 20-30k sq ft hardcore lifting facility in Harker Heights, Texas. Hero-driven design, problem-solution framing, member reviews block, three-step onboarding flow, and a full FAQ. Built around the gym's identity: no-judgment, no-fluff, no-crowds. Real members. Real strength.",
+    image: "/work/fieldhouse.png",
+    tags: ["Client build", "Fitness", "Lead capture", "Harker Heights, TX"],
+    href: "https://www.thefieldhousegym.com",
+    hrefLabel: "Visit Field House",
+  },
   {
     slug: "mintline-wellness",
     title: "Mintline Wellness",
@@ -159,6 +172,24 @@ function ProjectCard({ project }: { project: Project }) {
       <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px] mb-5">
         {project.body}
       </p>
+      {project.testimonial && (
+        <blockquote className="border-l-2 border-[color:var(--color-cyan)] pl-4 mb-5">
+          <p className="text-[color:var(--color-text)] italic leading-relaxed text-[15px] mb-2">
+            &ldquo;{project.testimonial}&rdquo;
+          </p>
+          {(project.testimonialAuthor || project.testimonialRole) && (
+            <footer className="text-xs font-mono tracking-wider text-[color:var(--color-text-muted)] uppercase">
+              — {project.testimonialAuthor}
+              {project.testimonialRole && (
+                <span className="text-[color:var(--color-text-muted)]">
+                  {" · "}
+                  {project.testimonialRole}
+                </span>
+              )}
+            </footer>
+          )}
+        </blockquote>
+      )}
       <div className="flex flex-wrap gap-2 mb-5">
         {project.tags.map((t) => (
           <span
