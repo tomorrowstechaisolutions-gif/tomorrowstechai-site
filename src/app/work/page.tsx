@@ -4,15 +4,20 @@ import Image from "next/image";
 export const metadata = {
   title: "Work",
   description:
-    "Selected work from TomorrowsTech AI — websites, apps, and brands we've shipped. The Field House Gym, Mintline Wellness, Held, TomorrowsTek, and more.",
+    "Selected work from TomorrowsTech AI — websites, apps, brands, and promotional video we've shipped. The Field House Gym, Mintline Wellness, Held, TomorrowsTek, and more.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · TomorrowsTech AI",
     description:
-      "Websites, apps, and brands we've shipped. Gyms, wellness practices, productivity apps, and media businesses.",
+      "Websites, apps, promotional video, and brands we've shipped. Gyms, wellness practices, productivity apps, and media businesses.",
     url: "https://tomorrowstechai.com/work",
     type: "website",
   },
+};
+
+type Video = {
+  id: string;
+  title: string;
 };
 
 type Project = {
@@ -27,6 +32,8 @@ type Project = {
   testimonial?: string;
   testimonialAuthor?: string;
   testimonialRole?: string;
+  videos?: Video[];
+  featured?: boolean;
 };
 
 const ownWork: Project[] = [
@@ -67,15 +74,20 @@ const clientWork: Project[] = [
     slug: "field-house-gym",
     title: "The Field House Gym",
     tagline: "The best 24/7 gym in Harker Heights.",
-    body: "Custom-built marketing site for a 20-30k sq ft hardcore lifting facility in Harker Heights, Texas. Hero-driven design, problem-solution framing, member reviews block, three-step onboarding flow, and a full FAQ. Built around the gym's identity: no-judgment, no-fluff, no-crowds. Real members. Real strength.",
+    body: "Full brand presence for a 20-30k sq ft hardcore lifting facility in Harker Heights, Texas. We built the marketing site, the hero design, problem-solution framing, member reviews block, three-step onboarding flow, and full FAQ. We also produced the promotional video content used on the site and in ad campaigns for both locations. One brand, top to bottom.",
     image: "/work/fieldhouse.png",
-    tags: ["Client build", "Fitness", "Lead capture", "Harker Heights, TX"],
+    tags: ["Client build", "Fitness", "Video production", "Lead capture", "Harker Heights, TX"],
     href: "https://www.thefieldhousegym.com",
     hrefLabel: "Visit Field House",
     testimonial:
       "John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work.",
     testimonialAuthor: "Christina Bills",
     testimonialRole: "Owner, The Field House Gym",
+    videos: [
+      { id: "MD0BQ-uaKG0", title: "The Field House Gym — Harker Heights / Killeen" },
+      { id: "poCVNcen-2o", title: "The Field House Gym — Temple location" },
+    ],
+    featured: true,
   },
   {
     slug: "mintline-wellness",
@@ -98,7 +110,7 @@ export default function WorkPage() {
           Things we&apos;ve built.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6 max-w-3xl">
-          Websites, apps, and brands we ship — for our own businesses and for clients.
+          Websites, apps, brands, and promotional video — for our own businesses and for clients.
           Operations-heavy and built to last, not built to demo.
         </p>
       </section>
@@ -160,14 +172,19 @@ export default function WorkPage() {
 }
 
 function ProjectCard({ project }: { project: Project }) {
+  const featuredClass = project.featured ? " md:col-span-2" : "";
   return (
-    <div className="card group overflow-hidden">
+    <div className={`card group overflow-hidden${featuredClass}`}>
       <div className="relative w-full aspect-[16/10] -mx-6 -mt-6 mb-5 overflow-hidden border-b border-[color:var(--color-border)]">
         <Image
           src={project.image}
           alt={project.title}
           fill
-          sizes="(max-width: 768px) 100vw, 580px"
+          sizes={
+            project.featured
+              ? "(max-width: 768px) 100vw, 1200px"
+              : "(max-width: 768px) 100vw, 580px"
+          }
           className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
         />
       </div>
@@ -176,6 +193,32 @@ function ProjectCard({ project }: { project: Project }) {
       <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px] mb-5">
         {project.body}
       </p>
+
+      {project.videos && project.videos.length > 0 && (
+        <div className="mb-5">
+          <div className="eyebrow-muted mb-3">Promotional video we produced</div>
+          <div className="grid md:grid-cols-2 gap-3">
+            {project.videos.map((v) => (
+              <div key={v.id}>
+                <div className="relative w-full aspect-video bg-black rounded overflow-hidden border border-[color:var(--color-border)]">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${v.id}`}
+                    title={v.title}
+                    loading="lazy"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+                <div className="text-xs text-[color:var(--color-text-muted)] font-mono mt-2 tracking-wider">
+                  {v.title}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {project.testimonial && (
         <blockquote className="border-l-2 border-[color:var(--color-cyan)] pl-4 mb-5">
           <p className="text-[color:var(--color-text)] italic leading-relaxed text-[15px] mb-2">

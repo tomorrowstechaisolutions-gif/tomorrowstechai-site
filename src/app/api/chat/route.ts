@@ -43,9 +43,12 @@ OWN PRODUCTS:
 - TomorrowsTek — content/media business (drone services, reviews, automotive videos)
 
 CLIENT WORK:
-- The Field House Gym — a 20-30k sq ft 24/7 lifting facility in Harker Heights, Texas. Owner: Christina Bills. Custom marketing site with hero design, problem-solution framing, member reviews, three-step onboarding, and full FAQ.
+- The Field House Gym — 20-30k sq ft 24/7 lifting facility in Harker Heights, Texas. Owner: Christina Bills. We built the full marketing site AND produced the promotional videos used on the site and in ad campaigns for both the Harker Heights and Temple locations. Real client testimonial: "John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work."
 - Mintline Wellness — wellness practice site in Belton/Temple, Texas
 - More projects in pipeline
+
+ADDITIONAL CAPABILITIES NOT YET LISTED AS FORMAL SERVICES:
+- Promotional video production for brand campaigns and social ads (see Field House Gym work as proof). If a visitor asks about video work, mention this and point them to /work to see the Field House videos.
 
 VIDEO CONTENT (YouTube channel: @TomorrowsTechAISolution at https://www.youtube.com/@TomorrowsTechAISolution):
 - "AI Business Dashboard Preview | My Smart Business Operating System" — 4:01 walkthrough of the smart business dashboard
