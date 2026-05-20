@@ -70,20 +70,95 @@ export const metadata: Metadata = {
   },
 };
 
+const clientReviews = [
+  {
+    "@type": "Review",
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: "5",
+      bestRating: "5",
+    },
+    author: {
+      "@type": "Person",
+      name: "Christina Bills",
+      jobTitle: "Owner",
+      worksFor: {
+        "@type": "Organization",
+        name: "The Field House Gym",
+      },
+    },
+    reviewBody:
+      "John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work.",
+    datePublished: "2026-05-19",
+  },
+  {
+    "@type": "Review",
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: "5",
+      bestRating: "5",
+    },
+    author: {
+      "@type": "Person",
+      name: "Dr. Marlow Griggs, MD",
+      jobTitle: "Founder",
+      worksFor: {
+        "@type": "Organization",
+        name: "Mintline Wellness",
+      },
+    },
+    reviewBody:
+      "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using TomorrowsTech AI again.",
+    datePublished: "2026-05-19",
+  },
+];
+
 const organizationJsonLd = {
   "@context": "https://schema.org",
-  "@type": "Organization",
+  "@type": "ProfessionalService",
   name: "TomorrowsTech AI",
   alternateName: "Tomorrowstek LLC",
   url: "https://tomorrowstechai.com",
   logo: "https://tomorrowstechai.com/logo.png",
+  image: "https://tomorrowstechai.com/logo.png",
   description:
-    "AI command centers, Smartsheet workflows, and custom AI systems for construction, contractors, and field operations businesses.",
+    "AI command centers, Smartsheet workflows, custom websites, video production, and AI systems for operations-heavy businesses — construction, contractors, field operations, telecom, and service companies.",
   founder: {
     "@type": "Person",
     name: "John Hockinson",
+    jobTitle: "Founder",
+    sameAs: "https://www.linkedin.com/in/johnhockinson/",
   },
-  sameAs: ["https://www.linkedin.com/in/johnhockinson/"],
+  priceRange: "$$$",
+  areaServed: {
+    "@type": "Country",
+    name: "United States",
+  },
+  serviceType: [
+    "AI Command Centers",
+    "Smartsheet Consulting",
+    "Custom AI Workflows",
+    "Custom AI App Development",
+    "Local AI Deployment",
+    "Operations Automation",
+    "Program Management Consulting",
+    "Website Design & Build",
+    "Video Production",
+  ],
+  sameAs: [
+    "https://www.linkedin.com/in/johnhockinson/",
+    "https://www.youtube.com/@TomorrowsTechAISolution",
+    "https://myheldapp.com",
+    "https://tomorrowstek.com",
+  ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "5.0",
+    reviewCount: clientReviews.length.toString(),
+    bestRating: "5",
+    worstRating: "1",
+  },
+  review: clientReviews,
 };
 
 const websiteJsonLd = {
