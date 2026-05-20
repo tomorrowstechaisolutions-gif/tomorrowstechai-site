@@ -72,6 +72,10 @@ const clientWork: Project[] = [
     tags: ["Client build", "Fitness", "Lead capture", "Harker Heights, TX"],
     href: "https://www.thefieldhousegym.com",
     hrefLabel: "Visit Field House",
+    testimonial:
+      "John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work.",
+    testimonialAuthor: "Christina Bills",
+    testimonialRole: "Owner, The Field House Gym",
   },
   {
     slug: "mintline-wellness",

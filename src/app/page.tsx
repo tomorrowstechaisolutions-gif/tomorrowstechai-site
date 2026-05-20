@@ -121,6 +121,28 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="max-w-4xl mx-auto px-6 py-20">
+        <div className="eyebrow-muted mb-6 text-center">● From a client</div>
+        <blockquote className="text-center">
+          <p className="text-2xl md:text-3xl font-medium tracking-tight leading-snug text-[color:var(--color-text)] mb-6">
+            &ldquo;John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work.&rdquo;
+          </p>
+          <footer className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
+            <span className="text-[color:var(--color-cyan)]">Christina Bills</span>
+            {" · "}
+            Owner, The Field House Gym
+          </footer>
+        </blockquote>
+        <div className="mt-8 text-center">
+          <Link
+            href="/work"
+            className="text-sm text-[color:var(--color-cyan)] hover:underline font-mono uppercase tracking-widest"
+          >
+            See the work →
+          </Link>
+        </div>
+      </section>
+
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="flex items-baseline justify-between mb-10">
           <div>
