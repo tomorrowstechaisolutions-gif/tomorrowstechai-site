@@ -6,6 +6,14 @@ export const metadata = {
   title: "Blog",
   description:
     "Field notes from the intersection of AI and operations. Smartsheet, Claude, MCP, construction tech, and the systems we wish existed.",
+  alternates: { canonical: "/blog" },
+  openGraph: {
+    title: "Blog · TomorrowsTech AI",
+    description:
+      "Field notes from the intersection of AI and operations. Written by an operator. For operators. No buzzwords.",
+    url: "https://tomorrowstechai.com/blog",
+    type: "website",
+  },
 };
 
 export default function BlogPage() {

@@ -4,6 +4,14 @@ export const metadata = {
   title: "Contact",
   description:
     "Book a discovery call with TomorrowsTech AI. AI command centers, Smartsheet workflows, and custom AI for construction and field ops.",
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: "Contact · TomorrowsTech AI",
+    description:
+      "Book a discovery call. 30 minutes, no pitch, just notes.",
+    url: "https://tomorrowstechai.com/contact",
+    type: "website",
+  },
 };
 
 export default function ContactPage() {

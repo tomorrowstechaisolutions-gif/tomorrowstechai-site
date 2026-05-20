@@ -4,6 +4,14 @@ export const metadata = {
   title: "Services",
   description:
     "AI Command Centers, Smartsheet consulting, custom AI app development, local AI deployment, and program management consulting for operations-heavy businesses.",
+  alternates: { canonical: "/services" },
+  openGraph: {
+    title: "Services · TomorrowsTech AI",
+    description:
+      "Seven service lines for operations-heavy businesses. AI command centers, Smartsheet, custom AI apps, local AI, automation, PMO consulting.",
+    url: "https://tomorrowstechai.com/services",
+    type: "website",
+  },
 };
 
 const services = [

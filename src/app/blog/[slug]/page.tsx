@@ -7,6 +7,8 @@ export async function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
 }
 
+const SITE_URL = "https://tomorrowstechai.com";
+
 export async function generateMetadata({
   params,
 }: {
@@ -15,21 +17,32 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return { title: "Not found" };
+  const url = `${SITE_URL}/blog/${post.slug}`;
   return {
     title: post.title,
     description: post.excerpt,
+    keywords: post.tags,
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
       type: "article",
-      publishedTime: post.date,
-      images: post.image ? [{ url: post.image }] : undefined,
+      url,
+      publishedTime: new Date(post.date).toISOString(),
+      authors: ["John Hockinson"],
+      tags: post.tags,
+      siteName: "TomorrowsTech AI",
+      images: post.image
+        ? [{ url: `${SITE_URL}${post.image}`, alt: post.title }]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: post.image ? [post.image] : undefined,
+      images: post.image ? [`${SITE_URL}${post.image}`] : undefined,
     },
   };
 }
@@ -43,8 +56,42 @@ export default async function BlogPostPage({
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.image ? `${SITE_URL}${post.image}` : undefined,
+    datePublished: new Date(post.date).toISOString(),
+    dateModified: new Date(post.date).toISOString(),
+    keywords: post.tags.join(", "),
+    articleSection: "Operations & AI",
+    author: {
+      "@type": "Person",
+      name: "John Hockinson",
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "TomorrowsTech AI",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/blog/${post.slug}`,
+    },
+  };
+
   return (
     <article>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
         <Link
           href="/blog"

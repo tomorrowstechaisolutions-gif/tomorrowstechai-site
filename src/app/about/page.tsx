@@ -4,6 +4,14 @@ export const metadata = {
   title: "About",
   description:
     "Founded by John Hockinson, an operations veteran with 18 years building telecom and infrastructure programs. Now building AI systems for the operations teams he came from.",
+  alternates: { canonical: "/about" },
+  openGraph: {
+    title: "About · TomorrowsTech AI",
+    description:
+      "Founded by John Hockinson — 18 years inside operations, now building the systems we wished existed.",
+    url: "https://tomorrowstechai.com/about",
+    type: "website",
+  },
 };
 
 export default function AboutPage() {
