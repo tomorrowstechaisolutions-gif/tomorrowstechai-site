@@ -3,29 +3,8 @@ import Link from "next/link";
 export const metadata = {
   title: "About",
   description:
-    "Founded by John Hockinson with Dr. Marlow Griggs and Abbas Koteish. Operations veterans building AI systems for the operations teams they came from.",
+    "Founded by John Hockinson, an operations veteran with 18 years building telecom and infrastructure programs. Now building AI systems for the operations teams he came from.",
 };
-
-const team = [
-  {
-    name: "John C. Hockinson",
-    role: "Founder & Chief AI Officer",
-    body: "Systems architect and technology strategist focused on building intelligent operational platforms that combine AI, automation, and real-time command dashboards. 18 years inside telecom and infrastructure programs informs every system we ship.",
-    initials: "JH",
-  },
-  {
-    name: "Dr. Marlow Griggs, MD",
-    role: "Chief Strategy & Innovation Officer",
-    body: "Strategic leader helping guide Tomorrowstech AI's direction, ensuring our technology solutions remain practical, scalable, and aligned with real business challenges. Brings the outside-the-tech-bubble perspective that keeps the work grounded.",
-    initials: "MG",
-  },
-  {
-    name: "Abbas Koteish, PMP",
-    role: "Director of Program Delivery",
-    body: "Experienced delivery leader focused on turning strategy into organized execution. Abbas ensures every system we build is practical, scalable, and aligned with real business goals — not just a great idea on a whiteboard.",
-    initials: "AK",
-  },
-];
 
 export default function AboutPage() {
   return (
@@ -90,33 +69,7 @@ export default function AboutPage() {
           <p>
             AI is leverage. Never autopilot.
           </p>
-        </div>
-      </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="eyebrow-muted mb-3">Who&apos;s behind TomorrowsTech AI</div>
-        <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-3 max-w-2xl">
-          The team building the systems.
-        </h2>
-        <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-12 max-w-2xl">
-          Three founders. One philosophy: build the operational foundation right before bolting on AI.
-        </p>
-        <div className="grid md:grid-cols-3 gap-5">
-          {team.map((member) => (
-            <div key={member.name} className="card">
-              <div className="w-14 h-14 rounded-full bg-[color:var(--color-cyan-deep)]/30 border border-[color:var(--color-cyan)]/40 flex items-center justify-center mb-4">
-                <span className="font-mono text-[color:var(--color-cyan)] text-base tracking-widest">{member.initials}</span>
-              </div>
-              <h3 className="text-lg font-medium mb-1">{member.name}</h3>
-              <div className="eyebrow-muted mb-4">{member.role}</div>
-              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">{member.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="max-w-3xl mx-auto px-6 pb-16">
-        <div className="prose-blog">
           <h2>Our products</h2>
           <p>
             Alongside our consulting work, we&apos;ve built our own products to
