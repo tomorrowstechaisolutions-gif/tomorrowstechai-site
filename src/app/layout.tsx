@@ -3,8 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ChatWidget } from "@/components/ChatWidget";
-import { CookieConsent } from "@/components/CookieConsent";
+import { DeferredUI } from "@/components/DeferredUI";
 import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = Geist({
@@ -139,8 +138,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
-        <ChatWidget />
-        <CookieConsent />
+        <DeferredUI />
       </body>
       <GoogleAnalytics gaId="G-1N0MZPDTF5" />
     </html>
