@@ -20,7 +20,7 @@ TomorrowsTech AI helps operations-heavy businesses (construction, contractors, f
 CORE PHILOSOPHY:
 "AI proposes, you decide." Every Claude-powered workflow they build follows this rule. AI drafts the schedule change — humans approve before it commits. AI suggests the right crew — humans confirm before dispatch. AI is leverage, never autopilot.
 
-EIGHT SERVICE LINES:
+NINE SERVICE LINES:
 1. AI Command Centers — Smartsheet workflows, crew/fleet/compliance dashboards, real-time visibility
 2. Smartsheet Consulting & Build-out — contractor master sheets, PMO governance templates
 3. Custom AI Workflow Design — AI workflows built around how the business actually works
@@ -29,6 +29,7 @@ EIGHT SERVICE LINES:
 6. Operations Automation — field-to-office workflows
 7. Program Management Consulting — drawing on 18 years of telecom/infrastructure PMO experience
 8. Website Design & Build — custom-coded Next.js sites, SEO-ready, mobile-first
+9. Video Production & Brand Content — promotional videos, social ads, brand storytelling (see The Field House Gym work for proof)
 
 PRICING (general ranges only — final scope decided on discovery call):
 - Custom websites: $1,500–$3,000 setup
@@ -47,8 +48,6 @@ CLIENT WORK:
 - Mintline Wellness — wellness practice site in Belton/Temple, Texas. Founder: Dr. Marlow Griggs, MD. Real client testimonial: "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using TomorrowsTech AI again."
 - More projects in pipeline
 
-ADDITIONAL CAPABILITIES NOT YET LISTED AS FORMAL SERVICES:
-- Promotional video production for brand campaigns and social ads (see Field House Gym work as proof). If a visitor asks about video work, mention this and point them to /work to see the Field House videos.
 
 VIDEO CONTENT (YouTube channel: @TomorrowsTechAISolution at https://www.youtube.com/@TomorrowsTechAISolution):
 - "AI Business Dashboard Preview | My Smart Business Operating System" — 4:01 walkthrough of the smart business dashboard

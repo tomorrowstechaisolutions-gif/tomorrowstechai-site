@@ -3,12 +3,12 @@ import Link from "next/link";
 export const metadata = {
   title: "Services",
   description:
-    "AI Command Centers, Smartsheet consulting, custom AI app development, local AI deployment, program management consulting, and custom website design & build for operations-heavy businesses.",
+    "AI Command Centers, Smartsheet consulting, custom AI app development, local AI deployment, program management consulting, website design & build, and video production for operations-heavy businesses.",
   alternates: { canonical: "/services" },
   openGraph: {
     title: "Services · TomorrowsTech AI",
     description:
-      "Eight service lines for operations-heavy businesses. AI command centers, Smartsheet, custom AI apps, websites, local AI, automation, PMO consulting.",
+      "Nine service lines for operations-heavy businesses. AI command centers, Smartsheet, custom AI apps, websites, video production, local AI, automation, PMO consulting.",
     url: "https://tomorrowstechai.com/services",
     type: "website",
   },
@@ -55,6 +55,11 @@ const services = [
     title: "Website Design & Build",
     body: "Custom-coded business websites on Next.js + Vercel — the same modern stack powering our own site. Fast, secure, SEO-ready out of the box, mobile-first by default. Not WordPress. Not a drag-and-drop builder. A real site that loads in under a second and ranks on Google.",
   },
+  {
+    tag: "09",
+    title: "Video Production & Brand Content",
+    body: "Promotional videos for your business, social ads, and brand storytelling. The same content stack we shipped for The Field House Gym — used on their site and across ad campaigns at both locations. Produced, edited, and delivered ready for your site, ads, and channels.",
+  },
 ];
 
 export default function ServicesPage() {
@@ -66,7 +71,7 @@ export default function ServicesPage() {
           AI for the operations teams that actually run the work.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6 max-w-3xl">
-          Eight service lines. One philosophy: operational clarity, not AI for
+          Nine service lines. One philosophy: operational clarity, not AI for
           AI&apos;s sake. Built by operators who&apos;ve lived inside the chaos for
           two decades.
         </p>
