@@ -14,6 +14,7 @@ export default function Home() {
           <h1 className="text-5xl md:text-6xl font-medium leading-[1.05] tracking-tight max-w-4xl">
             We build the systems your{" "}
             <span className="text-[color:var(--color-cyan)]">PMs wish existed.</span>
+            <span className="cursor-blink" aria-hidden="true"></span>
           </h1>
           <p className="text-xl text-[color:var(--color-text-secondary)] mt-6 max-w-2xl leading-relaxed">
             AI command centers, Smartsheet workflows, and custom AI systems for
