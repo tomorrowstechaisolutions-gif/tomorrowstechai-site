@@ -99,10 +99,20 @@ export default async function BlogPostPage({
         >
           ← All posts
         </Link>
-        <div className="flex items-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
+        <div className="flex flex-wrap items-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
           <span>{post.date}</span>
           <span>·</span>
           <span>{post.readTime}</span>
+          <span>·</span>
+          <span>
+            By{" "}
+            <Link
+              href="/about"
+              className="text-[color:var(--color-cyan)] hover:underline"
+            >
+              John Hockinson
+            </Link>
+          </span>
         </div>
         <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1] mb-6">
           {post.title}
@@ -142,6 +152,75 @@ export default async function BlogPostPage({
           {renderBody(post.body)}
         </div>
       </section>
+
+      <section className="max-w-3xl mx-auto px-6 py-12">
+        <div className="card flex items-start gap-5 p-8">
+          <div className="w-16 h-16 shrink-0 rounded-full bg-[color:var(--color-cyan-deep)]/30 border border-[color:var(--color-cyan)]/40 flex items-center justify-center">
+            <span className="font-mono text-[color:var(--color-cyan)] text-lg tracking-widest">
+              JH
+            </span>
+          </div>
+          <div>
+            <div className="eyebrow-muted mb-1">About the author</div>
+            <h3 className="text-lg font-medium mb-2">John Hockinson</h3>
+            <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-3">
+              Founder of TomorrowsTech AI. 18 years inside telecom and
+              infrastructure programs — now building AI command centers,
+              custom websites, and operations systems for businesses still
+              running on spreadsheets and email chains.
+            </p>
+            <Link
+              href="/about"
+              className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+            >
+              More about John →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {(() => {
+        const related = posts
+          .filter((p) => p.slug !== post.slug)
+          .slice(0, 3);
+        if (related.length === 0) return null;
+        return (
+          <section className="max-w-6xl mx-auto px-6 py-16">
+            <div className="eyebrow-muted mb-3">Keep reading</div>
+            <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-10 max-w-2xl">
+              More from the field.
+            </h2>
+            <div className="grid md:grid-cols-3 gap-5">
+              {related.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/blog/${r.slug}`}
+                  className="card hover:border-[color:var(--color-cyan-deep)] block group overflow-hidden"
+                >
+                  {r.image && (
+                    <div className="relative w-full aspect-[16/9] -mx-6 -mt-6 mb-4 overflow-hidden border-b border-[color:var(--color-border)]">
+                      <Image
+                        src={r.image}
+                        alt={r.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 360px"
+                        className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <div className="eyebrow-muted mb-3">{r.date}</div>
+                  <h3 className="text-lg font-medium leading-snug mb-2 group-hover:text-[color:var(--color-cyan)] transition-colors">
+                    {r.title}
+                  </h3>
+                  <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
+                    {r.excerpt}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       <section className="max-w-3xl mx-auto px-6 py-16">
         <div className="card card-accent p-10">
