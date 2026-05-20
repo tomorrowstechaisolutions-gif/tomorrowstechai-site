@@ -90,6 +90,31 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      <section className="max-w-6xl mx-auto px-6 pb-12">
+        <div className="card card-accent p-8">
+          <div className="md:flex md:items-start md:gap-10">
+            <div className="md:w-1/3 mb-4 md:mb-0">
+              <div className="eyebrow-muted mb-2">Pricing</div>
+              <h3 className="text-xl font-medium">Clear numbers. No surprises.</h3>
+            </div>
+            <div className="md:w-2/3 text-[color:var(--color-text-secondary)] leading-relaxed text-[15px] space-y-3">
+              <p>
+                <strong className="text-[color:var(--color-text)]">Custom websites</strong> start at <strong className="text-[color:var(--color-cyan)]">$1,500–$3,000</strong> for the initial build.
+              </p>
+              <p>
+                <strong className="text-[color:var(--color-text)]">Smartsheet command centers &amp; custom AI workflows</strong> range from <strong className="text-[color:var(--color-cyan)]">$5,000–$15,000</strong> depending on complexity.
+              </p>
+              <p>
+                <strong className="text-[color:var(--color-text)]">Ongoing partnership</strong> for maintenance, support, and small enhancements starts at <strong className="text-[color:var(--color-cyan)]">$200/month</strong>.
+              </p>
+              <p className="text-sm pt-1">
+                We give you an all-in number during the discovery call. No hourly meters running, no surprise change orders.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
         <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="eyebrow-muted mb-3">How we work</div>

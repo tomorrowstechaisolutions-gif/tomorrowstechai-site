@@ -32,6 +32,7 @@ export function Footer() {
               <li><Link href="/work" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Work</Link></li>
               <li><Link href="/about" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">About</Link></li>
               <li><Link href="/blog" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Blog</Link></li>
+              <li><Link href="/faq" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">FAQ</Link></li>
               <li><Link href="/contact" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Contact</Link></li>
             </ul>
           </div>
@@ -55,7 +56,11 @@ export function Footer() {
         </div>
         <div className="border-t border-[color:var(--color-border)] mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-[color:var(--color-text-muted)] font-mono uppercase tracking-wider">
           <div>© 2026 Tomorrowstek LLC · TomorrowsTech AI</div>
-          <div className="text-[color:var(--color-cyan)]">Propose · Never Act</div>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-[color:var(--color-cyan)] transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-[color:var(--color-cyan)] transition-colors">Terms</Link>
+            <span className="text-[color:var(--color-cyan)]">Propose · Never Act</span>
+          </div>
           <div>Build · v0.1</div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { posts } from "@/content/posts";
+import { NewsletterForm } from "@/components/NewsletterForm";
 
 export default function Home() {
   const latestPosts = posts.slice(0, 3);
@@ -155,6 +156,25 @@ export default function Home() {
               </p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="md:flex md:items-start md:justify-between gap-10">
+            <div className="md:max-w-md mb-6 md:mb-0">
+              <div className="eyebrow-muted mb-3">● Field notes by email</div>
+              <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-3">
+                Get the next post in your inbox.
+              </h2>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed">
+                Short notes on AI, operations, Smartsheet, and the systems we&apos;re shipping. No spam. No fluff. Unsubscribe any time.
+              </p>
+            </div>
+            <div className="flex-1 md:pt-2">
+              <NewsletterForm />
+            </div>
+          </div>
         </div>
       </section>
 

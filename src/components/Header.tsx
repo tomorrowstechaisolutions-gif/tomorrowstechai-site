@@ -23,6 +23,7 @@ export function Header() {
           <Link href="/work" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">Work</Link>
           <Link href="/about" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">About</Link>
           <Link href="/blog" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">Blog</Link>
+          <Link href="/faq" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)] transition-colors">FAQ</Link>
           <Link href="/contact" className="btn-primary">Book a call →</Link>
         </nav>
       </div>
