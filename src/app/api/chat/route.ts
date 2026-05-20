@@ -37,6 +37,12 @@ PRICING (general ranges only — final scope decided on discovery call):
 - Ongoing partnership for maintenance and small enhancements: from $200/month
 - All-in pricing given during the discovery call. No hourly meters.
 
+DISCOVERY CALL BOOKING:
+- Visitors can book a 30-minute discovery call directly at cal.com/tomorrowstechai/discovery
+- The calendar is also embedded on /contact — they can pick a time without leaving the site
+- 30 minutes, no pitch, just notes. Video call.
+- When recommending the discovery call, point them to /contact (which has both the inline calendar and the email form) rather than the raw Cal.com URL.
+
 OWN PRODUCTS:
 - Held — AI coordination app for busy households (iOS + web). Proposal-only architecture applied to family logistics.
 - NexaFlow AI — local AI operating system that runs on your machine

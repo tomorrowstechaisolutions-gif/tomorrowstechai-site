@@ -1,4 +1,5 @@
 import { ContactForm } from "@/components/ContactForm";
+import { CalEmbed } from "@/components/CalEmbed";
 
 export const metadata = {
   title: "Contact",
@@ -25,12 +26,32 @@ export default function ContactPage() {
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed">
           If your team is running operations through Smartsheet, dealing with
           field crews, contractors, fleet, and compliance — that&apos;s exactly
-          where we work. Tell us a bit about what you&apos;re building and
-          we&apos;ll be in touch within one business day.
+          where we work. Pick a time below, or send a message and we&apos;ll
+          get back to you within one business day.
         </p>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 pb-20">
+      <section className="max-w-4xl mx-auto px-6 pb-12">
+        <div className="eyebrow-muted mb-3">● Book directly</div>
+        <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-3">
+          Pick a time.
+        </h2>
+        <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
+          30 minutes. No pitch, just notes. Pick a slot that works and
+          you&apos;ll get a calendar invite with a video link instantly.
+        </p>
+        <CalEmbed />
+      </section>
+
+      <section className="max-w-3xl mx-auto px-6 py-16 border-t border-[color:var(--color-border)]">
+        <div className="eyebrow-muted mb-3">● Or send a message</div>
+        <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-3">
+          Prefer email?
+        </h2>
+        <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
+          Tell us a bit about what you&apos;re building. We respond within one
+          business day.
+        </p>
         <ContactForm />
       </section>
 
