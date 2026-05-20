@@ -16,25 +16,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "TomorrowsTech AI — AI for construction & field ops",
+    default: "TomorrowsTech AI — Intelligent systems for modern business",
     template: "%s · TomorrowsTech AI",
   },
   description:
-    "AI command centers, Smartsheet workflows, and custom AI systems for construction, contractors, and field operations businesses. Operations first, AI second.",
+    "Command Centers, Workflow Packages, AI Business Units, and Private On-Site AI Infrastructure for operations-heavy businesses. We design custom AI systems that bring operations, automation, and data into one clear command environment.",
   metadataBase: new URL("https://tomorrowstechai.com"),
   openGraph: {
-    title: "TomorrowsTech AI — AI for construction & field ops",
+    title: "TomorrowsTech AI — Intelligent systems for modern business",
     description:
-      "AI command centers and operational systems for construction, contractors, and field operations.",
+      "Command Centers, Workflow Packages, AI Business Units, and Private On-Site AI Infrastructure for operations-heavy businesses.",
     url: "https://tomorrowstechai.com",
     siteName: "TomorrowsTech AI",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TomorrowsTech AI — AI for construction & field ops",
+    title: "TomorrowsTech AI — Intelligent systems for modern business",
     description:
-      "AI command centers and operational systems for real businesses.",
+      "Custom AI systems that bring operations, automation, and data into one clear command environment.",
   },
 };
 
