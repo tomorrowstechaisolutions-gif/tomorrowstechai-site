@@ -18,7 +18,7 @@ export const posts: Post[] = [
       "Most fleet software was built for trucking, not ambulances. Here's the operational reality of running an EMS service — and what changes when you finally build software for the actual job.",
     readTime: "6 min read",
     tags: ["Fleet operations", "EMS", "Compliance", "Aegis Fleet AI", "Operations"],
-    image: "/work/aegisfleet.png",
+    image: "/blog/ems-fleet-three-numbers.png",
     body: `There's a question every EMS director should be able to answer in under five seconds, at any hour of the day:
 
 **How many units are dispatchable right now?**
