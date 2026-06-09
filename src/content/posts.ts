@@ -11,6 +11,104 @@ export type Post = {
 
 export const posts: Post[] = [
   {
+    slug: "ems-fleet-three-numbers",
+    title: "The Three Numbers Every EMS Fleet Director Should Know Without Opening a Spreadsheet",
+    date: "May 20, 2026",
+    excerpt:
+      "Most fleet software was built for trucking, not ambulances. Here's the operational reality of running an EMS service — and what changes when you finally build software for the actual job.",
+    readTime: "6 min read",
+    tags: ["Fleet operations", "EMS", "Compliance", "Aegis Fleet AI", "Operations"],
+    image: "/work/aegisfleet.png",
+    body: `There's a question every EMS director should be able to answer in under five seconds, at any hour of the day:
+
+**How many units are dispatchable right now?**
+
+Not "how many are in service." Not "how many are scheduled for today's shift." Dispatchable. Meaning: patient-ready, fully equipped, mechanically sound, crew-staffed, compliant, and inside their operating window.
+
+If the answer takes longer than five seconds — and for most services, the honest answer is anywhere from five minutes to an hour because someone has to open three different systems and call the bay — that's not a software problem. That's an operational vulnerability. And it's the exact gap most generic fleet software was never built to close.
+
+## Why generic fleet software keeps failing ambulance services
+
+Most fleet management software was built for trucking. The assumptions baked into it look like this:
+
+- Vehicles are largely interchangeable.
+- A truck out of service is annoying but not life-threatening.
+- Compliance means DOT logbooks and IFTA reports.
+- The driver is the operator.
+- The cargo isn't waiting.
+
+None of that maps to ambulance operations.
+
+In medical fleets:
+
+- Every unit has unique kit. Cardiac, peds, bariatric. ALS versus BLS. Primary versus spare. They are not interchangeable.
+- A truck out of service can mean a patient doesn't get transported.
+- Compliance is a layered stack. Federal HHS for Medicare and Medicaid billing. State EMS. DOT. OSHA. Plus whatever individual hospital contracts demand.
+- The driver is one role. The medic crew has their own certifications with their own expirations, and those don't sync to the vehicle.
+- Calls don't queue politely.
+
+So when an EMS director uses generic fleet software, the gap isn't a feature gap. It's an entire category mismatch. The director ends up doing what they've always done: living in a spreadsheet, calling the bay, asking the maintenance lead, checking the certification binder, double-checking the staffing board.
+
+Three minutes of phone calls to answer the question that should take three seconds.
+
+## The three numbers that actually matter
+
+Walk into any EMS director's office at 2:47 AM during a busy weekend, and there are three numbers that determine whether they can sleep.
+
+### 1. How many units are dispatchable right now
+
+Not paper-ready. Not technically in service. *Dispatchable.* Crew on, kit checked, no compliance flags, no PM overdue, no mechanical hold. The number that determines whether the next call gets answered or sits.
+
+### 2. Which units have PM due within seven days
+
+Because the difference between "we have nine ready units" and "we have nine ready units but four of them go down for PM next week" is the difference between a smooth Tuesday and a Tuesday spent rebalancing dispatch coverage on the fly.
+
+### 3. Which crew certifications expire this month
+
+Because a paramedic with an expired NREMT or a driver with an expired DOT physical isn't someone you can roll a call with. And catching that thirty days early instead of on the day of expiration is the difference between adjusting the schedule and pulling someone off shift.
+
+These are the three numbers. They aren't strategic KPIs. They are operational realities. And in most services they live spread across:
+
+- The maintenance spreadsheet on the bay manager's laptop
+- The compliance binder in the HR file cabinet
+- The staffing board in the dispatcher's notebook
+- Whatever someone last texted in the group chat
+
+## What changes when you build software for the actual job
+
+Here's the question we kept asking when we built **Aegis Fleet AI**: what would it look like if the operational reality drove the software design, instead of the other way around?
+
+The answer turned into one screen.
+
+One screen that shows you, without scrolling, without phone calls, without reconciling three sources of truth:
+
+- Total vehicles in the fleet
+- How many are active right now
+- How many have PM due
+- How many are in repair
+- Which units are at compliance risk, with what's expiring, and when
+
+It's the difference between *finding* the answer and *seeing* it. And for an EMS director making a midnight decision about whether to delay a transport, that difference is the entire job.
+
+## Why this matters more than features
+
+A lot of fleet management software is sold on feature counts. *400+ integrations. 50+ reports. AI-powered insights.*
+
+That's not what runs an ambulance service.
+
+What runs an ambulance service is the ability to answer the three numbers in three seconds, to act on them, and to know that the system you're trusting was built by people who understood that a dispatchable ambulance isn't an asset — it's a promise to a patient.
+
+We built **Aegis Fleet AI** specifically for EMS and medical fleets. Not generic fleet management with a medical skin painted over it. Purpose-built. AI agents handle the work behind the scenes — PM scheduling, compliance tracking, dispatch readiness — so the director, the dispatcher, and the bay manager can focus on what actually matters: keeping ready units on the road.
+
+If you run a fleet — county service, private medical transport, multi-station system, anything where a call can't wait — take a look at what we shipped.
+
+[**→ aegisfleetai.com**](https://aegisfleetai.com)
+
+Safety. Compliance. Protection.
+
+Built by operators who carried the radio.`,
+  },
+  {
     slug: "smartsheet-claude-mcp",
     title: "The Smartsheet Tool I Wish I'd Had 18 Years Ago: Claude's MCP Integration",
     date: "May 19, 2026",

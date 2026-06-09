@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local utility scripts (not part of the deployed site)
+*.ps1
+*.bat
+*.cmd
