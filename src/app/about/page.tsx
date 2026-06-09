@@ -87,6 +87,12 @@ export default function AboutPage() {
           </p>
           <ul>
             <li>
+              <strong><a href="https://aegisfleetai.com" target="_blank" rel="noopener noreferrer">Aegis Fleet AI</a></strong> — the all-in-one AI operating system built for EMS and medical fleets.
+              Safety, compliance, protection. AI agents handle PM scheduling,
+              compliance tracking, and dispatch readiness so crews can focus on
+              the call. Our newest product.
+            </li>
+            <li>
               <strong>Held</strong> — AI-powered coordination app for busy
               households, now on iOS. Same proposal-only architecture, applied
               to family logistics.

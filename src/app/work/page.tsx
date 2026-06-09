@@ -39,6 +39,21 @@ type Project = {
 
 const ownWork: Project[] = [
   {
+    slug: "aegis-fleet-ai",
+    title: "Aegis Fleet AI",
+    tagline: "The all-in-one AI operating system built for EMS & medical fleets.",
+    body: "Our newest product. Aegis Fleet AI gives EMS and medical fleet operators a single command interface for tracking, dispatch, PM scheduling, compliance, and oversight. AI agents handle the work behind the scenes — PM reminders, compliance expirations, vehicle status — so dispatch and field crews focus on the call instead of the paperwork. Real-time visibility into total vehicles, active units, services due, and units in repair. Built around one principle: Safety. Compliance. Protection.",
+    image: "/work/aegisfleet.png",
+    tags: ["AI product", "EMS & medical fleets", "Fleet command", "Compliance automation", "Just shipped"],
+    href: "https://aegisfleetai.com",
+    hrefLabel: "Visit Aegis Fleet AI",
+    videos: [
+      { id: "0ltnbI04vLY", title: "Aegis Fleet AI — Trailer" },
+      { id: "rJsPQ4nar50", title: "Aegis Fleet AI — Inside the command center" },
+    ],
+    featured: true,
+  },
+  {
     slug: "tomorrowstechai",
     title: "TomorrowsTech AI",
     tagline: "The site you're reading.",

@@ -51,6 +51,7 @@ FREE LEAD MAGNET — OPERATIONS AUDIT CHECKLIST:
 - The PDF gives a 3-tier action plan based on how the visitor scores themselves.
 
 OWN PRODUCTS:
+- Aegis Fleet AI (https://aegisfleetai.com) — our newest product. The all-in-one AI operating system built specifically for EMS and medical fleets (ambulance services, medical transport, paramedic ops). Tracks total vehicles, active units, PM (preventative maintenance) due, repairs in progress, and compliance expirations in real time. AI agents automate the work — PM scheduling, compliance tracking, dispatch readiness — so crews focus on the call instead of paperwork. Tagline: "Safety · Compliance · Protection." If a visitor mentions EMS, ambulances, medical transport, fleet compliance, DOT compliance, paramedics, or fleet maintenance, recommend Aegis Fleet AI directly.
 - Held — AI coordination app for busy households (iOS + web). Proposal-only architecture applied to family logistics.
 - NexaFlow AI — local AI operating system that runs on your machine
 - REI Ops Local — operational platform for real estate investment operations
@@ -69,7 +70,7 @@ VIDEO CONTENT (YouTube channel: @TomorrowsTechAISolution at https://www.youtube.
 - More videos in the works covering dashboards, AI workflows, and operations builds
 
 PORTFOLIO / WORK PAGE (/work):
-- Showcases our own brands and products (TomorrowsTech AI, Held, TomorrowsTek) plus client builds (The Field House Gym, Mintline Wellness)
+- Showcases our own brands and products (Aegis Fleet AI, TomorrowsTech AI, Held, TomorrowsTek) plus client builds (The Field House Gym, Mintline Wellness)
 - "Open slot" card invites prospects to be the next client featured
 - Recommend the /work page when visitors want to see what we've built
 

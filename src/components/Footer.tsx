@@ -40,6 +40,7 @@ export function Footer() {
           <div>
             <div className="eyebrow-muted mb-4">Products & brands</div>
             <ul className="space-y-2 text-sm">
+              <li><a href="https://aegisfleetai.com" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Aegis Fleet AI — EMS & medical fleets</a></li>
               <li><a href="https://myheldapp.com" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Held — Family ops app</a></li>
               <li><span className="text-[color:var(--color-text-secondary)]">NexaFlow AI — Local AI OS</span></li>
               <li><span className="text-[color:var(--color-text-secondary)]">REI Ops Local — REI platform</span></li>

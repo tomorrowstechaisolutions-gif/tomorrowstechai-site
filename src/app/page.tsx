@@ -40,6 +40,66 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="md:flex md:items-start md:gap-10">
+            <div className="md:w-1/2 mb-8 md:mb-0">
+              <div className="eyebrow mb-3">● Just shipped</div>
+              <h2 className="text-3xl md:text-4xl font-medium tracking-tight leading-[1.1] mb-3">
+                Aegis Fleet AI.
+              </h2>
+              <p className="text-xl text-[color:var(--color-cyan)] font-medium leading-tight mb-5">
+                The all-in-one AI operating system built for EMS &amp; medical fleets.
+              </p>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-5">
+                Tracking. Dispatch. Readiness. Oversight. AI agents handle PM scheduling, compliance tracking, and dispatch readiness so crews focus on the call instead of the paperwork.
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-6 max-w-md">
+                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
+                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Mission</div>
+                  <div className="text-sm font-medium">Safety</div>
+                </div>
+                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
+                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Standard</div>
+                  <div className="text-sm font-medium">Compliance</div>
+                </div>
+                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
+                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Outcome</div>
+                  <div className="text-sm font-medium">Protection</div>
+                </div>
+                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
+                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Status</div>
+                  <div className="text-sm font-medium text-[color:var(--color-cyan)]">Live</div>
+                </div>
+              </div>
+              <a
+                href="https://aegisfleetai.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary"
+              >
+                Enter the command center →
+              </a>
+            </div>
+            <div className="md:w-1/2">
+              <div className="card overflow-hidden p-0">
+                <div className="relative w-full aspect-video bg-black">
+                  <LazyYouTube id="0ltnbI04vLY" title="Aegis Fleet AI — Trailer" />
+                </div>
+                <div className="p-4">
+                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-cyan)] mb-1">
+                    Trailer · 10:02
+                  </div>
+                  <div className="text-sm text-[color:var(--color-text-secondary)]">
+                    Watch the Aegis Fleet AI command intelligence walkthrough.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="eyebrow-muted mb-3">What we build</div>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-12 max-w-2xl">

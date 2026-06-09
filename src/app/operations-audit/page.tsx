@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
 
 export const metadata = {
@@ -26,7 +27,20 @@ const previewQuestions = [
 export default function OperationsAuditPage() {
   return (
     <>
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
+      <section className="max-w-6xl mx-auto px-6 pt-12 pb-4">
+        <div className="relative w-full aspect-[1735/906] overflow-hidden rounded-lg border border-[color:var(--color-border)]">
+          <Image
+            src="/audit-ad.png"
+            alt="Free download: 12 questions to ask before you add AI to your operation"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 1100px"
+            className="object-cover"
+          />
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pt-8 pb-12">
         <div className="grid md:grid-cols-5 gap-10 items-start">
           <div className="md:col-span-3">
             <div className="eyebrow mb-6">● Free download</div>
