@@ -4,7 +4,23 @@ import { useState, FormEvent } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-export function LeadMagnetForm() {
+type Props = {
+  /**
+   * Which lead magnet to deliver. Must match an id in the API route's MAGNETS whitelist.
+   * Defaults to "operations-audit" for backward compatibility.
+   */
+  magnet?: string;
+  /** Button label override (default: "Send me the checklist →"). */
+  buttonLabel?: string;
+  /** Success-state body text override. */
+  successMessage?: string;
+};
+
+export function LeadMagnetForm({
+  magnet = "operations-audit",
+  buttonLabel = "Send me the checklist →",
+  successMessage,
+}: Props = {}) {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -25,6 +41,7 @@ export function LeadMagnetForm() {
         body: JSON.stringify({
           email: email.trim(),
           firstName: firstName.trim(),
+          magnet,
         }),
       });
       const data = await res.json();
@@ -43,18 +60,21 @@ export function LeadMagnetForm() {
   }
 
   if (status === "success" && downloadUrl) {
+    const successBody =
+      successMessage ??
+      (emailSent
+        ? "We also emailed you a copy so you have it for later. Check your inbox in a minute."
+        : "Click below to download. We had trouble emailing you a copy — your download link is right here.");
     return (
       <div className="card card-accent p-6">
         <div className="font-mono text-xs tracking-widest text-[color:var(--color-cyan)] uppercase mb-3">
           ●  Ready to download
         </div>
         <h3 className="text-xl font-medium mb-3">
-          Your checklist is ready.
+          Your download is ready.
         </h3>
         <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-5">
-          {emailSent
-            ? "We also emailed you a copy so you have it for later. Check your inbox in a minute."
-            : "Click below to download. We had trouble emailing you a copy — your download link is right here."}
+          {successBody}
         </p>
         <a
           href={downloadUrl}
@@ -105,7 +125,7 @@ export function LeadMagnetForm() {
         disabled={status === "submitting" || !email.trim()}
         className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {status === "submitting" ? "Sending..." : "Send me the checklist →"}
+        {status === "submitting" ? "Sending..." : buttonLabel}
       </button>
       {error && (
         <div className="text-sm text-red-400 font-mono">{error}</div>
