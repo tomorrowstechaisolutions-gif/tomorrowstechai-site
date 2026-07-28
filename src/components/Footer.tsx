@@ -29,6 +29,7 @@ export function Footer() {
             <div className="eyebrow-muted mb-4">Explore</div>
             <ul className="space-y-2 text-sm">
               <li><Link href="/services" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Services</Link></li>
+              <li><Link href="/job-catcher" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Job Catcher — for contractors</Link></li>
               <li><Link href="/work" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Work</Link></li>
               <li><Link href="/about" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">About</Link></li>
               <li><Link href="/blog" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Blog</Link></li>
