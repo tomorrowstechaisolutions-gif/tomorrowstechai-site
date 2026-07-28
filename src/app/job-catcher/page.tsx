@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata = {
   title:
@@ -134,34 +135,93 @@ export default function JobCatcherPage() {
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
-        <div className="eyebrow mb-6">⚡ Job Catcher · For Contractors · Temple – Belton – Killeen</div>
-        <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1] max-w-4xl">
-          Every missed call is a job your{" "}
-          <span className="text-[color:var(--color-cyan)]">competitor caught.</span>
-        </h1>
-        <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6 max-w-3xl">
-          You can&apos;t answer the phone from a roof. Job Catcher texts your missed
-          calls back in seconds, wins you Google reviews after every job, and
-          follows up on every lead — automatically, from your own number.
-        </p>
-        <div className="flex flex-wrap gap-4 mt-8">
-          <a
-            href="tel:+12542723313"
-            className="inline-block rounded-lg bg-[color:var(--color-cyan)] px-6 py-3 font-medium text-black transition-opacity hover:opacity-90"
-          >
-            Call (254) 272-3313 →
-          </a>
-          <Link
-            href="/contact"
-            className="inline-block rounded-lg border border-[color:var(--color-border)] px-6 py-3 font-medium transition-colors hover:border-[color:var(--color-cyan)]"
-          >
-            Get the free 2-week pilot
-          </Link>
+        <div className="md:grid md:grid-cols-[1fr_320px] md:items-center md:gap-12">
+          <div>
+            <div className="eyebrow mb-6">⚡ Job Catcher · For Contractors · Temple – Belton – Killeen</div>
+            <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1]">
+              Every missed call is a job your{" "}
+              <span className="text-[color:var(--color-cyan)]">competitor caught.</span>
+            </h1>
+            <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6">
+              You can&apos;t answer the phone from a roof. Job Catcher texts your missed
+              calls back in seconds, wins you Google reviews after every job, and
+              follows up on every lead — automatically, from your own number.
+            </p>
+            <div className="flex flex-wrap gap-4 mt-8">
+              <a
+                href="tel:+12542723313"
+                className="inline-block rounded-lg bg-[color:var(--color-cyan)] px-6 py-3 font-medium text-black transition-opacity hover:opacity-90"
+              >
+                Call (254) 272-3313 →
+              </a>
+              <Link
+                href="/contact"
+                className="inline-block rounded-lg border border-[color:var(--color-border)] px-6 py-3 font-medium transition-colors hover:border-[color:var(--color-cyan)]"
+              >
+                Get the free 2-week pilot
+              </Link>
+            </div>
+            <p className="mt-4 text-sm text-[color:var(--color-text-secondary)]">
+              Go ahead — call that number after hours. Watch what happens when we
+              &quot;miss&quot; your call. That&apos;s the product.
+            </p>
+          </div>
+
+          {/* Phone mockup — the product, happening */}
+          <div className="relative mx-auto mt-12 w-[300px] shrink-0 md:mt-0">
+            <div
+              aria-hidden
+              className="absolute -inset-6 rounded-[3rem] bg-[color:var(--color-cyan)]/10 blur-2xl"
+            />
+            <div className="relative rounded-[2.2rem] border border-[color:var(--color-border)] bg-black p-3 shadow-2xl">
+              <div className="rounded-[1.7rem] bg-[#0a0f14] px-4 pb-6 pt-4">
+                <div className="mb-4 text-center font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">
+                  Tuesday · 2:47 PM
+                </div>
+                <div className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-[color:var(--color-text-secondary)]">
+                  📵 Missed call · Mike&apos;s Roofing
+                </div>
+                <div className="ml-auto mb-1 max-w-[88%] rounded-2xl rounded-br-sm bg-[color:var(--color-cyan)] px-3 py-2 text-[13px] leading-snug text-black">
+                  This is Mike&apos;s Roofing — on a job right now. What do you need?
+                  I&apos;ll call you right back.
+                </div>
+                <div className="mb-4 text-right text-[10px] text-[color:var(--color-text-secondary)]">
+                  sent automatically · 8 seconds later
+                </div>
+                <div className="mr-auto mb-1 max-w-[88%] rounded-2xl rounded-bl-sm bg-white/10 px-3 py-2 text-[13px] leading-snug">
+                  Oh perfect — yes, hail damage on my roof. Can y&apos;all come look
+                  this week? 🙏
+                </div>
+                <div className="text-[10px] text-[color:var(--color-text-secondary)]">
+                  2:49 PM · customer stays yours
+                </div>
+                <div className="mt-4 rounded-lg border border-[color:var(--color-cyan)]/30 bg-[color:var(--color-cyan)]/10 px-3 py-2 text-center font-mono text-[11px] tracking-wide text-[color:var(--color-cyan)]">
+                  ✓ JOB CAUGHT
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="mt-4 text-sm text-[color:var(--color-text-secondary)]">
-          Go ahead — call that number after hours. Watch what happens when we
-          &quot;miss&quot; your call. That&apos;s the product.
-        </p>
+
+        {/* Stat row */}
+        <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div>
+            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">25–40%</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">of calls go unanswered</div>
+          </div>
+          <div>
+            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">30–60%</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">recovered by instant text</div>
+          </div>
+          <div>
+            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">$350</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">flat per month · no contract</div>
+          </div>
+          <div>
+            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">2 wks</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">free pilot on your real line</div>
+          </div>
+        </div>
       </section>
 
       {/* How it works */}
@@ -271,6 +331,52 @@ export default function JobCatcherPage() {
             answer to the same weather, the same hail season, and the same supply
             house lines you do.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {["ROOFING", "HVAC", "PLUMBING", "ELECTRICAL", "FENCE", "CONCRETE", "LANDSCAPING", "GUTTERS", "REMODEL"].map((t) => (
+              <span
+                key={t}
+                className="rounded-md border border-[color:var(--color-border)] px-2.5 py-1 font-mono text-[11px] tracking-widest text-[color:var(--color-text-secondary)]"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* The operator */}
+      <section className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="card md:flex md:items-center md:gap-10">
+          <div className="mb-6 shrink-0 md:mb-0">
+            <Image
+              src="/lead-magnets/ai-field-guide/john-hockinson.png"
+              alt="John Hockinson — founder, TomorrowsTech AI, Belton TX"
+              width={180}
+              height={180}
+              className="rounded-2xl border border-[color:var(--color-border)] object-cover"
+            />
+          </div>
+          <div>
+            <div className="eyebrow-muted mb-2">The guy behind it</div>
+            <h3 className="text-xl font-medium">
+              You&apos;ll deal with me — not a call center.
+            </h3>
+            <p className="mt-3 text-[color:var(--color-text-secondary)] leading-relaxed text-[15px]">
+              I&apos;m John Hockinson. I spent 18 years running telecom and
+              construction programs — towers, crews, deadlines, the phone ringing
+              while my hands were full — before I started building automation
+              systems. Job Catcher exists because I&apos;ve <em>been</em> the guy
+              who missed the call that mattered. I install it, I test it on your
+              real line, and if something ever breaks, you text me and I fix it.
+              That&apos;s the whole customer-service department.
+            </p>
+            <p className="mt-3 text-sm text-[color:var(--color-text-secondary)]">
+              John Hockinson · Founder, Tomorrows Tech AI LLC · Belton, TX ·{" "}
+              <a href="tel:+12542723313" className="text-[color:var(--color-cyan)] hover:underline">
+                (254) 272-3313
+              </a>
+            </p>
+          </div>
         </div>
       </section>
 
