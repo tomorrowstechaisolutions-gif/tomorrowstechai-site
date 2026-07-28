@@ -54,6 +54,9 @@ export function Footer() {
               <li><a href="https://www.linkedin.com/in/johnhockinson/" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">LinkedIn</a></li>
               <li><a href="https://www.youtube.com/@TomorrowsTechAISolution" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">YouTube</a></li>
               <li><Link href="/contact" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Book a call</Link></li>
+              <li><a href="tel:+12542723313" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">(254) 272-3313</a></li>
+              <li><a href="mailto:john@tomorrowstechai.com" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">john@tomorrowstechai.com</a></li>
+              <li><span className="text-[color:var(--color-text-secondary)]">Tomorrows Tech AI LLC<br />452 Eagle Landing Dr<br />Belton, TX 76513</span></li>
             </ul>
           </div>
         </div>
