@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -227,6 +228,14 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <DeferredUI />
+        {/* LeadConnector (GoHighLevel) SMS opt-in chat widget — required for A2P 10DLC consent collection */}
+        <Script
+          src="https://widgets.leadconnectorhq.com/loader.js"
+          data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
+          data-widget-id="6a68bd33b0ee6ed3ac662935"
+          data-source="WEB_USER"
+          strategy="afterInteractive"
+        />
         <SpeedInsights />
       </body>
       <GoogleAnalytics gaId="G-1N0MZPDTF5" />
