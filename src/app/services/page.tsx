@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ServicesGrid } from "@/components/ServicesGrid";
 
 export const metadata = {
   title: "Services",
@@ -14,53 +15,6 @@ export const metadata = {
   },
 };
 
-const services = [
-  {
-    tag: "01",
-    title: "AI Command Centers",
-    body: "Smartsheet workflows, crew/fleet/compliance dashboards, real-time visibility across departments. One source of truth your executives can actually trust. Built field-up, not boardroom-down.",
-  },
-  {
-    tag: "02",
-    title: "Smartsheet Consulting & Build-out",
-    body: "From contractor master sheets with scheduling violation detection to PMO governance templates that scale across projects. P6-style scheduling rigor translated into Smartsheet-native systems.",
-  },
-  {
-    tag: "03",
-    title: "Custom AI Workflow Design",
-    body: "AI workflows built around how your business actually works, not how generic tools think it should. Smartsheet-first, Claude-enabled, field-tested. Operations first, AI second.",
-  },
-  {
-    tag: "04",
-    title: "Custom AI App Development",
-    body: "TypeScript + Next.js + Vercel + Neon. The same stack we use to build Held. Production-ready apps for internal operations, customer portals, or net-new products.",
-  },
-  {
-    tag: "05",
-    title: "Local AI Deployment",
-    body: "NexaFlow AI-style: local LLM platforms that run on your machine. Online or offline, your data stays private. No training someone else's models on your operational secrets.",
-  },
-  {
-    tag: "06",
-    title: "Operations Automation",
-    body: "Field-to-office workflows that start with crews capturing information on their phone and flow through operations, reporting, approvals, billing, and customer invoicing.",
-  },
-  {
-    tag: "07",
-    title: "Program Management Consulting",
-    body: "Drawing on 18 years running real telecom and infrastructure programs. We help leadership teams design PMO structures, scheduling discipline, and operational governance.",
-  },
-  {
-    tag: "08",
-    title: "Website Design & Build",
-    body: "Custom-coded business websites on Next.js + Vercel — the same modern stack powering our own site. Fast, secure, SEO-ready out of the box, mobile-first by default. Not WordPress. Not a drag-and-drop builder. A real site that loads in under a second and ranks on Google.",
-  },
-  {
-    tag: "09",
-    title: "Video Production & Brand Content",
-    body: "Promotional videos for your business, social ads, and brand storytelling. The same content stack we shipped for The Field House Gym — used on their site and across ad campaigns at both locations. Produced, edited, and delivered ready for your site, ads, and channels.",
-  },
-];
 
 export default function ServicesPage() {
   return (
@@ -78,21 +32,7 @@ export default function ServicesPage() {
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="grid md:grid-cols-2 gap-5">
-          {services.map((s) => (
-            <div key={s.tag} className="card">
-              <div className="flex items-baseline gap-4 mb-3">
-                <span className="font-mono text-[color:var(--color-cyan)] text-sm tracking-widest">
-                  {s.tag}
-                </span>
-                <h2 className="text-xl font-medium">{s.title}</h2>
-              </div>
-              <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px]">
-                {s.body}
-              </p>
-            </div>
-          ))}
-        </div>
+        <ServicesGrid />
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-12">

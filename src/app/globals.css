@@ -222,6 +222,221 @@ body {
   border-left: 2px solid var(--color-cyan);
 }
 
+/* ── Service cards ─────────────────────────────────────────────────────── */
+
+.svc-card {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.svc-card:hover,
+.svc-card[data-open="true"] {
+  border-color: var(--color-cyan-deep);
+}
+
+.svc-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -20px rgba(0, 217, 255, 0.45);
+}
+
+/* Whole-card click target that keeps the heading markup valid */
+.svc-trigger {
+  text-align: left;
+}
+
+.svc-trigger::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.svc-trigger:focus-visible::after {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: -2px;
+}
+
+.svc-panel {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.svc-panel > div {
+  overflow: hidden;
+}
+
+.svc-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+/* Visual panel above each card */
+.svc-visual {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 150% at 50% 0%, rgba(0, 217, 255, 0.07) 0%, transparent 62%),
+    linear-gradient(180deg, #111A25 0%, #0A1119 100%);
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.svc-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(26, 37, 51, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 37, 51, 0.5) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at 50% 45%, black 0%, transparent 80%);
+  pointer-events: none;
+}
+
+.svc-visual::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -45%;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 217, 255, 0.08),
+    transparent
+  );
+  transform: skewX(-14deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.svc-card:hover .svc-visual::after {
+  animation: svc-sweep 1.1s ease-out;
+}
+
+.svc-visual > svg {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes svc-sweep {
+  0% { opacity: 0; left: -45%; }
+  25% { opacity: 1; }
+  100% { opacity: 0; left: 115%; }
+}
+
+/* Element-level motion inside the visuals */
+.svc-bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0.55);
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.svc-card:hover .svc-bar {
+  transform: scaleY(1);
+}
+
+.svc-grow {
+  transform-box: fill-box;
+  transform-origin: left;
+  transform: scaleX(0.72);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.svc-card:hover .svc-grow {
+  transform: scaleX(1);
+}
+
+.svc-rise {
+  transition: transform 0.45s ease;
+}
+
+.svc-card:hover .svc-rise {
+  transform: translateY(-2px);
+}
+
+.svc-glow {
+  opacity: 0.6;
+  transition: opacity 0.4s ease;
+}
+
+.svc-card:hover .svc-glow {
+  opacity: 1;
+}
+
+.svc-dash {
+  stroke-dasharray: 5 7;
+}
+
+.svc-card:hover .svc-dash {
+  animation: svc-flow 1.1s linear infinite;
+}
+
+@keyframes svc-flow {
+  to { stroke-dashoffset: -24; }
+}
+
+.svc-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.svc-card:hover .svc-pulse {
+  animation: svc-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes svc-blink {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.svc-travel {
+  opacity: 0;
+}
+
+.svc-card:hover .svc-travel {
+  animation: svc-travel 2.4s linear infinite;
+}
+
+@keyframes svc-travel {
+  0% { opacity: 0; transform: translateX(0); }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(var(--svc-travel-x, 300px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svc-card:hover {
+    transform: none;
+  }
+  .svc-panel {
+    transition: none;
+  }
+  .svc-bar,
+  .svc-grow,
+  .svc-rise {
+    transform: none;
+    transition: none;
+  }
+  .svc-card:hover .svc-visual::after,
+  .svc-card:hover .svc-dash,
+  .svc-card:hover .svc-pulse,
+  .svc-card:hover .svc-travel {
+    animation: none;
+  }
+  .svc-travel {
+    opacity: 1;
+  }
+}
+
 .prose-blog {
   color: var(--color-text);
   font-size: 17px;
