@@ -120,8 +120,8 @@ const organizationJsonLd = {
   name: "TomorrowsTech AI",
   alternateName: "Tomorrowstek LLC",
   url: "https://tomorrowstechai.com",
-  logo: "https://tomorrowstechai.com/logo.png",
-  image: "https://tomorrowstechai.com/logo.png",
+  logo: "https://tomorrowstechai.com/icon.svg",
+  image: "https://tomorrowstechai.com/icon.svg",
   description:
     "AI command centers, Smartsheet workflows, custom websites, video production, and AI systems for operations-heavy businesses — construction, contractors, field operations, telecom, and service companies.",
   founder: {

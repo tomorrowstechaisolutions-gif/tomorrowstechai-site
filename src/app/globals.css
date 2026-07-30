@@ -7,8 +7,8 @@
   --color-border: #1A2533;
   --color-border-subtle: #15202B;
   --color-text: #E8EEF5;
-  --color-text-secondary: #7A8A9A;
-  --color-text-muted: #4A5868;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
   --color-cyan: #00D9FF;
   --color-cyan-soft: #38B9D6;
   --color-cyan-deep: #0E7C95;
@@ -59,22 +59,15 @@ body {
 .grid-overlay::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 217, 255, 0) 10%,
-    rgba(0, 217, 255, 0.4) 50%,
-    rgba(0, 217, 255, 0) 90%,
-    transparent 100%
-  );
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
+  width: 680px;
+  height: 680px;
+  right: -220px;
+  top: -260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 217, 255, 0.1), transparent 68%);
   pointer-events: none;
-  z-index: 1;
-  animation: scanline 9s linear infinite;
-  opacity: 0;
+  z-index: 0;
+  opacity: 0.8;
 }
 
 @keyframes grid-pulse {
@@ -86,30 +79,13 @@ body {
   }
 }
 
-@keyframes scanline {
-  0% {
-    top: -2%;
-    opacity: 0;
-  }
-  4% {
-    opacity: 1;
-  }
-  96% {
-    opacity: 1;
-  }
-  100% {
-    top: 102%;
-    opacity: 0;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .grid-overlay::before,
   .grid-overlay::after {
     animation: none;
   }
   .grid-overlay::after {
-    display: none;
+    opacity: 0.8;
   }
 }
 
@@ -155,11 +131,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 21px;
   background: var(--color-cyan);
   color: var(--color-bg);
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: 7px;
   transition: all 0.2s ease;
   font-size: 14px;
   letter-spacing: 0.5px;
@@ -174,12 +150,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 21px;
   background: transparent;
   color: var(--color-text);
   font-weight: 500;
   border: 0.5px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 7px;
   transition: all 0.2s ease;
   font-size: 14px;
   letter-spacing: 0.5px;
@@ -209,13 +185,168 @@ body {
 .card {
   background: var(--color-surface);
   border: 0.5px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 24px;
   transition: border-color 0.2s ease;
 }
 
 .card:hover {
   border-color: var(--color-cyan-deep);
+}
+
+/* ── Brand system ─────────────────────────────────────────────────────── */
+
+.brand-mark {
+  --brand-mark-size: 36px;
+  position: relative;
+  display: inline-block;
+  width: var(--brand-mark-size);
+  height: var(--brand-mark-size);
+  flex: none;
+  filter: drop-shadow(0 0 12px rgba(0, 145, 255, 0.16));
+}
+
+.brand-mark-cap,
+.brand-mark-stem {
+  position: absolute;
+  display: block;
+}
+
+.brand-mark-cap {
+  top: 8%;
+  width: 47%;
+  height: 20%;
+  clip-path: polygon(0 0, 92% 0, 100% 100%, 14% 100%);
+}
+
+.brand-mark-cap-left {
+  left: 0;
+  background: linear-gradient(180deg, #F4F7FA 0%, #7C8792 45%, #D9E0E6 100%);
+}
+
+.brand-mark-cap-right {
+  right: 0;
+  transform: scaleX(-1);
+  background: linear-gradient(180deg, #55C9FF 0%, #0078D4 45%, #004C91 100%);
+}
+
+.brand-mark-stem {
+  top: 34%;
+  width: 31%;
+  height: 58%;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 52% 100%, 52% 34%, 0 34%);
+}
+
+.brand-mark-stem-left {
+  left: 14%;
+  background: linear-gradient(90deg, #77828D 0%, #F1F4F7 52%, #77828D 100%);
+}
+
+.brand-mark-stem-right {
+  right: 14%;
+  transform: scaleX(-1);
+  background: linear-gradient(90deg, #004B8D 0%, #159FE8 58%, #003F78 100%);
+}
+
+/* ── Homepage command-center hero ─────────────────────────────────────── */
+
+.operator-console {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(63, 90, 116, 0.62);
+  border-radius: 14px;
+  background: rgba(15, 22, 32, 0.94);
+  box-shadow:
+    0 35px 80px -35px rgba(0, 0, 0, 0.92),
+    0 18px 48px -32px rgba(0, 217, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.operator-console::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 24%);
+}
+
+.operator-console-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  top: -190px;
+  right: -70px;
+  border-radius: 999px;
+  background: rgba(0, 217, 255, 0.18);
+  filter: blur(64px);
+  pointer-events: none;
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(0, 214, 143, 0.3);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--color-success);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.workflow-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(7, 9, 14, 0.38);
+}
+
+.workflow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.workflow-dot-good {
+  background: var(--color-success);
+  box-shadow: 0 0 10px rgba(0, 214, 143, 0.5);
+}
+
+.workflow-dot-warn {
+  background: var(--color-amber);
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.35);
+}
+
+.workflow-status {
+  flex: none;
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.workflow-status-good {
+  background: rgba(0, 214, 143, 0.08);
+  color: var(--color-success);
+}
+
+.workflow-status-warn {
+  background: rgba(245, 166, 35, 0.09);
+  color: var(--color-amber);
+}
+
+@media (max-width: 640px) {
+  .operator-console {
+    border-radius: 11px;
+  }
 }
 
 .card-accent {

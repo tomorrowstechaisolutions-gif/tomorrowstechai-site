@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { BrandMark } from "./BrandMark";
 
 const NAV_LINKS = [
   { href: "/services", label: "Services" },
@@ -16,11 +16,6 @@ const NAV_LINKS = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   // Lock body scroll while drawer is open
   useEffect(() => {
@@ -38,16 +33,9 @@ export function Header() {
     <header className="border-b border-[color:var(--color-border)] bg-[color:var(--color-bg)]/80 backdrop-blur sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-5 md:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 md:gap-3 group shrink-0">
-          <Image
-            src="/logo.png"
-            alt="TomorrowsTech AI"
-            width={32}
-            height={32}
-            priority
-            className="rounded-sm w-8 h-8 md:w-9 md:h-9"
-          />
-          <span className="font-medium tracking-wide text-[13px] md:text-[15px] whitespace-nowrap">
-            TOMORROWS<span className="text-[color:var(--color-cyan)]">TECH</span> AI
+          <BrandMark size={37} className="transition-transform duration-300 group-hover:scale-[1.04]" />
+          <span className="font-medium tracking-[0.08em] text-[12px] md:text-[14px] whitespace-nowrap">
+            TOMORROWS <span className="text-[color:var(--color-cyan)]">TECH AI</span>
           </span>
         </Link>
 
@@ -117,6 +105,7 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setOpen(false)}
                 className={`py-3.5 text-base border-b border-[color:var(--color-border-subtle)] flex items-center justify-between ${
                   active
                     ? "text-[color:var(--color-cyan)]"
@@ -130,7 +119,11 @@ export function Header() {
               </Link>
             );
           })}
-          <Link href="/contact" className="btn-primary mt-5 mb-2 justify-center text-base py-3">
+          <Link
+            href="/contact"
+            onClick={() => setOpen(false)}
+            className="btn-primary mt-5 mb-2 justify-center text-base py-3"
+          >
             Book a call →
           </Link>
         </nav>

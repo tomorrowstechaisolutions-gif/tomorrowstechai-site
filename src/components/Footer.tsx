@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { BrandMark } from "./BrandMark";
 
 export function Footer() {
   return (
@@ -8,15 +8,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Image
-                src="/logo.png"
-                alt="TomorrowsTech AI"
-                width={32}
-                height={32}
-                className="rounded-sm"
-              />
-              <span className="font-medium tracking-wide text-[15px]">
-                TOMORROWS<span className="text-[color:var(--color-cyan)]">TECH</span> AI
+              <BrandMark size={38} />
+              <span className="font-medium tracking-[0.08em] text-[14px]">
+                TOMORROWS <span className="text-[color:var(--color-cyan)]">TECH AI</span>
               </span>
             </div>
             <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">

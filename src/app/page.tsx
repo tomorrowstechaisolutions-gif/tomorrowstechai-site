@@ -9,33 +9,48 @@ export default function Home() {
 
   return (
     <>
-      <section className="relative grid-overlay overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 pt-24 pb-20 relative z-10">
-          <div className="eyebrow mb-6">● AI for construction · field ops · contractors</div>
-          <h1 className="text-5xl md:text-6xl font-medium leading-[1.05] tracking-tight max-w-4xl">
-            We build the systems your{" "}
-            <span className="text-[color:var(--color-cyan)]">PMs wish existed.</span>
-            <span className="cursor-blink" aria-hidden="true"></span>
-          </h1>
-          <p className="text-xl text-[color:var(--color-text-secondary)] mt-6 max-w-2xl leading-relaxed">
-            AI command centers, Smartsheet workflows, and custom AI systems for
-            construction, contractors, field operations, and service businesses.
-            Operations first. AI second. Built by operators who&apos;ve lived
-            inside the chaos.
-          </p>
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/contact" className="btn-primary">
-              Book a discovery call →
-            </Link>
-            <Link href="/services" className="btn-secondary">
-              See what we build
-            </Link>
+      <section className="relative grid-overlay overflow-hidden border-b border-[color:var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-6 pt-20 pb-16 lg:pt-24 lg:pb-20 relative z-10">
+          <div className="grid lg:grid-cols-[1.02fr_0.98fr] gap-14 lg:gap-16 items-center">
+            <div>
+              <div className="eyebrow mb-6">● AI for construction · field ops · contractors</div>
+              <h1 className="text-5xl md:text-6xl lg:text-[68px] font-medium leading-[1.02] tracking-[-0.045em] max-w-3xl">
+                We build the systems your{" "}
+                <span className="text-[color:var(--color-cyan)]">PMs wish existed.</span>
+              </h1>
+              <p className="text-lg md:text-xl text-[color:var(--color-text-secondary)] mt-7 max-w-2xl leading-relaxed">
+                AI command centers, Smartsheet workflows, and custom AI systems
+                for operations-heavy businesses. Built by operators who&apos;ve
+                lived inside the chaos.
+              </p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link href="/contact" className="btn-primary">
+                  Book a discovery call →
+                </Link>
+                <Link href="/work" className="btn-secondary">
+                  See proven work
+                </Link>
+              </div>
+              <div className="mt-7 flex items-center gap-3 text-sm text-[color:var(--color-text-muted)]">
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--color-success)] shadow-[0_0_12px_rgba(0,214,143,0.7)]" />
+                  Open for select engagements
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>30-minute working session</span>
+              </div>
+            </div>
+
+            <OperatorConsole />
           </div>
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+        </div>
+
+        <div className="relative z-10 border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]/70 backdrop-blur">
+          <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 lg:grid-cols-4 gap-y-7">
             <Stat label="Years in operations" value="18" />
             <Stat label="Programs delivered" value="100s" />
-            <Stat label="Smartsheet-first" value="Yes" />
-            <Stat label="Propose, never act" value="Always" />
+            <Stat label="Client rating" value="5.0" />
+            <Stat label="Human approval" value="Always" />
           </div>
         </div>
       </section>
@@ -351,10 +366,92 @@ export default function Home() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="text-3xl font-mono text-[color:var(--color-cyan)]">{value}</div>
-      <div className="text-xs text-[color:var(--color-text-muted)] uppercase tracking-widest mt-1">
+    <div className="border-l border-[color:var(--color-border)] pl-5 first:border-l-0 first:pl-0 lg:first:border-l lg:first:pl-5">
+      <div className="text-2xl md:text-3xl font-medium tracking-tight text-[color:var(--color-text)]">{value}</div>
+      <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-[0.16em] mt-1.5">
         {label}
+      </div>
+    </div>
+  );
+}
+
+function OperatorConsole() {
+  const workflows = [
+    { name: "Fleet readiness", meta: "42 of 46 units ready", status: "92%", tone: "good" },
+    { name: "Compliance watch", meta: "4 items need attention", status: "Review", tone: "warn" },
+    { name: "Job closeouts", meta: "18 completed this week", status: "+12%", tone: "good" },
+  ];
+
+  return (
+    <div className="operator-console" aria-label="Representative AI command center interface">
+      <div className="operator-console-glow" />
+      <div className="relative">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--color-border)]">
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+              Representative operator view
+            </div>
+            <div className="text-sm font-medium mt-1">Live operating picture</div>
+          </div>
+          <div className="live-pill">
+            <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--color-success)]" />
+            Live
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-px bg-[color:var(--color-border)] border-b border-[color:var(--color-border)]">
+          <div className="bg-[color:var(--color-surface)] px-5 py-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+              Operational readiness
+            </div>
+            <div className="mt-2 flex items-end gap-2">
+              <span className="text-3xl font-medium tracking-tight">92%</span>
+              <span className="text-xs text-[color:var(--color-success)] mb-1">+4.8%</span>
+            </div>
+          </div>
+          <div className="bg-[color:var(--color-surface)] px-5 py-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+              AI recommendations
+            </div>
+            <div className="mt-2 flex items-end gap-2">
+              <span className="text-3xl font-medium tracking-tight">03</span>
+              <span className="text-xs text-[color:var(--color-amber)] mb-1">awaiting approval</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-5 space-y-2">
+          {workflows.map((workflow) => (
+            <div key={workflow.name} className="workflow-row">
+              <span className={`workflow-dot workflow-dot-${workflow.tone}`} />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium">{workflow.name}</div>
+                <div className="text-xs text-[color:var(--color-text-muted)] mt-0.5">{workflow.meta}</div>
+              </div>
+              <span className={`workflow-status workflow-status-${workflow.tone}`}>{workflow.status}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mx-5 mb-5 rounded-lg border border-[color:var(--color-cyan-deep)]/50 bg-[color:var(--color-cyan)]/[0.045] p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-[color:var(--color-cyan)]">
+              AI recommendation
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-[color:var(--color-amber)]">
+              Approval required
+            </div>
+          </div>
+          <p className="text-sm leading-relaxed text-[color:var(--color-text-secondary)] mt-2">
+            Move Unit 214 into tomorrow&apos;s PM window to avoid a compliance conflict on Friday.
+          </p>
+          <div className="mt-3 flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider">
+            <span className="rounded border border-[color:var(--color-cyan-deep)] px-2.5 py-1 text-[color:var(--color-cyan)]">
+              Review proposal
+            </span>
+            <span className="text-[color:var(--color-text-muted)]">No changes made</span>
+          </div>
+        </div>
       </div>
     </div>
   );
