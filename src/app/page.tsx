@@ -5,7 +5,9 @@ import { NewsletterForm } from "@/components/NewsletterForm";
 import { LazyYouTube } from "@/components/LazyYouTube";
 
 export default function Home() {
-  const latestPosts = posts.slice(0, 3);
+  const latestPosts = posts
+    .filter((post) => !post.tags.includes("Aegis Fleet AI"))
+    .slice(0, 3);
 
   return (
     <>
@@ -19,16 +21,16 @@ export default function Home() {
                 <span className="text-[color:var(--color-cyan)]">PMs wish existed.</span>
               </h1>
               <p className="text-lg md:text-xl text-[color:var(--color-text-secondary)] mt-7 max-w-2xl leading-relaxed">
-                AI command centers, Smartsheet workflows, and custom AI systems
-                for operations-heavy businesses. Built by operators who&apos;ve
-                lived inside the chaos.
+                Custom business operating platforms with a modern public
+                website in front and the entire operation behind it—CRM,
+                dashboards, apps, workflows, admin tools, social systems, and AI.
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Link href="/contact" className="btn-primary">
                   Book a discovery call →
                 </Link>
-                <Link href="/work" className="btn-secondary">
-                  See proven work
+                <Link href="/services#business-platforms" className="btn-secondary">
+                  See the operating platform
                 </Link>
               </div>
               <div className="mt-7 flex items-center gap-3 text-sm text-[color:var(--color-text-muted)]">
@@ -57,57 +59,52 @@ export default function Home() {
 
       <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40">
         <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="md:flex md:items-start md:gap-10">
-            <div className="md:w-1/2 mb-8 md:mb-0">
-              <div className="eyebrow mb-3">● Just shipped</div>
+          <div className="job-work-feature">
+            <div className="job-work-copy">
+              <div className="job-work-mark">JC</div>
+              <div className="eyebrow mb-3">● Featured product · Built for contractors</div>
               <h2 className="text-3xl md:text-4xl font-medium tracking-tight leading-[1.1] mb-3">
-                Aegis Fleet AI.
+                Job Catcher.
               </h2>
               <p className="text-xl text-[color:var(--color-cyan)] font-medium leading-tight mb-5">
-                The all-in-one AI operating system built for EMS &amp; medical fleets.
+                Never lose another job to a missed call.
               </p>
               <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-5">
-                Tracking. Dispatch. Readiness. Oversight. AI agents handle PM scheduling, compliance tracking, and dispatch readiness so crews focus on the call instead of the paperwork.
+                Job Catcher texts missed callers back in seconds, keeps every
+                opportunity visible, follows up on leads, and helps turn
+                completed work into more Google reviews.
               </p>
-              <div className="grid grid-cols-2 gap-3 mb-6 max-w-md">
-                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
-                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Mission</div>
-                  <div className="text-sm font-medium">Safety</div>
-                </div>
-                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
-                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Standard</div>
-                  <div className="text-sm font-medium">Compliance</div>
-                </div>
-                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
-                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Outcome</div>
-                  <div className="text-sm font-medium">Protection</div>
-                </div>
-                <div className="border-l-2 border-[color:var(--color-cyan)] pl-3">
-                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">Status</div>
-                  <div className="text-sm font-medium text-[color:var(--color-cyan)]">Live</div>
-                </div>
+              <div className="job-work-points mb-7">
+                <span>Missed-call text back</span>
+                <span>Lead follow-up</span>
+                <span>Review automation</span>
+                <span>Free two-week pilot</span>
               </div>
-              <a
-                href="https://aegisfleetai.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-              >
-                Enter the command center →
-              </a>
+              <Link href="/job-catcher" className="btn-primary">
+                See Job Catcher →
+              </Link>
             </div>
-            <div className="md:w-1/2">
-              <div className="card overflow-hidden p-0">
-                <div className="relative w-full aspect-video bg-black">
-                  <LazyYouTube id="0ltnbI04vLY" title="Aegis Fleet AI — Trailer" />
-                </div>
-                <div className="p-4">
-                  <div className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-cyan)] mb-1">
-                    Trailer · 10:02
-                  </div>
-                  <div className="text-sm text-[color:var(--color-text-secondary)]">
-                    Watch the Aegis Fleet AI command intelligence walkthrough.
-                  </div>
+
+            <div className="job-work-demo" aria-label="Representative Job Catcher lead recovery flow">
+              <div className="job-work-status">
+                <span>Incoming lead</span>
+                <strong>Missed call detected</strong>
+                <i>00:04 ago</i>
+              </div>
+              <div className="job-work-line"><span>Automatic response</span></div>
+              <div className="job-work-message">
+                <span>Job Catcher</span>
+                <p>
+                  Sorry we missed you—we may be on a job. What can we help you
+                  with?
+                </p>
+                <i>Sent in seconds</i>
+              </div>
+              <div className="job-work-outcome">
+                <span>✓</span>
+                <div>
+                  <strong>Opportunity preserved</strong>
+                  <p>The contractor can call back without losing the lead.</p>
                 </div>
               </div>
             </div>
@@ -116,31 +113,75 @@ export default function Home() {
       </section>
 
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="eyebrow-muted mb-3">What we build</div>
-        <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-12 max-w-2xl">
-          Operational clarity, powered by AI.
+        <div className="eyebrow-muted mb-3">Our flagship build</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-5 max-w-3xl">
+          Your website should do more than market the business. It should run it.
         </h2>
+        <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-10 max-w-2xl">
+          We build one custom system around the entire company: a fast public
+          website for customers and a private operating environment for the
+          team running everything behind it.
+        </p>
+
+        <div className="platform-feature mb-5">
+          <div className="platform-feature-copy">
+            <div className="eyebrow mb-3">● Custom Business Operating Platform</div>
+            <h3 className="text-2xl md:text-3xl font-medium tracking-tight">
+              One company. One connected system.
+            </h3>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4 max-w-xl">
+              Public website, private admin backend, customer records, lead
+              pipeline, dashboards, forms, approvals, reporting, content
+              workflows, and AI—built to fit the way your business actually works.
+            </p>
+            <Link
+              href="/services#business-platforms"
+              className="inline-flex mt-6 text-sm text-[color:var(--color-cyan)] hover:underline"
+            >
+              Explore the flagship platform →
+            </Link>
+          </div>
+          <div className="platform-module-grid" aria-label="Business operating platform modules">
+            {[
+              ["Public", "Modern website"],
+              ["Admin", "Private backend"],
+              ["CRM", "Leads and customers"],
+              ["Control", "Dashboards"],
+              ["Flow", "Apps and workflows"],
+              ["Growth", "Social and content"],
+            ].map(([label, value]) => (
+              <div key={label} className="platform-module">
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-5">
           <BuildCard
-            tag="Service"
+            tag="Core specialty"
             title="AI Command Centers"
             body="Smartsheet workflows, crew/fleet/compliance dashboards, real-time visibility across departments. One source of truth your executives can actually trust."
+            href="/services#command-centers"
           />
           <BuildCard
-            tag="Product"
-            title="Held"
-            body="AI-powered coordination app for busy households, now on iOS. Built around one principle: AI proposes, you decide. Nothing changes without approval."
-            href="https://myheldapp.com"
-          />
-          <BuildCard
-            tag="Product"
-            title="NexaFlow AI"
-            body="Local AI operating system that runs on your machine. Online or offline, your data stays private. Your data isn't training someone else's models."
+            tag="Contractor product"
+            title="Job Catcher"
+            body="Missed-call text-back, review automation, and lead follow-up for contractors. It catches the opportunity before a competitor does."
+            href="/job-catcher"
           />
           <BuildCard
             tag="Service"
-            title="Custom AI Workflows"
-            body="Built around how your business actually works, not how generic tools think it should. Field-tested, Smartsheet-first, AI-enabled."
+            title="Workflow Automation"
+            body="Forms, approvals, alerts, reports, and field-to-office processes that move work without the constant follow-up."
+            href="/services#workflow-automation"
+          />
+          <BuildCard
+            tag="Service"
+            title="Custom Apps & AI"
+            body="Purpose-built internal tools, customer portals, private AI, and integrations without per-seat platform lock-in."
+            href="/services#custom-ai"
           />
         </div>
       </section>
@@ -475,8 +516,11 @@ function BuildCard({
       <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px]">{body}</p>
     </>
   );
+  if (href?.startsWith("/")) {
+    return <Link href={href} className="card block group">{content}</Link>;
+  }
   if (href) {
-    return <a href={href} className="card block group">{content}</a>;
+    return <a href={href} className="card block group" target="_blank" rel="noopener noreferrer">{content}</a>;
   }
   return <div className="card">{content}</div>;
 }

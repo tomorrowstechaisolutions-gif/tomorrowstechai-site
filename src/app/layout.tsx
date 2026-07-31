@@ -24,9 +24,13 @@ export const metadata: Metadata = {
     template: "%s · TomorrowsTech AI",
   },
   description:
-    "AI command centers, Smartsheet workflows, and custom AI systems for construction, contractors, and field operations businesses. Operations first, AI second.",
+    "Custom business operating platforms with modern websites, private admin backends, CRM, dashboards, apps, workflows, and AI—plus command centers for operations-heavy businesses.",
   keywords: [
     "AI command center",
+    "custom business operating platform",
+    "website with admin dashboard",
+    "custom CRM platform",
+    "business operations website",
     "Smartsheet AI",
     "Claude MCP integration",
     "construction AI",
@@ -46,8 +50,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "TomorrowsTech AI — AI for construction & field ops",
-    description:
-      "AI command centers and operational systems for construction, contractors, and field operations.",
+  description:
+    "Custom business operating platforms, command centers, CRM, dashboards, workflows, and AI for operations-heavy companies.",
     url: "https://tomorrowstechai.com",
     siteName: "TomorrowsTech AI",
     type: "website",
@@ -56,8 +60,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "TomorrowsTech AI — AI for construction & field ops",
-    description:
-      "AI command centers and operational systems for real businesses.",
+  description:
+    "Modern websites with private operating systems, CRM, dashboards, apps, workflows, and AI built around the business.",
   },
   robots: {
     index: true,
@@ -123,7 +127,7 @@ const organizationJsonLd = {
   logo: "https://tomorrowstechai.com/icon.svg",
   image: "https://tomorrowstechai.com/icon.svg",
   description:
-    "AI command centers, Smartsheet workflows, custom websites, video production, and AI systems for operations-heavy businesses — construction, contractors, field operations, telecom, and service companies.",
+    "Custom business operating platforms with modern public websites, private admin systems, CRM, dashboards, apps, workflows, and AI for operations-heavy businesses.",
   founder: {
     "@type": "Person",
     name: "John Hockinson",
@@ -148,6 +152,8 @@ const organizationJsonLd = {
     name: "United States",
   },
   serviceType: [
+    "Custom Business Operating Platforms",
+    "Custom CRM and Business Admin Systems",
     "AI Command Centers",
     "Smartsheet Consulting",
     "Custom AI Workflows",
@@ -157,6 +163,7 @@ const organizationJsonLd = {
     "Program Management Consulting",
     "Website Design & Build",
     "Video Production",
+    "Contractor Lead Automation",
   ],
   sameAs: [
     "https://www.linkedin.com/in/johnhockinson/",

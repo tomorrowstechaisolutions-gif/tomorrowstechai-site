@@ -74,7 +74,7 @@ const services: Service[] = [
     body: "TypeScript + Next.js + Vercel + Neon. The same stack we use to build Held. Production-ready apps for internal operations, customer portals, or net-new products.",
     Visual: VisualAppDev,
     includes: [
-      "TypeScript + Next.js + Vercel + Neon — the stack behind Held and Aegis Fleet AI",
+      "TypeScript + Next.js + Vercel + Neon — the stack behind our production apps",
       "Auth, roles, and audit trails built in from day one, not bolted on later",
       "Staging and production environments on your own domain",
       "The source code is yours. No platform lock-in, no per-seat tax",

@@ -4,7 +4,7 @@ import { CalEmbed } from "@/components/CalEmbed";
 export const metadata = {
   title: "Contact",
   description:
-    "Book a discovery call with TomorrowsTech AI. AI command centers, Smartsheet workflows, and custom AI for construction and field ops.",
+    "Book a discovery call with TomorrowsTech AI for a custom business operating platform, command center, workflow system, or AI solution.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact · TomorrowsTech AI",
@@ -24,10 +24,10 @@ export default function ContactPage() {
           Let&apos;s compare notes.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed">
-          If your team is running operations through Smartsheet, dealing with
-          field crews, contractors, fleet, and compliance — that&apos;s exactly
-          where we work. Pick a time below, or send a message and we&apos;ll
-          get back to you within one business day.
+          Whether you need a complete business operating platform, a command
+          center, or one broken workflow fixed, start with the way the company
+          runs today. Pick a time below, or send a message and we&apos;ll get
+          back to you within one business day.
         </p>
       </section>
 

@@ -7,8 +7,8 @@ export const contentType = ogContentType;
 export default function Image() {
   return generateOgImage({
     eyebrow: "Work",
-    title: "Things we've built.",
+    title: "Work built to run the business.",
     subtitle:
-      "Websites, apps, brands, and promotional video. Field House Gym, Mintline Wellness, Held, and more.",
+      "Business operating platforms, command centers, Job Catcher, and client systems built around real operations.",
   });
 }

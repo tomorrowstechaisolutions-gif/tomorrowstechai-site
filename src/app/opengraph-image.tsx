@@ -9,6 +9,6 @@ export default function Image() {
     eyebrow: "AI for construction · field ops · contractors",
     title: "We build the systems your PMs wish existed.",
     subtitle:
-      "AI command centers, Smartsheet workflows, websites, and custom AI for operations-heavy businesses.",
+      "Modern websites with private operations systems behind them—CRM, dashboards, apps, workflows, and AI.",
   });
 }

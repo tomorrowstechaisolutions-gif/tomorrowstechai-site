@@ -14,16 +14,15 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
-              Intelligent systems for operations-heavy businesses — command
-              centers, custom AI, websites, and program management. Operations
-              first, AI second.
+              Custom business operating platforms—modern websites, private
+              admin systems, CRM, command centers, apps, workflows, and AI
+              built around one business.
             </p>
           </div>
           <div>
             <div className="eyebrow-muted mb-4">Explore</div>
             <ul className="space-y-2 text-sm">
               <li><Link href="/services" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Services</Link></li>
-              <li><Link href="/job-catcher" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Job Catcher — for contractors</Link></li>
               <li><Link href="/work" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Work</Link></li>
               <li><Link href="/about" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">About</Link></li>
               <li><Link href="/blog" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Blog</Link></li>
@@ -36,7 +35,7 @@ export function Footer() {
           <div>
             <div className="eyebrow-muted mb-4">Products & brands</div>
             <ul className="space-y-2 text-sm">
-              <li><a href="https://aegisfleetai.com" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Aegis Fleet AI — EMS & medical fleets</a></li>
+              <li><Link href="/job-catcher" className="text-[color:var(--color-cyan)] hover:text-[color:var(--color-text)] transition-colors">Job Catcher — Contractor lead automation</Link></li>
               <li><a href="https://myheldapp.com" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Held — Family ops app</a></li>
               <li><span className="text-[color:var(--color-text-secondary)]">NexaFlow AI — Local AI OS</span></li>
               <li><span className="text-[color:var(--color-text-secondary)]">REI Ops Local — REI platform</span></li>

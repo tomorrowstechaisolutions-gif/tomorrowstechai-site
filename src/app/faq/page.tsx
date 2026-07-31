@@ -16,8 +16,12 @@ export const metadata = {
 
 const faqs = [
   {
+    q: "What is a custom business operating platform?",
+    a: "It is a modern public website and a private business operating system built as one connected platform. Customers see the website, booking, services, and lead experience. Your team signs into the private side for CRM, customer records, dashboards, apps, forms, approvals, reporting, social-content workflows, and AI-assisted operations. Every module is built around the way your company actually runs.",
+  },
+  {
     q: "How long does an engagement take?",
-    a: "It depends on scope. A custom marketing website typically ships in 2–4 weeks. A Smartsheet command center build is 4–8 weeks. A full AI workflow or custom app is usually 8–16 weeks. We tell you the realistic timeline during the discovery call — no rosy estimates that slip later.",
+    a: "It depends on scope. A standalone marketing website typically ships in 2–4 weeks. A Smartsheet command center build is 4–8 weeks. A full business operating platform, AI workflow, or custom application is usually 8–16 weeks. We tell you the realistic timeline during the discovery call — no rosy estimates that slip later.",
   },
   {
     q: "Do you offer ongoing maintenance and support?",
@@ -45,7 +49,7 @@ const faqs = [
   },
   {
     q: "What does an engagement typically cost?",
-    a: "Custom websites start at $1,500–$3,000 for the initial build. Smartsheet command centers and custom AI workflows range from $5,000–$15,000 depending on complexity. Ongoing partnership pricing starts at $200/month. We give you a clear, all-in number during the discovery call — no surprises, no hourly meters running.",
+    a: "Standalone marketing websites start at $1,500–$3,000. Smartsheet command centers and custom AI workflows generally range from $5,000–$15,000. Full custom business operating platforms are scoped around the modules, users, integrations, and operating requirements involved. Ongoing partnership pricing starts at $200/month. We give you a clear, all-in number before work begins.",
   },
 ];
 

@@ -1,189 +1,336 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { LazyYouTube } from "@/components/LazyYouTube";
 
 export const metadata = {
   title: "Work",
   description:
-    "Selected work from TomorrowsTech AI — websites, apps, brands, and promotional video we've shipped. The Field House Gym, Mintline Wellness, Held, TomorrowsTek, and more.",
+    "Selected business operating platforms, command centers, contractor automation, websites, and client systems built by TomorrowsTech AI.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · TomorrowsTech AI",
     description:
-      "Websites, apps, promotional video, and brands we've shipped. Gyms, wellness practices, productivity apps, and media businesses.",
+      "Business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
     url: "https://tomorrowstechai.com/work",
     type: "website",
   },
 };
 
-type Video = {
-  id: string;
-  title: string;
-};
-
-type Project = {
-  slug: string;
-  title: string;
-  tagline: string;
-  body: string;
-  image: string;
-  tags: string[];
-  href: string;
-  hrefLabel: string;
-  testimonial?: string;
-  testimonialAuthor?: string;
-  testimonialRole?: string;
-  videos?: Video[];
-  featured?: boolean;
-};
-
-const ownWork: Project[] = [
-  {
-    slug: "aegis-fleet-ai",
-    title: "Aegis Fleet AI",
-    tagline: "The all-in-one AI operating system built for EMS & medical fleets.",
-    body: "Our newest product. Aegis Fleet AI gives EMS and medical fleet operators a single command interface for tracking, dispatch, PM scheduling, compliance, and oversight. AI agents handle the work behind the scenes — PM reminders, compliance expirations, vehicle status — so dispatch and field crews focus on the call instead of the paperwork. Real-time visibility into total vehicles, active units, services due, and units in repair. Built around one principle: Safety. Compliance. Protection.",
-    image: "/work/aegisfleet.png",
-    tags: ["AI product", "EMS & medical fleets", "Fleet command", "Compliance automation", "Just shipped"],
-    href: "https://aegisfleetai.com",
-    hrefLabel: "Visit Aegis Fleet AI",
-    videos: [
-      { id: "0ltnbI04vLY", title: "Aegis Fleet AI — Trailer" },
-      { id: "rJsPQ4nar50", title: "Aegis Fleet AI — Inside the command center" },
-    ],
-    featured: true,
-  },
-  {
-    slug: "tomorrowstechai",
-    title: "TomorrowsTech AI",
-    tagline: "The site you're reading.",
-    body: "Custom-coded marketing site on Next.js + Vercel. Cyan-on-black operator aesthetic, full SEO foundation (sitemap, JSON-LD, canonical URLs), built-in blog with featured images, working contact form, and an under-one-second load time. The same stack we ship for clients.",
-    image: "/work/tomorrowstechai.png",
-    tags: ["Marketing site", "Next.js", "Vercel", "Resend", "SEO"],
-    href: "https://tomorrowstechai.com",
-    hrefLabel: "You're here",
-  },
-  {
-    slug: "held",
-    title: "Held",
-    tagline: "For the one carrying it all.",
-    body: "AI-powered coordination app for busy households, available on iOS with a web companion. Built around one philosophy: AI proposes, you decide. Nothing changes without approval. Calendar, tasks, shared Circle, and intelligent time-blocking to protect quiet windows.",
-    image: "/work/held.png",
-    tags: ["iOS app", "Web app", "AI", "Family ops"],
-    href: "https://myheldapp.com",
-    hrefLabel: "Visit Held",
-  },
-  {
-    slug: "tomorrowstek",
-    title: "TomorrowsTek",
-    tagline: "How-to videos, reviews, drone services, and media.",
-    body: "Our content and media business — automotive repair walkthroughs, town travel reviews, drone services, and giveaways. A separate brand under the same parent LLC, built around field knowledge and the kind of media most local audiences actually want.",
-    image: "/work/tomorrowstek.png",
-    tags: ["Media business", "Content", "Drone services"],
-    href: "https://tomorrowstek.com",
-    hrefLabel: "Visit TomorrowsTek",
-  },
+const platformLayers = [
+  { code: "01", title: "Public experience", body: "Website, services, lead capture, booking, and content" },
+  { code: "02", title: "Private operations", body: "Admin tools, CRM, customer records, forms, and approvals" },
+  { code: "03", title: "Command center", body: "Live dashboards, reporting, exceptions, and executive visibility" },
+  { code: "04", title: "Connected intelligence", body: "Automations, integrations, social workflows, and human-approved AI" },
 ];
 
-const clientWork: Project[] = [
+const supportingWork = [
   {
-    slug: "field-house-gym",
-    title: "The Field House Gym",
-    tagline: "The best 24/7 gym in Harker Heights.",
-    body: "Full brand presence for a 20-30k sq ft hardcore lifting facility in Harker Heights, Texas. We built the marketing site, the hero design, problem-solution framing, member reviews block, three-step onboarding flow, and full FAQ. We also produced the promotional video content used on the site and in ad campaigns for both locations. One brand, top to bottom.",
-    image: "/work/fieldhouse.png",
-    tags: ["Client build", "Fitness", "Video production", "Lead capture", "Harker Heights, TX"],
-    href: "https://www.thefieldhousegym.com",
-    hrefLabel: "Visit Field House",
-    testimonial:
-      "John did an amazing job building what I described, he really understood The Field House, my brand, and it really showed thru his work.",
-    testimonialAuthor: "Christina Bills",
-    testimonialRole: "Owner, The Field House Gym",
-    videos: [
-      { id: "MD0BQ-uaKG0", title: "The Field House Gym — Harker Heights / Killeen" },
-      { id: "poCVNcen-2o", title: "The Field House Gym — Temple location" },
-    ],
-    featured: true,
+    title: "TomorrowsTech AI",
+    category: "Company platform",
+    body: "A custom Next.js marketing system with lead capture, field notes, downloadable resources, an AI assistant, SEO infrastructure, and connected inquiry workflows.",
+    image: "/work/tomorrowstechai.png",
+    href: "https://tomorrowstechai.com",
+    hrefLabel: "You’re here",
+    tags: ["Next.js", "Vercel", "Lead systems", "AI assistant"],
   },
   {
-    slug: "mintline-wellness",
-    title: "Mintline Wellness",
-    tagline: "Evidence-based wellness education for sustainable weight loss.",
-    body: "Custom site for a Texas-based wellness practice serving the Belton and Temple area. A calmer, more supportive approach to weight and metabolic health — built around medical credibility, not weight-loss hype. Waitlist-driven launch.",
-    image: "/work/mintline.png",
-    tags: ["Client build", "Wellness", "Lead capture"],
-    href: "https://mintlinewellness.com",
-    hrefLabel: "Visit Mintline",
-    testimonial:
-      "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using TomorrowsTech AI again.",
-    testimonialAuthor: "Dr. Marlow Griggs, MD",
-    testimonialRole: "Founder, Mintline Wellness",
+    title: "Held",
+    category: "Product studio",
+    body: "An AI-assisted coordination product for busy households, built around shared calendars, tasks, time-blocking, and a deliberate human-approval model.",
+    image: "/work/held.png",
+    href: "https://myheldapp.com",
+    hrefLabel: "Visit Held",
+    tags: ["iOS", "Web app", "AI", "Workflow design"],
+  },
+  {
+    title: "TomorrowsTek",
+    category: "Media brand",
+    body: "A separate content and field-media brand spanning practical how-to content, local reviews, drone services, and audience development.",
+    image: "/work/tomorrowstek-garage.png",
+    href: "https://tomorrowstek.com",
+    hrefLabel: "Visit TomorrowsTek",
+    tags: ["Content systems", "Media", "Drone services"],
   },
 ];
 
 export default function WorkPage() {
   return (
     <>
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
-        <div className="eyebrow mb-6">● Work</div>
-        <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1] max-w-4xl">
-          Things we&apos;ve built.
+      <section className="work-hero max-w-6xl mx-auto px-6 pt-20 pb-14">
+        <div className="eyebrow mb-6">● Selected work</div>
+        <h1 className="text-4xl md:text-6xl font-medium tracking-tight leading-[1.04] max-w-5xl">
+          Work built to run the business—not just represent it.
         </h1>
-        <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6 max-w-3xl">
-          Websites, apps, brands, and promotional video — for our own businesses and for clients.
-          Operations-heavy and built to last, not built to demo.
+        <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-7 max-w-3xl">
+          Public websites, private admin systems, CRM, command centers,
+          dashboards, apps, and automation designed as one connected operation.
+          Here is the work that best represents where TomorrowsTech AI is going.
         </p>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-6 pb-12">
-        <div className="eyebrow-muted mb-3">Brands & products we ship</div>
-        <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-10 max-w-2xl">
-          Our own work.
-        </h2>
-        <div className="grid md:grid-cols-2 gap-5">
-          {ownWork.map((p) => (
-            <ProjectCard key={p.slug} project={p} />
-          ))}
+        <div className="flex flex-wrap gap-3 mt-8">
+          <Link href="/services#business-platforms" className="btn-primary">
+            Explore the flagship build →
+          </Link>
+          <Link href="/contact" className="btn-secondary">
+            Discuss your operation
+          </Link>
         </div>
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="eyebrow-muted mb-3">Built for clients</div>
-        <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-10 max-w-2xl">
-          Client builds.
-        </h2>
-        <div className="grid md:grid-cols-2 gap-5">
-          {clientWork.map((p) => (
-            <ProjectCard key={p.slug} project={p} />
-          ))}
-          <div className="card border-dashed flex items-center justify-center text-center min-h-[260px]">
-            <div>
-              <div className="eyebrow-muted mb-3">Open slot</div>
-              <h3 className="text-lg font-medium mb-2">Your project here.</h3>
-              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed max-w-sm">
-                We&apos;re taking on a small number of website builds this quarter.{" "}
-                <Link href="/contact" className="text-[color:var(--color-cyan)] hover:underline">
-                  Book a discovery call →
-                </Link>
+        <div className="work-proof-strip">
+          <ProofItem label="Flagship" value="Business operating platforms" />
+          <ProofItem label="Core specialty" value="Command centers & dashboards" />
+          <ProofItem label="Featured product" value="Job Catcher for contractors" />
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">The flagship delivery model</div>
+        <div className="work-platform">
+          <div className="work-platform-copy">
+            <div className="eyebrow mb-5">● One connected system</div>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-tight leading-tight max-w-xl">
+              A modern website in front. The entire operation behind it.
+            </h2>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-5 max-w-xl">
+              The strongest work is not a collection of disconnected tools.
+              It is a business-specific platform where customers get a polished
+              experience and the team gets one secure place to run the work.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-6">
+              {["Website", "Admin backend", "CRM", "Dashboards", "Custom apps", "Social systems", "AI"].map(
+                (tag) => (
+                  <span key={tag} className="work-tag">
+                    {tag}
+                  </span>
+                ),
+              )}
+            </div>
+            <Link
+              href="/services#business-platforms"
+              className="inline-block mt-7 text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+            >
+              See how the platform is built →
+            </Link>
+          </div>
+
+          <div className="work-platform-map" aria-label="Four connected layers of a business operating platform">
+            {platformLayers.map((layer, index) => (
+              <div className="work-platform-layer" key={layer.code}>
+                <span>{layer.code}</span>
+                <div>
+                  <strong>{layer.title}</strong>
+                  <p>{layer.body}</p>
+                </div>
+                {index < platformLayers.length - 1 && <i aria-hidden="true" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">Featured live product</div>
+        <div className="job-work-feature">
+          <div className="job-work-copy">
+            <div className="job-work-mark">JC</div>
+            <div className="eyebrow mb-4">● Built for contractors</div>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-tight">
+              Job Catcher
+            </h2>
+            <p className="text-lg text-[color:var(--color-text-secondary)] leading-relaxed mt-4 max-w-xl">
+              A missed-call recovery and lead follow-up system that texts
+              prospects back in seconds, keeps the opportunity visible, and
+              helps contractors turn completed work into more Google reviews.
+            </p>
+            <div className="job-work-points">
+              <span>Missed-call text back</span>
+              <span>Lead alerts and follow-up</span>
+              <span>Review automation</span>
+              <span>Contractor-first setup</span>
+            </div>
+            <Link href="/job-catcher" className="btn-primary mt-7">
+              See Job Catcher →
+            </Link>
+          </div>
+
+          <div className="job-work-demo" aria-label="Representative Job Catcher lead recovery flow">
+            <div className="job-work-status">
+              <span>Incoming lead</span>
+              <strong>Missed call detected</strong>
+              <i>00:04 ago</i>
+            </div>
+            <div className="job-work-line"><span>Automatic response</span></div>
+            <div className="job-work-message">
+              <span>Job Catcher</span>
+              <p>
+                Sorry we missed you—we may be on a job. What can we help you
+                with?
               </p>
+              <i>Sent in seconds</i>
+            </div>
+            <div className="job-work-outcome">
+              <span>✓</span>
+              <div>
+                <strong>Opportunity preserved</strong>
+                <p>The contractor can call back without losing the lead.</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="card card-accent text-center md:text-left md:flex md:items-center md:justify-between gap-10 p-10">
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">Client work</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-10">
+          Real businesses. Clearer customer journeys.
+        </h2>
+
+        <article className="work-client-feature">
+          <div className="work-client-media">
+            <Image
+              src="/work/fieldhouse.png"
+              alt="The Field House Gym website"
+              fill
+              sizes="(max-width: 900px) 100vw, 55vw"
+              className="object-cover"
+            />
+          </div>
+          <div className="work-client-copy">
+            <div className="eyebrow mb-4">● Website · Brand · Video · Lead capture</div>
+            <h3 className="text-3xl font-medium tracking-tight">The Field House Gym</h3>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4">
+              A complete digital presence for a major 24/7 lifting facility:
+              positioning, website, member proof, onboarding, FAQs, lead
+              capture, and promotional video for both Texas locations.
+            </p>
+            <blockquote className="work-quote">
+              “John did an amazing job building what I described. He really
+              understood The Field House, my brand, and it really showed through
+              his work.”
+              <footer>— Christina Bills, Owner</footer>
+            </blockquote>
+            <a
+              href="https://www.thefieldhousegym.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+            >
+              Visit The Field House →
+            </a>
+          </div>
+        </article>
+
+        <div className="work-video-panel">
           <div>
-            <div className="eyebrow mb-3">● Open for new engagements</div>
-            <h3 className="text-2xl md:text-3xl font-medium tracking-tight max-w-xl">
-              Want something like this for your business?
+            <div className="eyebrow-muted mb-3">Campaign media</div>
+            <h3 className="text-2xl font-medium tracking-tight">
+              Brand footage made for the same customer journey.
             </h3>
-            <p className="text-[color:var(--color-text-secondary)] mt-3 max-w-lg">
-              Custom-coded websites and apps, built to last. Book a discovery call. 30 minutes, no pitch, just notes.
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <VideoCard id="MD0BQ-uaKG0" title="The Field House Gym · Harker Heights / Killeen" />
+            <VideoCard id="poCVNcen-2o" title="The Field House Gym · Temple" />
+          </div>
+        </div>
+
+        <article className="work-client-compact">
+          <div className="work-client-compact-image">
+            <Image
+              src="/work/mintline.png"
+              alt="Mintline Wellness website"
+              fill
+              sizes="(max-width: 768px) 100vw, 42vw"
+              className="object-cover"
+            />
+          </div>
+          <div>
+            <div className="eyebrow mb-4">● Wellness · Website · Lead capture</div>
+            <h3 className="text-2xl md:text-3xl font-medium tracking-tight">
+              Mintline Wellness
+            </h3>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4">
+              A calm, medically credible launch presence for a Texas wellness
+              practice—built around sustainable care, clear education, and a
+              focused waitlist path.
+            </p>
+            <blockquote className="work-quote">
+              “John&apos;s attention to detail was amazing. He asked all the
+              right questions.”
+              <footer>— Dr. Marlow Griggs, MD, Founder</footer>
+            </blockquote>
+            <a
+              href="https://mintlinewellness.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+            >
+              Visit Mintline Wellness →
+            </a>
+          </div>
+        </article>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">Products & brands</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-4">
+          Supporting work from the studio.
+        </h2>
+        <p className="text-[color:var(--color-text-secondary)] leading-relaxed max-w-2xl mb-10">
+          Separate products and brands that demonstrate product thinking,
+          technical range, content systems, and the ability to build beyond a
+          standard marketing site.
+        </p>
+        <div className="grid md:grid-cols-3 gap-5">
+          {supportingWork.map((project) => (
+            <article className="work-support-card" key={project.title}>
+              <div className="work-support-image">
+                <Image
+                  src={project.image}
+                  alt={`${project.title} website`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="eyebrow-muted mt-5 mb-2">{project.category}</div>
+              <h3 className="text-xl font-medium">{project.title}</h3>
+              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mt-3">
+                {project.body}
+              </p>
+              <div className="flex flex-wrap gap-2 mt-5">
+                {project.tags.map((tag) => (
+                  <span className="work-tag" key={tag}>{tag}</span>
+                ))}
+              </div>
+              <a
+                href={project.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-5 text-xs font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+              >
+                {project.hrefLabel} →
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <div className="work-final-cta">
+          <div>
+            <div className="eyebrow mb-3">● Build the next one</div>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-2xl">
+              Your business should not have to operate around disconnected tools.
+            </h2>
+            <p className="text-[color:var(--color-text-secondary)] mt-4 max-w-xl">
+              Bring the website, CRM, dashboards, apps, workflows, social
+              systems, and AI into one platform built around the way your team
+              actually works.
             </p>
           </div>
-          <Link href="/contact" className="btn-primary mt-6 md:mt-0 whitespace-nowrap">
-            Book a discovery call →
+          <Link href="/contact" className="btn-primary whitespace-nowrap">
+            Start the conversation →
           </Link>
         </div>
       </section>
@@ -191,83 +338,24 @@ export default function WorkPage() {
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
-  const featuredClass = project.featured ? " md:col-span-2" : "";
+function ProofItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`card group overflow-hidden${featuredClass}`}>
-      <div className="relative w-full aspect-[16/10] -mx-6 -mt-6 mb-5 overflow-hidden border-b border-[color:var(--color-border)]">
-        <Image
-          src={project.image}
-          alt={project.title}
-          fill
-          sizes={
-            project.featured
-              ? "(max-width: 768px) 100vw, 1200px"
-              : "(max-width: 768px) 100vw, 580px"
-          }
-          className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
-        />
-      </div>
-      <h3 className="text-2xl font-medium mb-1">{project.title}</h3>
-      <div className="eyebrow-muted mb-4">{project.tagline}</div>
-      <p className="text-[color:var(--color-text-secondary)] leading-relaxed text-[15px] mb-5">
-        {project.body}
-      </p>
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
 
-      {project.videos && project.videos.length > 0 && (
-        <div className="mb-5">
-          <div className="eyebrow-muted mb-3">Promotional video we produced</div>
-          <div className="grid md:grid-cols-2 gap-3">
-            {project.videos.map((v) => (
-              <div key={v.id}>
-                <div className="relative w-full aspect-video bg-black rounded overflow-hidden border border-[color:var(--color-border)]">
-                  <LazyYouTube id={v.id} title={v.title} />
-                </div>
-                <div className="text-xs text-[color:var(--color-text-muted)] font-mono mt-2 tracking-wider">
-                  {v.title}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {project.testimonial && (
-        <blockquote className="border-l-2 border-[color:var(--color-cyan)] pl-4 mb-5">
-          <p className="text-[color:var(--color-text)] italic leading-relaxed text-[15px] mb-2">
-            &ldquo;{project.testimonial}&rdquo;
-          </p>
-          {(project.testimonialAuthor || project.testimonialRole) && (
-            <footer className="text-xs font-mono tracking-wider text-[color:var(--color-text-muted)] uppercase">
-              — {project.testimonialAuthor}
-              {project.testimonialRole && (
-                <span className="text-[color:var(--color-text-muted)]">
-                  {" · "}
-                  {project.testimonialRole}
-                </span>
-              )}
-            </footer>
-          )}
-        </blockquote>
-      )}
-      <div className="flex flex-wrap gap-2 mb-5">
-        {project.tags.map((t) => (
-          <span
-            key={t}
-            className="text-xs font-mono tracking-wider text-[color:var(--color-text-muted)] border border-[color:var(--color-border)] px-2 py-0.5 rounded"
-          >
-            {t}
-          </span>
-        ))}
+function VideoCard({ id, title }: { id: string; title: string }) {
+  return (
+    <div>
+      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-[color:var(--color-border)]">
+        <LazyYouTube id={id} title={title} />
       </div>
-      <a
-        href={project.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
-      >
-        {project.hrefLabel} →
-      </a>
+      <div className="text-xs text-[color:var(--color-text-muted)] font-mono mt-2 tracking-wider">
+        {title}
+      </div>
     </div>
   );
 }

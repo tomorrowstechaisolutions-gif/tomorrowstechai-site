@@ -10,7 +10,7 @@ type Message = {
 const INITIAL_GREETING: Message = {
   role: "assistant",
   content:
-    "Hi — I'm the TomorrowsTech AI assistant. Ask me about command centers, websites, custom AI workflows, or anything else we build. I'll point you in the right direction.",
+    "Hi — I'm the TomorrowsTech AI assistant. Ask me about custom business operating platforms, command centers, Job Catcher, or AI workflows. I'll point you in the right direction.",
 };
 
 export function ChatWidget() {

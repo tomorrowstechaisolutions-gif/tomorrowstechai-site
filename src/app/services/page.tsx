@@ -4,18 +4,23 @@ import Link from "next/link";
 export const metadata = {
   title: "Services",
   description:
-    "Command centers, workflow automation, and custom AI systems for construction, field operations, contractors, and operations-heavy businesses.",
+    "Custom business operating platforms, command centers, workflow automation, CRM, dashboards, apps, and AI built around the way your company actually runs.",
   alternates: { canonical: "/services" },
   openGraph: {
     title: "Services · TomorrowsTech AI",
     description:
-      "Three focused ways to bring visibility, control, and intelligent automation to the operations that run your business.",
+      "A modern public website and a private operating system behind it—plus command centers, workflow automation, CRM, dashboards, apps, and AI.",
     url: "https://tomorrowstechai.com/services",
     type: "website",
   },
 };
 
 const paths = [
+  {
+    problem: "I need one system to run the business.",
+    answer: "Business operating platforms",
+    href: "#business-platforms",
+  },
   {
     problem: "I can’t see what’s happening.",
     answer: "Command centers",
@@ -27,11 +32,6 @@ const paths = [
     href: "#workflow-automation",
   },
   {
-    problem: "We need software that fits us.",
-    answer: "Custom AI systems",
-    href: "#custom-ai",
-  },
-  {
     problem: "I’m not sure where to begin.",
     answer: "Start with discovery",
     href: "#how-we-work",
@@ -40,8 +40,29 @@ const paths = [
 
 const solutions = [
   {
-    id: "command-centers",
+    id: "business-platforms",
     number: "01",
+    label: "The flagship build",
+    title: "Custom business operating platforms",
+    statement: "A modern website in front. The entire operation behind it.",
+    body:
+      "We build one connected system around your company: a high-performance public website for customers and a secure private backend for the people running the business. Every module is shaped around your processes instead of forcing the company into generic software.",
+    includes: [
+      "Custom public website, SEO, booking, and lead capture",
+      "Private admin backend with roles and permissions",
+      "CRM, customer records, lead pipeline, and follow-up",
+      "Dashboards, apps, forms, approvals, and reporting",
+      "Social content planning, asset workflows, and lead-source visibility",
+      "AI assistants and automations with human approval controls",
+    ],
+    outcome: "One custom-built home for the public brand and the private operation.",
+    timeline: "8–16 weeks",
+    price: "Scoped proposal",
+    visual: "platform",
+  },
+  {
+    id: "command-centers",
+    number: "02",
     label: "Visibility and control",
     title: "Command centers",
     statement: "One operating picture your leadership team can trust.",
@@ -60,7 +81,7 @@ const solutions = [
   },
   {
     id: "workflow-automation",
-    number: "02",
+    number: "03",
     label: "Flow and accountability",
     title: "Workflow automation",
     statement: "Move work from field capture to final approval without the chase.",
@@ -79,7 +100,7 @@ const solutions = [
   },
   {
     id: "custom-ai",
-    number: "03",
+    number: "04",
     label: "Purpose-built intelligence",
     title: "Custom AI systems",
     statement: "Software designed around your operation—not the average company.",
@@ -105,8 +126,8 @@ const supporting = [
     meta: "4–12 weeks or ongoing",
   },
   {
-    title: "Website design and build",
-    body: "Fast, custom-coded Next.js websites with SEO, booking, lead capture, analytics, and a visual system built around your actual brand.",
+    title: "Standalone marketing websites",
+    body: "For companies that need the public-facing brand and lead system without a full private operating backend.",
     meta: "$1,500–$3,000 · 2–4 weeks",
   },
   {
@@ -117,6 +138,11 @@ const supporting = [
 ];
 
 const pricing = [
+  {
+    engagement: "Custom business operating platform",
+    range: "Scoped proposal",
+    timeline: "8–16 weeks",
+  },
   {
     engagement: "Command center or Smartsheet system",
     range: "$5,000–$15,000",
@@ -203,9 +229,9 @@ export default function ServicesPage() {
 
       <section className="max-w-7xl mx-auto px-6 py-20 lg:py-24">
         <div className="max-w-3xl mb-14">
-          <div className="eyebrow-muted mb-3">Three ways we solve it</div>
+          <div className="eyebrow-muted mb-3">Four ways we solve it</div>
           <h2 className="text-3xl md:text-4xl font-medium tracking-tight leading-tight">
-            Fewer service lines. Clearer outcomes.
+            One flagship system. Three focused specialties.
           </h2>
           <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4 max-w-2xl">
             Most engagements land in one of these three systems. We start with
@@ -258,23 +284,48 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      <section className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="job-catcher-feature">
+          <div className="job-catcher-badge">JC</div>
+          <div className="flex-1">
+            <div className="eyebrow mb-2">● Featured product · contractors</div>
+            <h2 className="text-2xl md:text-3xl font-medium tracking-tight">
+              Job Catcher turns missed calls into another chance to win the work.
+            </h2>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-3 max-w-3xl">
+              Missed-call text-back, review automation, and lead follow-up—from
+              the contractor&apos;s own number. A focused product for roofers,
+              HVAC, plumbing, fence, concrete, and field-service businesses that
+              cannot afford to let an opportunity die in voicemail.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <span className="text-sm text-[color:var(--color-cyan)]">$350/month flat</span>
+              <span className="text-sm text-[color:var(--color-text-muted)]">Free two-week pilot</span>
+              <Link href="/job-catcher" className="text-sm text-[color:var(--color-text)] hover:text-[color:var(--color-cyan)]">
+                See Job Catcher →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="border-y border-[color:var(--color-border)] bg-[color:var(--color-surface)]/35">
         <div className="max-w-7xl mx-auto px-6 py-20">
           <div className="grid lg:grid-cols-[0.88fr_1.12fr] gap-10 lg:gap-16 items-center">
             <div>
-              <div className="eyebrow mb-4">● Proof, not a pitch deck</div>
+              <div className="eyebrow mb-4">● Client proof</div>
               <h2 className="text-3xl md:text-4xl font-medium tracking-tight leading-tight">
-                Built for the operational reality.
+                One brand experience, built from top to bottom.
               </h2>
               <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-5">
-                Aegis Fleet AI brings vehicle readiness, preventive maintenance,
-                compliance, dispatch context, and AI-assisted oversight into one
-                command interface built specifically for EMS and medical fleets.
+                For The Field House Gym, we built the positioning, website,
+                customer journey, lead capture, onboarding flow, FAQs, and
+                campaign video used across both Texas locations.
               </p>
               <div className="mt-7 grid grid-cols-2 gap-4">
-                <ProofMetric label="Operating picture" value="One screen" />
-                <ProofMetric label="AI boundary" value="Human approval" />
-                <ProofMetric label="Primary mission" value="Readiness" />
+                <ProofMetric label="Locations supported" value="Two" />
+                <ProofMetric label="Customer access" value="24 / 7" />
+                <ProofMetric label="Delivery" value="Site + video" />
                 <ProofMetric label="Status" value="Live" accent />
               </div>
               <Link href="/work" className="inline-flex mt-8 text-sm text-[color:var(--color-cyan)] hover:underline">
@@ -283,8 +334,8 @@ export default function ServicesPage() {
             </div>
             <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-[color:var(--color-border)] shadow-[0_28px_70px_-40px_rgba(0,217,255,0.45)]">
               <Image
-                src="/work/aegisfleet.png"
-                alt="Aegis Fleet AI command center"
+                src="/work/fieldhouse.png"
+                alt="The Field House Gym website"
                 fill
                 sizes="(max-width: 1024px) 100vw, 650px"
                 className="object-cover"
@@ -393,11 +444,11 @@ export default function ServicesPage() {
           <div>
             <div className="eyebrow mb-3">● Start with the operational problem</div>
             <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-2xl">
-              Show us where the work is breaking.
+              Build the system that runs your business.
             </h2>
             <p className="text-[color:var(--color-text-secondary)] mt-3 max-w-xl">
-              We&apos;ll map the system that fixes it—and tell you honestly if
-              the answer is smaller than a custom build.
+              Start with the public brand, the private operation, or the gap
+              between them. We&apos;ll map the right platform around the company.
             </p>
           </div>
           <Link href="/contact" className="btn-primary whitespace-nowrap">
@@ -431,6 +482,34 @@ function ServiceMeta({
 }
 
 function SolutionVisual({ kind }: { kind: string }) {
+  if (kind === "platform") {
+    return (
+      <div className="solution-visual">
+        <div className="visual-label">One connected business platform</div>
+        <div className="platform-architecture">
+          <div className="platform-layer platform-layer-public">
+            <span>Public experience</span>
+            <strong>Website · SEO · Leads · Booking</strong>
+          </div>
+          <div className="platform-connector">Connected company data</div>
+          <div className="platform-layer platform-layer-private">
+            <span>Private operation</span>
+            <strong>Admin · CRM · Apps · Dashboards</strong>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          {["Workflows", "Reporting", "Social systems", "AI controls"].map((item) => (
+            <div key={item} className="system-module">
+              <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--color-cyan)]" />
+              {item}
+            </div>
+          ))}
+        </div>
+        <div className="visual-note">Built around the business. Owned by the business.</div>
+      </div>
+    );
+  }
+
   if (kind === "workflow") {
     return (
       <div className="solution-visual">

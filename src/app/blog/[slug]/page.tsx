@@ -165,8 +165,8 @@ export default async function BlogPostPage({
             <h3 className="text-lg font-medium mb-2">John Hockinson</h3>
             <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-3">
               Founder of TomorrowsTech AI. 18 years inside telecom and
-              infrastructure programs — now building AI command centers,
-              custom websites, and operations systems for businesses still
+              infrastructure programs — now building business operating
+              platforms, AI command centers, and operations systems for businesses still
               running on spreadsheets and email chains.
             </p>
             <Link

@@ -19,7 +19,7 @@ const helpfulLinks = [
   {
     href: "/services",
     title: "Services",
-    body: "Nine service lines: command centers, custom AI, websites, video, and more.",
+    body: "Business operating platforms, command centers, workflow automation, and custom AI.",
   },
   {
     href: "/work",

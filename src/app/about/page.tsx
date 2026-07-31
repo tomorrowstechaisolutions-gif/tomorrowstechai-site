@@ -50,10 +50,17 @@ export default function AboutPage() {
 
           <h2>What we build</h2>
           <p>
-            We build AI command centers, Smartsheet workflows, fleet and crew
-            management systems, financial dashboards, custom AI platforms, and
-            modern websites — the kind of systems that pull every layer of an
-            operation onto one source of truth.
+            Our flagship build is a custom business operating platform: a
+            modern public website for customers and a private operating system
+            behind it for the team. CRM, dashboards, apps, forms, approvals,
+            reporting, social-content workflows, and AI all live in one system
+            shaped around the company.
+          </p>
+          <p>
+            We also build focused command centers, Smartsheet workflows, fleet
+            and crew management systems, financial dashboards, and private AI
+            tools—the pieces that give leadership one trustworthy operating
+            picture.
           </p>
           <p>
             For construction, contractors, field operations, telecom, real
@@ -87,10 +94,10 @@ export default function AboutPage() {
           </p>
           <ul>
             <li>
-              <strong><a href="https://aegisfleetai.com" target="_blank" rel="noopener noreferrer">Aegis Fleet AI</a></strong> — the all-in-one AI operating system built for EMS and medical fleets.
-              Safety, compliance, protection. AI agents handle PM scheduling,
-              compliance tracking, and dispatch readiness so crews can focus on
-              the call. Our newest product.
+              <strong><Link href="/job-catcher">Job Catcher</Link></strong> —
+              missed-call text-back, review automation, and lead follow-up for
+              contractors. A focused product built to keep real opportunities
+              from dying in voicemail.
             </li>
             <li>
               <strong>Held</strong> — AI-powered coordination app for busy

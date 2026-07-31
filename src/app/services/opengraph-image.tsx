@@ -9,6 +9,6 @@ export default function Image() {
     eyebrow: "Services",
     title: "AI for the operations teams that actually run the work.",
     subtitle:
-      "Nine service lines. Command centers, websites, video, custom AI, and program management.",
+      "Modern websites with private operations systems behind them—CRM, dashboards, apps, workflows, and AI.",
   });
 }
