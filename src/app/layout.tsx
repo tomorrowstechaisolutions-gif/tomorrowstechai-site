@@ -132,6 +132,8 @@ const organizationJsonLd = {
     "@type": "Person",
     name: "John Hockinson",
     jobTitle: "Founder",
+    image:
+      "https://tomorrowstechai.com/about/john-hockinson-portrait.png",
     sameAs: "https://www.linkedin.com/in/johnhockinson/",
   },
   priceRange: "$$$",
