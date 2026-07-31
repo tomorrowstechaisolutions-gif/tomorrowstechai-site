@@ -78,7 +78,7 @@ export function ContactForm() {
           name="message"
           rows={6}
           required
-          placeholder="Tell us what the business needs to run — public website, admin backend, CRM, dashboards, apps, workflows, social systems, or something else..."
+          placeholder="Tell us what you need — a Job Catcher missed-call setup, public website, admin backend, CRM, dashboards, apps, workflows, social systems, or something else..."
           className="w-full bg-[color:var(--color-bg)] border border-[color:var(--color-border)] rounded-md px-4 py-3 text-[color:var(--color-text)] placeholder-[color:var(--color-text-muted)] focus:border-[color:var(--color-cyan)] focus:outline-none transition-colors"
         />
       </div>

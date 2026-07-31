@@ -5,7 +5,7 @@ export const metadata = {
   title:
     "Job Catcher — Missed Call Text Back for Contractors | Temple, Belton & Killeen TX",
   description:
-    "Every missed call is a job your competitor caught. Job Catcher texts your missed calls back in seconds, wins you Google reviews, and follows up on every lead — built for roofers, HVAC, plumbers, fence and concrete crews in Temple, Belton, Killeen and Central Texas. $350/month flat. Free 2-week pilot.",
+    "Job Catcher connects to a contractor's business line and sends custom missed-call responses while the crew is busy. Built and managed for roofers, HVAC, plumbers, fence and concrete crews in Central Texas. $350/month. Free 2-week pilot.",
   keywords: [
     "missed call text back",
     "contractor answering service Temple TX",
@@ -19,7 +19,7 @@ export const metadata = {
   openGraph: {
     title: "Job Catcher — Never Lose Another Job to a Missed Call",
     description:
-      "Missed-call text-back + review automation + lead follow-up for Central Texas contractors. $350/month flat. Free 2-week pilot — if it doesn't catch you a job, rip it out.",
+      "Custom missed-call text responses, lead alerts, follow-up, and review workflows for Central Texas contractors. Fully configured and managed for $350/month.",
     url: "https://tomorrowstechai.com/job-catcher",
     type: "website",
   },
@@ -28,48 +28,68 @@ export const metadata = {
 const steps = [
   {
     tag: "01",
-    title: "A customer calls. You're on a roof.",
-    body: "Service businesses miss 25–40% of their inbound calls — you're up a ladder, in an attic, running a crew. The customer doesn't leave a voicemail. They call the next name on Google.",
+    title: "We connect your business line.",
+    body: "We verify the best setup for your current number, carrier, and call flow. Depending on the line, we connect it directly or configure forwarding so missed calls can trigger the workflow.",
   },
   {
     tag: "02",
-    title: "Seconds later, they get your text.",
-    body: "“This is Mike's Roofing — on a job right now. What do you need? I'll call you right back.” Automatic, instant, from your business number. The customer stops dialing your competitors, because you already answered.",
+    title: "We write responses that sound like you.",
+    body: "Your trade, services, hours, service area, preferred tone, and callback expectations are built into the response. It feels like your company answering—not a canned bot.",
   },
   {
     tag: "03",
-    title: "You call back and win the job.",
-    body: "You get an instant alert with their number. Call back on your schedule — the job's still yours. After the work's done, Job Catcher automatically asks the happy customer for a Google review, so the next customer finds you first.",
+    title: "A missed caller gets an immediate text.",
+    body: "When you cannot answer, Job Catcher responds automatically and alerts you. The customer can explain what they need while you finish the job, giving you a better chance to call back before they move on.",
   },
 ];
 
 const included = [
   {
-    title: "24/7 missed-call text-back",
-    body: "Every unanswered call gets an instant, personal-sounding text from your business line. Works while you're on a roof, in a crawlspace, or asleep.",
+    title: "Business-line connection",
+    body: "We configure the number, forwarding, carrier registration, and missed-call trigger required for your specific phone setup.",
   },
   {
-    title: "Google review engine",
-    body: "Job done → customer automatically gets a review request text. Five-star work deserves five-star proof. Reviews are how contractors win local search — most great crews around here have fewer than 20.",
+    title: "Custom response writing",
+    body: "We write the initial reply and follow-up language around your company, services, schedule, service area, and the way you actually speak to customers.",
   },
   {
-    title: "Lead follow-up that never forgets",
-    body: "New inquiries get a polite automatic follow-up sequence, so no lead goes cold in your pocket. Any reply comes straight to you — a human closes, the machine just never drops the ball.",
+    title: "Lead alerts and conversations",
+    body: "Replies stay visible in one managed conversation flow, and you are alerted when a customer responds so a real person can take over and close the work.",
+  },
+  {
+    title: "Follow-up and review workflows",
+    body: "We can configure polite lead follow-up and post-job review requests, then tune the messages as you learn what gets the best response.",
   },
 ];
 
 const faqs = [
   {
     q: "How fast can this be running on my line?",
-    a: "About an hour of setup, and nothing about your phone or number changes — you keep your number, calls ring exactly like they do today. The automation only wakes up when you can't answer.",
+    a: "We can build the workflow quickly, but activation depends on connecting the number and completing required carrier and A2P registration. We give you a realistic activation date after checking your current phone setup.",
+  },
+  {
+    q: "Can I keep my existing business number?",
+    a: "In most cases we can connect your existing business line or use call forwarding so customers keep calling the number they already know. The exact setup depends on your carrier and number type, and we verify that before changing anything.",
+  },
+  {
+    q: "Are the responses generic?",
+    a: "No. We write them around your company, trade, services, hours, service area, preferred tone, and callback process. You approve the language before it goes live, and we can adjust it as you learn what customers respond to.",
+  },
+  {
+    q: "Is this an answering service or an AI receptionist?",
+    a: "No. Job Catcher does not pretend to estimate, diagnose, or close the job for you. It acknowledges the missed call, asks what the customer needs, keeps the conversation open, and alerts you. You or your team take over when you are available.",
   },
   {
     q: "What does it cost?",
-    a: "$350/month flat. No contract, no setup fee, no per-text nickel-and-diming. One recovered service call typically pays for the month; one recovered roof pays for the year.",
+    a: "$350 per month for the managed Job Catcher service. That covers configuration, custom response writing, workflow management, testing, and ongoing adjustments. There is no long-term contract.",
   },
   {
     q: "What's the free pilot?",
-    a: "We install Job Catcher on your line free for two weeks. If it catches you a job, we start at $350/month. If it doesn't, we rip it out and shake hands. All the risk is ours.",
+    a: "Once the line is approved and connected, we run Job Catcher on your real call flow for two weeks. You can see the conversations it catches before deciding whether to continue at $350 per month.",
+  },
+  {
+    q: "Do I have to learn or manage another app?",
+    a: "No. Job Catcher is a fully managed service. TomorrowsTech AI handles the phone workflow, custom responses, testing, monitoring, and ongoing tuning behind the scenes.",
   },
   {
     q: "Who's behind it?",
@@ -81,7 +101,8 @@ const serviceJsonLd = {
   "@context": "https://schema.org",
   "@type": "Service",
   name: "Job Catcher — Missed Call Text-Back for Contractors",
-  serviceType: "Missed call text-back, review automation, and lead follow-up",
+  serviceType:
+    "Managed missed-call text responses, contractor lead follow-up, and review automation",
   provider: {
     "@type": "ProfessionalService",
     name: "TomorrowsTech AI",
@@ -107,7 +128,8 @@ const serviceJsonLd = {
     "@type": "Offer",
     price: "350",
     priceCurrency: "USD",
-    description: "$350/month flat — free 2-week pilot, no contract, no setup fee",
+    description:
+      "$350/month managed service with custom responses and a free 2-week pilot",
   },
 };
 
@@ -139,13 +161,14 @@ export default function JobCatcherPage() {
           <div>
             <div className="eyebrow mb-6">⚡ Job Catcher · For Contractors · Temple – Belton – Killeen</div>
             <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1]">
-              Every missed call is a job your{" "}
-              <span className="text-[color:var(--color-cyan)]">competitor caught.</span>
+              When you can&apos;t answer the call,{" "}
+              <span className="text-[color:var(--color-cyan)]">your business still does.</span>
             </h1>
             <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6">
-              You can&apos;t answer the phone from a roof. Job Catcher texts your missed
-              calls back in seconds, wins you Google reviews after every job, and
-              follows up on every lead — automatically, from your own number.
+              We connect your business line and build custom text responses
+              around your company. When you&apos;re on a roof, under a sink, or
+              running a crew, the customer gets an immediate answer instead of
+              another reason to call the next contractor.
             </p>
             <div className="flex flex-wrap gap-4 mt-8">
               <a
@@ -162,8 +185,8 @@ export default function JobCatcherPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-[color:var(--color-text-secondary)]">
-              Go ahead — call that number after hours. Watch what happens when we
-              &quot;miss&quot; your call. That&apos;s the product.
+              Call that number after hours and watch the managed response flow
+              work. That is the product your customers will experience.
             </p>
           </div>
 
@@ -203,23 +226,23 @@ export default function JobCatcherPage() {
           </div>
         </div>
 
-        {/* Stat row */}
+        {/* Offer row */}
         <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
           <div>
-            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">25–40%</div>
-            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">of calls go unanswered</div>
+            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">Seconds</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">to the first response</div>
           </div>
           <div>
-            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">30–60%</div>
-            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">recovered by instant text</div>
+            <div className="font-mono text-2xl text-[color:var(--color-cyan)]">Custom</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">to your company and trade</div>
           </div>
           <div>
             <div className="font-mono text-2xl text-[color:var(--color-cyan)]">$350</div>
-            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">flat per month · no contract</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">managed service per month</div>
           </div>
           <div>
             <div className="font-mono text-2xl text-[color:var(--color-cyan)]">2 wks</div>
-            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">free pilot on your real line</div>
+            <div className="mt-1 text-xs uppercase tracking-wider text-[color:var(--color-text-secondary)]">free pilot after activation</div>
           </div>
         </div>
       </section>
@@ -243,30 +266,68 @@ export default function JobCatcherPage() {
         </div>
       </section>
 
-      {/* The math */}
+      {/* Response playbook */}
+      <section className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="card card-accent p-8">
+          <div className="grid lg:grid-cols-[0.7fr_1.3fr] gap-8 lg:gap-12">
+            <div>
+              <div className="eyebrow-muted mb-3">Your response playbook</div>
+              <h2 className="text-2xl md:text-3xl font-medium tracking-tight">
+                Built around your business before it answers for you.
+              </h2>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4">
+                You approve the language. We configure the workflow and keep it
+                current as your business changes.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                ["Company voice", "Straightforward, friendly, urgent, or professional"],
+                ["Services", "What you handle—and what you do not"],
+                ["Service area", "The cities and radius your crew covers"],
+                ["Business hours", "Different replies for busy, closed, and after-hours"],
+                ["Customer questions", "The details you need before calling back"],
+                ["Callback process", "What the customer should expect next"],
+              ].map(([title, body]) => (
+                <div
+                  key={title}
+                  className="rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg)]/60 p-4"
+                >
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-cyan)]">
+                    {title}
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-[color:var(--color-text-secondary)]">
+                    {body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* The value */}
       <section className="max-w-6xl mx-auto px-6 pb-16">
         <div className="card card-accent p-8">
           <div className="md:flex md:items-start md:gap-10">
             <div className="md:w-1/3 mb-4 md:mb-0">
-              <div className="eyebrow-muted mb-2">The math</div>
+              <div className="eyebrow-muted mb-2">Why it matters</div>
               <h3 className="text-xl font-medium">
-                One caught job pays for months.
+                The first useful response often wins the conversation.
               </h3>
             </div>
             <div className="md:w-2/3 text-[color:var(--color-text-secondary)] leading-relaxed text-[15px] space-y-3">
               <p>
-                Service businesses miss{" "}
-                <strong className="text-[color:var(--color-text)]">25–40% of inbound calls</strong>,
-                and instant text-back recovers{" "}
-                <strong className="text-[color:var(--color-text)]">30–60% of those callers</strong>{" "}
-                into booked work.
+                A homeowner with a leak, a dead air conditioner, or a damaged
+                fence is not looking for voicemail. They are looking for a
+                contractor who acknowledges the problem and gives them a clear
+                next step.
               </p>
               <p>
-                For a Central Texas roofer in hail season, one recovered call can be a{" "}
-                <strong className="text-[color:var(--color-cyan)]">$12,000+ insurance job</strong>.
-                For HVAC in a Texas July, it&apos;s the service call that didn&apos;t go to
-                the other guy. Job Catcher costs $350/month — the arithmetic isn&apos;t
-                subtle.
+                Job Catcher gives them that response while your hands are full.
+                You still handle the estimate and close the job; the system
+                simply helps keep the opportunity alive long enough for you to
+                take over.
               </p>
             </div>
           </div>
@@ -276,7 +337,7 @@ export default function JobCatcherPage() {
       {/* What's included */}
       <section className="max-w-6xl mx-auto px-6 pb-16">
         <div className="eyebrow mb-6">● What&apos;s included</div>
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           {included.map((s) => (
             <div key={s.title} className="card">
               <h3 className="text-lg font-medium mb-2">{s.title}</h3>
@@ -294,21 +355,24 @@ export default function JobCatcherPage() {
           <div className="md:flex md:items-start md:gap-10">
             <div className="md:w-1/3 mb-4 md:mb-0">
               <div className="eyebrow-muted mb-2">Pricing</div>
-              <h3 className="text-xl font-medium">$350/month. Flat. That&apos;s it.</h3>
+              <h3 className="text-xl font-medium">$350/month. Managed. Month to month.</h3>
             </div>
             <div className="md:w-2/3 text-[color:var(--color-text-secondary)] leading-relaxed text-[15px] space-y-3">
               <p>
-                No contract. No setup fee. No per-text charges. Cancel any month —
-                though nobody cancels the thing that answers their phone.
+                This is a managed service, not a login we hand you. We connect
+                the line, write the responses, configure the workflow, test it,
+                monitor the setup, and adjust the messages with you. There is no
+                long-term contract.
               </p>
               <p>
                 <strong className="text-[color:var(--color-text)]">The pilot:</strong>{" "}
-                we install it free for two weeks on your real line.{" "}
+                after your number is approved and connected, we run the workflow
+                free for two weeks on your real call flow.{" "}
                 <strong className="text-[color:var(--color-cyan)]">
-                  If it catches you a job, we start at $350/month. If it
-                  doesn&apos;t, we rip it out and shake hands.
+                  See the conversations it catches, then decide whether the
+                  $350/month service earns its place.
                 </strong>{" "}
-                All the risk is ours.
+                If it does not fit, you do not continue.
               </p>
             </div>
           </div>
@@ -402,9 +466,9 @@ export default function JobCatcherPage() {
             How many jobs called someone else this week?
           </h2>
           <p className="text-[color:var(--color-text-secondary)] mt-3 max-w-2xl mx-auto">
-            Two weeks free on your real line. If it catches a job, we go from
-            there. If it doesn&apos;t, you lose nothing but the jobs you were
-            already losing.
+            We connect your line, write your responses, and let you see the
+            workflow operate on real missed calls for two weeks. Continue only
+            if the $350/month service proves useful to your business.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-6">
             <a

@@ -293,13 +293,13 @@ export default function ServicesPage() {
               Job Catcher turns missed calls into another chance to win the work.
             </h2>
             <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-3 max-w-3xl">
-              Missed-call text-back, review automation, and lead follow-up—from
-              the contractor&apos;s own number. A focused product for roofers,
-              HVAC, plumbing, fence, concrete, and field-service businesses that
-              cannot afford to let an opportunity die in voicemail.
+              We connect the contractor&apos;s business line and write custom
+              responses around their trade, hours, service area, and tone. When
+              the crew cannot answer, the customer gets an immediate text and
+              the contractor gets another chance to win the work.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <span className="text-sm text-[color:var(--color-cyan)]">$350/month flat</span>
+              <span className="text-sm text-[color:var(--color-cyan)]">$350/month managed service</span>
               <span className="text-sm text-[color:var(--color-text-muted)]">Free two-week pilot</span>
               <Link href="/job-catcher" className="text-sm text-[color:var(--color-text)] hover:text-[color:var(--color-cyan)]">
                 See Job Catcher →

@@ -35,7 +35,7 @@ export function Footer() {
           <div>
             <div className="eyebrow-muted mb-4">Products & brands</div>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/job-catcher" className="text-[color:var(--color-cyan)] hover:text-[color:var(--color-text)] transition-colors">Job Catcher — Contractor lead automation</Link></li>
+              <li><Link href="/job-catcher" className="text-[color:var(--color-cyan)] hover:text-[color:var(--color-text)] transition-colors">Job Catcher — Managed missed-call response</Link></li>
               <li><a href="https://myheldapp.com" target="_blank" rel="noopener noreferrer" className="text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-cyan)] transition-colors">Held — Family ops app</a></li>
               <li><span className="text-[color:var(--color-text-secondary)]">NexaFlow AI — Local AI OS</span></li>
               <li><span className="text-[color:var(--color-text-secondary)]">REI Ops Local — REI platform</span></li>

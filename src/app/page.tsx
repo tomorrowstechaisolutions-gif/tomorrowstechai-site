@@ -70,14 +70,15 @@ export default function Home() {
                 Never lose another job to a missed call.
               </p>
               <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-5">
-                Job Catcher texts missed callers back in seconds, keeps every
-                opportunity visible, follows up on leads, and helps turn
-                completed work into more Google reviews.
+                We connect your business line and write responses around your
+                company. When you cannot answer, Job Catcher texts the customer
+                immediately and keeps the conversation alive until you can take
+                over.
               </p>
               <div className="job-work-points mb-7">
-                <span>Missed-call text back</span>
-                <span>Lead follow-up</span>
-                <span>Review automation</span>
+                <span>Connected business line</span>
+                <span>Custom responses</span>
+                <span>$350/month managed</span>
                 <span>Free two-week pilot</span>
               </div>
               <Link href="/job-catcher" className="btn-primary">
@@ -168,7 +169,7 @@ export default function Home() {
           <BuildCard
             tag="Contractor product"
             title="Job Catcher"
-            body="Missed-call text-back, review automation, and lead follow-up for contractors. It catches the opportunity before a competitor does."
+            body="A managed missed-call response service for contractors. We connect the business line, write custom responses, and keep the opportunity alive until the contractor can take over."
             href="/job-catcher"
           />
           <BuildCard

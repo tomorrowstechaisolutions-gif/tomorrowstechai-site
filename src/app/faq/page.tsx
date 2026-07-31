@@ -20,6 +20,10 @@ const faqs = [
     a: "It is a modern public website and a private business operating system built as one connected platform. Customers see the website, booking, services, and lead experience. Your team signs into the private side for CRM, customer records, dashboards, apps, forms, approvals, reporting, social-content workflows, and AI-assisted operations. Every module is built around the way your company actually runs.",
   },
   {
+    q: "What is Job Catcher, and what does the $350/month include?",
+    a: "Job Catcher is a managed missed-call response service for contractors. We connect an eligible business line or configure forwarding, write custom responses around the contractor's trade, services, hours, area, tone, and callback process, test the workflow, and tune it over time. A missed caller gets an immediate text and the contractor gets an alert so a human can take over. The managed service is $350/month, with a free two-week pilot after number and carrier approval.",
+  },
+  {
     q: "How long does an engagement take?",
     a: "It depends on scope. A standalone marketing website typically ships in 2–4 weeks. A Smartsheet command center build is 4–8 weeks. A full business operating platform, AI workflow, or custom application is usually 8–16 weeks. We tell you the realistic timeline during the discovery call — no rosy estimates that slip later.",
   },

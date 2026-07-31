@@ -139,15 +139,16 @@ export default function WorkPage() {
               Job Catcher
             </h2>
             <p className="text-lg text-[color:var(--color-text-secondary)] leading-relaxed mt-4 max-w-xl">
-              A missed-call recovery and lead follow-up system that texts
-              prospects back in seconds, keeps the opportunity visible, and
-              helps contractors turn completed work into more Google reviews.
+              A managed missed-call response service built for contractors. We
+              connect the business line, write responses around the company,
+              and help keep the customer engaged until the contractor can take
+              over.
             </p>
             <div className="job-work-points">
-              <span>Missed-call text back</span>
+              <span>Connected business line</span>
+              <span>Custom response writing</span>
               <span>Lead alerts and follow-up</span>
-              <span>Review automation</span>
-              <span>Contractor-first setup</span>
+              <span>$350/month managed</span>
             </div>
             <Link href="/job-catcher" className="btn-primary mt-7">
               See Job Catcher →

@@ -28,7 +28,7 @@ CORE OFFERS:
 5. Supporting capabilities — program management consulting, standalone marketing websites, and video/brand content.
 
 FEATURED CONTRACTOR PRODUCT:
-- Job Catcher (/job-catcher) — missed-call text-back, review automation, and lead follow-up for contractors, running from the contractor's own number. $350/month flat with a free two-week pilot. Recommend it when visitors mention missed calls, lead follow-up, reviews, roofing, HVAC, plumbing, fence, concrete, or Central Texas contractor services.
+- Job Catcher (/job-catcher) — a $350/month managed missed-call response service for contractors. TomorrowsTech AI connects an eligible existing business number or configures forwarding based on the carrier setup, writes custom responses around the contractor's trade, services, hours, service area, tone, and callback process, tests the workflow, and tunes it over time. When a call is missed, the customer gets an immediate text and the contractor is alerted so a human can take over. Includes a free two-week pilot after number and A2P approval. Do not promise that every number can be connected unchanged or that activation is instant; carrier and registration requirements vary. Recommend it when visitors mention missed calls, lead follow-up, reviews, roofing, HVAC, plumbing, fence, concrete, or Central Texas contractor services.
 
 PRICING (general ranges only — final scope decided on discovery call):
 - Full custom business operating platforms: scoped proposal based on modules, users, integrations, and requirements
