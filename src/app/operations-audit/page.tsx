@@ -5,10 +5,10 @@ import { LeadMagnetForm } from "@/components/LeadMagnetForm";
 export const metadata = {
   title: "Operations Audit Checklist",
   description:
-    "Free PDF — 12 questions to ask before adding AI to your operation. Self-audit your foundation in 5 minutes. By John Hockinson, founder of TomorrowsTech AI.",
+    "Free PDF — 12 questions to ask before adding AI to your operation. Self-audit your foundation in 5 minutes. By John Hockinson, founder of Tomorrow’s Tech AI.",
   alternates: { canonical: "/operations-audit" },
   openGraph: {
-    title: "The Operations Audit Checklist · TomorrowsTech AI",
+    title: "The Operations Audit Checklist · Tomorrow’s Tech AI",
     description:
       "12 questions to ask before adding AI to your operation. Score yourself honestly — find out where your foundation is ready and where it needs work.",
     url: "https://tomorrowstechai.com/operations-audit",

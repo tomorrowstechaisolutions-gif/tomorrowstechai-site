@@ -89,11 +89,11 @@ const faqs = [
   },
   {
     q: "Do I have to learn or manage another app?",
-    a: "No. Job Catcher is a fully managed service. TomorrowsTech AI handles the phone workflow, custom responses, testing, monitoring, and ongoing tuning behind the scenes.",
+    a: "No. Job Catcher is a fully managed service. Tomorrow’s Tech AI handles the phone workflow, custom responses, testing, monitoring, and ongoing tuning behind the scenes.",
   },
   {
     q: "Who's behind it?",
-    a: "TomorrowsTech AI is a Belton, TX company run by John Hockinson — 18 years in telecom and construction operations before building automation systems. We work in the trades' world, not the other way around.",
+    a: "Tomorrow’s Tech AI is a Belton, TX company run by John Hockinson — 18 years in telecom and construction operations before building automation systems. We work in the trades' world, not the other way around.",
   },
 ];
 
@@ -105,7 +105,7 @@ const serviceJsonLd = {
     "Managed missed-call text responses, contractor lead follow-up, and review automation",
   provider: {
     "@type": "ProfessionalService",
-    name: "TomorrowsTech AI",
+    name: "Tomorrow’s Tech AI",
     legalName: "Tomorrows Tech AI LLC",
     telephone: "+1-254-272-3313",
     email: "john@tomorrowstechai.com",
@@ -414,7 +414,7 @@ export default function JobCatcherPage() {
           <div className="mb-6 shrink-0 md:mb-0">
             <Image
               src="/lead-magnets/ai-field-guide/john-hockinson.png"
-              alt="John Hockinson — founder, TomorrowsTech AI, Belton TX"
+              alt="John Hockinson — founder, Tomorrow’s Tech AI, Belton TX"
               width={180}
               height={180}
               className="rounded-2xl border border-[color:var(--color-border)] object-cover"

@@ -3,7 +3,7 @@ import { Resend } from "resend";
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
 const FROM_EMAIL =
-  process.env.CONTACT_FROM_EMAIL || "TomorrowsTech AI <hello@tomorrowstechai.com>";
+  process.env.CONTACT_FROM_EMAIL || "Tomorrow’s Tech AI <hello@tomorrowstechai.com>";
 
 export async function POST(request: Request) {
   try {

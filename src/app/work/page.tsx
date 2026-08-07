@@ -5,10 +5,10 @@ import { LazyYouTube } from "@/components/LazyYouTube";
 export const metadata = {
   title: "Work",
   description:
-    "Selected business operating platforms, command centers, contractor automation, websites, and client systems built by TomorrowsTech AI.",
+    "Selected business operating platforms, command centers, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
   alternates: { canonical: "/work" },
   openGraph: {
-    title: "Work · TomorrowsTech AI",
+    title: "Work · Tomorrow’s Tech AI",
     description:
       "Business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
     url: "https://tomorrowstechai.com/work",
@@ -25,7 +25,7 @@ const platformLayers = [
 
 const supportingWork = [
   {
-    title: "TomorrowsTech AI",
+    title: "Tomorrow’s Tech AI",
     category: "Company platform",
     body: "A custom Next.js marketing system with lead capture, field notes, downloadable resources, an AI assistant, SEO infrastructure, and connected inquiry workflows.",
     image: "/work/tomorrowstechai.png",
@@ -64,7 +64,7 @@ export default function WorkPage() {
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-7 max-w-3xl">
           Public websites, private admin systems, CRM, command centers,
           dashboards, apps, and automation designed as one connected operation.
-          Here is the work that best represents where TomorrowsTech AI is going.
+          Here is the work that best represents where Tomorrow’s Tech AI is going.
         </p>
         <div className="flex flex-wrap gap-3 mt-8">
           <Link href="/services#business-platforms" className="btn-primary">

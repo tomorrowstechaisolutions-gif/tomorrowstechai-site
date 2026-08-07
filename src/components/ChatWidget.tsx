@@ -10,7 +10,7 @@ type Message = {
 const INITIAL_GREETING: Message = {
   role: "assistant",
   content:
-    "Hi — I'm the TomorrowsTech AI assistant. Ask me about custom business operating platforms, command centers, Job Catcher, or AI workflows. I'll point you in the right direction.",
+    "Hi — I'm the Tomorrow’s Tech AI assistant. Ask me about custom business operating platforms, command centers, Job Catcher, or AI workflows. I'll point you in the right direction.",
 };
 
 export function ChatWidget() {
@@ -139,7 +139,7 @@ export function ChatWidget() {
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="w-2 h-2 rounded-full bg-[color:var(--color-cyan)] animate-pulse"></span>
                 <span className="font-mono text-xs tracking-widest text-[color:var(--color-cyan)] uppercase">
-                  TomorrowsTech AI · Live
+                  Tomorrow’s Tech AI · Live
                 </span>
               </div>
               <div className="text-xs text-[color:var(--color-text-muted)] font-mono">

@@ -4,10 +4,10 @@ import { CalEmbed } from "@/components/CalEmbed";
 export const metadata = {
   title: "Contact",
   description:
-    "Book a discovery call with TomorrowsTech AI for a custom business operating platform, command center, workflow system, or AI solution.",
+    "Book a discovery call with Tomorrow’s Tech AI for a custom business operating platform, command center, workflow system, or AI solution.",
   alternates: { canonical: "/contact" },
   openGraph: {
-    title: "Contact · TomorrowsTech AI",
+    title: "Contact · Tomorrow’s Tech AI",
     description:
       "Book a discovery call. 30 minutes, no pitch, just notes.",
     url: "https://tomorrowstechai.com/contact",

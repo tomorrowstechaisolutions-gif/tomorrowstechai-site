@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Page Not Found",
   description:
-    "The page you're looking for doesn't exist on the TomorrowsTech AI command center.",
+    "The page you're looking for doesn't exist on the Tomorrow’s Tech AI command center.",
   robots: {
     index: false,
     follow: false,

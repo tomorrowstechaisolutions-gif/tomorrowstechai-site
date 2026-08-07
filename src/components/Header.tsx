@@ -164,8 +164,9 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-5 md:px-6 h-[68px] flex items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-3 group shrink-0">
             <BrandMark size={34} className="transition-transform duration-300 group-hover:scale-[1.05]" />
-            <span className="font-bold tracking-[0.06em] text-[14px] md:text-[16px] whitespace-nowrap">
-              TOMORROWSTECH <span className="text-[color:var(--color-blue)]">AI</span>
+            <span className="tt-wordmark text-[13px] md:text-[15.5px] whitespace-nowrap">
+              <span className="tt-wordmark-metal">TOMORROW’S TECH</span>{" "}
+              <span className="tt-wordmark-ai">AI</span>
             </span>
           </Link>
 

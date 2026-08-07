@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const audienceId = process.env.RESEND_AUDIENCE_ID || DEFAULT_AUDIENCE_ID;
     const fromEmail =
       process.env.CONTACT_FROM_EMAIL ||
-      "TomorrowsTech AI <hello@tomorrowstechai.com>";
+      "Tomorrow’s Tech AI <hello@tomorrowstechai.com>";
     const toEmail =
       process.env.CONTACT_TO_EMAIL || "tomorrowstechaisolutions@gmail.com";
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
           from: fromEmail,
           to: toEmail,
           subject: "New newsletter subscriber",
-          text: `New subscriber to TomorrowsTech AI field notes:\n\n${email}\n\nFrom: ${ip}\n\nView the full list:\nhttps://resend.com/audiences/${audienceId}/contacts`,
+          text: `New subscriber to Tomorrow’s Tech AI field notes:\n\n${email}\n\nFrom: ${ip}\n\nView the full list:\nhttps://resend.com/audiences/${audienceId}/contacts`,
         });
       } catch (err) {
         // Don't fail the user-facing request if notification email fails

@@ -27,7 +27,7 @@ const MAGNETS: Record<string, Magnet> = {
     id: "operations-audit",
     title: "The Operations Audit Checklist",
     pdfPath: "/downloads/operations-audit-checklist.pdf",
-    subject: "Your Operations Audit Checklist · TomorrowsTech AI",
+    subject: "Your Operations Audit Checklist · Tomorrow’s Tech AI",
     notificationSubject: "New lead magnet download (Operations Audit)",
     emailBody: (firstName: string) => {
       const greeting = firstName ? `Hi ${firstName},` : "Hey,";
@@ -44,7 +44,7 @@ If 8 or more of the questions land easily — your operation is genuinely ready 
 If you want a 30-minute walk-through of these questions against your specific operation, just reply to this email or book a slot directly: ${SITE}/contact
 
 — John
-Founder, TomorrowsTech AI
+Founder, Tomorrow’s Tech AI
 ${SITE}`;
     },
   },
@@ -52,7 +52,7 @@ ${SITE}`;
     id: "ai-field-guide",
     title: "Your Best Next Hire Is AI",
     pdfPath: "/downloads/your-best-next-hire-is-ai.pdf",
-    subject: "Your AI Field Guide is here · TomorrowsTech AI",
+    subject: "Your AI Field Guide is here · Tomorrow’s Tech AI",
     notificationSubject: "New lead magnet download (AI Field Guide)",
     emailBody: (firstName: string) => {
       const greeting = firstName ? `Hey ${firstName},` : "Hey,";
@@ -71,7 +71,7 @@ If you want a guide to walk the path with you — the right tools for your busin
 Build smarter. Scale faster.
 
 — John
-Founder, TomorrowsTech AI
+Founder, Tomorrow’s Tech AI
 ${SITE}`;
     },
   },
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     const audienceId = process.env.RESEND_AUDIENCE_ID || DEFAULT_AUDIENCE_ID;
     const fromEmail =
       process.env.CONTACT_FROM_EMAIL ||
-      "TomorrowsTech AI <hello@tomorrowstechai.com>";
+      "Tomorrow’s Tech AI <hello@tomorrowstechai.com>";
     const toEmail =
       process.env.CONTACT_TO_EMAIL || "tomorrowstechaisolutions@gmail.com";
 

@@ -7,7 +7,7 @@ export const metadata = {
     "Custom business operating platforms, command centers, workflow automation, CRM, dashboards, apps, and AI built around the way your company actually runs.",
   alternates: { canonical: "/services" },
   openGraph: {
-    title: "Services · TomorrowsTech AI",
+    title: "Services · Tomorrow’s Tech AI",
     description:
       "A modern public website and a private operating system behind it—plus command centers, workflow automation, CRM, dashboards, apps, and AI.",
     url: "https://tomorrowstechai.com/services",

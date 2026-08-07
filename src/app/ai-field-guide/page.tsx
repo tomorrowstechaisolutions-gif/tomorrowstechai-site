@@ -8,7 +8,7 @@ export const metadata = {
     "Free 6-page field guide for business owners — a plain-English playbook for using AI to grow your business. What to hand off first, how to start in a week, and the prompts that actually move the needle. No hype. No code.",
   alternates: { canonical: "/ai-field-guide" },
   openGraph: {
-    title: "Your Best Next Hire Is AI · TomorrowsTech AI",
+    title: "Your Best Next Hire Is AI · Tomorrow’s Tech AI",
     description:
       "Free 6-page field guide. Plain English. No code. By Friday you can have a real AI workflow running for your business.",
     url: "https://tomorrowstechai.com/ai-field-guide",
@@ -229,7 +229,7 @@ export default function AIFieldGuidePage() {
           <p className="text-[color:var(--color-text-secondary)] mb-6 max-w-xl">
             If you&apos;d rather have someone help you pick the right tools,
             set up done-with-you workflows, and train your team live — that&apos;s
-            exactly what we do at TomorrowsTech AI.
+            exactly what we do at Tomorrow’s Tech AI.
           </p>
           <Link href="/contact" className="btn-primary">
             Book a 30-minute discovery call →

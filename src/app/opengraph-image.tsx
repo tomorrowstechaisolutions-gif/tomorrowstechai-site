@@ -1,14 +1,14 @@
 import { generateOgImage, ogSize, ogContentType } from "@/lib/og-image";
 
-export const alt = "TomorrowsTech AI — AI for construction & field ops";
+export const alt = "Tomorrow’s Tech AI — We build modern businesses";
 export const size = ogSize;
 export const contentType = ogContentType;
 
 export default function Image() {
   return generateOgImage({
-    eyebrow: "AI for construction · field ops · contractors",
-    title: "We build the systems your PMs wish existed.",
+    eyebrow: "We build. You grow.",
+    title: "We build modern businesses.",
     subtitle:
-      "Modern websites with private operations systems behind them—CRM, dashboards, apps, workflows, and AI.",
+      "Brand, website, commerce, operations, software and AI — one company building it together.",
   });
 }

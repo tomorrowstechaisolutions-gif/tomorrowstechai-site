@@ -3,12 +3,12 @@ import Link from "next/link";
 export const metadata = {
   title: "Terms of Service",
   description:
-    "The terms under which you may use the TomorrowsTech AI website and our services.",
+    "The terms under which you may use the Tomorrow’s Tech AI website and our services.",
   alternates: { canonical: "/terms" },
   openGraph: {
-    title: "Terms of Service · TomorrowsTech AI",
+    title: "Terms of Service · Tomorrow’s Tech AI",
     description:
-      "The terms under which you may use the TomorrowsTech AI website and our services.",
+      "The terms under which you may use the Tomorrow’s Tech AI website and our services.",
     url: "https://tomorrowstechai.com/terms",
     type: "website",
   },
@@ -32,7 +32,7 @@ export default function TermsPage() {
           <h2>Who we are</h2>
           <p>
             This website (<strong>tomorrowstechai.com</strong>) is operated by
-            Tomorrowstek LLC, doing business as TomorrowsTech AI. References
+            Tomorrowstek LLC, doing business as Tomorrow’s Tech AI. References
             to &quot;we,&quot; &quot;us,&quot; or &quot;our&quot; in these
             terms mean Tomorrowstek LLC.
           </p>

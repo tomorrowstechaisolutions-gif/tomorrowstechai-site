@@ -33,7 +33,7 @@ export async function generateMetadata({
       publishedTime: new Date(post.date).toISOString(),
       authors: ["John Hockinson"],
       tags: post.tags,
-      siteName: "TomorrowsTech AI",
+      siteName: "Tomorrow’s Tech AI",
       images: post.image
         ? [{ url: `${SITE_URL}${post.image}`, alt: post.title }]
         : undefined,
@@ -73,7 +73,7 @@ export default async function BlogPostPage({
     },
     publisher: {
       "@type": "Organization",
-      name: "TomorrowsTech AI",
+      name: "Tomorrow’s Tech AI",
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
@@ -164,7 +164,7 @@ export default async function BlogPostPage({
             <div className="eyebrow-muted mb-1">About the author</div>
             <h3 className="text-lg font-medium mb-2">John Hockinson</h3>
             <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-3">
-              Founder of TomorrowsTech AI. 18 years inside telecom and
+              Founder of Tomorrow’s Tech AI. 18 years inside telecom and
               infrastructure programs — now building business operating
               platforms, AI command centers, and operations systems for businesses still
               running on spreadsheets and email chains.

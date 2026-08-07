@@ -4,10 +4,10 @@ import Link from "next/link";
 export const metadata = {
   title: "About",
   description:
-    "Meet John Hockinson, founder of TomorrowsTech AI—an operations veteran with 18 years inside telecom, construction, and infrastructure programs, now building the systems he wished existed.",
+    "Meet John Hockinson, founder of Tomorrow’s Tech AI—an operations veteran with 18 years inside telecom, construction, and infrastructure programs, now building the systems he wished existed.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About · TomorrowsTech AI",
+    title: "About · Tomorrow’s Tech AI",
     description:
       "Meet John Hockinson—18 years inside operations, now building custom business platforms, command centers, dashboards, and AI systems.",
     url: "https://tomorrowstechai.com/about",
@@ -33,7 +33,7 @@ const journey = [
   },
   {
     step: "04",
-    title: "TomorrowsTech AI",
+    title: "Tomorrow’s Tech AI",
     body: "Custom business operating platforms shaped around the company—not generic software that forces the company to reshape itself.",
   },
 ];
@@ -78,7 +78,7 @@ export default function AboutPage() {
                 existed.
               </h1>
               <p className="text-lg md:text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-7 max-w-2xl">
-                I&apos;m John Hockinson, founder of TomorrowsTech AI. I spent
+                I&apos;m John Hockinson, founder of Tomorrow’s Tech AI. I spent
                 nearly two decades inside telecom, construction, and
                 infrastructure programs—where the work is complicated, the
                 deadlines are real, and disconnected systems cost more than
@@ -98,7 +98,7 @@ export default function AboutPage() {
               <div className="about-portrait-frame">
                 <Image
                   src="/about/john-hockinson-portrait.png"
-                  alt="John Hockinson, founder of TomorrowsTech AI"
+                  alt="John Hockinson, founder of Tomorrow’s Tech AI"
                   fill
                   priority
                   sizes="(max-width: 1024px) 90vw, 440px"
@@ -109,7 +109,7 @@ export default function AboutPage() {
               <figcaption className="about-portrait-caption">
                 <div>
                   <span>John Hockinson</span>
-                  <strong>Founder · TomorrowsTech AI</strong>
+                  <strong>Founder · Tomorrow’s Tech AI</strong>
                 </div>
                 <div className="about-portrait-location">
                   Belton, Texas
@@ -135,7 +135,7 @@ export default function AboutPage() {
               The work came first. The technology followed.
             </h2>
             <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-5">
-              TomorrowsTech AI exists because I kept seeing the same operational
+              Tomorrow’s Tech AI exists because I kept seeing the same operational
               problems repeat at every level—and because most software was built
               around features instead of the people doing the work.
             </p>

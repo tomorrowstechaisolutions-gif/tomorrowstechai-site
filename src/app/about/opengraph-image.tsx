@@ -1,6 +1,6 @@
 import { generateOgImage, ogSize, ogContentType } from "@/lib/og-image";
 
-export const alt = "About · TomorrowsTech AI";
+export const alt = "About · Tomorrow’s Tech AI";
 export const size = ogSize;
 export const contentType = ogContentType;
 

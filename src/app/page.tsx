@@ -179,7 +179,7 @@ export default function Home() {
                 <div className="relative aspect-[1020/941]">
                   <Image
                     src="/hero-building.webp"
-                    alt="The TomorrowsTech AI business system, visualised as a connected building"
+                    alt="The Tomorrow’s Tech AI business system, visualised as a connected building"
                     fill
                     priority
                     fetchPriority="high"

@@ -3,12 +3,12 @@ import Link from "next/link";
 export const metadata = {
   title: "Privacy Policy",
   description:
-    "How TomorrowsTech AI collects, uses, and protects your information. Plain-English privacy practices.",
+    "How Tomorrow’s Tech AI collects, uses, and protects your information. Plain-English privacy practices.",
   alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy Policy · TomorrowsTech AI",
+    title: "Privacy Policy · Tomorrow’s Tech AI",
     description:
-      "How TomorrowsTech AI collects, uses, and protects your information.",
+      "How Tomorrow’s Tech AI collects, uses, and protects your information.",
     url: "https://tomorrowstechai.com/privacy",
     type: "website",
   },
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         <div className="prose-blog">
           <h2>Who we are</h2>
           <p>
-            TomorrowsTech AI is a brand of Tomorrowstek LLC, a Texas-registered
+            Tomorrow’s Tech AI is a brand of Tomorrowstek LLC, a Texas-registered
             limited liability company. This Privacy Policy applies to{" "}
             <strong>tomorrowstechai.com</strong> and all related pages.
           </p>

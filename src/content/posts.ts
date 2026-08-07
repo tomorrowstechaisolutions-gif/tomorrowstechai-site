@@ -164,7 +164,7 @@ Here's what changes when Claude sees your Smartsheet directly:
 
 Here's the part most AI integrations get wrong: they're built to *automate*, not to *assist*. They send the email. They commit the change. They post the update. And when they're wrong, it's loud, public, and expensive.
 
-That's not how we build. Every Claude-powered workflow we set up at TomorrowsTech AI follows one rule: **AI proposes, you decide.**
+That's not how we build. Every Claude-powered workflow we set up at Tomorrow’s Tech AI follows one rule: **AI proposes, you decide.**
 
 Claude can draft the schedule change. You approve before it's committed. Claude can suggest the right crew. You confirm before dispatch. Claude can compile the executive summary. You read it before it ships.
 
@@ -360,9 +360,9 @@ This is the part most "AI consultants" skip. It's also where most AI deployments
 
 Start small. Test AI in one area, measure impact, then expand. A common mistake is rolling out AI across the entire organization without first proving its value in a controlled environment.
 
-## The TomorrowsTech AI Approach
+## The Tomorrow’s Tech AI Approach
 
-At TomorrowsTech AI, we help businesses cut through the AI noise and develop strategies that actually work. Our approach focuses on:
+At Tomorrow’s Tech AI, we help businesses cut through the AI noise and develop strategies that actually work. Our approach focuses on:
 
 - Identifying the right AI use cases for your business
 - Ensuring high-quality data for AI models

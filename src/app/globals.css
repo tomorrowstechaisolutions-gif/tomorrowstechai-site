@@ -2078,6 +2078,32 @@ body {
     box-shadow: 0 0 34px -6px rgba(59, 130, 246, 0.95);
   }
 
+  /* ── Wordmark ─────────────────────────────────────────────────────────── */
+
+  /* Echoes the brushed-metal treatment of the logo art without shipping the
+     wordmark as an image, so it stays selectable text for search and a11y. */
+  .tt-wordmark {
+    font-weight: 800;
+    letter-spacing: 0.055em;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.34em;
+  }
+
+  .tt-wordmark-metal {
+    background: linear-gradient(180deg, #FFFFFF 0%, #C9D2DB 44%, #8C97A3 72%, #E7EDF3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tt-wordmark-ai {
+    background: linear-gradient(180deg, #7CC4FF 0%, #2E86F0 55%, #1257B0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   /* ── Trust strip ──────────────────────────────────────────────────────── */
 
   .tt-trust {

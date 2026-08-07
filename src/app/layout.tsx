@@ -20,12 +20,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "TomorrowsTech AI — AI for construction & field ops",
-    template: "%s · TomorrowsTech AI",
+    default: "Tomorrow’s Tech AI — We build modern businesses",
+    template: "%s · Tomorrow’s Tech AI",
   },
   description:
-    "Custom business operating platforms with modern websites, private admin backends, CRM, dashboards, apps, workflows, and AI—plus command centers for operations-heavy businesses.",
+    "We build the complete digital foundation of a modern business — brand, website, ecommerce, CRM, admin dashboard, automation and AI, in one connected system.",
   keywords: [
+    "business website design",
+    "complete business system",
+    "brand website ecommerce CRM",
+    "custom admin dashboard",
     "AI command center",
     "custom business operating platform",
     "website with admin dashboard",
@@ -43,25 +47,25 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "John Hockinson" }],
   creator: "John Hockinson",
-  publisher: "TomorrowsTech AI",
+  publisher: "Tomorrow’s Tech AI",
   metadataBase: new URL("https://tomorrowstechai.com"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "TomorrowsTech AI — AI for construction & field ops",
-  description:
-    "Custom business operating platforms, command centers, CRM, dashboards, workflows, and AI for operations-heavy companies.",
+    title: "Tomorrow’s Tech AI — We build modern businesses",
+    description:
+      "We build the complete digital foundation of a modern business — brand, website, ecommerce, CRM, admin dashboard, automation and AI, in one connected system.",
     url: "https://tomorrowstechai.com",
-    siteName: "TomorrowsTech AI",
+    siteName: "Tomorrow’s Tech AI",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TomorrowsTech AI — AI for construction & field ops",
-  description:
-    "Modern websites with private operating systems, CRM, dashboards, apps, workflows, and AI built around the business.",
+    title: "Tomorrow’s Tech AI — We build modern businesses",
+    description:
+      "We build the complete digital foundation of a modern business — brand, website, ecommerce, CRM, admin dashboard, automation and AI, in one connected system.",
   },
   robots: {
     index: true,
@@ -113,7 +117,7 @@ const clientReviews = [
       },
     },
     reviewBody:
-      "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using TomorrowsTech AI again.",
+      "John's attention to detail was amazing. He asked all the right questions. Our location is still in its early stages, but will be using Tomorrow’s Tech AI again.",
     datePublished: "2026-05-19",
   },
 ];
@@ -121,13 +125,13 @@ const clientReviews = [
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
-  name: "TomorrowsTech AI",
+  name: "Tomorrow’s Tech AI",
   alternateName: "Tomorrowstek LLC",
   url: "https://tomorrowstechai.com",
-  logo: "https://tomorrowstechai.com/icon.svg",
-  image: "https://tomorrowstechai.com/icon.svg",
+  logo: "https://tomorrowstechai.com/brand/icon-512.png",
+  image: "https://tomorrowstechai.com/brand/icon-512.png",
   description:
-    "Custom business operating platforms with modern public websites, private admin systems, CRM, dashboards, apps, workflows, and AI for operations-heavy businesses.",
+    "We build the complete digital foundation of a modern business — brand, website, ecommerce, CRM, admin dashboard, automation and AI, in one connected system.",
   founder: {
     "@type": "Person",
     name: "John Hockinson",
@@ -186,7 +190,7 @@ const organizationJsonLd = {
 const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "TomorrowsTech AI",
+  name: "Tomorrow’s Tech AI",
   url: "https://tomorrowstechai.com",
   potentialAction: {
     "@type": "SearchAction",

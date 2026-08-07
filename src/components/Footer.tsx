@@ -65,11 +65,16 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <BrandMark size={34} />
-              <span className="font-bold tracking-[0.06em] text-[15px]">
-                TOMORROWSTECH <span className="text-[color:var(--color-blue)]">AI</span>
+              <span className="tt-wordmark text-[14px]">
+                <span className="tt-wordmark-metal">TOMORROW’S TECH</span>{" "}
+                <span className="tt-wordmark-ai">AI</span>
               </span>
             </div>
-            <p className="text-[14px] text-[color:var(--color-text-secondary)] leading-relaxed max-w-xs">
+            <p className="text-[11px] tracking-[0.16em] uppercase text-[color:var(--color-text-muted)] mt-3">
+              Solutions for tomorrow.{" "}
+              <span className="text-[color:var(--color-blue)]">Results today.</span>
+            </p>
+            <p className="text-[14px] text-[color:var(--color-text-secondary)] leading-relaxed max-w-xs mt-4">
               We build modern businesses.
               <br />
               You build the future.
@@ -154,7 +159,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-[color:var(--color-border-subtle)] mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-[11.5px] text-[color:var(--color-text-muted)]">
-          <div>© 2026 Tomorrowstek LLC · TomorrowsTech AI. All rights reserved.</div>
+          <div>© 2026 Tomorrowstek LLC · Tomorrow’s Tech AI. All rights reserved.</div>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="hover:text-[color:var(--color-blue-bright)] transition-colors">
               Privacy policy
