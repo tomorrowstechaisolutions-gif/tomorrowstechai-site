@@ -135,7 +135,7 @@ export default function Home() {
       {/* ══ HERO ══════════════════════════════════════════════════════════ */}
       <section className="tt-hero tt-grid-bg border-b border-[color:var(--color-border)]">
         <div className="max-w-7xl mx-auto px-5 md:px-6 pt-14 pb-10 lg:pt-20 lg:pb-14 relative z-10">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-12 lg:gap-10 items-center">
+          <div className="grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.18fr)] gap-12 lg:gap-8 items-center">
             {/* Copy */}
             <div className="tt-hero-rule">
               <div className="text-[12px] font-semibold tracking-[0.28em] uppercase text-[color:var(--color-blue-bright)] mb-6">
@@ -171,14 +171,19 @@ export default function Home() {
                 Below lg the labels drop under the image as a two-column grid so
                 the fixed-width column never squeezes the render. */}
             <div className="flex flex-col lg:flex-row items-center gap-7 lg:gap-6">
-              <div className="tt-hero-visual relative w-full lg:flex-1 min-w-0">
-                <div className="relative aspect-[4/3]">
+              <div className="tt-hero-visual relative w-full lg:flex-1 min-w-0 lg:-my-6 xl:-mr-6">
+                {/* Aspect matches the asset (1020x941) so object-contain fills the
+                    box exactly — no letterboxing, no wasted vertical space. The
+                    asset's edges are alpha-feathered, so it dissolves into the
+                    page rather than showing a black rectangle. */}
+                <div className="relative aspect-[1020/941]">
                   <Image
-                    src="/hero-building.png"
+                    src="/hero-building.webp"
                     alt="The TomorrowsTech AI business system, visualised as a connected building"
                     fill
                     priority
-                    sizes="(max-width: 1024px) 90vw, 620px"
+                    fetchPriority="high"
+                    sizes="(max-width: 1024px) 92vw, 640px"
                     className="object-contain"
                   />
                 </div>

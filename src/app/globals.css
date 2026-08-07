@@ -2197,12 +2197,14 @@ body {
     position: relative;
   }
 
+  /* Soft ambient pool under the render. Kept low so it lifts the building off
+     the page without washing out the glow that is baked into the asset. */
   .tt-hero-visual::before {
     content: "";
     position: absolute;
-    inset: 12% 8% 6% 8%;
-    background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.22), transparent 70%);
-    filter: blur(28px);
+    inset: 22% 12% 4% 12%;
+    background: radial-gradient(ellipse at 50% 70%, rgba(59, 130, 246, 0.16), transparent 68%);
+    filter: blur(46px);
     pointer-events: none;
   }
 
