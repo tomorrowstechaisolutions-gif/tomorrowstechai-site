@@ -41,6 +41,7 @@ const COLUMNS: { head: string; links: { label: string; href: string; external?: 
   {
     head: "Products",
     links: [
+      { label: "Logo Studio", href: "/logo-studio" },
       { label: "Job Catcher", href: "/job-catcher" },
       { label: "Held", href: "https://myheldapp.com", external: true },
       { label: "TomorrowsTek", href: "https://tomorrowstek.com", external: true },

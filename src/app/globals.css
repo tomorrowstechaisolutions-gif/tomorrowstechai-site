@@ -2800,6 +2800,39 @@ body {
       linear-gradient(180deg, #060C17, #04070D);
   }
 
+  /* ── Logo Studio ──────────────────────────────────────────────────────── */
+
+  .tt-input {
+    display: block;
+    width: 100%;
+    border-radius: 9px;
+    border: 1px solid var(--color-border);
+    background: rgba(4, 7, 13, 0.6);
+    color: var(--color-text);
+    padding: 11px 14px;
+    font-size: 14px;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  .tt-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .tt-input:focus {
+    outline: none;
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+
+  /* Generated logo SVGs carry intrinsic width/height so they rasterise
+     correctly on export; on screen they should simply fill their slot. */
+  .mk-svg > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+  }
+
   /* ── Footer ───────────────────────────────────────────────────────────── */
 
   .tt-foot-link {

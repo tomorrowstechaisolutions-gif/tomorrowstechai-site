@@ -69,6 +69,11 @@ const SOLUTIONS: MegaItem[] = [
 
 const PRODUCTS: MegaItem[] = [
   {
+    href: "/logo-studio",
+    label: "Logo Studio",
+    blurb: "Create a logo in minutes, then have it refined by hand.",
+  },
+  {
     href: "/job-catcher",
     label: "Job Catcher",
     blurb: "Managed missed-call response for contractors.",
@@ -109,6 +114,7 @@ const RESOURCES: MegaItem[] = [
 
 const NAV: NavEntry[] = [
   { label: "Solutions", href: "/services", items: SOLUTIONS, cols: 1 },
+  { label: "Logo Studio", href: "/logo-studio" },
   { label: "Our Work", href: "/work" },
   { label: "Products", href: "/services", items: PRODUCTS, cols: 1 },
   { label: "About", href: "/about" },
