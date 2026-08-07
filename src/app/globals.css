@@ -2668,6 +2668,127 @@ body {
     color: var(--color-text-muted);
   }
 
+  /* ── Pointer effects ──────────────────────────────────────────────────── */
+
+  /* Cursor-tracked spotlight. Coordinates come from PointerFX as CSS custom
+     properties, so the effect costs one compositor-friendly repaint and never
+     re-renders React. --spot-on gates it so it fades rather than snaps. */
+  [data-spotlight] {
+    --spot-x: 50%;
+    --spot-y: 50%;
+    --spot-on: 0;
+    position: relative;
+    isolation: isolate;
+  }
+
+  [data-spotlight]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--spot-on);
+    transition: opacity 0.35s ease;
+    background: radial-gradient(
+      380px circle at var(--spot-x) var(--spot-y),
+      rgba(96, 165, 250, 0.17),
+      transparent 64%
+    );
+  }
+
+  /* Keep card content above the wash. */
+  [data-spotlight] > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  [data-magnetic] {
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  /* ── Hero connector pulse ─────────────────────────────────────────────── */
+
+  /* A light travels the dotted lead-in toward each label, echoing the light
+     strips on the building render. */
+  .tt-hero-label::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 34px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.95), transparent);
+    background-size: 14px 1px;
+    background-repeat: no-repeat;
+    animation: tt-pulse 3.4s ease-in-out infinite;
+    animation-delay: var(--pulse-delay, 0s);
+    opacity: 0;
+  }
+
+  @keyframes tt-pulse {
+    0% { background-position: -14px 0; opacity: 0; }
+    12% { opacity: 1; }
+    45% { background-position: 34px 0; opacity: 0; }
+    100% { background-position: 34px 0; opacity: 0; }
+  }
+
+  /* ── Typing caret ─────────────────────────────────────────────────────── */
+
+  .tt-caret {
+    display: inline-block;
+    width: 1px;
+    height: 0.95em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--color-blue-bright);
+    animation: tt-caret-blink 1s steps(2, end) infinite;
+  }
+
+  @keyframes tt-caret-blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+
+  /* ── Sound toggle ─────────────────────────────────────────────────────── */
+
+  .tt-sound-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    transition: all 0.18s ease;
+  }
+
+  .tt-sound-toggle:hover {
+    border-color: rgba(59, 130, 246, 0.6);
+    color: var(--color-blue-bright);
+  }
+
+  .tt-sound-toggle[aria-pressed="true"] {
+    border-color: rgba(59, 130, 246, 0.55);
+    color: var(--color-blue-bright);
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-spotlight]::after,
+    .tt-hero-label::after {
+      display: none;
+    }
+    [data-magnetic] {
+      transition: none;
+    }
+    .tt-caret {
+      animation: none;
+    }
+  }
+
   /* ── Final CTA band ───────────────────────────────────────────────────── */
 
   .tt-final {

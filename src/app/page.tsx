@@ -3,6 +3,7 @@ import Image from "next/image";
 import { posts } from "@/content/posts";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { IndustryRail } from "@/components/IndustryRail";
+import { CommandCenter } from "@/components/home/CommandCenter";
 import {
   IconArrowRight,
   IconBadgeCheck,
@@ -156,11 +157,11 @@ export default function Home() {
                 </span>
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
-                <Link href="/contact" className="btn-primary uppercase tracking-[0.08em] px-6 py-3.5">
+                <Link href="/contact" className="btn-primary uppercase tracking-[0.08em] px-6 py-3.5" data-magnetic>
                   Build my business
                   <IconArrowRight size={16} />
                 </Link>
-                <Link href="/services" className="btn-secondary uppercase tracking-[0.08em] px-6 py-3.5">
+                <Link href="/services" className="btn-secondary uppercase tracking-[0.08em] px-6 py-3.5" data-magnetic>
                   <IconPlay size={17} />
                   See how it works
                 </Link>
@@ -190,8 +191,8 @@ export default function Home() {
               </div>
 
               <ul className="tt-hero-labels w-full lg:w-[184px] lg:shrink-0">
-                {HERO_LABELS.map(({ Icon, label }) => (
-                  <li key={label} className="tt-hero-label">
+                {HERO_LABELS.map(({ Icon, label }, i) => (
+                  <li key={label} className="tt-hero-label" style={{ ["--pulse-delay" as string]: `${i * 0.45}s` }}>
                     <span className="tt-hero-label-dot" aria-hidden="true" />
                     <Icon size={19} className="text-[color:var(--color-blue-bright)] shrink-0" />
                     <strong className="whitespace-pre-line">{label}</strong>
@@ -249,7 +250,7 @@ export default function Home() {
 
         <div className="grid gap-4 mt-12 sm:grid-cols-2 lg:grid-cols-5">
           {LAYERS.map(({ Icon, title, sub, body }) => (
-            <Link key={title} href="/services" className="tt-layer-card group">
+            <Link key={title} href="/services" className="tt-layer-card group" data-spotlight>
               <span className="tt-icon-tile mb-5">
                 <Icon size={21} />
               </span>
@@ -323,7 +324,7 @@ export default function Home() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {CASES.map((item) => (
-            <Link key={item.name} href={item.href} className="tt-case group">
+            <Link key={item.name} href={item.href} className="tt-case group" data-spotlight>
               <div className="tt-case-media">
                 {item.image ? (
                   <Image
@@ -355,6 +356,7 @@ export default function Home() {
 
           <Link
             href="/work"
+            data-spotlight
             className="tt-case items-center justify-center text-center p-7 !bg-[linear-gradient(160deg,rgba(59,130,246,0.14),rgba(99,102,241,0.06))] border-[color:var(--color-blue-deep)]"
           >
             <h3 className="text-[17px] font-bold uppercase tracking-[0.05em] leading-snug">
@@ -411,7 +413,7 @@ export default function Home() {
         </div>
         <div className="grid md:grid-cols-3 gap-4">
           {latestPosts.map((post) => (
-            <Link key={post.slug} href={`/blog/${post.slug}`} className="tt-case group">
+            <Link key={post.slug} href={`/blog/${post.slug}`} className="tt-case group" data-spotlight>
               {post.image && (
                 <div className="tt-case-media !aspect-[16/9]">
                   <Image
@@ -484,7 +486,7 @@ export default function Home() {
               Let&apos;s build the foundation your business deserves. The future
               starts now.
             </p>
-            <Link href="/contact" className="btn-primary mt-7 uppercase tracking-[0.08em] px-6 py-3.5">
+            <Link href="/contact" className="btn-primary mt-7 uppercase tracking-[0.08em] px-6 py-3.5" data-magnetic>
               Start your project
               <IconArrowRight size={16} />
             </Link>
@@ -495,268 +497,5 @@ export default function Home() {
         </div>
       </section>
     </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Command center — a representative admin dashboard, drawn entirely in
-   markup + SVG so it costs no image payload and recolors with the theme.
-   Figures are illustrative sample data, not a real client account.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-const DASH_NAV = [
-  "Dashboard",
-  "Leads",
-  "Customers",
-  "Orders",
-  "Calendar",
-  "Products",
-  "Marketing",
-  "Reports",
-  "Automations",
-  "Settings",
-];
-
-const DASH_KPIS = [
-  { label: "New leads", value: "128", delta: "+24%" },
-  { label: "Sales", value: "$24,560", delta: "+18%" },
-  { label: "Orders", value: "84", delta: "+12%" },
-  { label: "Revenue", value: "$96,430", delta: "+11%" },
-];
-
-const DASH_SOURCES = [
-  { name: "Website", pct: 42, color: "#3B82F6" },
-  { name: "Facebook", pct: 28, color: "#6366F1" },
-  { name: "Instagram", pct: 15, color: "#8B5CF6" },
-  { name: "Google", pct: 10, color: "#22C55E" },
-  { name: "Other", pct: 5, color: "#475569" },
-];
-
-const DASH_APPTS = [
-  { time: "10:00 AM", title: "Pool estimate", who: "Sarah Johnson" },
-  { time: "1:00 PM", title: "Consultation call", who: "Mike Reyes" },
-  { time: "3:30 PM", title: "Site visit", who: "Dana Whitfield" },
-];
-
-function CommandCenter() {
-  return (
-    <div className="tt-dash" aria-label="Representative business dashboard">
-      <div className="grid grid-cols-[124px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]">
-        {/* Sidebar */}
-        <aside className="tt-dash-side p-3 hidden sm:block">
-          <div className="flex items-center gap-2 px-1.5 pb-4 mb-2 border-b border-[color:var(--color-border-subtle)]">
-            <span className="w-4 h-4 rounded bg-[color:var(--color-blue)]" />
-            <span className="text-[9.5px] font-bold tracking-[0.06em] uppercase truncate">
-              TomorrowsTech
-            </span>
-          </div>
-          <nav className="space-y-0.5">
-            {DASH_NAV.map((item, i) => (
-              <div key={item} className="tt-dash-nav" data-active={i === 0}>
-                <span className="w-1.5 h-1.5 rounded-sm bg-current opacity-70 shrink-0" />
-                <span className="truncate">{item}</span>
-              </div>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main */}
-        <div className="p-3.5 md:p-5 col-span-2 sm:col-span-1">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <div className="text-[14px] md:text-[16px] font-semibold">Welcome back, John</div>
-              <div className="text-[11px] text-[color:var(--color-text-muted)] mt-0.5">
-                Here&apos;s what&apos;s happening in your business today.
-              </div>
-            </div>
-            <div className="hidden md:flex items-center gap-2 text-[10px] text-[color:var(--color-text-muted)] border border-[color:var(--color-border-subtle)] rounded-md px-2.5 py-1.5">
-              Quick actions
-            </div>
-          </div>
-
-          {/* KPI row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
-            {DASH_KPIS.map(({ label, value, delta }) => (
-              <div key={label} className="tt-dash-panel tt-dash-kpi">
-                <span>{label}</span>
-                <strong>{value}</strong>
-                <div className="text-[9.5px] text-[color:var(--color-success)] mt-1 whitespace-nowrap">
-                  {delta} <span className="text-[color:var(--color-text-muted)]">vs 7 days</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Charts row */}
-          <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1.05fr)] gap-2 mb-2">
-            <div className="tt-dash-panel">
-              <div className="text-[10.5px] font-medium mb-2">Sales overview</div>
-              <SalesChart />
-            </div>
-
-            <div className="tt-dash-panel">
-              <div className="text-[10.5px] font-medium mb-2">Leads by source</div>
-              <div className="flex items-center gap-3">
-                <Donut />
-                <ul className="space-y-1 min-w-0">
-                  {DASH_SOURCES.map((s) => (
-                    <li key={s.name} className="flex items-center gap-1.5 text-[9.5px] whitespace-nowrap">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full shrink-0"
-                        style={{ background: s.color }}
-                      />
-                      <span className="text-[color:var(--color-text-secondary)] truncate">{s.name}</span>
-                      <span className="text-[color:var(--color-text-muted)] ml-auto">{s.pct}%</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="tt-dash-panel">
-              <div className="text-[10.5px] font-medium mb-2">Upcoming appointments</div>
-              <ul className="space-y-2">
-                {DASH_APPTS.map((a) => (
-                  <li key={a.time} className="flex items-start gap-2">
-                    <span className="text-[9.5px] font-medium text-[color:var(--color-blue)] w-[52px] shrink-0 pt-px">
-                      {a.time}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[10.5px] truncate">{a.title}</span>
-                      <span className="block text-[9.5px] text-[color:var(--color-text-muted)] truncate">
-                        {a.who}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Activity + assistant */}
-          <div className="grid lg:grid-cols-2 gap-2">
-            <div className="tt-dash-panel">
-              <div className="text-[10.5px] font-medium mb-2.5">Recent activity</div>
-              <ul className="space-y-2">
-                {[
-                  { dot: "var(--color-success)", text: "New lead from website", time: "2 min ago" },
-                  { dot: "var(--color-amber)", text: "New order #1234", time: "18 min ago" },
-                  { dot: "var(--color-blue)", text: "Invoice paid — Mintline", time: "1 hr ago" },
-                ].map((row) => (
-                  <li key={row.text} className="flex items-center gap-2 text-[10.5px]">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ background: row.dot }}
-                    />
-                    <span className="truncate">{row.text}</span>
-                    <span className="ml-auto text-[9.5px] text-[color:var(--color-text-muted)] shrink-0">
-                      {row.time}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="tt-dash-panel !bg-[rgba(59,130,246,0.07)] !border-[rgba(59,130,246,0.28)]">
-              <div className="flex items-center gap-1.5 text-[10.5px] font-medium text-[color:var(--color-blue-bright)] mb-2.5">
-                <IconSparkle size={13} />
-                AI assistant
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 rounded-md border border-[color:var(--color-border-subtle)] bg-[color:var(--color-bg)]/60 px-2.5 py-2 text-[10.5px] text-[color:var(--color-text-muted)]">
-                  What would you like to do today?
-                </div>
-                <span className="tt-icon-tile !w-8 !h-8 !rounded-lg">
-                  <IconBot size={15} />
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
-                {["Summarize this week", "Draft follow-ups", "Flag stale leads"].map((chip) => (
-                  <span
-                    key={chip}
-                    className="text-[9px] rounded-full border border-[color:var(--color-border-subtle)] px-2 py-1 text-[color:var(--color-text-secondary)]"
-                  >
-                    {chip}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Illustrative sales trend. Points are a fixed path — no live data. */
-function SalesChart() {
-  const points = [26, 34, 30, 44, 38, 52, 47, 63, 58, 72, 66, 80];
-  const w = 260;
-  const h = 76;
-  const step = w / (points.length - 1);
-  const max = 90;
-  const coords = points.map((p, i) => [i * step, h - (p / max) * h] as const);
-  const line = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
-  const area = `${line} L${w} ${h} L0 ${h} Z`;
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto" aria-hidden="true">
-      <defs>
-        <linearGradient id="tt-sales-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.42" />
-          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0.25, 0.5, 0.75].map((f) => (
-        <line
-          key={f}
-          x1="0"
-          y1={h * f}
-          x2={w}
-          y2={h * f}
-          stroke="currentColor"
-          strokeWidth="0.5"
-          className="text-[color:var(--color-border-subtle)]"
-        />
-      ))}
-      <path d={area} fill="url(#tt-sales-fill)" />
-      <path d={line} fill="none" stroke="#60A5FA" strokeWidth="1.8" strokeLinejoin="round" />
-      <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="3" fill="#60A5FA" />
-    </svg>
-  );
-}
-
-/**
- * Donut built from stroke-dasharray arcs so it needs no chart library.
- * Arc offsets are precomputed as a running total rather than mutated during
- * render, so the output is identical on every pass.
- */
-const DONUT_R = 22;
-const DONUT_C = 2 * Math.PI * DONUT_R;
-
-const DONUT_ARCS = DASH_SOURCES.map((s, i) => {
-  const len = (s.pct / 100) * DONUT_C;
-  const start = DASH_SOURCES.slice(0, i).reduce((sum, prev) => sum + (prev.pct / 100) * DONUT_C, 0);
-  return { ...s, len, start };
-});
-
-function Donut() {
-  return (
-    <svg viewBox="0 0 60 60" className="w-[62px] h-[62px] shrink-0 -rotate-90" aria-hidden="true">
-      <circle cx="30" cy="30" r={DONUT_R} fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="9" />
-      {DONUT_ARCS.map((arc) => (
-        <circle
-          key={arc.name}
-          cx="30"
-          cy="30"
-          r={DONUT_R}
-          fill="none"
-          stroke={arc.color}
-          strokeWidth="9"
-          strokeDasharray={`${arc.len} ${DONUT_C - arc.len}`}
-          strokeDashoffset={-arc.start}
-        />
-      ))}
-    </svg>
   );
 }

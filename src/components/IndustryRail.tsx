@@ -87,7 +87,7 @@ export function IndustryRail() {
     <div className="relative">
       <div ref={railRef} onScroll={sync} className="tt-rail">
         {INDUSTRIES.map(({ name, Icon, tint, image }) => (
-          <Link key={name} href="/contact" className="tt-industry group">
+          <Link key={name} href="/contact" className="tt-industry group" data-spotlight>
             {image ? (
               <Image
                 src={image}

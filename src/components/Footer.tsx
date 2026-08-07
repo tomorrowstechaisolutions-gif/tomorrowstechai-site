@@ -152,7 +152,7 @@ export function Footer() {
                 </span>
               </li>
             </ul>
-            <Link href="/contact" className="btn-primary w-full justify-center mt-6 text-[12px] uppercase tracking-[0.1em]">
+            <Link href="/contact" className="btn-primary w-full justify-center mt-6 text-[12px] uppercase tracking-[0.1em]" data-magnetic>
               Start your project
             </Link>
           </div>

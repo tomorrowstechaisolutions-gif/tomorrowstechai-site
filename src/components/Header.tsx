@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "./BrandMark";
+import { SoundToggle } from "./fx/UiSound";
 import {
   IconArrowRight,
   IconBadgeCheck,
@@ -187,7 +188,7 @@ export function Header() {
                 );
               }
               return (
-                <div key={entry.label} className="tt-nav-item">
+                <div key={entry.label} className="tt-nav-item" data-sfx="open">
                   <Link href={entry.href} className="tt-nav-link" data-active={active}>
                     {entry.label}
                     <IconChevronDown size={14} />
@@ -229,7 +230,9 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/contact" className="tt-cta-outline hidden sm:inline-flex">
+            <SoundToggle className="tt-sound-toggle hidden sm:inline-flex" />
+
+            <Link href="/contact" className="tt-cta-outline hidden sm:inline-flex" data-magnetic data-sfx="cta">
               <IconRocket size={16} className="text-[color:var(--color-blue-bright)]" />
               Build my business
               <IconArrowRight size={15} />

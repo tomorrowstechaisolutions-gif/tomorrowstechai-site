@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { PointerFX } from "@/components/fx/PointerFX";
+import { SoundEffects } from "@/components/fx/UiSound";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DeferredUI } from "@/components/DeferredUI";
@@ -234,6 +236,8 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        <PointerFX />
+        <SoundEffects />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
