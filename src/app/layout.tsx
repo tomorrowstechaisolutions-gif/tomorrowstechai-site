@@ -230,9 +230,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        <div className="classification-bar">
-          TomorrowsTech AI &nbsp;//&nbsp; Operations · Live
-        </div>
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
