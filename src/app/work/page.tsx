@@ -25,6 +25,18 @@ const platformLayers = [
 
 const supportingWork = [
   {
+    title: "Clearwater Pool Service",
+    // Labelled as an industry build rather than a client engagement — it is a
+    // reference site for the pool-service vertical, not work commissioned by a
+    // customer, and saying so keeps the portfolio honest.
+    category: "Industry build · Pool service",
+    body: "A complete customer-facing system for pool service companies: weekly photo reporting, water-chemistry records, before-and-after documentation, service-area checking, tiered plans, and a customer portal.",
+    image: "/work/clearwater.webp",
+    href: "https://clearwater-pool-service.vercel.app/",
+    hrefLabel: "View the build",
+    tags: ["Website", "Service reporting", "Customer portal", "Lead capture"],
+  },
+  {
     title: "Tomorrow’s Tech AI",
     category: "Company platform",
     body: "A custom Next.js marketing system with lead capture, field notes, downloadable resources, an AI assistant, SEO infrastructure, and connected inquiry workflows.",
@@ -278,11 +290,11 @@ export default function WorkPage() {
           Supporting work from the studio.
         </h2>
         <p className="text-[color:var(--color-text-secondary)] leading-relaxed max-w-2xl mb-10">
-          Separate products and brands that demonstrate product thinking,
-          technical range, content systems, and the ability to build beyond a
-          standard marketing site.
+          Separate products, brands and industry builds that demonstrate product
+          thinking, technical range, content systems, and the ability to build
+          beyond a standard marketing site.
         </p>
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {supportingWork.map((project) => (
             <article className="work-support-card" key={project.title}>
               <div className="work-support-image">
@@ -290,7 +302,7 @@ export default function WorkPage() {
                   src={project.image}
                   alt={`${project.title} website`}
                   fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover"
                 />
               </div>
