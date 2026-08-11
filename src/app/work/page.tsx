@@ -5,7 +5,7 @@ import { LazyYouTube } from "@/components/LazyYouTube";
 export const metadata = {
   title: "Work",
   description:
-    "Selected business operating platforms, command centers, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
+    "Selected business operating platforms, command centers, contractor automation, e-commerce builds, websites, and client systems built by Tomorrow’s Tech AI.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · Tomorrow’s Tech AI",
@@ -279,6 +279,53 @@ export default function WorkPage() {
               className="text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
             >
               Visit Mintline Wellness →
+            </a>
+          </div>
+        </article>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">Commerce build</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-10">
+          A full e-commerce operation, not a storefront template.
+        </h2>
+
+        <article className="work-client-feature">
+          <div className="work-client-media">
+            <Image
+              src="/work/proudlytexan.webp"
+              alt="Proudly Texan apparel storefront"
+              fill
+              sizes="(max-width: 900px) 100vw, 55vw"
+              className="object-cover"
+            />
+          </div>
+          <div className="work-client-copy">
+            <div className="eyebrow mb-4">● Our brand · Storefront · Admin · Fulfillment</div>
+            <h3 className="text-3xl font-medium tracking-tight">Proudly Texan</h3>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4">
+              A Texas apparel brand built end to end by the studio: a custom
+              storefront, a private admin center for orders, products and
+              customers, print-on-demand fulfillment, and a checkout pipeline
+              designed so a paid order is never lost. Built to prove out the
+              full commerce stack on our own brand before running it for a
+              client.
+            </p>
+            <div className="work-stack-points">
+              <span>Next.js storefront</span>
+              <span>Supabase data layer</span>
+              <span>Stripe checkout</span>
+              <span>Printful fulfillment</span>
+              <span>Admin order pipeline</span>
+              <span>Two brands, one codebase</span>
+            </div>
+            <a
+              href="https://proudlytexan.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-7 text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+            >
+              Visit Proudly Texan →
             </a>
           </div>
         </article>
