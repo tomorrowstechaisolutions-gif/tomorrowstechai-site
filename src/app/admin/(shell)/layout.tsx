@@ -8,6 +8,7 @@ const NAV = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/marketing/campaigns/business-launch", label: "$399 Business Launch" },
+  { href: "/admin/marketing/ads", label: "Ad Studio" },
   { href: "/admin/marketing/spend", label: "Ad spend" },
   { href: "/admin/settings", label: "Settings" },
 ];
@@ -53,13 +54,13 @@ export default async function AdminShellLayout({
             </Link>
           ))}
           <span className="ad-nav-head">Marketing</span>
-          {NAV.slice(2, 4).map((n) => (
+          {NAV.slice(2, 5).map((n) => (
             <Link key={n.href} href={n.href} className="ad-nav-link">
               {n.label}
             </Link>
           ))}
           <span className="ad-nav-head">System</span>
-          {NAV.slice(4).map((n) => (
+          {NAV.slice(5).map((n) => (
             <Link key={n.href} href={n.href} className="ad-nav-link">
               {n.label}
             </Link>

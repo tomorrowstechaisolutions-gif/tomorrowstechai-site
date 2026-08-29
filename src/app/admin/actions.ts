@@ -328,3 +328,146 @@ export async function signOutAction() {
   await supabase.auth.signOut();
   redirect("/admin/login");
 }
+
+// ── Ad Studio ───────────────────────────────────────────────────────────────
+
+const AD_STATUS_VALUES = ["draft", "ready", "live", "paused", "archived"];
+const AD_FORMAT_VALUES = ["feed_4x5", "feed_1x1", "story_9x16", "reel_9x16", "other"];
+
+function adFieldsFrom(formData: FormData) {
+  const status = str(formData, "status", 20);
+  const format = str(formData, "format", 20);
+  return {
+    name: str(formData, "name", 120),
+    campaign: str(formData, "campaign", 120) || CAMPAIGN_NAME,
+    adset: str(formData, "adset", 120),
+    status: AD_STATUS_VALUES.includes(status) ? status : "draft",
+    format: AD_FORMAT_VALUES.includes(format) ? format : "feed_4x5",
+    primary_text: str(formData, "primary_text", 2200),
+    headline: str(formData, "headline", 255),
+    description: str(formData, "description", 255),
+    cta_label: str(formData, "cta_label", 40) || "Learn More",
+    destination_path: str(formData, "destination_path", 200) || "/business-launch",
+    image_url: str(formData, "image_url", 500) || null,
+    image_note: str(formData, "image_note", 1000) || null,
+    audience_note: str(formData, "audience_note", 1000) || null,
+    notes: str(formData, "notes", 4000) || null,
+  };
+}
+
+export async function createAd(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const fields = adFieldsFrom(formData);
+  if (!fields.name) return;
+
+  const { data, error } = await supabase
+    .from("ad_creatives")
+    .insert({
+      ...fields,
+      generated_by: str(formData, "generated_by", 10) === "ai" ? "ai" : "human",
+      brief: str(formData, "brief", 1500) || null,
+      parent_id: str(formData, "parent_id", 40) || null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error("Ad create failed:", error?.message);
+    return;
+  }
+
+  revalidatePath("/admin/marketing/ads");
+  redirect(`/admin/marketing/ads/${data.id}`);
+}
+
+export async function updateAd(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "id", 40);
+  if (!id) return;
+
+  const fields = adFieldsFrom(formData);
+  if (!fields.name) return;
+
+  // Going live for the first time stamps the date, so the library shows how
+  // long each ad has actually been running.
+  const patch: Record<string, unknown> = { ...fields };
+  if (fields.status === "live") {
+    const { data: current } = await supabase
+      .from("ad_creatives")
+      .select("first_run_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (current && !current.first_run_at) patch.first_run_at = new Date().toISOString();
+  }
+  if (fields.status === "archived") patch.retired_at = new Date().toISOString();
+
+  await supabase.from("ad_creatives").update(patch).eq("id", id);
+
+  revalidatePath("/admin/marketing/ads");
+  revalidatePath(`/admin/marketing/ads/${id}`);
+}
+
+/** Copies an ad as a new draft. The name gets a suffix because name+campaign
+ *  is unique — two ads sharing a name would break per-ad attribution. */
+export async function cloneAd(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "id", 40);
+  if (!id) return;
+
+  const { data: source } = await supabase
+    .from("ad_creatives")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (!source) return;
+
+  const { data: siblings } = await supabase
+    .from("ad_creatives")
+    .select("name")
+    .eq("campaign", source.campaign);
+
+  const taken = new Set((siblings ?? []).map((s) => s.name.toLowerCase()));
+  let suffix = 2;
+  let candidate = `${source.name}-v${suffix}`;
+  while (taken.has(candidate.toLowerCase())) {
+    suffix += 1;
+    candidate = `${source.name}-v${suffix}`;
+  }
+
+  const { data: created } = await supabase
+    .from("ad_creatives")
+    .insert({
+      name: candidate,
+      campaign: source.campaign,
+      adset: source.adset,
+      status: "draft",
+      platform: source.platform,
+      format: source.format,
+      primary_text: source.primary_text,
+      headline: source.headline,
+      description: source.description,
+      cta_label: source.cta_label,
+      destination_path: source.destination_path,
+      image_url: source.image_url,
+      image_note: source.image_note,
+      audience_note: source.audience_note,
+      notes: source.notes,
+      parent_id: source.id,
+      generated_by: source.generated_by,
+      brief: source.brief,
+    })
+    .select("id")
+    .single();
+
+  revalidatePath("/admin/marketing/ads");
+  if (created) redirect(`/admin/marketing/ads/${created.id}`);
+}
+
+export async function deleteAd(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "id", 40);
+  if (!id) return;
+  await supabase.from("ad_creatives").delete().eq("id", id);
+  revalidatePath("/admin/marketing/ads");
+  redirect("/admin/marketing/ads");
+}

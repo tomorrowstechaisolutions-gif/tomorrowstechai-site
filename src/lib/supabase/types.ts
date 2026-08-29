@@ -174,3 +174,29 @@ export type RevenueEvent = {
   occurred_at: string;
   created_at: string;
 };
+
+export type AdCreative = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  campaign: string;
+  adset: string;
+  status: "draft" | "ready" | "live" | "paused" | "archived";
+  platform: "meta" | "google" | "other";
+  format: "feed_4x5" | "feed_1x1" | "story_9x16" | "reel_9x16" | "other";
+  primary_text: string;
+  headline: string;
+  description: string;
+  cta_label: string;
+  destination_path: string;
+  image_url: string | null;
+  image_note: string | null;
+  audience_note: string | null;
+  notes: string | null;
+  parent_id: string | null;
+  generated_by: "human" | "ai";
+  brief: string | null;
+  first_run_at: string | null;
+  retired_at: string | null;
+};
