@@ -81,8 +81,13 @@ export default function PrivacyPage() {
               We don&apos;t use your data to train AI models on your behalf.
             </li>
             <li>
-              We don&apos;t use advertising or remarketing cookies. Our analytics
-              setup measures aggregate traffic only.
+              We don&apos;t set any advertising or analytics cookies until you
+              accept them in the privacy banner. Decline and neither Google
+              Analytics nor the Meta Pixel runs at all.
+            </li>
+            <li>
+              We don&apos;t build advertising profiles about you beyond
+              measuring whether our own ads worked.
             </li>
             <li>
               We don&apos;t send marketing emails to people who haven&apos;t
@@ -114,6 +119,27 @@ export default function PrivacyPage() {
               served by YouTube via the privacy-friendly{" "}
               <code>youtube-nocookie.com</code> domain. No tracking cookies are
               set unless you press play.
+            </li>
+            <li>
+              <strong>Meta (Facebook &amp; Instagram)</strong> — we run paid ads
+              on Meta, and the Meta Pixel measures which of them lead to an
+              enquiry. It only loads after you accept in the privacy banner. If
+              you contact us from one of those ads, we also send Meta a
+              hashed (irreversible) copy of your email and phone number so it can
+              match the enquiry to the ad. Handled by Meta under{" "}
+              <a
+                href="https://www.facebook.com/privacy/policy"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                their privacy policy
+              </a>
+              .
+            </li>
+            <li>
+              <strong>Supabase</strong> — stores the enquiries you send us so we
+              can follow up. Hosted in the United States, access restricted to
+              us.
             </li>
             <li>
               <strong>Google Analytics 4</strong> — measures aggregate site

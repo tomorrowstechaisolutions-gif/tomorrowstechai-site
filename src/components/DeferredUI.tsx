@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 
 /**
  * Defers loading of non-critical UI (chat widget + cookie consent).
@@ -10,7 +11,10 @@ import dynamic from "next/dynamic";
  * we keep them out of the initial JS bundle and out of hydration —
  * they mount client-side after the rest of the page is interactive.
  *
- * This shrinks initial JS and reduces Total Blocking Time.
+ * The chat widget is suppressed on the paid campaign landing page and in
+ * the admin center: on /business-launch it competes with the single CTA,
+ * and in /admin it has no business being there at all. The cookie banner
+ * still renders everywhere — it gates the Meta Pixel, so it has to.
  */
 
 const ChatWidget = dynamic(
@@ -23,10 +27,17 @@ const CookieConsent = dynamic(
   { ssr: false }
 );
 
+const NO_CHAT_PREFIXES = ["/business-launch", "/admin"];
+
 export function DeferredUI() {
+  const pathname = usePathname() ?? "";
+  const hideChat = NO_CHAT_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+
   return (
     <>
-      <ChatWidget />
+      {!hideChat && <ChatWidget />}
       <CookieConsent />
     </>
   );

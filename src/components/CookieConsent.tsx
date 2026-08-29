@@ -5,6 +5,10 @@ import Link from "next/link";
 
 const STORAGE_KEY = "tomorrowstechai_cookie_consent";
 
+/** MetaPixel.tsx listens for this so the pixel mounts the moment consent is
+ *  granted, without a page reload. */
+export const CONSENT_EVENT = "ttai:consent-change";
+
 type Consent = "accepted" | "declined" | null;
 
 declare global {
@@ -13,23 +17,33 @@ declare global {
   }
 }
 
-function applyConsentToGA(consent: Consent) {
+/**
+ * Consent Mode v2. The root layout defaults every storage type to denied;
+ * this only ever loosens that after an explicit click.
+ *
+ * Accepting now also grants ad_storage — the site runs paid Meta campaigns
+ * and the pixel is gated on this value. Declining leaves the visitor with no
+ * analytics and no pixel at all.
+ */
+function applyConsent(consent: Consent) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  if (consent === "accepted") {
-    window.gtag("consent", "update", {
-      analytics_storage: "granted",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
-  } else if (consent === "declined") {
-    window.gtag("consent", "update", {
-      analytics_storage: "denied",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
+  const granted = consent === "accepted";
+  window.gtag("consent", "update", {
+    analytics_storage: granted ? "granted" : "denied",
+    ad_storage: granted ? "granted" : "denied",
+    ad_user_data: granted ? "granted" : "denied",
+    ad_personalization: granted ? "granted" : "denied",
+  });
+}
+
+function persist(consent: Exclude<Consent, null>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, consent);
+  } catch {
+    // ignore
   }
+  applyConsent(consent);
+  window.dispatchEvent(new Event(CONSENT_EVENT));
 }
 
 export function CookieConsent() {
@@ -46,33 +60,21 @@ export function CookieConsent() {
       // localStorage unavailable; treat as no consent yet
     }
 
-    // Apply previously stored consent to GA (or default deny if first visit)
-    applyConsentToGA(stored);
+    applyConsent(stored);
 
     if (stored === null) {
-      // Show banner after a tiny delay so it doesn't compete with first paint
       const t = setTimeout(() => setVisible(true), 400);
       return () => clearTimeout(t);
     }
   }, []);
 
   function handleAccept() {
-    try {
-      localStorage.setItem(STORAGE_KEY, "accepted");
-    } catch {
-      // ignore
-    }
-    applyConsentToGA("accepted");
+    persist("accepted");
     setVisible(false);
   }
 
   function handleDecline() {
-    try {
-      localStorage.setItem(STORAGE_KEY, "declined");
-    } catch {
-      // ignore
-    }
-    applyConsentToGA("declined");
+    persist("declined");
     setVisible(false);
   }
 
@@ -82,7 +84,7 @@ export function CookieConsent() {
     <div
       role="dialog"
       aria-label="Cookie consent"
-      className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 z-40 max-w-3xl md:mx-auto"
+      className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 z-[60] max-w-3xl md:mx-auto"
     >
       <div className="bg-[color:var(--color-bg)] border border-[color:var(--color-cyan-deep)] rounded-lg shadow-2xl p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-start md:gap-6">
@@ -91,8 +93,9 @@ export function CookieConsent() {
               ● Privacy notice
             </div>
             <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
-              We use Google Analytics to measure aggregate site traffic. No
-              advertising cookies, no cross-site tracking. See our{" "}
+              We use Google Analytics to measure site traffic, and the Meta
+              Pixel to measure the results of our own ads. Decline and neither
+              one runs. See our{" "}
               <Link
                 href="/privacy"
                 className="text-[color:var(--color-cyan)] hover:underline"

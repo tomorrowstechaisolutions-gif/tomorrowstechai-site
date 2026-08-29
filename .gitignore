@@ -46,3 +46,12 @@ next-env.d.ts
 *.cmd
 
 .vercel
+
+# campaign verification scratch
+scripts/_libs/
+
+# local render previews used for layout checks
+.preview/
+
+# local scratch that can be deleted by hand
+_to_delete/

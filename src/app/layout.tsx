@@ -7,6 +7,8 @@ import { SoundEffects } from "@/components/fx/UiSound";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DeferredUI } from "@/components/DeferredUI";
+import { ChromeGate } from "@/components/ChromeGate";
+import { MetaPixel } from "@/components/MetaPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -236,20 +238,35 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        <PointerFX />
-        <SoundEffects />
-        <Header />
+        {/* Decorative interaction layer — marketing pages only. It has no
+            job on the paid landing page or in the admin, and skipping it
+            keeps both leaner. */}
+        <ChromeGate>
+          <PointerFX />
+          <SoundEffects />
+        </ChromeGate>
+        <ChromeGate>
+          <Header />
+        </ChromeGate>
         <main className="flex-1">{children}</main>
-        <Footer />
+        <ChromeGate>
+          <Footer />
+        </ChromeGate>
         <DeferredUI />
-        {/* SMS opt-in chat widget required for A2P 10DLC consent collection */}
-        <Script
-          src="https://widgets.leadconnectorhq.com/loader.js"
-          data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
-          data-widget-id="6a68bd33b0ee6ed3ac662935"
-          data-source="WEB_USER"
-          strategy="afterInteractive"
-        />
+        <MetaPixel />
+        {/* SMS opt-in chat widget required for A2P 10DLC consent collection.
+            Suppressed on /business-launch (its form collects SMS consent
+            itself, and a second chat bubble competes with the single CTA) and
+            in /admin. It still loads on every other page of the site. */}
+        <ChromeGate>
+          <Script
+            src="https://widgets.leadconnectorhq.com/loader.js"
+            data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
+            data-widget-id="6a68bd33b0ee6ed3ac662935"
+            data-source="WEB_USER"
+            strategy="afterInteractive"
+          />
+        </ChromeGate>
         <SpeedInsights />
       </body>
       <GoogleAnalytics gaId="G-1N0MZPDTF5" />
