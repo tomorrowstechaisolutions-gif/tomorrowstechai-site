@@ -37,13 +37,89 @@ export function gaEvent(name: string, params: Record<string, unknown> = {}) {
   window.gtag("event", name, params);
 }
 
+/**
+ * The pixel is loaded lazily and only after the visitor accepts advertising
+ * cookies, so `fbq` usually does not exist yet when a page fires its first
+ * event from a mount effect. Returning early there silently dropped every
+ * ViewContent on the campaign landing page for the whole first launch.
+ *
+ * So: queue, and flush the moment the pixel is alive. The queue expires after
+ * PIXEL_WAIT_MS — if consent is never granted the events are discarded, never
+ * fired late behind the visitor's back.
+ */
+const PIXEL_WAIT_MS = 30_000;
+
+type QueuedMetaEvent = {
+  name: MetaEvent;
+  params: Record<string, unknown>;
+  eventId?: string;
+};
+
+const metaQueue: QueuedMetaEvent[] = [];
+let watchingForPixel = false;
+
+function pixelReady(): boolean {
+  return typeof window !== "undefined" && typeof window.fbq === "function";
+}
+
+function sendToPixel(event: QueuedMetaEvent) {
+  const fbq = typeof window === "undefined" ? undefined : window.fbq;
+  if (typeof fbq !== "function") return;
+  fbq(
+    "track",
+    event.name,
+    event.params,
+    event.eventId ? { eventID: event.eventId } : undefined
+  );
+}
+
+function flushMetaQueue() {
+  if (!pixelReady()) return;
+  while (metaQueue.length) {
+    const next = metaQueue.shift();
+    if (next) sendToPixel(next);
+  }
+}
+
+function watchForPixel() {
+  if (watchingForPixel || typeof window === "undefined") return;
+  watchingForPixel = true;
+  const deadline = Date.now() + PIXEL_WAIT_MS;
+
+  const tick = () => {
+    if (pixelReady()) {
+      flushMetaQueue();
+      watchingForPixel = false;
+      return;
+    }
+    if (Date.now() > deadline) {
+      metaQueue.length = 0;
+      watchingForPixel = false;
+      return;
+    }
+    window.setTimeout(tick, 250);
+  };
+
+  window.setTimeout(tick, 250);
+}
+
 export function metaEvent(
   name: MetaEvent,
   params: Record<string, unknown> = {},
   eventId?: string
 ) {
-  if (typeof window === "undefined" || typeof window.fbq !== "function") return;
-  window.fbq("track", name, params, eventId ? { eventID: eventId } : undefined);
+  if (typeof window === "undefined") return;
+
+  const event: QueuedMetaEvent = { name, params, eventId };
+
+  if (pixelReady()) {
+    flushMetaQueue();
+    sendToPixel(event);
+    return;
+  }
+
+  metaQueue.push(event);
+  watchForPixel();
 }
 
 /**
