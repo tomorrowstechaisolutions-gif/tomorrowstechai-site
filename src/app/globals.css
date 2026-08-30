@@ -2582,12 +2582,26 @@ body {
     transition: border-color 0.22s ease, transform 0.22s ease;
   }
 
-  .tt-industry::after {
+  /* The legibility scrim lives on ::before, not ::after.
+     These cards carry data-spotlight, and [data-spotlight]::after — declared
+     later in this layer at equal specificity — was silently claiming ::after
+     and taking the scrim with it. .tt-layer-card already used ::before, which
+     is why that one never broke. */
+  .tt-industry::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(4, 7, 13, 0.25) 0%, rgba(4, 7, 13, 0.55) 45%, rgba(4, 7, 13, 0.92) 100%);
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(4, 7, 13, 0.15) 0%, rgba(4, 7, 13, 0.42) 46%, rgba(4, 7, 13, 0.93) 100%);
     transition: background 0.22s ease;
+  }
+
+  /* Lift the cursor wash above the photo. At z-index 0 it sat behind an opaque
+     image and never showed at all. */
+  .tt-industry::after {
+    z-index: 2;
   }
 
   .tt-industry:hover {
@@ -2595,15 +2609,19 @@ body {
     transform: translateY(-3px);
   }
 
-  .tt-industry:hover::after {
-    background: linear-gradient(180deg, rgba(11, 30, 66, 0.3) 0%, rgba(4, 7, 13, 0.5) 45%, rgba(4, 7, 13, 0.92) 100%);
+  .tt-industry:hover::before {
+    background: linear-gradient(180deg, rgba(11, 30, 66, 0.2) 0%, rgba(4, 7, 13, 0.38) 46%, rgba(4, 7, 13, 0.93) 100%);
   }
 
-  .tt-industry-body {
+  /* Restated against .tt-industry so it beats [data-spotlight] > *, which sets
+     position: relative and z-index: 1 on every direct child. That rule was
+     pushing the label to the TOP of the card — over the sky, furthest from the
+     gradient that exists to make it readable. */
+  .tt-industry > .tt-industry-body {
     position: absolute;
     inset: auto 0 0 0;
-    z-index: 2;
-    padding: 16px 14px;
+    z-index: 3;
+    padding: 16px 14px 18px;
     text-align: center;
   }
 
