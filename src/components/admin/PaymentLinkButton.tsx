@@ -62,8 +62,9 @@ export function PaymentLinkButton({
           {copied ? "Copied" : "Copy link"}
         </button>
         <p className="ad-hint">
-          $399 today plus the first $29 hosting month, then $29/month. Paying it
-          marks the lead Won, records the revenue and opens the job.
+          $399 today. Hosting is free for 30 days, then $29/month — so billing
+          starts well after the site is live. Paying marks the lead Won,
+          records the revenue and opens the job.
         </p>
       </div>
     );

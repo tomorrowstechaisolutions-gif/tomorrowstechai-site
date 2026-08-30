@@ -175,6 +175,8 @@ async function handleCheckoutCompleted(event: StripeEvent) {
       .from("customers")
       .update({
         status: "active",
+        // The contracted rate. Collected money lives in revenue_events; this
+        // is what they will pay once the trial ends.
         mrr_cents: HOSTING_FROM_CENTS,
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: stripeSubscriptionId,
@@ -200,37 +202,27 @@ async function handleCheckoutCompleted(event: StripeEvent) {
     customerId = created?.id ?? null;
   }
 
-  // 3. Revenue. The launch fee and the first month are separate events so the
-  //    dashboard can tell one-time money from recurring money.
+  // 3. Revenue — only what was actually collected today.
+  //
+  //    Hosting is on a 30-day trial, so nothing recurring is charged now.
+  //    Booking a hypothetical $29 here would overstate LTV against ad spend
+  //    for every customer who cancels during the trial. The first hosting
+  //    payment is written by handleInvoicePaid when Stripe really charges it.
   const campaign = lead?.utm_campaign || lead?.campaign || null;
-  const launchCents = Math.max(0, Math.min(OFFER_PRICE_CENTS, amountTotal || OFFER_PRICE_CENTS));
-  const hostingCents = Math.max(0, (amountTotal || 0) - launchCents) || HOSTING_FROM_CENTS;
+  const launchCents = amountTotal > 0 ? amountTotal : OFFER_PRICE_CENTS;
 
   await db.from("revenue_events").upsert(
-    [
-      {
-        customer_id: customerId,
-        lead_id: leadId,
-        kind: "initial",
-        category: "launch_package",
-        description: `${CAMPAIGN_NAME} — one-time launch`,
-        amount_cents: launchCents,
-        campaign,
-        occurred_at: now,
-        external_id: `${sessionId}:launch`,
-      },
-      {
-        customer_id: customerId,
-        lead_id: leadId,
-        kind: "recurring",
-        category: "hosting",
-        description: "Hosting & management — first month",
-        amount_cents: hostingCents,
-        campaign,
-        occurred_at: now,
-        external_id: `${sessionId}:hosting`,
-      },
-    ],
+    {
+      customer_id: customerId,
+      lead_id: leadId,
+      kind: "initial",
+      category: "launch_package",
+      description: `${CAMPAIGN_NAME} — one-time launch`,
+      amount_cents: launchCents,
+      campaign,
+      occurred_at: now,
+      external_id: `${sessionId}:launch`,
+    },
     { onConflict: "external_id", ignoreDuplicates: true }
   );
 

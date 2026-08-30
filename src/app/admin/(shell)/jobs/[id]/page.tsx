@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { JOB_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
 import { fmtMoney } from "@/lib/campaign/metrics";
+import { HOSTING_TRIAL_DAYS } from "@/lib/campaign/config";
 import type { Job, JobTask, JobEvent, Customer, Invoice } from "@/lib/supabase/types";
 import {
   addJobNote,
@@ -190,10 +191,24 @@ export default async function JobDetailPage({
             <section className="ad-panel">
               <h2 className="ad-panel-title">Payment</h2>
               <dl className="ad-dl">
-                <dt>Launch</dt>
+                <dt>Charged</dt>
                 <dd>{fmtMoney(invoice.launch_cents / 100)}</dd>
-                <dt>First month</dt>
-                <dd>{fmtMoney(invoice.hosting_cents / 100)}</dd>
+                <dt>Then monthly</dt>
+                <dd>
+                  {fmtMoney(invoice.hosting_cents / 100)}
+                  {invoice.paid_at && (
+                    <>
+                      {" "}
+                      <span className="ad-muted">
+                        from{" "}
+                        {new Date(
+                          new Date(invoice.paid_at).getTime() +
+                            HOSTING_TRIAL_DAYS * 86_400_000
+                        ).toLocaleDateString()}
+                      </span>
+                    </>
+                  )}
+                </dd>
                 <dt>Status</dt>
                 <dd>
                   <span className={`ad-tag s-${invoice.status === "paid" ? "live" : "muted"}`}>

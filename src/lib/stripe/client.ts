@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import {
   OFFER_PRICE_CENTS,
   HOSTING_FROM_CENTS,
+  HOSTING_TRIAL_DAYS,
   CAMPAIGN_NAME,
 } from "@/lib/campaign/config";
 
@@ -171,11 +172,14 @@ export type CheckoutSession = {
 };
 
 /**
- * One link that charges the $399 today and starts the $29/month today.
+ * One link: $399 today, then $29/month starting 30 days from now.
  *
- * Checkout in subscription mode bills any one-time line item on the first
- * invoice, so the customer sees a single $428 charge now and $29 on the same
- * day next month — which is what John chose over deferring hosting to launch.
+ * Checkout in subscription mode bills one-time line items on the first
+ * invoice, so the customer is charged exactly $399 today. The recurring line
+ * sits at $0 through the trial, and Stripe raises the first $29 invoice when
+ * the trial ends — which the webhook books as recurring revenue then, not now.
+ *
+ * A card is still collected up front, because there is an amount due today.
  */
 export async function createCheckoutSession(opts: {
   leadId: string;
@@ -210,6 +214,7 @@ export async function createCheckoutSession(opts: {
         business_name: opts.businessName ?? "",
       },
       subscription_data: {
+        trial_period_days: HOSTING_TRIAL_DAYS,
         metadata: { lead_id: opts.leadId, invoice_id: opts.invoiceId },
       },
       success_url: `${origin}${opts.successPath ?? "/business-launch/thank-you"}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,

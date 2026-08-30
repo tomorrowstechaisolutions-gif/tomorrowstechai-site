@@ -13,8 +13,12 @@ export const OFFER_CURRENCY = "USD";
 export const HOSTING_FROM = 29;
 export const HOSTING_FROM_CENTS = 2900;
 
+/** Hosting is free for the first 30 days, so "$29/month after launch" in the
+ *  ad stays literally true — the build takes 7-14 days. */
+export const HOSTING_TRIAL_DAYS = 30;
+
 export const HOSTING_DISCLOSURE =
-  "Hosting & management from $29/month, billed after your site goes live. Cancel any time.";
+  "Hosting & management from $29/month. Free for the first 30 days, so billing starts well after your site is live. Cancel any time.";
 
 export const BUSINESS_TYPES = [
   "Contractor",
