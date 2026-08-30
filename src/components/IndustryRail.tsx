@@ -17,9 +17,13 @@ import {
 /**
  * Industry cards.
  *
- * `image` is optional on purpose: until real photography lands in
- * `public/industries/*`, each card renders a coded gradient plate with its icon.
- * Drop a file in and set `image` — nothing else needs to change.
+ * `image` stays optional: a card with no art falls back to its coded gradient
+ * plate, so a seventh industry can be added before its photograph exists.
+ *
+ * The art in `public/industries/*` is 700x933 WebP — 3x the 232px card at its
+ * widest, and 434 KB for all six together, down from 12 MB of source PNG. The
+ * `.tt-industry::after` gradient over the top is what keeps the label legible;
+ * every one of these was shot with a quiet bottom third for exactly that.
  */
 const INDUSTRIES: {
   name: string;
@@ -31,31 +35,37 @@ const INDUSTRIES: {
     name: "Contractors & home services",
     Icon: IconBrush,
     tint: "from-[#1E3A5F] via-[#0D1A2E] to-[#04070D]",
+    image: "/industries/contractors-home-services.webp",
   },
   {
     name: "Health & wellness",
     Icon: IconUsers,
     tint: "from-[#1F3352] via-[#0C1728] to-[#04070D]",
+    image: "/industries/health-wellness.webp",
   },
   {
     name: "Retail & e-commerce",
     Icon: IconCart,
     tint: "from-[#233A63] via-[#0E1B2F] to-[#04070D]",
+    image: "/industries/retail-ecommerce.webp",
   },
   {
     name: "Restaurants & hospitality",
     Icon: IconSparkle,
     tint: "from-[#2A2F63] via-[#12162E] to-[#04070D]",
+    image: "/industries/restaurants-hospitality.webp",
   },
   {
     name: "Real estate & property",
     Icon: IconMapPin,
     tint: "from-[#1B3B66] via-[#0B1B31] to-[#04070D]",
+    image: "/industries/real-estate-property.webp",
   },
   {
     name: "Professional services",
     Icon: IconDashboard,
     tint: "from-[#243158] via-[#0F1729] to-[#04070D]",
+    image: "/industries/professional-services.webp",
   },
 ];
 
@@ -93,7 +103,7 @@ export function IndustryRail() {
                 src={image}
                 alt=""
                 fill
-                sizes="232px"
+                sizes="(max-width: 860px) 27vw, 232px"
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
               />
             ) : (
