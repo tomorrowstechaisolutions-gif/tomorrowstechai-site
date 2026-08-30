@@ -95,6 +95,14 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   const m = meta(session);
   const leadId = m.lead_id || null;
   const invoiceId = m.invoice_id || null;
+
+  // This Stripe account is shared with the other storefronts, and Stripe
+  // delivers every checkout.session.completed to every endpoint subscribed to
+  // it. Without this guard a t-shirt order from another site would create a
+  // customer in this CRM, book its total as launch_package revenue against
+  // the ad campaign, and open a website build job for someone who bought a
+  // hat. Our own sessions always carry both ids — anything else is not ours.
+  if (!leadId || !invoiceId) return;
   const stripeCustomerId = str(session, "customer");
   const stripeSubscriptionId = str(session, "subscription");
   const amountTotal = num(session, "amount_total");
@@ -111,25 +119,23 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   type InvoiceRef = { id: string; status: string };
   let invoiceRow: InvoiceRef | null = null;
 
-  if (invoiceId) {
+  {
     const { data } = await db
       .from("invoices")
       .select("id, status")
       .eq("id", invoiceId)
       .maybeSingle();
     invoiceRow = (data as InvoiceRef | null) ?? null;
-  } else if (sessionId) {
-    const { data } = await db
-      .from("invoices")
-      .select("id, status")
-      .eq("stripe_session_id", sessionId)
-      .maybeSingle();
-    invoiceRow = (data as InvoiceRef | null) ?? null;
   }
 
-  if (invoiceRow?.status === "paid") return; // already handled
+  // A lead_id we never issued, or an invoice row that has since been deleted.
+  // Either way this is not a sale of ours to record.
+  if (!invoiceRow) return;
 
-  if (invoiceRow) {
+  // Stripe redelivers. Booking this twice would double the revenue.
+  if (invoiceRow.status === "paid") return;
+
+  {
     await db
       .from("invoices")
       .update({
@@ -160,11 +166,11 @@ async function handleCheckoutCompleted(event: StripeEvent) {
     .select("id")
     .or(
       [
-        leadId ? `lead_id.eq.${leadId}` : null,
+        `lead_id.eq.${leadId}`,
         stripeCustomerId ? `stripe_customer_id.eq.${stripeCustomerId}` : null,
       ]
         .filter(Boolean)
-        .join(",") || "id.is.null"
+        .join(",")
     )
     .limit(1)
     .maybeSingle();
@@ -248,7 +254,7 @@ async function handleCheckoutCompleted(event: StripeEvent) {
     await openJob({
       customerId,
       leadId,
-      invoiceId: invoiceRow?.id ?? null,
+      invoiceId: invoiceRow.id,
       businessName: lead?.business_name ?? m.business_name ?? null,
       name: lead ? `${lead.first_name ?? ""} ${lead.last_name ?? ""}`.trim() : null,
     });
