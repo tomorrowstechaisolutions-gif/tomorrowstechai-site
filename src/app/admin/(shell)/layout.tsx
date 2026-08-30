@@ -4,13 +4,32 @@ import { getAdminUser } from "@/lib/supabase/server";
 import { signOutAction } from "../actions";
 import { supabaseConfigured } from "@/lib/supabase/admin";
 
-const NAV = [
-  { href: "/admin", label: "Overview" },
-  { href: "/admin/leads", label: "Leads" },
-  { href: "/admin/marketing/campaigns/business-launch", label: "$399 Business Launch" },
-  { href: "/admin/marketing/ads", label: "Ad Studio" },
-  { href: "/admin/marketing/spend", label: "Ad spend" },
-  { href: "/admin/settings", label: "Settings" },
+/**
+ * Grouped rather than sliced by index — the old version used NAV.slice(0, 2)
+ * and friends, so adding one link silently moved another into the wrong
+ * section.
+ */
+const NAV_GROUPS = [
+  {
+    head: "Pipeline",
+    links: [
+      { href: "/admin", label: "Overview" },
+      { href: "/admin/leads", label: "Leads" },
+      { href: "/admin/jobs", label: "Jobs" },
+    ],
+  },
+  {
+    head: "Marketing",
+    links: [
+      { href: "/admin/marketing/campaigns/business-launch", label: "$399 Business Launch" },
+      { href: "/admin/marketing/ads", label: "Ad Studio" },
+      { href: "/admin/marketing/spend", label: "Ad spend" },
+    ],
+  },
+  {
+    head: "System",
+    links: [{ href: "/admin/settings", label: "Settings" }],
+  },
 ];
 
 export default async function AdminShellLayout({
@@ -47,23 +66,15 @@ export default async function AdminShellLayout({
           <span>Admin Center</span>
         </div>
         <nav className="ad-nav">
-          <span className="ad-nav-head">Pipeline</span>
-          {NAV.slice(0, 2).map((n) => (
-            <Link key={n.href} href={n.href} className="ad-nav-link">
-              {n.label}
-            </Link>
-          ))}
-          <span className="ad-nav-head">Marketing</span>
-          {NAV.slice(2, 5).map((n) => (
-            <Link key={n.href} href={n.href} className="ad-nav-link">
-              {n.label}
-            </Link>
-          ))}
-          <span className="ad-nav-head">System</span>
-          {NAV.slice(5).map((n) => (
-            <Link key={n.href} href={n.href} className="ad-nav-link">
-              {n.label}
-            </Link>
+          {NAV_GROUPS.map((group) => (
+            <div key={group.head} className="ad-nav-group">
+              <span className="ad-nav-head">{group.head}</span>
+              {group.links.map((n) => (
+                <Link key={n.href} href={n.href} className="ad-nav-link">
+                  {n.label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <form action={signOutAction} className="ad-side-foot">

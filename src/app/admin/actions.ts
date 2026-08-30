@@ -6,6 +6,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { cancelPendingFollowups } from "@/lib/campaign/intake";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/supabase/types";
 import { OFFER_PRICE_CENTS, CAMPAIGN_NAME } from "@/lib/campaign/config";
+import { JOB_STAGES, type JobStage } from "@/lib/jobs/config";
 
 /**
  * Every action re-checks the admin. Server actions are public endpoints —
@@ -470,4 +471,113 @@ export async function deleteAd(formData: FormData) {
   await supabase.from("ad_creatives").delete().eq("id", id);
   revalidatePath("/admin/marketing/ads");
   redirect("/admin/marketing/ads");
+}
+
+// ── Jobs ────────────────────────────────────────────────────────────────────
+
+/**
+ * Jobs are opened by the Stripe webhook, not here — a job should only exist
+ * because someone paid. These actions move one along.
+ */
+export async function updateJobStage(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const jobId = str(formData, "job_id", 40);
+  const stage = str(formData, "stage", 20) as JobStage;
+  if (!jobId || !JOB_STAGES.includes(stage)) return;
+
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("stage")
+    .eq("id", jobId)
+    .maybeSingle();
+  if (!job || job.stage === stage) return;
+
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = { stage };
+  if (stage === "Launch") patch.launched_at = now;
+  if (stage === "Complete") patch.completed_at = now;
+
+  const { error } = await supabase.from("jobs").update(patch).eq("id", jobId);
+  if (error) return;
+
+  await supabase.from("job_events").insert({
+    job_id: jobId,
+    kind: "stage_change",
+    body: `Stage moved to ${stage}.`,
+    from_stage: job.stage,
+    to_stage: stage,
+    actor,
+  });
+
+  revalidatePath("/admin/jobs");
+  revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+export async function toggleJobTask(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const jobId = str(formData, "job_id", 40);
+  const taskId = str(formData, "task_id", 40);
+  if (!jobId || !taskId) return;
+
+  const { data: task } = await supabase
+    .from("job_tasks")
+    .select("done, label")
+    .eq("id", taskId)
+    .maybeSingle();
+  if (!task) return;
+
+  const done = !task.done;
+  await supabase
+    .from("job_tasks")
+    .update({ done, done_at: done ? new Date().toISOString() : null })
+    .eq("id", taskId);
+
+  // Only ticking is worth a history entry. Unticking is usually a misclick.
+  if (done) {
+    await supabase.from("job_events").insert({
+      job_id: jobId,
+      kind: "task",
+      body: `Done: ${task.label}`,
+      actor,
+    });
+  }
+
+  revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+export async function addJobNote(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const jobId = str(formData, "job_id", 40);
+  const body = str(formData, "body", 4000);
+  if (!jobId || !body) return;
+
+  await supabase.from("job_events").insert({
+    job_id: jobId,
+    kind: "note",
+    body,
+    actor,
+  });
+
+  revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+export async function updateJobFields(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const jobId = str(formData, "job_id", 40);
+  if (!jobId) return;
+
+  const siteUrl = str(formData, "site_url", 500);
+  const notes = str(formData, "notes", 8000);
+  const due = str(formData, "due_at", 30);
+
+  await supabase
+    .from("jobs")
+    .update({
+      site_url: siteUrl || null,
+      notes: notes || null,
+      due_at: due ? new Date(due).toISOString() : null,
+    })
+    .eq("id", jobId);
+
+  revalidatePath(`/admin/jobs/${jobId}`);
 }

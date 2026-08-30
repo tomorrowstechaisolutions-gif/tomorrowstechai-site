@@ -10,6 +10,7 @@ import {
   type Appointment,
 } from "@/lib/supabase/types";
 import { scoreBand } from "@/lib/campaign/scoring";
+import { PaymentLinkButton } from "@/components/admin/PaymentLinkButton";
 import { fmtMoney } from "@/lib/campaign/metrics";
 import {
   addAppointment,
@@ -44,8 +45,13 @@ export default async function LeadDetailPage({
   if (!leadRow) notFound();
   const lead = leadRow as Lead;
 
-  const [{ data: eventRows }, { data: revenueRows }, { data: apptRows }, { data: followups }] =
-    await Promise.all([
+  const [
+    { data: eventRows },
+    { data: revenueRows },
+    { data: apptRows },
+    { data: followups },
+    { data: openInvoice },
+  ] = await Promise.all([
       supabase
         .from("lead_events")
         .select("*")
@@ -67,6 +73,15 @@ export default async function LeadDetailPage({
         .select("step, status, due_at, sent_at")
         .eq("lead_id", id)
         .order("due_at", { ascending: true }),
+      // The live payment link, if one has already been created for this lead.
+      supabase
+        .from("invoices")
+        .select("checkout_url, status")
+        .eq("lead_id", id)
+        .eq("status", "sent")
+        .order("sent_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
   const events = (eventRows ?? []) as LeadEvent[];
@@ -250,10 +265,13 @@ export default async function LeadDetailPage({
                 Save status
               </button>
             </form>
+            <div className="ad-form mt">
+              <PaymentLinkButton leadId={lead.id} existingUrl={openInvoice?.checkout_url ?? null} />
+            </div>
             <form action={recordLaunchSale} className="ad-form mt">
               <input type="hidden" name="lead_id" value={lead.id} />
-              <button type="submit" className="ad-btn">
-                Mark won + record the $399 build
+              <button type="submit" className="ad-btn ghost">
+                Paid another way — mark won and record it
               </button>
             </form>
           </section>

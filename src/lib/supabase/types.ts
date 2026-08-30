@@ -1,3 +1,4 @@
+import type { JobStage } from "@/lib/jobs/config";
 /**
  * Hand-written row types for the campaign CRM tables.
  * Kept in sync with supabase/migrations/0001_business_launch.sql.
@@ -141,6 +142,8 @@ export type Customer = {
   churned_at: string | null;
   mrr_cents: number;
   notes: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -172,6 +175,84 @@ export type RevenueEvent = {
   currency: string;
   campaign: string | null;
   occurred_at: string;
+  created_at: string;
+  /** Stripe's id for the thing that produced this row. Unique — a webhook
+   *  replay updates nothing instead of booking the money twice. Null for
+   *  rows a human entered in the admin. */
+  external_id: string | null;
+};
+
+export const INVOICE_STATUSES = [
+  "draft",
+  "sent",
+  "paid",
+  "expired",
+  "void",
+  "refunded",
+] as const;
+
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+export type Invoice = {
+  id: string;
+  lead_id: string | null;
+  customer_id: string | null;
+  stripe_session_id: string | null;
+  stripe_invoice_id: string | null;
+  stripe_payment_intent: string | null;
+  launch_cents: number;
+  hosting_cents: number;
+  currency: string;
+  status: InvoiceStatus;
+  checkout_url: string | null;
+  receipt_url: string | null;
+  sent_at: string;
+  paid_at: string | null;
+  expires_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Job = {
+  id: string;
+  customer_id: string | null;
+  lead_id: string | null;
+  invoice_id: string | null;
+  title: string;
+  business_name: string | null;
+  stage: JobStage;
+  package: string;
+  promised_days: number;
+  due_at: string | null;
+  started_at: string;
+  launched_at: string | null;
+  completed_at: string | null;
+  site_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JobTask = {
+  id: string;
+  job_id: string;
+  stage: string;
+  label: string;
+  position: number;
+  done: boolean;
+  done_at: string | null;
+  created_at: string;
+};
+
+export type JobEvent = {
+  id: string;
+  job_id: string;
+  kind: "note" | "stage_change" | "task" | "payment" | "system";
+  body: string | null;
+  from_stage: string | null;
+  to_stage: string | null;
+  actor: string | null;
   created_at: string;
 };
 
