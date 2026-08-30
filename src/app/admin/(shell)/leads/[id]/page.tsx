@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   LEAD_STATUSES,
+  type CatalogItem,
   REVENUE_CATEGORIES,
   type Lead,
   type LeadEvent,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/supabase/types";
 import { scoreBand } from "@/lib/campaign/scoring";
 import { PaymentLinkButton } from "@/components/admin/PaymentLinkButton";
+import { SellUpsellButton } from "@/components/admin/SellUpsellButton";
 import { fmtMoney } from "@/lib/campaign/metrics";
 import {
   addAppointment,
@@ -51,6 +53,7 @@ export default async function LeadDetailPage({
     { data: apptRows },
     { data: followups },
     { data: openInvoice },
+    { data: catalogRows },
   ] = await Promise.all([
       supabase
         .from("lead_events")
@@ -79,9 +82,15 @@ export default async function LeadDetailPage({
         .select("checkout_url, status")
         .eq("lead_id", id)
         .eq("status", "sent")
+        .eq("kind", "launch")
         .order("sent_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("catalog_items")
+        .select("*")
+        .eq("active", true)
+        .order("position", { ascending: true }),
     ]);
 
   const events = (eventRows ?? []) as LeadEvent[];
@@ -267,6 +276,9 @@ export default async function LeadDetailPage({
             </form>
             <div className="ad-form mt">
               <PaymentLinkButton leadId={lead.id} existingUrl={openInvoice?.checkout_url ?? null} />
+            </div>
+            <div className="ad-form mt">
+              <SellUpsellButton items={(catalogRows ?? []) as CatalogItem[]} leadId={lead.id} />
             </div>
             <form action={recordLaunchSale} className="ad-form mt">
               <input type="hidden" name="lead_id" value={lead.id} />

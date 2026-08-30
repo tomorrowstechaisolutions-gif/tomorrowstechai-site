@@ -5195,3 +5195,18 @@ body {
     }
   }
 }
+
+@layer components {
+  .ad-check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--color-text-secondary);
+  }
+
+  .ad-check-row input {
+    width: 16px;
+    height: 16px;
+  }
+}

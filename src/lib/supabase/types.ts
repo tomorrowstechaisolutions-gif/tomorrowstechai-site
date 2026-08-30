@@ -182,6 +182,30 @@ export type RevenueEvent = {
   external_id: string | null;
 };
 
+export const BILLING_PERIODS = ["one_time", "monthly"] as const;
+export type BillingPeriod = (typeof BILLING_PERIODS)[number];
+
+/**
+ * Something you can sell on top of the $399 package.
+ *
+ * `from_cents` is a reference price for the catalog screen only. The amount
+ * actually charged is typed when the link is sent, because custom work is
+ * quoted per job — so a stale catalog price can never reach a customer.
+ */
+export type CatalogItem = {
+  id: string;
+  name: string;
+  category: RevenueCategory;
+  description: string | null;
+  billing: BillingPeriod;
+  from_cents: number;
+  active: boolean;
+  position: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export const INVOICE_STATUSES = [
   "draft",
   "sent",
@@ -195,8 +219,14 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
 export type Invoice = {
   id: string;
+  /** 'launch' uses launch_cents + hosting_cents; 'upsell' uses amount_cents. */
+  kind: "launch" | "upsell";
   lead_id: string | null;
   customer_id: string | null;
+  catalog_item_id: string | null;
+  amount_cents: number;
+  billing: BillingPeriod;
+  description: string | null;
   stripe_session_id: string | null;
   stripe_invoice_id: string | null;
   stripe_payment_intent: string | null;

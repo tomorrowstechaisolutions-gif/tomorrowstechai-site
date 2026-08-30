@@ -268,3 +268,70 @@ export function verifyStripeSignature(
     );
   });
 }
+
+/**
+ * A one-off link for a quoted upsell.
+ *
+ * The amount is passed inline as price_data rather than pointing at a stored
+ * Price. Custom work is priced per job, so creating a permanent Stripe Price
+ * for every quote would litter the dashboard with hundreds of dead objects —
+ * and worse, make it possible to send someone last quarter's number.
+ *
+ * One-time work uses payment mode. A retainer uses subscription mode and
+ * bills on the same day every month from today; there is no trial, because
+ * unlike hosting the work starts immediately.
+ */
+export async function createUpsellCheckoutSession(opts: {
+  invoiceId: string;
+  leadId?: string | null;
+  customerId?: string | null;
+  catalogItemId: string;
+  name: string;
+  description?: string | null;
+  amountCents: number;
+  billing: "one_time" | "monthly";
+  email: string;
+  stripeCustomerId?: string | null;
+}): Promise<CheckoutSession> {
+  const origin = siteOrigin();
+
+  const priceData: Record<string, unknown> = {
+    currency: "usd",
+    unit_amount: opts.amountCents,
+    product_data: {
+      name: opts.name,
+      ...(opts.description ? { description: opts.description.slice(0, 500) } : {}),
+    },
+    ...(opts.billing === "monthly" ? { recurring: { interval: "month" } } : {}),
+  };
+
+  const metadata = {
+    kind: "upsell",
+    invoice_id: opts.invoiceId,
+    catalog_item_id: opts.catalogItemId,
+    lead_id: opts.leadId ?? "",
+    customer_id: opts.customerId ?? "",
+  };
+
+  return stripeRequest<CheckoutSession>(
+    "POST",
+    "/checkout/sessions",
+    {
+      mode: opts.billing === "monthly" ? "subscription" : "payment",
+      // Reuse the Stripe customer when we have one, so a retainer and the
+      // hosting subscription sit on the same customer record rather than
+      // splitting one business across two.
+      ...(opts.stripeCustomerId
+        ? { customer: opts.stripeCustomerId }
+        : { customer_email: opts.email }),
+      line_items: [{ price_data: priceData, quantity: 1 }],
+      metadata,
+      ...(opts.billing === "monthly"
+        ? { subscription_data: { metadata } }
+        : { payment_intent_data: { metadata } }),
+      success_url: `${origin}/business-launch/thank-you?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/business-launch?checkout=cancelled`,
+    },
+    `upsell:${opts.invoiceId}`
+  );
+}

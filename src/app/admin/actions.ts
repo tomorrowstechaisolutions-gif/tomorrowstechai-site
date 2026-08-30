@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { cancelPendingFollowups } from "@/lib/campaign/intake";
-import { LEAD_STATUSES, type LeadStatus } from "@/lib/supabase/types";
+import {
+  LEAD_STATUSES,
+  REVENUE_CATEGORIES,
+  BILLING_PERIODS,
+  type LeadStatus,
+  type RevenueCategory,
+  type BillingPeriod,
+} from "@/lib/supabase/types";
 import { OFFER_PRICE_CENTS, CAMPAIGN_NAME } from "@/lib/campaign/config";
 import { JOB_STAGES, type JobStage } from "@/lib/jobs/config";
 
@@ -580,4 +587,62 @@ export async function updateJobFields(formData: FormData) {
     .eq("id", jobId);
 
   revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+// ── Catalog ─────────────────────────────────────────────────────────────────
+
+/**
+ * What you can sell on top of the $399 package.
+ *
+ * `from_cents` is a reference price shown on the catalog screen. It is never
+ * what gets charged — the amount is typed when the link is sent — so editing
+ * it here can't reprice a quote already out with a customer.
+ */
+export async function saveCatalogItem(formData: FormData) {
+  const { supabase } = await requireAdmin();
+
+  const id = str(formData, "id", 40);
+  const name = str(formData, "name", 120);
+  if (!name) return;
+
+  const category = str(formData, "category", 40) as RevenueCategory;
+  const billing = str(formData, "billing", 20) as BillingPeriod;
+
+  const patch = {
+    name,
+    category: REVENUE_CATEGORIES.includes(category) ? category : "other",
+    billing: BILLING_PERIODS.includes(billing) ? billing : "one_time",
+    description: str(formData, "description", 600) || null,
+    from_cents: toCents(str(formData, "from_price", 20)),
+    position: toInt(str(formData, "position", 10)),
+    active: formData.get("active") === "on",
+    notes: str(formData, "notes", 2000) || null,
+  };
+
+  if (id) {
+    await supabase.from("catalog_items").update(patch).eq("id", id);
+  } else {
+    await supabase.from("catalog_items").insert(patch);
+  }
+
+  revalidatePath("/admin/catalog");
+}
+
+export async function retireCatalogItem(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "id", 40);
+  if (!id) return;
+
+  // Deactivated, never deleted — invoices reference it, and a sold item has
+  // to keep its name and category for the revenue history to make sense.
+  await supabase.from("catalog_items").update({ active: false }).eq("id", id);
+  revalidatePath("/admin/catalog");
+}
+
+export async function restoreCatalogItem(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "id", 40);
+  if (!id) return;
+  await supabase.from("catalog_items").update({ active: true }).eq("id", id);
+  revalidatePath("/admin/catalog");
 }

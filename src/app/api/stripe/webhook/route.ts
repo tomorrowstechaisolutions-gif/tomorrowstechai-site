@@ -96,6 +96,13 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   const leadId = m.lead_id || null;
   const invoiceId = m.invoice_id || null;
 
+  // An upsell to someone who already bought. Different money, different
+  // bookkeeping, and no new job — the work attaches to the one already open.
+  if (m.kind === "upsell") {
+    await handleUpsellPaid(event);
+    return;
+  }
+
   // This Stripe account is shared with the other storefronts, and Stripe
   // delivers every checkout.session.completed to every endpoint subscribed to
   // it. Without this guard a t-shirt order from another site would create a
@@ -285,6 +292,110 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   });
 }
 
+
+// ── Upsells ─────────────────────────────────────────────────────────────────
+
+/**
+ * A quoted extra — a CRM build, a retainer — paid by an existing customer or
+ * by a lead buying it alongside the launch.
+ *
+ * Books an 'upsell' revenue event under the catalog item's own category, so
+ * the campaign dashboard can show what an ad-sourced customer is worth over
+ * time rather than only what they paid on day one. Monthly items also raise
+ * the customer's MRR.
+ */
+async function handleUpsellPaid(event: StripeEvent) {
+  const db = supabaseAdmin();
+  const session = event.data.object;
+
+  const sessionId = str(session, "id");
+  const m = meta(session);
+  const invoiceId = m.invoice_id || null;
+  if (!invoiceId || !sessionId) return;
+
+  const { data: invoice } = await db
+    .from("invoices")
+    .select("id, status, amount_cents, billing, lead_id, customer_id, catalog_item_id, description")
+    .eq("id", invoiceId)
+    .maybeSingle();
+
+  if (!invoice) return;
+  if (invoice.status === "paid") return; // Stripe redelivers
+
+  const now = new Date().toISOString();
+  const amount = num(session, "amount_total") || invoice.amount_cents;
+
+  await db
+    .from("invoices")
+    .update({
+      status: "paid",
+      paid_at: now,
+      stripe_session_id: sessionId,
+      stripe_invoice_id: str(session, "invoice"),
+      stripe_payment_intent: str(session, "payment_intent"),
+    })
+    .eq("id", invoice.id);
+
+  // Category comes from the catalog item so the money lands in the right
+  // bucket without the webhook needing to know what any of them mean.
+  let category = "other";
+  if (invoice.catalog_item_id) {
+    const { data: item } = await db
+      .from("catalog_items")
+      .select("category")
+      .eq("id", invoice.catalog_item_id)
+      .maybeSingle();
+    if (item?.category) category = item.category as string;
+  }
+
+  const { data: lead } = invoice.lead_id
+    ? await db
+        .from("leads")
+        .select("campaign, utm_campaign")
+        .eq("id", invoice.lead_id)
+        .maybeSingle()
+    : { data: null };
+
+  await db.from("revenue_events").upsert(
+    {
+      customer_id: invoice.customer_id,
+      lead_id: invoice.lead_id,
+      kind: "upsell",
+      category,
+      description: invoice.description ?? "Upsell",
+      amount_cents: amount,
+      campaign: lead?.utm_campaign || lead?.campaign || null,
+      occurred_at: now,
+      external_id: `${sessionId}:upsell`,
+    },
+    { onConflict: "external_id", ignoreDuplicates: true }
+  );
+
+  // A retainer raises what this customer is worth every month from now on.
+  if (invoice.billing === "monthly" && invoice.customer_id) {
+    const { data: customer } = await db
+      .from("customers")
+      .select("mrr_cents")
+      .eq("id", invoice.customer_id)
+      .maybeSingle();
+    if (customer) {
+      await db
+        .from("customers")
+        .update({ mrr_cents: (customer.mrr_cents ?? 0) + amount })
+        .eq("id", invoice.customer_id);
+    }
+  }
+
+  if (invoice.lead_id) {
+    await db.from("lead_events").insert({
+      lead_id: invoice.lead_id,
+      type: "revenue",
+      body: `Upsell paid — ${invoice.description ?? "extra work"}.`,
+      actor: "stripe",
+    });
+  }
+}
+
 // ── Later months ────────────────────────────────────────────────────────────
 
 async function handleInvoicePaid(event: StripeEvent) {
@@ -306,13 +417,37 @@ async function handleInvoicePaid(event: StripeEvent) {
     .maybeSingle();
   if (!customer) return;
 
+  // A customer can have more than one subscription — hosting, plus any
+  // monthly retainer they bought later. Both raise invoice.paid, so the
+  // subscription's own metadata decides which bucket this month belongs in.
+  // Without this, a $750 ad-management retainer would be filed as hosting.
+  const subDetails = invoice.subscription_details as
+    | { metadata?: Record<string, string> }
+    | undefined;
+  const subMeta = subDetails?.metadata ?? {};
+
+  let category = "hosting";
+  let description = "Hosting & management";
+
+  if (subMeta.kind === "upsell" && subMeta.catalog_item_id) {
+    const { data: item } = await db
+      .from("catalog_items")
+      .select("name, category")
+      .eq("id", subMeta.catalog_item_id)
+      .maybeSingle();
+    if (item) {
+      category = item.category as string;
+      description = item.name as string;
+    }
+  }
+
   await db.from("revenue_events").upsert(
     {
       customer_id: customer.id,
       lead_id: customer.lead_id,
       kind: "recurring",
-      category: "hosting",
-      description: "Hosting & management",
+      category,
+      description,
       amount_cents: amountPaid,
       occurred_at: new Date().toISOString(),
       external_id: stripeInvoiceId,

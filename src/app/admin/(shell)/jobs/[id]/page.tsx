@@ -4,7 +4,15 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { JOB_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
 import { fmtMoney } from "@/lib/campaign/metrics";
 import { HOSTING_TRIAL_DAYS } from "@/lib/campaign/config";
-import type { Job, JobTask, JobEvent, Customer, Invoice } from "@/lib/supabase/types";
+import type {
+  Job,
+  JobTask,
+  JobEvent,
+  Customer,
+  Invoice,
+  CatalogItem,
+} from "@/lib/supabase/types";
+import { SellUpsellButton } from "@/components/admin/SellUpsellButton";
 import {
   addJobNote,
   toggleJobTask,
@@ -40,8 +48,13 @@ export default async function JobDetailPage({
   if (!jobRow) notFound();
   const job = jobRow as Job;
 
-  const [{ data: taskRows }, { data: eventRows }, { data: customerRow }, { data: invoiceRow }] =
-    await Promise.all([
+  const [
+    { data: taskRows },
+    { data: eventRows },
+    { data: customerRow },
+    { data: invoiceRow },
+    { data: catalogRows },
+  ] = await Promise.all([
       supabase.from("job_tasks").select("*").eq("job_id", id).order("position"),
       supabase
         .from("job_events")
@@ -55,6 +68,11 @@ export default async function JobDetailPage({
       job.invoice_id
         ? supabase.from("invoices").select("*").eq("id", job.invoice_id).maybeSingle()
         : Promise.resolve({ data: null }),
+      supabase
+        .from("catalog_items")
+        .select("*")
+        .eq("active", true)
+        .order("position", { ascending: true }),
     ]);
 
   const tasks = (taskRows ?? []) as JobTask[];
@@ -224,6 +242,19 @@ export default async function JobDetailPage({
               </dl>
             </section>
           )}
+
+          <section className="ad-panel">
+            <h2 className="ad-panel-title">Sell more</h2>
+            <p className="ad-hint">
+              Mid-job is when they trust you most. Anything sold here is billed
+              to the same customer and lands on this job&rsquo;s revenue.
+            </p>
+            <SellUpsellButton
+              items={(catalogRows ?? []) as CatalogItem[]}
+              customerId={job.customer_id}
+              leadId={job.lead_id}
+            />
+          </section>
 
           <section className="ad-panel">
             <h2 className="ad-panel-title">Details</h2>
