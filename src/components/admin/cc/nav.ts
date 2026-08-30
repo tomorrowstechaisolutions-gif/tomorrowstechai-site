@@ -109,7 +109,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage, soon: true },
       { href: "/admin/marketing/social", label: "Social Center", icon: IconShare, soon: true },
       { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail, soon: true },
-      { href: "/admin/marketing/seo", label: "SEO", icon: IconGlobe, soon: true },
+      { href: "/admin/marketing/seo", label: "SEO", icon: IconGlobe },
       { href: "/admin/marketing/brand", label: "Brand Assets", icon: IconImage, soon: true },
     ],
   },
@@ -266,10 +266,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Broadcast and sequence email. The transactional and follow-up emails already run through Resend.",
     nearest: { href: "/admin/settings", label: "Check email configuration" },
-  },
-  "/admin/marketing/seo": {
-    title: "SEO",
-    blurb: "Rankings, indexing and on-page checks for tomorrowstechai.com.",
   },
   "/admin/automations": {
     title: "Automations",

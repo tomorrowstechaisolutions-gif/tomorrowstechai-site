@@ -7873,4 +7873,63 @@ body {
     .cc-kv { grid-template-columns: 1fr; gap: 2px 0; }
     .cc-kv dt { margin-top: 8px; }
   }
+
+  /* ═══ SEO Command Center ══════════════════════════════════════════════
+
+     Only three shapes are new here. Everything else on that screen reuses
+     the panels, tables, alert rows and bar lists the rest of the admin
+     already has, which is the point: one visual language, not a per-page
+     dialect. */
+
+  /* Score on the left at its own size, the counts filling the rest —
+     a half-and-half split leaves a 76px ring alone in 300px of nothing. */
+  .cc-seo-health {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .cc-seo-health .cc-stats {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cc-inline-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .cc-inline-form .cc-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cc-inline-form .cc-note { margin-top: 0; }
+
+  /* A watched competitor: name, whatever is known, and a way to stop. */
+  .cc-health-row form { margin-left: auto; display: flex; }
+
+  .cc-health-row .cc-icon-btn {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  /* The audit button sits in a panel foot beside its own caveat. */
+  .cc-panel-foot form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 860px) {
+    .cc-seo-health { flex-direction: column; align-items: stretch; gap: 12px; }
+    .cc-inline-form { width: 100%; }
+    .cc-inline-form .cc-input { flex: 1 1 100%; }
+  }
+
 }

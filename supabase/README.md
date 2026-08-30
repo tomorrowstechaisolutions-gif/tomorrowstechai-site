@@ -19,6 +19,7 @@ rather than a convincing empty list.
 | 0006 | `0006_catalog_and_upsells.sql` | `catalog_items`, and the upsell columns on `invoices`. |
 | 0007 | `0007_command_center.sql` | The Business Command Center — see below. |
 | 0008 | `0008_client_record.sql` | The client record — see below. |
+| 0009 | `0009_seo.sql` | SEO Command Center — see below. |
 
 ## 0007 — Business Command Center
 
@@ -106,3 +107,57 @@ no row and writes nothing.
 (idempotency), then constraint tests (rating bounds 1-5, invalid occasion,
 negative renewal amount), the cascade delete, and RLS as `anon` (permission
 denied).
+
+## 0009 — SEO Command Center
+
+Five tables, no changes to anything that already existed.
+
+**New tables**
+
+`seo_audit_runs` — one row per crawl. Written with `status='running'` *before*
+the crawl starts, so a run that dies halfway leaves evidence rather than
+silence. `pages_checked`, `issues_found`, `base_url` and `actor` are filled in
+when it completes.
+
+`seo_pages` — what one crawl found on one page: status code, response time,
+title, description, canonical, og:image, heading counts, word count, JSON-LD
+types, `noindex`, internal link count. Cascade-deletes with its run, so the
+history prunes itself by deleting old runs.
+
+`seo_issues` — one row per rule that fired, with `code`, `severity` and a
+human `detail`. Also cascade-deletes with its run. The rule catalogue itself
+(what each code means, why it matters, how to fix it) lives in
+`src/lib/seo/rules.ts` and is **not** in the database: rule text changes far
+more often than rule results, and a copy in both places drifts.
+
+`seo_queries` — the Search Console cache, one row per day + query + page.
+Unique on `(date, query, page)` so a re-sync updates rather than duplicates.
+`source` distinguishes `search_console` from `manual`. The dashboard reads
+only this table — it never makes a Google round trip while rendering.
+
+`seo_competitors` — a watched domain. `visibility_pct`, `keyword_count`,
+`traffic_est` and `stats_source` are all nullable and stay null until a
+rank-tracking source fills them: a competitor with no data renders as
+*watched, no data*, never as a competitor scoring zero. Unique on
+`lower(domain)`.
+
+**RLS**
+
+All five are enabled with the same deny-by-default shape as every other table:
+select/insert/update/delete for `authenticated` only when `public.is_admin()`.
+PostgREST grants are revoked from `anon`.
+
+**NOT added, on purpose**
+
+- A stored SEO score. `healthScore()` derives it per request from the current
+  run's issues, and the band with it. Same reasoning as client health: a
+  stored score is a number that was true once.
+- A `seo_recommendations` table. Recommendations are recomputed from the audit,
+  the leads and the query cache on every render. The ones that survive review
+  become rows in `ai_actions`, which already exists and already enforces
+  propose → review → approve.
+
+**Verified before applying**: 0001→0009 against a scratch PostgreSQL 16, twice
+(idempotency), then the severity and status check constraints, the
+`(date, query, page)` uniqueness, the cascade delete from `seo_audit_runs`
+through `seo_pages` and `seo_issues`, and RLS as `anon` (permission denied).
