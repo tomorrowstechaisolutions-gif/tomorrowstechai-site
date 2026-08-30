@@ -213,7 +213,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("Business Launch lead route error:", err);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again, or call (254) 272-3313." },
+      { error: "Something went wrong. Please try again, or call (254) 563-2130." },
       { status: 500 }
     );
   }

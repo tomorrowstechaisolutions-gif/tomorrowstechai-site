@@ -382,11 +382,11 @@ export default function BusinessLaunchPage() {
           <p className="bl-callnote">
             Would rather talk first?{" "}
             <ContactAction
-              href="tel:+12542723313"
+              href="tel:+12545632130"
               method="phone"
               className="bl-link"
             >
-              Call (254) 272-3313
+              Call (254) 563-2130
             </ContactAction>{" "}
             or{" "}
             <ContactAction

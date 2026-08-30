@@ -66,7 +66,7 @@ Talk soon.
 — John
 Founder, Tomorrow's Tech AI
 ${SITE}
-(254) 272-3313`,
+(254) 563-2130`,
     });
     return !res.error;
   } catch (err) {
@@ -206,7 +206,7 @@ plan for the $${OFFER_PRICE} build.
 — John
 Tomorrow's Tech AI
 ${SITE}
-(254) 272-3313`,
+(254) 563-2130`,
         };
 
   const unsub = unsubscribeUrl(lead.id);

@@ -140,8 +140,8 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-2.5">
                 <IconPhone size={16} className="text-[color:var(--color-blue)] mt-0.5 shrink-0" />
-                <a href="tel:+12542723313" className="tt-foot-link">
-                  (254) 272-3313
+                <a href="tel:+12545632130" className="tt-foot-link">
+                  (254) 563-2130
                 </a>
               </li>
               <li className="flex items-start gap-2.5">

@@ -107,7 +107,7 @@ const serviceJsonLd = {
     "@type": "ProfessionalService",
     name: "Tomorrow’s Tech AI",
     legalName: "Tomorrows Tech AI LLC",
-    telephone: "+1-254-272-3313",
+    telephone: "+1-254-563-2130",
     email: "john@tomorrowstechai.com",
     address: {
       "@type": "PostalAddress",
@@ -172,10 +172,10 @@ export default function JobCatcherPage() {
             </p>
             <div className="flex flex-wrap gap-4 mt-8">
               <a
-                href="tel:+12542723313"
+                href="tel:+12545632130"
                 className="inline-block rounded-lg bg-[color:var(--color-cyan)] px-6 py-3 font-medium text-black transition-opacity hover:opacity-90"
               >
-                Call (254) 272-3313 →
+                Call (254) 563-2130 →
               </a>
               <Link
                 href="/contact"
@@ -436,8 +436,8 @@ export default function JobCatcherPage() {
             </p>
             <p className="mt-3 text-sm text-[color:var(--color-text-secondary)]">
               John Hockinson · Founder, Tomorrows Tech AI LLC · Belton, TX ·{" "}
-              <a href="tel:+12542723313" className="text-[color:var(--color-cyan)] hover:underline">
-                (254) 272-3313
+              <a href="tel:+12545632130" className="text-[color:var(--color-cyan)] hover:underline">
+                (254) 563-2130
               </a>
             </p>
           </div>
@@ -472,10 +472,10 @@ export default function JobCatcherPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-6">
             <a
-              href="tel:+12542723313"
+              href="tel:+12545632130"
               className="inline-block rounded-lg bg-[color:var(--color-cyan)] px-6 py-3 font-medium text-black transition-opacity hover:opacity-90"
             >
-              Call (254) 272-3313
+              Call (254) 563-2130
             </a>
             <Link
               href="/contact"

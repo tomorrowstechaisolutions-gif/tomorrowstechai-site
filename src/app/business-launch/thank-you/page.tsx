@@ -88,11 +88,11 @@ export default function ThankYouPage() {
           <p className="bl-callnote">
             Need us sooner?{" "}
             <ContactAction
-              href="tel:+12542723313"
+              href="tel:+12545632130"
               method="phone"
               className="bl-link"
             >
-              Call (254) 272-3313
+              Call (254) 563-2130
             </ContactAction>{" "}
             or{" "}
             <ContactAction
