@@ -69,6 +69,11 @@ const SOLUTIONS: MegaItem[] = [
 
 const PRODUCTS: MegaItem[] = [
   {
+    href: "/business-launch",
+    label: "$399 Business Launch",
+    blurb: "Website, lead capture, CRM, booking and payments. Live in 7-14 days.",
+  },
+  {
     href: "/logo-studio",
     label: "Logo Studio",
     blurb: "Create a logo in minutes, then have it refined by hand.",

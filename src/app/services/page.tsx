@@ -129,6 +129,8 @@ const supporting = [
     title: "$399 Business Launch package",
     body: "A five-page site on a layout we have already proven, plus lead capture, a starter CRM, booking, payments and one dashboard. Live in 7–14 days. For getting online now rather than getting something bespoke.",
     meta: "$399 one-time · hosting from $29/month, free for 30 days",
+    href: "/business-launch",
+    hrefLabel: "See what's included →",
   },
   {
     title: "Custom marketing websites",
@@ -381,6 +383,14 @@ export default function ServicesPage() {
                   <div className="text-[11px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)] mt-3">
                     {item.meta}
                   </div>
+                  {"href" in item && item.href && (
+                    <Link
+                      href={item.href}
+                      className="inline-block mt-3 text-sm text-[color:var(--color-cyan)] border-b border-[color:var(--color-cyan)]/30 hover:border-[color:var(--color-cyan)] pb-0.5 transition-colors"
+                    >
+                      {item.hrefLabel ?? "Read more →"}
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

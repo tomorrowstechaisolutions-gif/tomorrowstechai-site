@@ -23,6 +23,11 @@ type Service = {
   includes: string[];
   timeline: string;
   price?: string;
+  /** Where the card's link goes. Defaults to /contact for scoped work; the
+   *  productized offers point at their own page instead, because "talk
+   *  through this one" is the wrong ask for something with a fixed price. */
+  ctaHref?: string;
+  ctaLabel?: string;
 };
 
 const services: Service[] = [
@@ -135,6 +140,8 @@ const services: Service[] = [
     ],
     timeline: "$399 package: 7–14 days · Custom: 2–4 weeks",
     price: "$399 package · $1,500–$3,000 custom",
+    ctaHref: "/business-launch",
+    ctaLabel: "See the $399 Business Launch →",
   },
   {
     tag: "09",
@@ -240,11 +247,11 @@ function ServiceCard({ service }: { service: Service }) {
             </div>
 
             <Link
-              href="/contact"
+              href={service.ctaHref ?? "/contact"}
               tabIndex={open ? 0 : -1}
               className="inline-flex items-center gap-2 mt-5 text-sm text-[color:var(--color-cyan)] border-b border-[color:var(--color-cyan)]/30 hover:border-[color:var(--color-cyan)] pb-0.5 transition-colors"
             >
-              Talk through this one →
+              {service.ctaLabel ?? "Talk through this one →"}
             </Link>
           </div>
         </div>
