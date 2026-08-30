@@ -126,8 +126,13 @@ const supporting = [
     meta: "4–12 weeks or ongoing",
   },
   {
-    title: "Standalone marketing websites",
-    body: "For companies that need the public-facing brand and lead system without a full private operating backend.",
+    title: "$399 Business Launch package",
+    body: "A five-page site on a layout we have already proven, plus lead capture, a starter CRM, booking, payments and one dashboard. Live in 7–14 days. For getting online now rather than getting something bespoke.",
+    meta: "$399 one-time · hosting from $29/month, free for 30 days",
+  },
+  {
+    title: "Custom marketing websites",
+    body: "When the design, the words and the structure have to be yours rather than ours. Original layout, copy written for your market, and as many pages as the business actually needs.",
     meta: "$1,500–$3,000 · 2–4 weeks",
   },
   {
@@ -157,6 +162,11 @@ const pricing = [
     engagement: "Custom application or private AI",
     range: "Scoped proposal",
     timeline: "6–12 weeks",
+  },
+  {
+    engagement: "$399 Business Launch package",
+    range: "$399 + $29/month",
+    timeline: "7–14 days",
   },
   {
     engagement: "Custom marketing website",

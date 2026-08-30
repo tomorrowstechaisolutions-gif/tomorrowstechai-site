@@ -123,16 +123,18 @@ const services: Service[] = [
   {
     tag: "08",
     title: "Website Design & Build",
-    body: "Custom-coded business websites on Next.js + Vercel — the same modern stack powering our own site. Fast, secure, SEO-ready out of the box, mobile-first by default. Not WordPress. Not a drag-and-drop builder.",
+    body: "Custom-coded business websites on Next.js + Vercel — the same modern stack powering our own site. Fast, secure, SEO-ready out of the box, mobile-first by default. Not WordPress. Not a drag-and-drop builder. Two ways in: the $399 Business Launch package if you need to be online in two weeks, or a custom build when the design and the words have to be yours.",
     Visual: VisualWebsite,
     includes: [
       "Custom-coded on Next.js + Vercel. Not WordPress, not a page builder",
       "SEO foundation: sitemap, structured data, canonical URLs, social preview images",
       "Mobile-first, sub-second load, accessible by default",
       "Contact forms, booking, blog, and analytics wired up before launch day",
+      "$399 Business Launch: five pages on a proven layout, live in 7–14 days",
+      "Custom build: your design, your copy, as many pages as the business needs",
     ],
-    timeline: "2–4 weeks from kickoff to live",
-    price: "$1,500–$3,000",
+    timeline: "$399 package: 7–14 days · Custom: 2–4 weeks",
+    price: "$399 package · $1,500–$3,000 custom",
   },
   {
     tag: "09",

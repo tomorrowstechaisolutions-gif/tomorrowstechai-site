@@ -115,6 +115,6 @@ export const FAQ = [
   { q: "Do I own the site?", a: "Yes. The site, the domain and the content are yours. If you ever leave, you take it with you." },
   { q: "What if I already have a website?", a: "Then this is usually a rebuild rather than a first build — same price, and we migrate what's worth keeping." },
   { q: "What happens if I stop paying the $29?", a: "The site stops being hosted and managed by us. We'll hand you the files and help you move it. Nothing is held hostage." },
-  { q: "Is this a template?", a: "The structure is proven and repeatable — that's how it's $399 instead of $4,000. The design, copy and photos are yours." },
+  { q: "Is this a template?", a: "The structure is proven and repeatable — that's how it's $399 instead of the $1,500 to $3,000 a fully custom build costs. The design, copy and photos are yours. If you want an original layout and copy written for your market, that's the custom build, and we'll quote it." },
   { q: "What if I need more than this later?", a: "That's the point. The $399 package is the foundation. CRM, AI, automation, e-commerce and custom applications bolt on when you're ready, at your pace." },
 ];
