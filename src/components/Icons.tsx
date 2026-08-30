@@ -102,8 +102,9 @@ export const IconUsers = (p: IconProps) => (
 
 export const IconDashboard = (p: IconProps) => (
   <Svg {...p}>
-    <rect x="2.5" y="3.5" width="19" height="17" rx="2" />
-    <path d="M2.5 8.5h19M8 8.5v12" />
+    <rect x="2.5" y="3.5" width="19" height="17" rx="2.5" />
+    <path d="M2.5 8h19" />
+    <path d="M6.5 12.5v4M10.5 14.5v2M14.5 11v5.5M18 13.5v3" />
   </Svg>
 );
 
@@ -117,8 +118,9 @@ export const IconBot = (p: IconProps) => (
 
 export const IconMegaphone = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M3 11v2a2 2 0 0 0 2 2h2l9 5V4L7 9H5a2 2 0 0 0-2 2Z" />
-    <path d="M19.5 9a4 4 0 0 1 0 6" />
+    <path d="M4 10.5v3A1.5 1.5 0 0 0 5.5 15H7l10 4.5V5L7 9.5H5.5A1.5 1.5 0 0 0 4 11Z" />
+    <path d="M7 15v4.5a1.5 1.5 0 0 0 3 0V16" />
+    <path d="M20 9.8a3.5 3.5 0 0 1 0 4.9" />
   </Svg>
 );
 
@@ -131,8 +133,9 @@ export const IconShield = (p: IconProps) => (
 
 export const IconBrain = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M9.5 3.5A3 3 0 0 0 6.6 6a2.8 2.8 0 0 0-2.1 4.3A3 3 0 0 0 5 15.6a3 3 0 0 0 2.8 3.7A2.6 2.6 0 0 0 12 19V4a2.4 2.4 0 0 0-2.5-.5Z" />
-    <path d="M14.5 3.5A3 3 0 0 1 17.4 6a2.8 2.8 0 0 1 2.1 4.3A3 3 0 0 1 19 15.6a3 3 0 0 1-2.8 3.7A2.6 2.6 0 0 1 12 19" />
+    <path d="M12 5.4a3.4 3.4 0 0 0-6.3-1.1A3 3 0 0 0 3.4 9a3.1 3.1 0 0 0 .8 4.9A3.2 3.2 0 0 0 7 19.6a3.1 3.1 0 0 0 5-1.4" />
+    <path d="M12 5.4a3.4 3.4 0 0 1 6.3-1.1A3 3 0 0 1 20.6 9a3.1 3.1 0 0 1-.8 4.9A3.2 3.2 0 0 1 17 19.6a3.1 3.1 0 0 1-5-1.4Z" />
+    <path d="M12 5.4v12.8M8.6 8.6c1 .3 1.9.9 2.4 1.8M15.4 12.4c-1 .3-1.9.9-2.4 1.8" />
   </Svg>
 );
 
@@ -278,4 +281,60 @@ export const IconInstagram = ({ size = 20, className }: IconProps) => (
     <circle cx="12" cy="12" r="4" />
     <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
   </svg>
+);
+
+/**
+ * Intelligence and automation.
+ *
+ * A brain is the obvious choice and the wrong one: at 18px any line brain
+ * turns to mush. A chip with a spark in it is unmistakable at both sizes and
+ * says "automation" as well as "clever", which the brain never did.
+ */
+export const IconAiChip = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="5" y="5" width="14" height="14" rx="3.5" />
+    <path d="M12 8.6l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1 1-2.4Z" />
+    <path d="M9 2.6v2.4M15 2.6v2.4M9 19v2.4M15 19v2.4M2.6 9H5M2.6 15H5M19 9h2.4M19 15h2.4" />
+  </Svg>
+);
+
+export const IconArticle = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 3.5h9.5L19 8v12.5H5Z" />
+    <path d="M14 3.5V8h5" />
+    <path d="M8 12.5h7M8 16h5" />
+  </Svg>
+);
+
+export const IconHelp = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.8" />
+    <path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.5" />
+    <path d="M12 17h.01" />
+  </Svg>
+);
+
+export const IconChecklist = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8.5 4h7a1.5 1.5 0 0 1 1.5 1.5v14A1.5 1.5 0 0 1 15.5 21h-7A1.5 1.5 0 0 1 7 19.5v-14A1.5 1.5 0 0 1 8.5 4Z" />
+    <path d="M9.5 4V2.8h5V4" />
+    <path d="m9.8 9.4 1.2 1.2 2.4-2.4M9.8 15.4l1.2 1.2 2.4-2.4" />
+  </Svg>
+);
+
+/** A guide, with the spark that marks the AI ones. */
+export const IconGuide = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4.5 4.6A1.6 1.6 0 0 1 6.1 3h11.4a1.5 1.5 0 0 1 1.5 1.5v16H6.1a1.6 1.6 0 0 1-1.6-1.6Z" />
+    <path d="M4.5 17.4H19" />
+    <path d="M11.8 6.4 12.8 9l2.6 1-2.6 1-1 2.6-1-2.6L8.2 10l2.6-1 1-2.6Z" />
+  </Svg>
+);
+
+/** A call, not a handset-shaped slab — legible where IconPhone is not. */
+export const IconPhoneCall = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M15.6 21A12.6 12.6 0 0 1 3 8.4 2.9 2.9 0 0 1 5.9 5.5h1.5a1 1 0 0 1 1 .8l.7 2.9a1 1 0 0 1-.3.95l-1.3 1.2a10.4 10.4 0 0 0 4.6 4.6l1.2-1.3a1 1 0 0 1 .95-.3l2.9.7a1 1 0 0 1 .8 1v1.5A2.9 2.9 0 0 1 15.6 21Z" />
+    <path d="M14.5 3.5a6 6 0 0 1 6 6" />
+  </Svg>
 );

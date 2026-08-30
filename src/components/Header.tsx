@@ -6,23 +6,40 @@ import { usePathname } from "next/navigation";
 import { BrandMark } from "./BrandMark";
 import { SoundToggle } from "./fx/UiSound";
 import {
+  IconAiChip,
   IconArrowRight,
+  IconArticle,
   IconBadgeCheck,
   IconBrain,
   IconBrush,
   IconChart,
+  IconChecklist,
   IconChevronDown,
   IconCode,
   IconDashboard,
+  IconDesktopTower,
+  IconGuide,
+  IconHelp,
   IconLock,
   IconMegaphone,
+  IconPhoneCall,
   IconRocket,
+  IconUsers,
 } from "./Icons";
 
 type MegaItem = {
   href: string;
   label: string;
   blurb: string;
+  /**
+   * Carried on the item, not looked up by position.
+   *
+   * These used to come from a five-icon array indexed by the item's place in
+   * the list, which meant the Solutions menu happened to line up and the other
+   * two did not — the blog got a paintbrush, Job Catcher got a dashboard, and
+   * a family app got a brain.
+   */
+  Icon: typeof IconBrush;
   external?: boolean;
 };
 
@@ -44,26 +61,31 @@ const SOLUTIONS: MegaItem[] = [
     href: "/services",
     label: "Build your business",
     blurb: "Brand, logo, website, hosting, SEO, ecommerce, 3D experiences.",
+    Icon: IconBrush,
   },
   {
     href: "/services",
     label: "Run your business",
     blurb: "Admin center, dashboard, CRM, scheduling, orders, documents.",
+    Icon: IconDashboard,
   },
   {
     href: "/services",
     label: "Grow your audience",
     blurb: "Social center, content, campaigns, lead gen, reputation.",
+    Icon: IconMegaphone,
   },
   {
     href: "/services",
     label: "Intelligence & automation",
     blurb: "AI assistants, workflow automation, reporting, custom agents.",
+    Icon: IconAiChip,
   },
   {
     href: "/services",
     label: "Technology & software",
     blurb: "Custom apps, SaaS, computer builds, local AI, integrations.",
+    Icon: IconCode,
   },
 ];
 
@@ -72,48 +94,61 @@ const PRODUCTS: MegaItem[] = [
     href: "/business-launch",
     label: "$399 Business Launch",
     blurb: "Website, lead capture, CRM, booking and payments. Live in 7-14 days.",
+    Icon: IconRocket,
   },
   {
     href: "/logo-studio",
     label: "Logo Studio",
     blurb: "Create a logo in minutes, then have it refined by hand.",
+    Icon: IconBrush,
   },
   {
     href: "/job-catcher",
     label: "Job Catcher",
     blurb: "Managed missed-call response for contractors.",
+    Icon: IconPhoneCall,
   },
   {
     href: "https://myheldapp.com",
     label: "Held",
     blurb: "Family operations app.",
+    Icon: IconUsers,
     external: true,
   },
   {
     href: "https://tomorrowstek.com",
     label: "TomorrowsTek",
     blurb: "Media, computer builds, and hardware.",
+    Icon: IconDesktopTower,
     external: true,
   },
   {
     href: "/services",
     label: "Custom software",
     blurb: "Apps, SaaS products, and internal tools built to order.",
+    Icon: IconCode,
   },
 ];
 
 const RESOURCES: MegaItem[] = [
-  { href: "/blog", label: "Blog", blurb: "Notes from the field on systems and AI." },
-  { href: "/faq", label: "FAQ", blurb: "How we scope, price, and build." },
+  {
+    href: "/blog",
+    label: "Blog",
+    blurb: "Notes from the field on systems and AI.",
+    Icon: IconArticle,
+  },
+  { href: "/faq", label: "FAQ", blurb: "How we scope, price, and build.", Icon: IconHelp },
   {
     href: "/operations-audit",
     label: "Operations audit checklist",
     blurb: "Free 3-page PDF — 12 questions before adding AI.",
+    Icon: IconChecklist,
   },
   {
     href: "/ai-field-guide",
     label: "AI field guide",
     blurb: "Free guide: your best next hire is AI.",
+    Icon: IconGuide,
   },
 ];
 
@@ -149,7 +184,6 @@ const TRUST = [
   },
 ];
 
-const MEGA_ICONS = [IconBrush, IconDashboard, IconMegaphone, IconBrain, IconCode];
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -205,12 +239,12 @@ export function Header() {
                     <IconChevronDown size={14} />
                   </Link>
                   <div className="tt-mega w-[380px]">
-                    {entry.items.map((item, i) => {
-                      const Icon = MEGA_ICONS[i % MEGA_ICONS.length];
+                    {entry.items.map((item) => {
+                      const Icon = item.Icon;
                       const inner = (
                         <>
                           <span className="tt-icon-tile !w-9 !h-9 !rounded-lg">
-                            <Icon size={17} />
+                            <Icon size={18} strokeWidth={1.75} />
                           </span>
                           <span className="min-w-0">
                             <strong>{item.label}</strong>
