@@ -7,12 +7,14 @@ import {
   IconCart,
   IconChart,
   IconCheckSquare,
+  IconCode,
   IconDollar,
   IconFile,
   IconFunnel,
   IconGlobe,
   IconGrid,
   IconImage,
+  IconInbox,
   IconLayers,
   IconMail,
   IconMegaphone,
@@ -60,15 +62,17 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin", label: "Dashboard", icon: IconGrid },
       { href: "/admin/ai", label: "AI Command Center", icon: IconSpark, soon: true, badge: "aiProposals" },
-      { href: "/admin/activity", label: "Activity", icon: IconPulse, soon: true },
+      { href: "/admin/activity", label: "Activity Center", icon: IconPulse, soon: true },
     ],
   },
   {
     head: "Sales",
     links: [
-      { href: "/admin/leads", label: "Leads & CRM", icon: IconFunnel, badge: "leadsNeedingAttention" },
-      { href: "/admin/clients", label: "Clients", icon: IconUsers, soon: true },
+      { href: "/admin/leads", label: "Leads", icon: IconFunnel, badge: "leadsNeedingAttention" },
+      { href: "/admin/crm", label: "CRM", icon: IconInbox, soon: true },
+      { href: "/admin/pipeline", label: "Pipeline", icon: IconChart, soon: true },
       { href: "/admin/proposals", label: "Proposals", icon: IconFile, soon: true },
+      { href: "/admin/clients", label: "Clients", icon: IconUsers },
     ],
   },
   {
@@ -83,8 +87,13 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Products & Services",
     links: [
       { href: "/admin/catalog", label: "Catalog", icon: IconLayers },
+      { href: "/admin/websites", label: "Websites", icon: IconGlobe, soon: true },
+      { href: "/admin/apps", label: "Apps", icon: IconLayers, soon: true },
+      { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot, soon: true },
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
-      { href: "/admin/services", label: "Service lines", icon: IconZap, soon: true },
+      { href: "/admin/hosting", label: "Hosting", icon: IconServer, soon: true },
+      { href: "/admin/software", label: "Software", icon: IconCode, soon: true },
+      { href: "/admin/services", label: "Services", icon: IconZap, soon: true },
     ],
   },
   {
@@ -92,21 +101,23 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       {
         href: "/admin/marketing/campaigns/business-launch",
-        label: "Campaigns",
+        label: "Marketing Dashboard",
         icon: IconMegaphone,
       },
       { href: "/admin/marketing/ads", label: "Ad Studio", icon: IconPen },
       { href: "/admin/marketing/spend", label: "Ad spend", icon: IconDollar },
-      { href: "/admin/marketing/social", label: "Social Center", icon: IconShare, soon: true },
       { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage, soon: true },
-      { href: "/admin/marketing/email", label: "Email", icon: IconMail, soon: true },
+      { href: "/admin/marketing/social", label: "Social Center", icon: IconShare, soon: true },
+      { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail, soon: true },
       { href: "/admin/marketing/seo", label: "SEO", icon: IconGlobe, soon: true },
+      { href: "/admin/marketing/brand", label: "Brand Assets", icon: IconImage, soon: true },
     ],
   },
   {
     head: "Automation",
     links: [
       { href: "/admin/automations", label: "Automations", icon: IconRepeat, soon: true },
+      { href: "/admin/automations/workflows", label: "Workflows", icon: IconLayers, soon: true },
       { href: "/admin/ai/agents", label: "AI Agents", icon: IconBot, soon: true },
       { href: "/admin/automations/triggers", label: "Triggers", icon: IconZap, soon: true },
     ],
@@ -163,11 +174,57 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
       "Everything that has happened across the company, filterable by module and date. The last twelve events are on the dashboard.",
     nearest: { href: "/admin", label: "See recent activity" },
   },
-  "/admin/clients": {
-    title: "Clients",
+  "/admin/crm": {
+    title: "CRM",
     blurb:
-      "The customer record: what they pay, what they bought, what is running. Customers are created automatically when a lead is marked Won.",
-    nearest: { href: "/admin/leads", label: "Open the CRM" },
+      "A contact-centred view of the same records the Leads screen holds — one company, every person at it, every conversation. Today that screen IS the CRM: every lead carries its own timeline, notes, calls and follow-ups.",
+    nearest: { href: "/admin/leads", label: "Open Leads" },
+  },
+  "/admin/pipeline": {
+    title: "Pipeline",
+    blurb:
+      "A drag-between-stages board over the same leads. The stage counts, values and conversion rates are already on the dashboard, and every lead's stage is set from its own page.",
+    nearest: { href: "/admin", label: "See the pipeline" },
+  },
+  "/admin/websites": {
+    title: "Websites",
+    blurb:
+      "Every site built and hosted, with its stack, domain, renewal and who it belongs to. Sites in build are projects; sites live are what this will list.",
+    nearest: { href: "/admin/jobs", label: "Open Projects" },
+  },
+  "/admin/apps": {
+    title: "Apps",
+    blurb: "Web and mobile applications delivered, with their platform, release state and owner.",
+    nearest: { href: "/admin/jobs", label: "Open Projects" },
+  },
+  "/admin/ai-solutions": {
+    title: "AI Solutions",
+    blurb:
+      "Chatbots, agents and automations built for clients — what each one does, what it runs on, and what it costs to keep running.",
+    nearest: { href: "/admin/catalog", label: "Open the catalog" },
+  },
+  "/admin/hosting": {
+    title: "Hosting",
+    blurb:
+      "Which sites are hosted, on what, and what each one bills. The money side is already live: every hosting subscription shows on its client's record.",
+    nearest: { href: "/admin/clients", label: "Open Clients" },
+  },
+  "/admin/software": {
+    title: "Software",
+    blurb: "Custom software and industry SaaS platforms, with their versions and deployments.",
+    nearest: { href: "/admin/catalog", label: "Open the catalog" },
+  },
+  "/admin/marketing/brand": {
+    title: "Brand Assets",
+    blurb:
+      "Logos, palettes, type and templates — yours and each client's. Logo Studio already generates the marks; this is where they would live afterwards.",
+    nearest: { href: "/logo-studio", label: "Open Logo Studio" },
+  },
+  "/admin/automations/workflows": {
+    title: "Workflows",
+    blurb:
+      "Multi-step sequences across modules — a lead converts, a job opens, a welcome email goes out, a check-in is scheduled. Each step proposes before it acts.",
+    nearest: { href: "/admin", label: "Back to the dashboard" },
   },
   "/admin/proposals": {
     title: "Proposals",

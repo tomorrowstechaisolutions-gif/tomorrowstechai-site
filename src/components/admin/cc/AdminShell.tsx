@@ -6,7 +6,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NAV_GROUPS, type NavLink as NavLinkT } from "./nav";
 import QuickAdd from "./QuickAdd";
 import { initials } from "./format";
-import { IconBell, IconLogout, IconMenu, IconSearch, IconX } from "./Icons";
+import { useCollapsed } from "./useCollapsed";
+import { IconArrowRight, IconBell, IconLogout, IconMenu, IconSearch, IconX } from "./Icons";
 
 /**
  * The command-centre chrome: sidebar, top bar, and the two popovers that hang
@@ -42,6 +43,7 @@ export default function AdminShell({
   const router = useRouter();
   const bellWrap = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const [collapsed, setCollapsed] = useCollapsed();
 
   /**
    * Both popovers remember which page they were opened on, and are treated as
@@ -95,7 +97,7 @@ export default function AdminShell({
   };
 
   return (
-    <div className={`cc-root cc-shell ${navOpen ? "is-open" : ""}`}>
+    <div className={`cc-root cc-shell ${navOpen ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`}>
       {navOpen ? (
         <div className="cc-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />
       ) : null}
@@ -130,7 +132,7 @@ export default function AdminShell({
                 const inner = (
                   <>
                     <link.icon size={15} />
-                    <span>{link.label}</span>
+                    <span className="cc-nav-label">{link.label}</span>
                     {n > 0 && !link.soon ? (
                       <span
                         className={`cc-nav-badge ${
@@ -150,11 +152,12 @@ export default function AdminShell({
                     target="_blank"
                     rel="noreferrer"
                     className={cls}
+                    title={link.label}
                   >
                     {inner}
                   </a>
                 ) : (
-                  <Link key={link.href} href={link.href} className={cls}>
+                  <Link key={link.href} href={link.href} className={cls} title={link.label}>
                     {inner}
                   </Link>
                 );
@@ -162,6 +165,17 @@ export default function AdminShell({
             </div>
           ))}
         </nav>
+
+        <button
+          type="button"
+          className="cc-collapse"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-pressed={collapsed}
+          title={collapsed ? "Expand navigation" : "Collapse navigation"}
+        >
+          <IconArrowRight size={14} className="cc-collapse-icon" />
+          <span className="cc-nav-label">Collapse</span>
+        </button>
 
         <div className="cc-side-foot">
           <span className="cc-avatar">{initials(user.name || user.email)}</span>

@@ -18,6 +18,7 @@ rather than a convincing empty list.
 | 0005 | `0005_revenue_external_id.sql` | `revenue_events.external_id`, unique, so a Stripe webhook replay updates instead of booking twice. |
 | 0006 | `0006_catalog_and_upsells.sql` | `catalog_items`, and the upsell columns on `invoices`. |
 | 0007 | `0007_command_center.sql` | The Business Command Center — see below. |
+| 0008 | `0008_client_record.sql` | The client record — see below. |
 
 ## 0007 — Business Command Center
 
@@ -58,3 +59,50 @@ scratch PostgreSQL 16 (idempotency), then checked for constraint behaviour
 negative expense rejected; duplicate social account rejected) and for RLS as
 `anon` (permission denied), as an authenticated non-admin (0 rows, insert
 refused) and as an admin (rows, insert allowed).
+
+
+## 0008 — Client record
+
+Applied 2026-08-30. Additive only.
+
+**Added to `customers`**
+
+`city`, `state` (Top client locations), `business_type` (carried across from
+the originating lead by the migration's own backfill), `owner`, `tags`,
+`renews_at`, `renewal_amount_cents`, `notes_internal`. Two partial indexes:
+renewals for active clients, and location.
+
+**New table**
+
+`client_satisfaction` — one row per time a client was actually asked.
+`rating` 1-5, `occasion` (check-in / launch / support / renewal / ad hoc),
+`recorded_by`, `recorded_at`. Appended, never updated: the Clients screen
+averages each client's **most recent** rating, so one enthusiastic client
+rated five times cannot outvote everyone else, and a rating from a year ago
+does not keep voting in this month's average. Cascade-deletes with the client.
+
+**Where the renewal date comes from**
+
+`customer.subscription.created` and `.updated` in the Stripe webhook, via
+`handleSubscriptionSynced`. It reads `current_period_end` off the subscription
+(falling back to the subscription *item*, where Stripe moved it in the 2025 API
+versions) rather than adding a month to the last payment — a trial, a pause or
+a proration all move the real date. Only the subscription a customer row
+already points at is synced, so a client's second subscription cannot overwrite
+the first one's date, and another storefront on the same Stripe account matches
+no row and writes nothing.
+
+**NOT added, on purpose**
+
+- `health_score` — derived per request in `src/lib/clients/health.ts` from
+  unpaid invoices, projects past their date, subscription state, contact
+  recency and the latest rating. A stored score is a number that was true once;
+  this one cannot go stale, and every point it deducts is named on screen.
+- `last_activity_at` — the timeline already unions the event tables. A
+  denormalised copy would drift the first time a webhook wrote to one and not
+  the other.
+
+**Verified before applying**: 0001→0008 against a scratch PostgreSQL 16, twice
+(idempotency), then constraint tests (rating bounds 1-5, invalid occasion,
+negative renewal amount), the cascade delete, and RLS as `anon` (permission
+denied).

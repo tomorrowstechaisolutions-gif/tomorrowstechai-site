@@ -5524,6 +5524,29 @@ body {
 
   .cc-nav-badge.t-risk { background: var(--cc-risk); color: #1A0606; }
 
+  /* ── Collapse ───────────────────────────────────────────────────────── */
+
+  .cc-collapse {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 20px;
+    border-top: 1px solid var(--cc-line-soft);
+    font-size: 0.78rem;
+    color: var(--cc-faint);
+    transition: color 0.14s ease;
+  }
+
+  .cc-collapse:hover { color: var(--cc-text); }
+
+  .cc-collapse-icon {
+    transform: rotate(180deg);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .cc-shell.is-collapsed .cc-collapse-icon { transform: rotate(0deg); }
+
   .cc-side-foot {
     flex-shrink: 0;
     padding: 12px;
@@ -5575,6 +5598,51 @@ body {
   }
 
   .cc-signout:hover { background: rgba(248, 113, 113, 0.12); color: var(--cc-risk); }
+
+  /* ── Collapsed rail ─────────────────────────────────────────────────── */
+  /* Icons only. Every link keeps a title attribute, so the label it loses on
+     screen it gains as a tooltip rather than disappearing entirely. */
+
+  .cc-shell.is-collapsed { grid-template-columns: 66px minmax(0, 1fr); }
+
+  .cc-shell.is-collapsed .cc-brand-text,
+  .cc-shell.is-collapsed .cc-nav-head,
+  .cc-shell.is-collapsed .cc-nav-label,
+  .cc-shell.is-collapsed .cc-side-user,
+  .cc-shell.is-collapsed .cc-signout { display: none; }
+
+  .cc-shell.is-collapsed .cc-brand,
+  .cc-shell.is-collapsed .cc-collapse,
+  .cc-shell.is-collapsed .cc-side-foot { justify-content: center; padding-left: 0; padding-right: 0; }
+
+  .cc-shell.is-collapsed .cc-nav { padding: 12px 8px 18px; }
+
+  .cc-shell.is-collapsed .cc-nav-link {
+    justify-content: center;
+    padding: 9px 0;
+  }
+
+  .cc-shell.is-collapsed .cc-nav-link.is-soon::after { display: none; }
+  .cc-shell.is-collapsed .cc-nav-link.is-active::before { left: -8px; }
+
+  /* The group heads are gone, so the groups need their own separation. */
+  .cc-shell.is-collapsed .cc-nav-group + .cc-nav-group {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--cc-line-soft);
+  }
+
+  /* A count still has to be visible when the label is not. */
+  .cc-shell.is-collapsed .cc-nav-badge {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    min-width: 15px;
+    height: 15px;
+    margin: 0;
+    font-size: 0.55rem;
+    box-shadow: 0 0 0 2px var(--cc-bg-2);
+  }
 
   /* ── Top bar ────────────────────────────────────────────────────────── */
 
@@ -5792,12 +5860,18 @@ body {
   }
 
   .cc-s3  { grid-column: span 3; }
+  .cc-s9  { grid-column: span 9; }
   .cc-s4  { grid-column: span 4; }
   .cc-s5  { grid-column: span 5; }
   .cc-s6  { grid-column: span 6; }
   .cc-s7  { grid-column: span 7; }
   .cc-s8  { grid-column: span 8; }
   .cc-s12 { grid-column: span 12; }
+
+  /* Fills its grid row rather than leaving a gap beneath it when the panel
+     beside it is taller. The panel's footer is already pinned to the bottom,
+     so the extra height reads as deliberate. */
+  .cc-stretch { align-self: stretch; }
 
   /* ── Panel ──────────────────────────────────────────────────────────── */
 
@@ -6373,6 +6447,20 @@ body {
   }
 
   .cc-table tbody tr:last-child td { border-bottom: 0; }
+
+  /* Ten columns of client data have to fit beside the rail without the two
+     that matter most — health and the rating — falling off the right edge. */
+  .cc-table.dense { font-size: 0.76rem; }
+  .cc-table.dense th { padding: 8px 7px; letter-spacing: 0.07em; }
+  .cc-table.dense td { padding: 8px 7px; }
+  .cc-table.dense th:first-child,
+  .cc-table.dense td:first-child { padding-left: 14px; }
+  .cc-table.dense th:last-child,
+  .cc-table.dense td:last-child { padding-right: 14px; }
+  .cc-table.dense .cc-mono { width: 26px; height: 26px; border-radius: 8px; font-size: 0.64rem; }
+  .cc-table.dense .cc-client { gap: 8px; }
+  .cc-table.dense .cc-client-name { font-size: 0.77rem; }
+  .cc-table.dense .cc-client-sub { font-size: 0.67rem; }
   .cc-table tbody tr:hover td { background: rgba(255, 255, 255, 0.022); }
   .cc-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .cc-table th.num { text-align: right; }
@@ -6943,6 +7031,17 @@ body {
 
     .cc-shell.is-open .cc-side { transform: translateX(0); }
 
+    .cc-shell.is-collapsed { grid-template-columns: 1fr; }
+    .cc-shell.is-collapsed .cc-side { width: 268px; }
+    .cc-shell.is-collapsed .cc-brand-text,
+    .cc-shell.is-collapsed .cc-nav-head,
+    .cc-shell.is-collapsed .cc-nav-label,
+    .cc-shell.is-collapsed .cc-side-user,
+    .cc-shell.is-collapsed .cc-signout { display: revert; }
+    .cc-shell.is-collapsed .cc-nav-link { justify-content: flex-start; padding: 7px 10px; }
+    .cc-shell.is-collapsed .cc-nav-badge { position: static; margin-left: auto; }
+    .cc-shell.is-collapsed .cc-collapse { display: none; }
+
     .cc-scrim {
       position: fixed;
       inset: 0;
@@ -6952,7 +7051,7 @@ body {
 
     .cc-burger { display: grid; place-items: center; }
 
-    .cc-s3, .cc-s4, .cc-s5, .cc-s6, .cc-s7, .cc-s8 {
+    .cc-s3, .cc-s4, .cc-s5, .cc-s6, .cc-s7, .cc-s8, .cc-s9 {
       grid-column: span 6;
     }
   }
@@ -6989,8 +7088,8 @@ body {
 
     .cc-greet h1 { font-size: 1.28rem; }
     .cc-search { max-width: none; }
-    .cc-add-btn span { display: none; }
-    .cc-add-btn { padding: 0 10px; }
+    .cc-topbar .cc-add-btn span { display: none; }
+    .cc-topbar .cc-add-btn { padding: 0 10px; }
     .cc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cc-field.row2 { grid-template-columns: 1fr; gap: 0; }
     .cc-split { grid-template-columns: 1fr; gap: 16px; }
@@ -7117,4 +7216,643 @@ body {
      fight the new one if a page ever nests it. */
   .cc-root .ad-shell { display: contents; }
   .cc-root .ad-main { padding: 0; }
+}
+
+@layer components {
+  /* ═══════════════════════════════════════════════════════════════════════
+     CLIENTS — /admin/clients
+     Extends the .cc-* command-centre system.
+
+     Chart colour is not decorative here and was not chosen by eye. The
+     categorical slots below are the validated dark-mode order, re-checked
+     against THIS panel surface (#111823) rather than a generic dark: all
+     eight clear the lightness band, the chroma floor, adjacent CVD
+     separation (worst ΔE 8.4) and 3:1 contrast. Every chart that uses them
+     also carries direct labels, so colour never has to carry identity alone.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .cc-root {
+    /* Categorical — service lines. Fixed order, never cycled: a service that
+       stops selling must not repaint the ones that are left. */
+    --cc-cat-1: #3987E5;
+    --cc-cat-2: #D95926;
+    --cc-cat-3: #199E70;
+    --cc-cat-4: #C98500;
+    --cc-cat-5: #D55181;
+    --cc-cat-6: #008300;
+    --cc-cat-7: #9085E9;
+    --cc-cat-8: #E66767;
+
+    /* Ordinal health bands, best to worst. Kept apart from the categorical
+       slots so an account's health can never be mistaken for a service. */
+    --cc-band-excellent: #0CA30C;
+    --cc-band-good:      #38BDF8;
+    --cc-band-average:   #FAB219;
+    --cc-band-poor:      #D03B3B;
+  }
+
+  .cc-cat-1 { color: var(--cc-cat-1); }
+  .cc-cat-2 { color: var(--cc-cat-2); }
+  .cc-cat-3 { color: var(--cc-cat-3); }
+  .cc-cat-4 { color: var(--cc-cat-4); }
+  .cc-cat-5 { color: var(--cc-cat-5); }
+  .cc-cat-6 { color: var(--cc-cat-6); }
+  .cc-cat-7 { color: var(--cc-cat-7); }
+  .cc-cat-8 { color: var(--cc-cat-8); }
+
+  /* ── The right-hand rail: several panels stacked in one grid cell ────── */
+
+  .cc-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  /* ── Page header actions ────────────────────────────────────────────── */
+
+  .cc-greet-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Tabs ───────────────────────────────────────────────────────────── */
+
+  .cc-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 14px 0;
+    border-bottom: 1px solid var(--cc-line-soft);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .cc-tabs::-webkit-scrollbar { display: none; }
+
+  .cc-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px 10px;
+    font-size: 0.81rem;
+    font-weight: 550;
+    color: var(--cc-faint);
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.14s ease, border-color 0.14s ease;
+  }
+
+  .cc-tab:hover { color: var(--cc-dim); }
+
+  .cc-tab.is-on {
+    color: var(--cc-text);
+    border-bottom-color: var(--cc-accent);
+  }
+
+  .cc-tab-n {
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 99px;
+    font-size: 0.66rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-faint);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .cc-tab.is-on .cc-tab-n {
+    color: #05121B;
+    background: var(--cc-accent);
+  }
+
+  /* ── Filter bar ─────────────────────────────────────────────────────── */
+
+  .cc-filterbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--cc-line-soft);
+  }
+
+  .cc-filter-search {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .cc-filter-search svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cc-faint);
+    pointer-events: none;
+  }
+
+  .cc-filter-search input {
+    width: 100%;
+    padding: 7px 11px 7px 31px;
+    border-radius: 8px;
+    border: 1px solid var(--cc-line);
+    background: rgba(4, 8, 13, 0.5);
+    color: var(--cc-text);
+    font-family: inherit;
+    font-size: 0.8rem;
+  }
+
+  .cc-filter-search input:focus {
+    outline: none;
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 0 3px var(--cc-accent-glow);
+  }
+
+  .cc-filter-select {
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--cc-line);
+    background: rgba(4, 8, 13, 0.5);
+    color: var(--cc-dim);
+    font-family: inherit;
+    font-size: 0.78rem;
+    max-width: 170px;
+  }
+
+  .cc-filter-select:focus {
+    outline: none;
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 0 3px var(--cc-accent-glow);
+  }
+
+  .cc-filter-select option { background: #0F1620; }
+
+  .cc-filter-clear {
+    font-size: 0.76rem;
+    color: var(--cc-accent);
+    padding: 6px 4px;
+  }
+
+  /* ── Client cell ────────────────────────────────────────────────────── */
+
+  .cc-client {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .cc-mono {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: #BAE6FD;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+  }
+
+  .cc-client-text { min-width: 0; line-height: 1.3; }
+
+  .cc-client-name {
+    display: block;
+    font-size: 0.81rem;
+    font-weight: 560;
+    color: var(--cc-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-client-sub {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--cc-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Service pips in the table. Colour repeats the legend in the rail, and a
+     title attribute names each one — the colour is a reminder, not the label. */
+  .cc-pips {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .cc-pip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .cc-pips-more {
+    font-size: 0.68rem;
+    color: var(--cc-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Health ring ────────────────────────────────────────────────────── */
+
+  .cc-ring {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .cc-ring svg { display: block; transform: rotate(-90deg); }
+
+  .cc-ring-n {
+    position: absolute;
+    font-size: 0.72rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-text);
+  }
+
+  .cc-ring.is-untested .cc-ring-n { color: var(--cc-faint); font-weight: 500; }
+
+  /* ── Stars ──────────────────────────────────────────────────────────── */
+
+  .cc-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    color: var(--cc-warn);
+  }
+
+  .cc-stars .is-empty { color: rgba(255, 255, 255, 0.16); }
+
+  .cc-stars-none {
+    font-size: 0.72rem;
+    color: var(--cc-faint);
+  }
+
+  /* ── Donut ──────────────────────────────────────────────────────────── */
+
+  .cc-donut-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .cc-donut {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .cc-donut svg { display: block; transform: rotate(-90deg); }
+
+  .cc-donut-centre {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+  }
+
+  .cc-donut-total {
+    font-size: 1.02rem;
+    font-weight: 620;
+    letter-spacing: -0.02em;
+    color: var(--cc-text);
+  }
+
+  .cc-donut-caption {
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cc-faint);
+  }
+
+  .cc-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .cc-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.74rem;
+    line-height: 1.4;
+  }
+
+  .cc-legend-key {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* Labels and values wear text tokens; only the key carries the series hue. */
+  .cc-legend-label {
+    color: var(--cc-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-legend-value {
+    margin-left: auto;
+    color: var(--cc-text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .cc-legend-share {
+    color: var(--cc-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ── Bar list (locations, satisfaction, top clients) ─────────────────── */
+
+  .cc-barlist {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .cc-barrow {
+    display: grid;
+    grid-template-columns: minmax(72px, auto) 1fr auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+  }
+
+  .cc-barrow-label {
+    color: var(--cc-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-barrow-track {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.055);
+    overflow: hidden;
+  }
+
+  /* 4px rounded data-end, anchored to the baseline at the left. */
+  .cc-barrow-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--cc-accent);
+    min-width: 3px;
+  }
+
+  .cc-barrow-value {
+    color: var(--cc-text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    min-width: 34px;
+    text-align: right;
+  }
+
+  .cc-barrow-share {
+    color: var(--cc-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ── Health breakdown ───────────────────────────────────────────────── */
+
+  .cc-band-excellent { color: var(--cc-band-excellent); }
+  .cc-band-good      { color: var(--cc-band-good); }
+  .cc-band-average   { color: var(--cc-band-average); }
+  .cc-band-poor      { color: var(--cc-band-poor); }
+
+  /* ── Pagination ─────────────────────────────────────────────────────── */
+
+  .cc-pager {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .cc-page-btn {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    border: 1px solid var(--cc-line-soft);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-dim);
+    transition: border-color 0.14s ease, color 0.14s ease;
+  }
+
+  .cc-page-btn:hover { border-color: rgba(255, 255, 255, 0.16); color: var(--cc-text); }
+
+  .cc-page-btn.is-on {
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.1);
+    color: #BAE6FD;
+  }
+
+  .cc-page-btn.is-off {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* ── Detail page ────────────────────────────────────────────────────── */
+
+  .cc-idhead {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .cc-mono.lg {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    font-size: 0.95rem;
+  }
+
+  .cc-taglist {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .cc-kv {
+    display: grid;
+    grid-template-columns: minmax(96px, auto) 1fr;
+    gap: 7px 14px;
+    font-size: 0.79rem;
+    align-items: baseline;
+  }
+
+  .cc-kv dt { color: var(--cc-faint); }
+  .cc-kv dd { color: var(--cc-text); margin: 0; overflow-wrap: anywhere; }
+
+  .cc-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .cc-reason {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: var(--cc-dim);
+  }
+
+  .cc-reason-pts {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--cc-risk);
+    flex-shrink: 0;
+    min-width: 26px;
+    text-align: right;
+  }
+
+  .cc-timeline {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cc-timeline-item {
+    display: flex;
+    gap: 11px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--cc-line-soft);
+  }
+
+  .cc-timeline-item:last-child { border-bottom: 0; }
+
+  .cc-timeline-rail {
+    position: relative;
+    width: 9px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .cc-timeline-rail::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    bottom: -14px;
+    width: 1px;
+    background: var(--cc-line);
+  }
+
+  .cc-timeline-item:last-child .cc-timeline-rail::before { display: none; }
+
+  .cc-timeline-node {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    margin-top: 5px;
+    border-radius: 99px;
+    background: var(--cc-faint);
+  }
+
+  .cc-timeline-node.k-revenue,
+  .cc-timeline-node.k-invoice { background: var(--cc-ok); }
+  .cc-timeline-node.k-project { background: var(--cc-violet); }
+  .cc-timeline-node.k-rating  { background: var(--cc-warn); }
+  .cc-timeline-node.k-won     { background: var(--cc-accent); }
+  .cc-timeline-node.k-churn   { background: var(--cc-risk); }
+
+  .cc-rating-picker {
+    display: flex;
+    gap: 6px;
+  }
+
+  /* Radio inputs do the state; the labels do the looks. No JS, and the
+     keyboard behaviour is the browser's rather than something re-implemented. */
+  .cc-rating-in {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .cc-rating-in:checked + .cc-rating-opt {
+    border-color: rgba(251, 191, 36, 0.6);
+    background: rgba(251, 191, 36, 0.12);
+    color: var(--cc-warn);
+  }
+
+  .cc-rating-in:focus-visible + .cc-rating-opt {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--cc-accent-glow);
+  }
+
+  .cc-rating-opt { cursor: pointer; text-align: center; }
+
+  .cc-rating-opt {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 9px;
+    border: 1px solid var(--cc-line);
+    background: rgba(4, 8, 13, 0.4);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--cc-dim);
+    transition: border-color 0.13s ease, color 0.13s ease, background 0.13s ease;
+  }
+
+  .cc-rating-opt:hover {
+    border-color: rgba(251, 191, 36, 0.5);
+    color: var(--cc-warn);
+  }
+
+  .cc-rating-opt.is-on {
+    border-color: rgba(251, 191, 36, 0.6);
+    background: rgba(251, 191, 36, 0.12);
+    color: var(--cc-warn);
+  }
+
+  @media (max-width: 860px) {
+    .cc-donut-wrap { flex-direction: column; align-items: stretch; }
+    .cc-donut { margin: 0 auto; }
+    .cc-filterbar { padding: 10px 12px; }
+    .cc-filter-select { flex: 1; max-width: none; min-width: 130px; }
+    .cc-barrow { grid-template-columns: minmax(64px, auto) 1fr auto; }
+    .cc-kv { grid-template-columns: 1fr; gap: 2px 0; }
+    .cc-kv dt { margin-top: 8px; }
+  }
 }

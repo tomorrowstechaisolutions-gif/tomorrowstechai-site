@@ -149,3 +149,12 @@ export const IconCode = (p: P) => (
 export const IconPen = (p: P) => (
   <Svg {...p}><path d="M17 3.5a2.1 2.1 0 0 1 3 3L7.5 19 3 20.5 4.5 16 17 3.5Z" /></Svg>
 );
+export const IconStar = (p: P) => (
+  <Svg {...p}><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4-5.8-3-5.8 3 1.1-6.4L2.6 9.4l6.5-.9L12 2.6Z" /></Svg>
+);
+export const IconMapPin = (p: P) => (
+  <Svg {...p}><path d="M12 21s-7-5.7-7-11a7 7 0 1 1 14 0c0 5.3-7 11-7 11Z" /><circle cx="12" cy="10" r="2.6" /></Svg>
+);
+export const IconLink = (p: P) => (
+  <Svg {...p}><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7" /><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7" /></Svg>
+);

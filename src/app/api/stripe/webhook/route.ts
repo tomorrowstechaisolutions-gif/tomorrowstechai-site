@@ -70,6 +70,10 @@ export async function POST(req: Request) {
       case "invoice.paid":
         await handleInvoicePaid(event);
         break;
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await handleSubscriptionSynced(event);
+        break;
       case "customer.subscription.deleted":
         await handleSubscriptionCancelled(event);
         break;
@@ -454,6 +458,86 @@ async function handleInvoicePaid(event: StripeEvent) {
     },
     { onConflict: "external_id", ignoreDuplicates: true }
   );
+}
+
+/**
+ * Keeps the client record's subscription facts true.
+ *
+ * This is where the renewal date on the Clients screen comes from. It is read
+ * off the subscription itself rather than guessed by adding a month to the
+ * last payment, because a trial, a paused month or a proration all move the
+ * real date and a guessed one would quietly drift.
+ *
+ * Only the subscription a customer row already points at is synced. A client
+ * can hold two — hosting plus a monthly retainer — and letting the second one
+ * overwrite `renews_at` would show the wrong date and the wrong amount. It is
+ * also what keeps another storefront on this shared Stripe account from
+ * touching this CRM: no matching row, no write.
+ */
+async function handleSubscriptionSynced(event: StripeEvent) {
+  const db = supabaseAdmin();
+  const subscription = event.data.object;
+
+  const subscriptionId = str(subscription, "id");
+  if (!subscriptionId) return;
+
+  const { data: customer } = await db
+    .from("customers")
+    .select("id, status")
+    .eq("stripe_subscription_id", subscriptionId)
+    .maybeSingle();
+  if (!customer) return;
+
+  // Stripe moved current_period_end onto the subscription ITEM in the 2025
+  // API versions and kept it on the subscription in older ones. Read both so
+  // this does not silently stop working on an API version bump.
+  const items = (subscription.items as { data?: Record<string, unknown>[] } | undefined)?.data ?? [];
+
+  let periodEnd = num(subscription, "current_period_end");
+  if (!periodEnd) {
+    for (const item of items) {
+      const itemEnd = num(item, "current_period_end");
+      if (itemEnd > periodEnd) periodEnd = itemEnd;
+    }
+  }
+
+  // What it will actually bill: recurring line items only. A one-off line
+  // sitting on the first invoice is not part of the monthly figure.
+  let recurringCents = 0;
+  for (const item of items) {
+    const price = item.price as Record<string, unknown> | undefined;
+    if (!price || !price.recurring) continue;
+    const unit = num(price, "unit_amount");
+    const quantity = Math.max(num(item, "quantity"), 1);
+    recurringCents += unit * quantity;
+  }
+
+  const stripeStatus = str(subscription, "status") ?? "";
+
+  // customers.status has three values. Anything Stripe is still expecting
+  // money from is "paused", not "churned" — churn is final and feeds the
+  // MRR figure, so a card that failed once must not look like a lost client.
+  const status =
+    stripeStatus === "trialing" || stripeStatus === "active"
+      ? "active"
+      : stripeStatus === "canceled" || stripeStatus === "incomplete_expired"
+        ? "churned"
+        : "paused";
+
+  const patch: Record<string, unknown> = {
+    status,
+    renews_at: periodEnd > 0 ? new Date(periodEnd * 1000).toISOString() : null,
+    renewal_amount_cents: recurringCents,
+    // The contracted monthly rate, taken from what Stripe will really charge
+    // rather than from the price the landing page happened to print.
+    mrr_cents: status === "churned" ? 0 : recurringCents,
+  };
+
+  if (status === "churned" && customer.status !== "churned") {
+    patch.churned_at = new Date().toISOString();
+  }
+
+  await db.from("customers").update(patch).eq("id", customer.id);
 }
 
 async function handleSubscriptionCancelled(event: StripeEvent) {
