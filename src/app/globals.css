@@ -1368,6 +1368,77 @@ body {
   font-size: 10px;
 }
 
+/* Highlighted build — full-bleed screenshot over a two-column body. */
+.work-hero-feature {
+  overflow: hidden;
+  border: 1px solid rgba(0, 217, 255, 0.22);
+  border-radius: 18px;
+  background: var(--color-surface);
+}
+
+.work-hero-feature-media {
+  position: relative;
+  min-height: 300px;
+  aspect-ratio: 16 / 8;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.work-hero-feature-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
+  gap: clamp(28px, 4vw, 54px);
+  padding: clamp(28px, 4vw, 46px);
+}
+
+.work-stack-points-single {
+  grid-template-columns: 1fr;
+}
+
+/* The four leading builds. */
+.work-top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.work-top-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: var(--color-surface);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.work-top-card:hover {
+  border-color: rgba(0, 217, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.work-top-media {
+  position: relative;
+  min-height: 235px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.work-top-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: clamp(22px, 3vw, 30px);
+}
+
+.work-top-body .work-quote {
+  margin: 22px 0 0;
+  font-size: 13px;
+}
+
+.work-top-link {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
 .work-client-feature {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
@@ -1483,6 +1554,12 @@ body {
   min-height: 180px;
 }
 
+@media (max-width: 820px) {
+  .work-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .work-final-cta {
   display: flex;
   align-items: center;
@@ -1499,6 +1576,7 @@ body {
 @media (max-width: 900px) {
   .work-platform,
   .job-work-feature,
+  .work-hero-feature-body,
   .work-client-feature,
   .work-video-panel,
   .work-client-compact {
@@ -1539,6 +1617,14 @@ body {
   .job-work-points,
   .work-stack-points {
     grid-template-columns: 1fr;
+  }
+
+  .work-hero-feature-media {
+    min-height: 210px;
+  }
+
+  .work-top-media {
+    min-height: 200px;
   }
 
   .work-client-media {

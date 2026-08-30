@@ -98,7 +98,7 @@ const CASES = [
     name: "Purrfrequency",
     stack: "3D website · E-commerce · Brand",
     body: "Immersive 3D experience with a full online store and custom branding.",
-    image: null,
+    image: "/work/purrfrequency.webp",
     href: "/work",
   },
   {
@@ -112,14 +112,14 @@ const CASES = [
     name: "Mintline",
     stack: "Brand · Website · Dashboard",
     body: "Modern brand and custom admin dashboard to run the business.",
-    image: "/work/mintline.png",
+    image: "/work/mintline.webp",
     href: "/work",
   },
   {
     name: "Held",
     stack: "E-commerce · Branding · CRM",
     body: "E-commerce store with CRM and customer management system.",
-    image: "/work/held.png",
+    image: "/work/held.webp",
     href: "/work",
   },
 ];
