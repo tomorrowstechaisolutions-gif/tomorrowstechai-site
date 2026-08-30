@@ -311,3 +311,235 @@ export type AdCreative = {
   first_run_at: string | null;
   retired_at: string | null;
 };
+
+/* ───────────────────────────────────────────────────────────────────────
+   Command Center — 0007_command_center.sql
+   ─────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A job's business category. `jobs` is the project record for the whole
+ * company now, not only the $399 package — see the migration note on why no
+ * separate `projects` table exists.
+ */
+export const PROJECT_TYPES = [
+  "website",
+  "app",
+  "ai_system",
+  "crm",
+  "automation",
+  "branding",
+  "ecommerce",
+  "saas",
+  "custom_software",
+  "consulting",
+  "other",
+] as const;
+
+export type ProjectType = (typeof PROJECT_TYPES)[number];
+
+export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
+  website: "Website",
+  app: "App",
+  ai_system: "AI System",
+  crm: "CRM",
+  automation: "Automation",
+  branding: "Branding",
+  ecommerce: "Ecommerce",
+  saas: "SaaS",
+  custom_software: "Custom Software",
+  consulting: "Consulting",
+  other: "Other",
+};
+
+export const TASK_KINDS = [
+  "task",
+  "followup",
+  "meeting",
+  "callback",
+  "deadline",
+  "invoice",
+  "content",
+  "other",
+] as const;
+
+export type TaskKind = (typeof TASK_KINDS)[number];
+export type Priority = "low" | "medium" | "high" | "critical";
+
+export type TaskRow = {
+  id: string;
+  title: string;
+  notes: string | null;
+  kind: TaskKind;
+  priority: Priority;
+  due_at: string | null;
+  done: boolean;
+  done_at: string | null;
+  owner: string | null;
+  lead_id: string | null;
+  job_id: string | null;
+  customer_id: string | null;
+  invoice_id: string | null;
+  source: "manual" | "ai" | "system";
+  created_at: string;
+  updated_at: string;
+};
+
+export const INSIGHT_KINDS = [
+  "opportunity",
+  "action",
+  "marketing",
+  "revenue",
+  "risk",
+  "system",
+] as const;
+
+export type InsightKind = (typeof INSIGHT_KINDS)[number];
+
+export type AiInsight = {
+  id: string;
+  kind: InsightKind;
+  title: string;
+  body: string;
+  severity: Priority;
+  href: string | null;
+  metric: Record<string, unknown>;
+  /** 'rule' rows are computed per request and never stored. */
+  generated_by: "rule" | "ai";
+  model: string | null;
+  status: "new" | "seen" | "dismissed";
+  valid_until: string | null;
+  created_at: string;
+};
+
+export const AI_ACTION_KINDS = [
+  "send_email",
+  "send_sms",
+  "publish_social",
+  "create_campaign",
+  "change_campaign",
+  "change_budget",
+  "update_lead",
+  "update_project",
+  "create_task",
+  "draft_proposal",
+  "delete_record",
+  "other",
+] as const;
+
+export type AiActionKind = (typeof AI_ACTION_KINDS)[number];
+
+/**
+ * A proposal, not a deed. Nothing consequential happens until an admin
+ * approves — the database itself refuses an 'approved' row with no
+ * reviewed_by.
+ */
+export type AiAction = {
+  id: string;
+  kind: AiActionKind;
+  title: string;
+  summary: string | null;
+  payload: Record<string, unknown>;
+  target_table: string | null;
+  target_id: string | null;
+  status: "proposed" | "approved" | "rejected" | "executed" | "failed" | "expired";
+  risk: "low" | "medium" | "high";
+  proposed_by: "ai" | "rule" | "human";
+  model: string | null;
+  rationale: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  executed_at: string | null;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const SOCIAL_PLATFORMS = [
+  "facebook",
+  "instagram",
+  "linkedin",
+  "tiktok",
+  "youtube",
+  "google_business",
+] as const;
+
+export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
+
+export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  google_business: "Google Business",
+};
+
+export type SocialAccount = {
+  id: string;
+  platform: SocialPlatform;
+  handle: string | null;
+  display_name: string | null;
+  external_id: string | null;
+  connected: boolean;
+  status: "connected" | "expired" | "disconnected" | "error";
+  /** null means never synced — rendered as "—", never as 0. */
+  followers: number | null;
+  reach_30d: number | null;
+  engagement_30d: number | null;
+  clicks_30d: number | null;
+  leads_30d: number | null;
+  stats_updated_at: string | null;
+  token_expires_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SocialPost = {
+  id: string;
+  account_id: string | null;
+  platform: SocialPlatform;
+  body: string;
+  media_url: string | null;
+  link_url: string | null;
+  scheduled_at: string | null;
+  published_at: string | null;
+  status: "draft" | "needs_approval" | "scheduled" | "published" | "failed";
+  external_id: string | null;
+  external_url: string | null;
+  campaign: string | null;
+  generated_by: "human" | "ai";
+  ai_action_id: string | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const EXPENSE_CATEGORIES = [
+  "software",
+  "contractor",
+  "hardware",
+  "hosting",
+  "fees",
+  "marketing",
+  "travel",
+  "other",
+] as const;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+/** Ad spend is NOT here — it lives in campaign_spend and is added on top. */
+export type Expense = {
+  id: string;
+  occurred_at: string;
+  category: ExpenseCategory;
+  vendor: string | null;
+  description: string | null;
+  amount_cents: number;
+  recurring: boolean;
+  notes: string | null;
+  external_id: string | null;
+  created_at: string;
+  updated_at: string;
+};

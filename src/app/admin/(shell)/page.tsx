@@ -1,135 +1,127 @@
-import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { LEAD_STATUSES, type Lead } from "@/lib/supabase/types";
-import { scoreBand } from "@/lib/campaign/scoring";
+import { Suspense } from "react";
+import { getAdminUser } from "@/lib/supabase/server";
+import { greeting, todayLabel } from "@/components/admin/cc/format";
+import { PanelSkeleton } from "@/components/admin/cc/Panel";
+import KpiRow, { KpiRowSkeleton } from "@/components/admin/cc/panels/KpiRow";
+import AdvisorPanel from "@/components/admin/cc/panels/AdvisorPanel";
+import InsightsPanel from "@/components/admin/cc/panels/InsightsPanel";
+import PipelinePanel from "@/components/admin/cc/panels/PipelinePanel";
+import TodayPanel from "@/components/admin/cc/panels/TodayPanel";
+import ProjectsPanel from "@/components/admin/cc/panels/ProjectsPanel";
+import SocialPanel from "@/components/admin/cc/panels/SocialPanel";
+import WebPanel from "@/components/admin/cc/panels/WebPanel";
+import MarketingPanel from "@/components/admin/cc/panels/MarketingPanel";
+import FinancePanel from "@/components/admin/cc/panels/FinancePanel";
+import ServicesPanel from "@/components/admin/cc/panels/ServicesPanel";
+import ActivityPanel from "@/components/admin/cc/panels/ActivityPanel";
+import AlertsPanel from "@/components/admin/cc/panels/AlertsPanel";
+import HealthPanel from "@/components/admin/cc/panels/HealthPanel";
 
 export const dynamic = "force-dynamic";
 
-/** Read the clock outside the component body — this page is force-dynamic and
- *  re-renders per request, so "30 days ago" is meant to move. */
-function thirtyDaysAgoIso(): string {
-  return new Date(Date.now() - 30 * 86400_000).toISOString();
-}
+/**
+ * The Business Command Center.
+ *
+ * Reading order, top to bottom, is the order the questions get asked:
+ *   how is the business doing → what does AI see → what needs me today →
+ *   what is sales and delivery doing → what is marketing and money doing →
+ *   what happened, what is wrong, what is running.
+ *
+ * Every panel below loads its own data inside its own Suspense boundary. The
+ * page shell and the KPI row paint immediately; a slow panel delays itself and
+ * nothing else, and a failing panel renders an error in its own frame rather
+ * than taking the dashboard with it.
+ *
+ * The `cc-mN` class on each panel is its position on a phone. Mobile is not
+ * this layout narrowed — it is a different running order, and it is defined
+ * once in globals.css.
+ */
+export default async function CommandCenterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ask?: string }>;
+}) {
+  const [session, params] = await Promise.all([getAdminUser(), searchParams]);
 
-export default async function AdminOverviewPage() {
-  const supabase = await createSupabaseServerClient();
+  const firstName =
+    session?.admin.full_name?.trim().split(/\s+/)[0] ??
+    session?.admin.email.split("@")[0] ??
+    "there";
 
-  const since = thirtyDaysAgoIso();
-
-  const [{ data: recent }, { count: total }, { count: last30 }] = await Promise.all([
-    supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(8),
-    supabase.from("leads").select("id", { count: "exact", head: true }),
-    supabase
-      .from("leads")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", since),
-  ]);
-
-  const leads = (recent ?? []) as Lead[];
-
-  const { data: statusRows } = await supabase.from("leads").select("lead_status");
-  const counts = new Map<string, number>();
-  for (const row of statusRows ?? []) {
-    counts.set(row.lead_status, (counts.get(row.lead_status) ?? 0) + 1);
-  }
+  const ask = typeof params.ask === "string" ? params.ask.slice(0, 500) : undefined;
 
   return (
     <>
-      <header className="ad-head">
-        <h1>Overview</h1>
-        <p>Everything coming in, and where it is in the pipeline.</p>
-      </header>
-
-      <div className="ad-kpis">
-        <div className="ad-kpi">
-          <span className="ad-kpi-label">Leads · all time</span>
-          <span className="ad-kpi-value">{total ?? 0}</span>
+      <div className="cc-greet">
+        <div>
+          <h1>
+            {greeting()}, {firstName}
+          </h1>
+          <p>Here&rsquo;s what&rsquo;s happening across Tomorrows Tech AI.</p>
         </div>
-        <div className="ad-kpi">
-          <span className="ad-kpi-label">Leads · last 30 days</span>
-          <span className="ad-kpi-value">{last30 ?? 0}</span>
-        </div>
-        <div className="ad-kpi">
-          <span className="ad-kpi-label">New, untouched</span>
-          <span className="ad-kpi-value">{counts.get("New") ?? 0}</span>
-        </div>
-        <div className="ad-kpi">
-          <span className="ad-kpi-label">Won</span>
-          <span className="ad-kpi-value">{counts.get("Won") ?? 0}</span>
+        <div className="cc-greet-meta">
+          <span className="cc-dot s-operational" />
+          {todayLabel()}
         </div>
       </div>
 
-      <section className="ad-panel">
-        <div className="ad-panel-head">
-          <h2>Pipeline</h2>
-          <Link href="/admin/leads" className="ad-link">
-            Open the full pipeline →
-          </Link>
-        </div>
-        <div className="ad-stage-row">
-          {LEAD_STATUSES.map((s) => (
-            <Link
-              key={s}
-              href={`/admin/leads?status=${encodeURIComponent(s)}`}
-              className="ad-stage"
-            >
-              <span className="ad-stage-n">{counts.get(s) ?? 0}</span>
-              <span className="ad-stage-label">{s}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <Suspense fallback={<KpiRowSkeleton />}>
+        <KpiRow />
+      </Suspense>
 
-      <section className="ad-panel">
-        <div className="ad-panel-head">
-          <h2>Latest leads</h2>
-        </div>
-        {leads.length === 0 ? (
-          <p className="ad-empty">
-            No leads yet. They&rsquo;ll appear here the moment the first form
-            comes in.
-          </p>
-        ) : (
-          <div className="ad-table-scroll">
-            <table className="ad-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Business</th>
-                  <th>Score</th>
-                  <th>Status</th>
-                  <th>Source</th>
-                  <th>When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((l) => (
-                  <tr key={l.id}>
-                    <td>
-                      <Link href={`/admin/leads/${l.id}`} className="ad-link">
-                        {l.first_name} {l.last_name}
-                      </Link>
-                    </td>
-                    <td>{l.business_name ?? "—"}</td>
-                    <td>
-                      <span className={`ad-score t-${scoreBand(l.lead_score).tone}`}>
-                        {l.lead_score}
-                      </span>
-                    </td>
-                    <td>{l.lead_status}</td>
-                    <td>{l.source}</td>
-                    <td>{new Date(l.created_at).toLocaleDateString("en-US")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <div className="cc-board">
+        <Suspense fallback={<PanelSkeleton title="AI Business Advisor" rows={5} />}>
+          <AdvisorPanel initialQuestion={ask} className="cc-s7 cc-m1" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="AI insights" rows={4} />}>
+          <InsightsPanel className="cc-s5 cc-m8" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Sales pipeline" rows={6} />}>
+          <PipelinePanel className="cc-s7 cc-m3" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Today" rows={6} />}>
+          <TodayPanel className="cc-s5 cc-m2" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Active projects" rows={5} />}>
+          <ProjectsPanel className="cc-s12 cc-m4" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Financial snapshot" rows={5} />}>
+          <FinancePanel className="cc-s5 cc-m6" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Website performance" rows={4} />}>
+          <WebPanel className="cc-s7 cc-m9" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Marketing performance" rows={5} />}>
+          <MarketingPanel className="cc-s7 cc-m10" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Social command center" rows={4} />}>
+          <SocialPanel className="cc-s5 cc-m7" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Products & services" rows={4} />}>
+          <ServicesPanel className="cc-s12 cc-m11" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Alerts" rows={4} />}>
+          <AlertsPanel className="cc-s4 cc-m5" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="Recent activity" rows={5} />}>
+          <ActivityPanel className="cc-s4 cc-m12" />
+        </Suspense>
+
+        <Suspense fallback={<PanelSkeleton title="System status" rows={5} />}>
+          <HealthPanel className="cc-s4 cc-m13" />
+        </Suspense>
+      </div>
     </>
   );
 }

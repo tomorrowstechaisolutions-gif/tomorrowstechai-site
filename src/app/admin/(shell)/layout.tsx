@@ -1,37 +1,107 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminUser } from "@/lib/supabase/server";
-import { signOutAction } from "../actions";
+import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/supabase/admin";
+import { signOutAction } from "../actions";
+import AdminShell from "@/components/admin/cc/AdminShell";
+import { loadAlerts } from "@/lib/dashboard/alerts";
+import { panel } from "@/lib/dashboard/panel";
+import { CLOSED_STATUSES } from "@/lib/supabase/types";
+
+export const dynamic = "force-dynamic";
 
 /**
- * Grouped rather than sliced by index — the old version used NAV.slice(0, 2)
- * and friends, so adding one link silently moved another into the wrong
- * section.
+ * Counters for the sidebar badges.
+ *
+ * Four head-only count queries — no rows come back. This runs on every admin
+ * page, so it stays cheap deliberately; anything that needs real rows belongs
+ * on the page that shows them.
  */
-const NAV_GROUPS = [
-  {
-    head: "Pipeline",
-    links: [
-      { href: "/admin", label: "Overview" },
-      { href: "/admin/leads", label: "Leads" },
-      { href: "/admin/jobs", label: "Jobs" },
-      { href: "/admin/catalog", label: "Catalog" },
-    ],
-  },
-  {
-    head: "Marketing",
-    links: [
-      { href: "/admin/marketing/campaigns/business-launch", label: "$399 Business Launch" },
-      { href: "/admin/marketing/ads", label: "Ad Studio" },
-      { href: "/admin/marketing/spend", label: "Ad spend" },
-    ],
-  },
-  {
-    head: "System",
-    links: [{ href: "/admin/settings", label: "Settings" }],
-  },
-];
+async function loadBadges() {
+  const supabase = await createSupabaseServerClient();
+  const now = new Date();
+  const dayAgo = new Date(now.getTime() - 24 * 3600_000).toISOString();
+  const nowIso = now.toISOString();
+  const openFilter = `(${CLOSED_STATUSES.join(",")})`;
+
+  const [followupsDue, uncontacted, atRisk, proposals] = await Promise.all([
+    supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .not("lead_status", "in", openFilter)
+      .eq("do_not_contact", false)
+      .lt("next_followup_at", nowIso)
+      .then((r) => r.count ?? 0),
+    supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .not("lead_status", "in", openFilter)
+      .eq("do_not_contact", false)
+      .is("last_contacted_at", null)
+      .lt("created_at", dayAgo)
+      .then((r) => r.count ?? 0),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .is("completed_at", null)
+      .neq("stage", "Complete")
+      .lt("due_at", nowIso)
+      .then((r) => r.count ?? 0),
+    supabase
+      .from("ai_actions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "proposed")
+      .then((r) => r.count ?? 0),
+  ]);
+
+  return {
+    leadsNeedingAttention: followupsDue + uncontacted,
+    projectsAtRisk: atRisk,
+    aiProposals: proposals,
+  };
+}
+
+/** The bell contents. Streamed, so it never delays the page around it. */
+async function AlertsPopover() {
+  const supabase = await createSupabaseServerClient();
+  const result = await panel("alerts:bell", () => loadAlerts(supabase, 6));
+
+  if (!result.ok) {
+    return <p className="cc-error">Alerts are unavailable right now.</p>;
+  }
+  if (result.data.length === 0) {
+    return (
+      <p style={{ padding: "10px 12px 14px", fontSize: "0.78rem", color: "var(--cc-faint)" }}>
+        Nothing needs attention. Every lead has been contacted, no project is
+        past its date, and no invoice is overdue.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {result.data.map((a) => (
+        <Link key={a.id} href={a.href} className="cc-pop-item">
+          <span className={`cc-dot ${a.priority === "critical" || a.priority === "high" ? "s-error" : "s-warning"}`} />
+          <span>
+            {a.title}
+            {a.detail ? (
+              <>
+                <br />
+                <span className="cc-faint" style={{ fontSize: "0.7rem" }}>{a.detail}</span>
+              </>
+            ) : null}
+          </span>
+        </Link>
+      ))}
+      <div className="cc-pop-sep" />
+      <Link href="/admin" className="cc-pop-item">
+        <span className="cc-link">See the full alert centre</span>
+      </Link>
+    </>
+  );
+}
 
 export default async function AdminShellLayout({
   children,
@@ -59,33 +129,36 @@ export default async function AdminShellLayout({
   // account; this just says so out loud instead of showing empty screens.
   if (!session) redirect("/admin/login?denied=1");
 
+  const badges = await loadBadges().catch(() => ({
+    leadsNeedingAttention: 0,
+    projectsAtRisk: 0,
+    aiProposals: 0,
+  }));
+
+  const alertCount =
+    badges.leadsNeedingAttention + badges.projectsAtRisk + badges.aiProposals;
+
   return (
-    <div className="ad-shell">
-      <aside className="ad-side">
-        <div className="ad-side-brand">
-          <Link href="/">Tomorrow&rsquo;s Tech AI</Link>
-          <span>Admin Center</span>
-        </div>
-        <nav className="ad-nav">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.head} className="ad-nav-group">
-              <span className="ad-nav-head">{group.head}</span>
-              {group.links.map((n) => (
-                <Link key={n.href} href={n.href} className="ad-nav-link">
-                  {n.label}
-                </Link>
-              ))}
+    <AdminShell
+      user={{ email: session.admin.email, name: session.admin.full_name ?? null }}
+      badges={badges}
+      alertCount={alertCount}
+      alerts={
+        <Suspense
+          fallback={
+            <div className="cc-skel-stack">
+              <div className="cc-skel cc-skel-line w-80" />
+              <div className="cc-skel cc-skel-line w-100" />
+              <div className="cc-skel cc-skel-line w-60" />
             </div>
-          ))}
-        </nav>
-        <form action={signOutAction} className="ad-side-foot">
-          <span className="ad-side-user">{session.admin.email}</span>
-          <button type="submit" className="ad-btn ghost sm">
-            Sign out
-          </button>
-        </form>
-      </aside>
-      <main className="ad-main">{children}</main>
-    </div>
+          }
+        >
+          <AlertsPopover />
+        </Suspense>
+      }
+      signOut={signOutAction}
+    >
+      {children}
+    </AdminShell>
   );
 }
