@@ -77,18 +77,21 @@ create policy catalog_items_admin_delete on public.catalog_items
 
 revoke all on public.catalog_items from anon;
 
--- Seed: the seven upgrades from the landing page, plus three things listed
--- under "not included" that are worth selling. Every from_cents below is a
--- PLACEHOLDER for John to set.
+-- Seed: the seven upgrades from the landing page, plus things from the "not
+-- included" list worth selling. Prices are set to sit alongside what the
+-- services page already publishes rather than undercut it — the Advanced
+-- dashboard IS the $5,000+ Command Center, and Custom applications keeps that
+-- same floor. Full CRM sits deliberately between the $399 entry and those.
 insert into public.catalog_items (name, category, description, billing, from_cents, position) values
-  ('Full CRM',               'crm',           'Pipelines, automations, assignment rules and reporting on top of the starter list.', 'one_time', 150000, 10),
-  ('AI agents & assistants', 'ai_automation', 'A trained assistant that answers, qualifies and routes.', 'one_time', 250000, 20),
-  ('Custom automation',      'ai_automation', 'The repetitive parts of your week, running themselves.', 'one_time', 100000, 30),
-  ('Custom applications',    'custom_app',    'Software built around how your business actually works.', 'one_time', 500000, 40),
-  ('E-commerce',             'ecommerce',     'Products, cart, checkout, fulfillment and inventory.', 'one_time', 250000, 50),
-  ('Advanced dashboard',     'dashboard',     'The full command center — jobs, crews, revenue, forecasting.', 'one_time', 200000, 60),
-  ('Social management',      'social',        'Content calendar, assets and publishing.', 'monthly', 60000, 70),
-  ('Ad management',          'marketing',     'Campaign builds, creative, budget and reporting. Ad spend billed separately.', 'monthly', 75000, 80),
-  ('Extra pages & copy',     'development',   'Pages beyond the five in the launch package, written and built.', 'one_time', 25000, 90),
-  ('Photo & video',          'other',         'On-site photography or video for the site.', 'one_time', 75000, 100)
+  ('Full CRM',               'crm',           'Pipelines, automations, assignment rules and reporting on top of the starter list. One extra job pays for it.', 'one_time', 250000, 10),
+  ('AI agents & assistants', 'ai_automation', 'A trained assistant that answers, qualifies and routes — on your site, your phone or your inbox. Setup and training.', 'one_time', 350000, 20),
+  ('AI assistant care',      'ai_automation', 'Keeping a deployed assistant accurate as the business changes — retraining, new answers, monitoring.', 'monthly', 25000, 25),
+  ('Custom automation',      'ai_automation', 'One repetitive part of your week, running itself. Priced per workflow.', 'one_time', 150000, 30),
+  ('Custom applications',    'custom_app',    'Software built around how your business actually works. $5,000–$15,000 depending on scope.', 'one_time', 500000, 40),
+  ('E-commerce',             'ecommerce',     'Products, cart, checkout, fulfillment and inventory.', 'one_time', 350000, 50),
+  ('Advanced dashboard',     'dashboard',     'The full command center — jobs, crews, revenue, forecasting. This is the AI Command Center from the services page.', 'one_time', 500000, 60),
+  ('Social management',      'social',        'Content calendar, assets and publishing. Heavier than the $350/mo managed service.', 'monthly', 75000, 70),
+  ('Ad management',          'marketing',     'Campaign builds, creative, budget and reporting. Ad spend billed separately — say this out loud every time.', 'monthly', 50000, 80),
+  ('Extra pages & copy',     'development',   'Pages beyond the five in the launch package, written and built. Priced per page.', 'one_time', 25000, 90),
+  ('Photo & video',          'other',         'On-site photography or video. Half-day $750, full day $1,500. Travel across Central Texas is most of the cost.', 'one_time', 75000, 100)
 on conflict do nothing;
