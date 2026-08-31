@@ -7926,10 +7926,122 @@ body {
     flex-wrap: wrap;
   }
 
+  /* The health strip: one line per named property of the site. */
+  .cc-checks {
+    display: flex;
+    flex-direction: column;
+    margin-top: 14px;
+  }
+
+  .cc-check-row {
+    display: grid;
+    grid-template-columns: 8px minmax(96px, auto) 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--cc-line-soft);
+  }
+
+  .cc-check-row:last-child { border-bottom: 0; }
+
+  .cc-check-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cc-ok);
+  }
+
+  .cc-check-row.t-warn .cc-check-dot { background: var(--cc-warn); }
+  .cc-check-row.t-risk .cc-check-dot { background: var(--cc-risk); }
+  .cc-check-row.t-none .cc-check-dot { background: var(--cc-line); }
+
+  .cc-check-name {
+    font-size: 0.78rem;
+    font-weight: 560;
+    color: var(--cc-text);
+  }
+
+  .cc-check-detail {
+    font-size: 0.72rem;
+    color: var(--cc-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-check-score {
+    font-size: 0.74rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-dim);
+  }
+
+  .cc-check-row.t-none .cc-check-score { color: var(--cc-faint); font-weight: 500; }
+
+  .cc-subhead {
+    margin: 16px 0 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--cc-faint);
+  }
+
+  /* The six standing jobs. */
+  .cc-jobs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+  }
+
+  .cc-job { display: flex; }
+
+  .cc-job-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 13px 14px;
+    border-radius: 11px;
+    border: 1px solid var(--cc-line);
+    background: rgba(4, 8, 13, 0.4);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.13s ease, background 0.13s ease, transform 0.13s ease;
+  }
+
+  .cc-job-btn:hover:not(:disabled) {
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.07);
+    transform: translateY(-1px);
+  }
+
+  /* Disabled means "there is nothing here to do", so it still has to be
+     readable — a job with no work is an answer, not a dead control. */
+  .cc-job-btn:disabled { cursor: default; opacity: 0.55; }
+
+  .cc-job-icon { color: var(--cc-accent); display: flex; }
+  .cc-job-btn:disabled .cc-job-icon { color: var(--cc-faint); }
+
+  .cc-job-label {
+    font-size: 0.8rem;
+    font-weight: 580;
+    color: var(--cc-text);
+  }
+
+  .cc-job-hint {
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--cc-faint);
+  }
+
   @media (max-width: 860px) {
     .cc-seo-health { flex-direction: column; align-items: stretch; gap: 12px; }
     .cc-inline-form { width: 100%; }
     .cc-inline-form .cc-input { flex: 1 1 100%; }
+    .cc-check-row { grid-template-columns: 8px 1fr auto; }
+    .cc-check-detail { display: none; }
   }
 
 }

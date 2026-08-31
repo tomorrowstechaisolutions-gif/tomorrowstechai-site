@@ -19,7 +19,13 @@ import {
   IconSpark,
   IconX,
 } from "../Icons";
-import { addCompetitorAction, proposeSeoActionAction, removeCompetitorAction, runSeoAuditAction } from "@/app/admin/seo-actions";
+import {
+  addCompetitorAction,
+  proposeSeoActionAction,
+  queueSeoJobAction,
+  removeCompetitorAction,
+  runSeoAuditAction,
+} from "@/app/admin/seo-actions";
 
 /**
  * The SEO Command Center.
@@ -144,7 +150,7 @@ function SearchPerformance({ board }: { board: Board }) {
       title="Search performance"
       sub={lastSyncedAt ? `Synced ${shortDate(lastSyncedAt)}` : undefined}
       icon={<IconChart size={15} />}
-      className="cc-s8"
+      className="cc-s12"
     >
       {series.length === 0 ? (
         <NotConnected what="Search Console" reason={reason} icon={<IconSearch size={17} />} />
@@ -303,7 +309,7 @@ function Health({ board }: { board: Board }) {
       title="SEO health"
       sub={ranAt ? `${bandLabel ?? ""} — audited ${shortDate(ranAt)}` : "Never audited"}
       icon={<IconAlert size={15} />}
-      className="cc-s6"
+      className="cc-s8"
       footer={
         <form action={runSeoAuditAction}>
           <button type="submit" className="cc-btn primary">
@@ -342,10 +348,25 @@ function Health({ board }: { board: Board }) {
             </div>
           </div>
 
+          <div className="cc-checks">
+            {board.checks.map((c) => (
+              <div className={`cc-check-row t-${c.tone}`} key={c.label}>
+                <span className="cc-check-dot" />
+                <span className="cc-check-name">{c.label}</span>
+                <span className="cc-check-detail">{c.detail}</span>
+                <span className="cc-check-score">
+                  {c.passed === null ? "Not measured" : `${c.passed}/${c.total}`}
+                </span>
+              </div>
+            ))}
+          </div>
+
           {issues.length === 0 ? (
             <p className="cc-note">Every check passed on all {count(pagesChecked)} pages.</p>
           ) : (
-            <div className="cc-alerts">
+            <>
+              <div className="cc-subhead">Issues to fix</div>
+              <div className="cc-alerts">
               {issues.slice(0, 8).map((i, n) => (
                 <div className={`cc-alert p-${i.severity}`} key={`${i.path}:${i.code}:${n}`}>
                   <span className="cc-alert-pri" />
@@ -364,7 +385,8 @@ function Health({ board }: { board: Board }) {
                   {issues.length - 8} more {issues.length - 8 === 1 ? "issue" : "issues"} not shown.
                 </p>
               ) : null}
-            </div>
+              </div>
+            </>
           )}
         </>
       )}
@@ -383,7 +405,7 @@ function Opportunities({ board }: { board: Board }) {
       title="Content opportunities"
       sub="Demand without a page, and rankings just off page one"
       icon={<IconPen size={15} />}
-      className="cc-s6"
+      className="cc-s4"
     >
       {missing.length === 0 && near.length === 0 ? (
         <EmptyState
@@ -540,25 +562,109 @@ function Advisor({ board }: { board: Board }) {
   );
 }
 
-function Queue({ board }: { board: Board }) {
+/* ── 10. The six standing jobs ─────────────────────────────────────── */
+
+/**
+ * Each tile states what it would do and what evidence it has. A tile with
+ * nothing to work on is shown disabled with the reason, not hidden — "no
+ * pages are missing a description" is worth knowing.
+ */
+function AiActions({ board }: { board: Board }) {
+  const metaCodes = [
+    "missing_title",
+    "missing_description",
+    "title_too_long",
+    "title_too_short",
+    "description_too_long",
+    "description_too_short",
+    "duplicate_title",
+    "duplicate_description",
+  ];
+  const metaPages = new Set(
+    board.audit.issues.filter((i) => metaCodes.includes(i.code)).map((i) => i.path)
+  ).size;
+  const noSchema = board.pages.filter((p) => !p.hasSchema).length;
+  const fewLinks = board.pages.filter((p) => p.internalLinks < 5).length;
+  const missingGaps = board.gaps.filter((g) => !g.hasPage).length;
+  const withIssues = board.pages.filter((p) => p.issueCount > 0).length;
+  const blogTopic = board.search.nearlyThere.length > 0 || missingGaps > 0;
+
+  const jobs: { job: string; label: string; icon: React.ReactNode; ready: boolean; hint: string }[] = [
+    {
+      job: "draft_page",
+      label: "Draft SEO page",
+      icon: <IconPen size={16} />,
+      ready: missingGaps > 0,
+      hint: missingGaps > 0 ? `${missingGaps} unserved topic${missingGaps === 1 ? "" : "s"}` : "No unserved topics",
+    },
+    {
+      job: "improve_page",
+      label: "Improve a page",
+      icon: <IconSpark size={16} />,
+      ready: withIssues > 0,
+      hint: withIssues > 0 ? `${withIssues} page${withIssues === 1 ? "" : "s"} with issues` : "No page has issues",
+    },
+    {
+      job: "meta_tags",
+      label: "Generate meta tags",
+      icon: <IconLink size={16} />,
+      ready: metaPages > 0,
+      hint: metaPages > 0 ? `${metaPages} page${metaPages === 1 ? "" : "s"} need work` : "Titles and descriptions are fine",
+    },
+    {
+      job: "blog_post",
+      label: "Create blog post",
+      icon: <IconPen size={16} />,
+      ready: blogTopic,
+      hint: blogTopic ? "A topic with demand behind it" : "No searched topic to write about yet",
+    },
+    {
+      job: "faq_schema",
+      label: "Build FAQ schema",
+      icon: <IconCheck size={16} />,
+      ready: noSchema > 0,
+      hint: noSchema > 0 ? `${noSchema} page${noSchema === 1 ? "" : "s"} without schema` : "Every page has schema",
+    },
+    {
+      job: "internal_links",
+      label: "Suggest internal links",
+      icon: <IconGlobe size={16} />,
+      ready: fewLinks > 0,
+      hint: fewLinks > 0 ? `${fewLinks} thinly linked page${fewLinks === 1 ? "" : "s"}` : "Every page is well linked",
+    },
+  ];
+
   return (
-    <Panel title="AI actions" icon={<IconSpark size={15} />} className="cc-s4">
-      <div className="cc-stats">
-        <div className="cc-stat">
-          <div className="cc-stat-label">Awaiting review</div>
-          <div className={`cc-stat-value ${board.pendingActions > 0 ? "t-risk" : "t-none"}`}>
-            {count(board.pendingActions)}
-          </div>
-          <div className="cc-stat-hint">Across the whole business, not just SEO</div>
+    <Panel
+      title="AI actions"
+      sub="Each one writes a proposal — none of them change the site"
+      icon={<IconSpark size={15} />}
+      className="cc-s12"
+      footer={
+        <div className="cc-inline-form">
+          <span className="cc-note">
+            {board.pendingActions > 0
+              ? `${count(board.pendingActions)} proposal${board.pendingActions === 1 ? "" : "s"} awaiting review across the business.`
+              : "Nothing is awaiting review."}
+          </span>
+          <Link href="/admin/ai" className="cc-cta">
+            Open the review queue
+          </Link>
         </div>
+      }
+    >
+      <div className="cc-jobs">
+        {jobs.map((j) => (
+          <form action={queueSeoJobAction} key={j.job} className="cc-job">
+            <input type="hidden" name="job" value={j.job} />
+            <button type="submit" className="cc-job-btn" disabled={!j.ready}>
+              <span className="cc-job-icon">{j.icon}</span>
+              <span className="cc-job-label">{j.label}</span>
+              <span className="cc-job-hint">{j.hint}</span>
+            </button>
+          </form>
+        ))}
       </div>
-      <p className="cc-note">
-        Nothing on this screen edits the website. An approved SEO action becomes a content change only
-        once the publishing step exists — until then, approving marks it ready for you to make.
-      </p>
-      <Link href="/admin/ai" className="cc-cta">
-        Open the review queue
-      </Link>
     </Panel>
   );
 }
@@ -574,11 +680,11 @@ export default async function SeoBoard() {
       <KpiRow board={board} />
       <div className="cc-board">
         <Advisor board={board} />
-        <Queue board={board} />
-        <Health board={board} />
         <Opportunities board={board} />
-        <SearchPerformance board={board} />
+        <AiActions board={board} />
+        <Health board={board} />
         <Keywords board={board} />
+        <SearchPerformance board={board} />
         <LandingPages board={board} />
         <LocalSeo board={board} />
         <Competitors board={board} />

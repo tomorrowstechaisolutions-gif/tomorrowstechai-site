@@ -4,7 +4,7 @@ import { unwrap } from "@/lib/dashboard/panel";
 import { lastNDays } from "@/lib/dashboard/period";
 import { auditTargets } from "./audit";
 import { attributionOf } from "./organic";
-import { healthBand, healthScore, RULES, SEVERITY_ORDER, type RuleCode, type Severity } from "./rules";
+import { healthBand, healthScore, RULES, SEVERITY_ORDER, SLOW_RESPONSE_MS, type RuleCode, type Severity } from "./rules";
 import { loadSearch, localConnection, type SearchSnapshot } from "./search-console";
 
 /**
@@ -37,6 +37,7 @@ export type SeoPageRow = {
   statusCode: number | null;
   responseMs: number | null;
   hasSchema: boolean;
+  internalLinks: number;
   /** Leads this page produced in the window, from the lead's landing page. */
   leads: number;
   organicLeads: number;
@@ -50,6 +51,18 @@ export type ContentGap = {
   /** A path that would plainly serve this interest, if one existed. */
   suggestedPath: string;
   hasPage: boolean;
+};
+
+/**
+ * One line of the health strip: a named property of the site, the share of
+ * pages that have it, and — when nothing can measure it here — why not.
+ */
+export type SeoCheck = {
+  label: string;
+  passed: number | null;
+  total: number;
+  detail: string;
+  tone: "ok" | "warn" | "risk" | "none";
 };
 
 export type SeoRecommendation = {
@@ -79,6 +92,7 @@ export type SeoBoard = {
   };
 
   pages: SeoPageRow[];
+  checks: SeoCheck[];
   organicLeads: number;
   organicLeadsPrevious: number;
   totalLeads: number;
@@ -194,7 +208,7 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
     ? await Promise.all([
         sb
           .from("seo_pages")
-          .select("path, url, title, title_length, description_length, word_count, status_code, response_ms, jsonld_types")
+          .select("path, url, title, title_length, description_length, word_count, status_code, response_ms, jsonld_types, internal_links, noindex")
           .eq("run_id", runId)
           .then((r) => unwrap(r, "audited pages")),
         sb
@@ -215,6 +229,8 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
     status_code: number | null;
     response_ms: number | null;
     jsonld_types: string[] | null;
+    internal_links: number | null;
+    noindex: boolean | null;
   };
   type IssueRaw = { path: string; code: RuleCode; severity: Severity; detail: string | null };
 
@@ -257,6 +273,7 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
         statusCode: p.status_code,
         responseMs: p.response_ms,
         hasSchema: (p.jsonld_types ?? []).length > 0,
+        internalLinks: p.internal_links ?? 0,
         leads: leadCounts.total,
         organicLeads: leadCounts.organic,
         issueCount: pageIssues.length,
@@ -270,6 +287,60 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
   const bySeverity = severities
     .map((severity) => ({ severity, count: issues.filter((i) => i.severity === severity).length }))
     .filter((s) => s.count > 0);
+
+  // ── The health strip ───────────────────────────────────────────────
+  // Named properties of the site, each a share of pages rather than a
+  // borrowed grade. A check that nothing here can measure says so instead
+  // of being scored out of a hundred.
+  const codesOn = (codes: RuleCode[]) =>
+    new Set(issues.filter((i) => codes.includes(i.code)).map((i) => i.path)).size;
+
+  const totalPages = pageRaw.length;
+  const share = (failing: number): SeoCheck["tone"] => {
+    if (totalPages === 0) return "none";
+    const ratio = (totalPages - failing) / totalPages;
+    return ratio === 1 ? "ok" : ratio >= 0.8 ? "warn" : "risk";
+  };
+
+  const httpsPages = pageRaw.filter((p) => p.url.startsWith("https://")).length;
+  const reachable = pageRaw.filter((p) => (p.status_code ?? 0) >= 200 && (p.status_code ?? 0) < 300).length;
+  const fastPages = pageRaw.filter((p) => (p.response_ms ?? 0) <= SLOW_RESPONSE_MS).length;
+
+  const checkSpecs: { label: string; failing: number; detail: string }[] = totalPages === 0 ? [] : [
+    { label: "Titles", failing: codesOn(["missing_title", "title_too_long", "title_too_short", "duplicate_title"]),
+      detail: "Present, unique, and short enough to show in full" },
+    { label: "Descriptions", failing: codesOn(["missing_description", "description_too_long", "description_too_short", "duplicate_description"]),
+      detail: "Present, unique, and within the length Google renders" },
+    { label: "Headings", failing: codesOn(["missing_h1", "multiple_h1"]),
+      detail: "Exactly one H1 saying what the page is" },
+    { label: "Schema markup", failing: codesOn(["no_schema"]),
+      detail: "JSON-LD Google can read" },
+    { label: "Indexing", failing: codesOn(["noindex", "unreachable"]) + (totalPages - reachable),
+      detail: "Reachable and not blocked from search" },
+    { label: "Page speed", failing: totalPages - fastPages,
+      detail: `Server responds in under ${SLOW_RESPONSE_MS}ms` },
+    { label: "Security", failing: totalPages - httpsPages,
+      detail: "Every page served over HTTPS" },
+  ];
+
+  const checks: SeoCheck[] = [
+    ...checkSpecs.map((c) => ({
+      label: c.label,
+      passed: Math.max(0, totalPages - c.failing),
+      total: totalPages,
+      detail: c.detail,
+      tone: share(c.failing),
+    })),
+    // Named so its absence is visible. Field data belongs to Google, and
+    // guessing it from a server response time would be a fabricated grade.
+    {
+      label: "Core Web Vitals",
+      passed: null,
+      total: totalPages,
+      detail: "Needs PageSpeed Insights — measured from real visitors, not from here",
+      tone: "none" as const,
+    },
+  ];
 
   // ── Content gaps ───────────────────────────────────────────────────
   // What leads asked about, against what the site actually publishes.
@@ -427,6 +498,7 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
     },
 
     pages,
+    checks,
     organicLeads: organic.length,
     organicLeadsPrevious: organicPrevious.length,
     totalLeads: inWindow.length,
