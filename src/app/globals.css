@@ -8071,7 +8071,133 @@ body {
 
   a.cc-kpi:hover { border-color: rgba(56, 189, 248, 0.4); }
 
+  /* ═══ Content Studio ══════════════════════════════════════════════════
+
+     The assistant reuses .cc-ask, .cc-prompt and .cc-answer from the
+     dashboard advisor. Only the format chips, the asset grid and the drop
+     target are new. */
+
+  .cc-assistant { display: flex; flex-direction: column; }
+
+  .cc-brandbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .cc-brandbar .cc-label { margin: 0; }
+  .cc-brandbar .cc-filter-select { max-width: 260px; }
+
+  /* Which formats to write. Multi-select, because a LinkedIn post and a Reel
+     script are different pieces of writing, not one text reformatted. */
+  .cc-formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .cc-format {
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--cc-line);
+    background: rgba(4, 8, 13, 0.4);
+    font-size: 0.72rem;
+    font-weight: 550;
+    color: var(--cc-faint);
+    cursor: pointer;
+    transition: border-color 0.13s ease, color 0.13s ease, background 0.13s ease;
+  }
+
+  .cc-format:hover { color: var(--cc-dim); border-color: var(--cc-line-strong, var(--cc-line)); }
+
+  .cc-format.is-on {
+    border-color: rgba(56, 189, 248, 0.55);
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--cc-accent);
+  }
+
+  /* The asset grid. Fixed-ratio tiles so a wall of mixed media still reads
+     as a grid rather than a ransom note. */
+  .cc-assets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 10px;
+  }
+
+  .cc-asset,
+  .cc-drop {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 10px;
+    border-radius: 11px;
+    border: 1px solid var(--cc-line);
+    background: rgba(4, 8, 13, 0.4);
+    min-height: 104px;
+    overflow: hidden;
+  }
+
+  .cc-asset-thumb,
+  .cc-drop-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    font-size: 1.1rem;
+    color: var(--cc-faint);
+  }
+
+  .cc-asset-name {
+    font-size: 0.72rem;
+    font-weight: 560;
+    color: var(--cc-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-asset-meta,
+  .cc-drop-hint {
+    font-size: 0.65rem;
+    color: var(--cc-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-drop {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-style: dashed;
+    cursor: pointer;
+    transition: border-color 0.13s ease, background 0.13s ease;
+  }
+
+  .cc-drop:hover:not(:disabled),
+  .cc-drop.is-over {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(56, 189, 248, 0.07);
+  }
+
+  .cc-drop:disabled { cursor: default; opacity: 0.6; }
+
+  .cc-drop-label {
+    font-size: 0.74rem;
+    font-weight: 560;
+    color: var(--cc-dim);
+  }
+
+  /* The queue's per-row action button sits in a table cell. */
+  .cc-table .cc-inline-form { margin-top: 0; }
+  .cc-table .cc-btn { padding: 4px 10px; font-size: 0.72rem; }
+
   @media (max-width: 860px) {
+    .cc-assets { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+    .cc-brandbar { flex-wrap: wrap; }
+    .cc-brandbar .cc-filter-select { max-width: none; flex: 1; }
     .cc-seo-health { flex-direction: column; align-items: stretch; gap: 12px; }
     .cc-inline-form { width: 100%; }
     .cc-inline-form .cc-input { flex: 1 1 100%; }

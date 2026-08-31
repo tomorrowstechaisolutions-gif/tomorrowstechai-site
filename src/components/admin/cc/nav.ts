@@ -106,7 +106,7 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { href: "/admin/marketing/ads", label: "Ad Studio", icon: IconPen },
       { href: "/admin/marketing/spend", label: "Ad spend", icon: IconDollar },
-      { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage, soon: true },
+      { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage },
       { href: "/admin/marketing/social", label: "Social Center", icon: IconShare, soon: true },
       { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail, soon: true },
       { href: "/admin/marketing/seo", label: "SEO", icon: IconGlobe },
@@ -248,12 +248,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Compose, schedule and publish across channels. Accounts must be connected first — nothing here will show numbers for a platform that has not been linked.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/marketing/content": {
-    title: "Content Studio",
-    blurb:
-      "AI-assisted content, built on the same generator that already writes ad copy in Ad Studio.",
-    nearest: { href: "/admin/marketing/ads", label: "Open Ad Studio" },
   },
   "/admin/marketing/email": {
     title: "Email",

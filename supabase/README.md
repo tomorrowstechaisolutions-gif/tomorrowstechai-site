@@ -21,6 +21,7 @@ rather than a convincing empty list.
 | 0008 | `0008_client_record.sql` | The client record — see below. |
 | 0009 | `0009_seo.sql` | SEO Command Center — see below. |
 | 0010 | `0010_websites.sql` | The website portfolio — see below. |
+| 0011 | `0011_content_studio.sql` | Content Studio, brands and the asset library — see below. |
 
 ## 0007 — Business Command Center
 
@@ -242,3 +243,96 @@ variants), every status/type/provider/environment/kind check constraint, the
 partial unique index on deployments, the cascade from `websites` to all three
 child tables, `on delete set null` from both `customers` and `jobs`, the
 `updated_at` trigger, and RLS as `anon` (permission denied on all four).
+
+## 0011 — Content Studio
+
+Four tables and a private storage bucket. Again the interesting part is what
+was refused.
+
+**What already existed and is not duplicated**
+
+`social_posts` is the **publish** record — account_id, scheduled_at,
+published_at, external_id, external_url, error. It is what Social Center hands
+to a platform API. Content Studio does not replace it: approved social content
+*becomes* one, and `content_items.social_post_id` is the link. Two records
+because they answer two different questions — "what did we write" and "what did
+the platform do with it".
+
+`ad_creatives` already holds ad copy, already with variants via `parent_id`.
+Ads stay in Ad Studio. `ai_actions` is already the propose → review → approve
+queue with a database constraint behind it, so there is no `content_approvals`.
+
+A campaign is a **name string** across this database (`leads.campaign`,
+`campaign_spend.campaign`, `social_posts.campaign`, `ad_creatives.campaign`).
+Introducing a `campaigns` table now would orphan every one of those references,
+so `content_items.campaign` is text too. That is a deliberate consistency
+choice, not an oversight.
+
+**New tables**
+
+`brand_profiles` — whose voice a piece is written in. Tone, audience, writing
+guidance, CTA style, preferred and prohibited phrases: all of it is prompt
+material handed to the generator, so changing how a brand sounds is an edit to
+a row rather than a code change. A partial unique index on `((is_default))
+where is_default` enforces exactly one default. Every `content_items` row
+carries `brand_profile_id` **not null** with `on delete restrict`, which is what
+stops one brand's guidance ever writing another brand's content.
+
+`content_assets` — the library. `storage_path` is the object key inside the
+private bucket; **no public URL is stored**, because a stored link outlives
+every permission check around it. Unique on `storage_path`.
+
+`content_items` — one piece for any channel. The status list is deliberately
+the same shape as `social_posts`, plus the two states that only exist before
+publishing (`generating`, `archived`), so an approved item becomes a social post
+without translating a status vocabulary. Two check constraints stop the calendar
+lying: `scheduled` requires `scheduled_at`, `published` requires `published_at`.
+
+`content_asset_links` — many-to-many, cascading from both sides.
+
+**Repurposing is a self-reference, not a table.** `source_content_id` points a
+Reel script at the blog it came from, so "what did this come from" and "what
+came out of this" are the same query run two ways.
+
+**Storage**
+
+Bucket `brand-assets`, **private**, 50MB per file, with four RLS policies on
+`storage.objects` gated on `bucket_id = 'brand-assets' and public.is_admin()`.
+A public bucket would put every client logo and unreleased graphic on a
+guessable URL with no auth in front of it. The app mints a signed URL that
+expires in 300 seconds, and `/api/admin/assets` will only sign a path that
+already exists as a row the caller can read — otherwise the route would be a
+way to read the whole bucket.
+
+Object keys are `<brand-id>/<uuid>.<ext>`. The uploaded file name is kept only
+in `title` and never in the key: user-chosen names are exactly how a path
+traversal gets into a bucket.
+
+**NOT created, on purpose**
+
+- `content_variants` — a variant IS a content_item with `source_content_id` set.
+  A separate table would need every one of the same columns.
+- `content_metrics` — nothing writes it. No analytics or social credential
+  exists. Lead attribution already works through `leads.campaign` and
+  `leads.utm_campaign`.
+- `content_ai_scores` — derived per read in `src/lib/content/score.ts`, like
+  client and SEO health. A content score is guidance rather than measurement, so
+  freezing one is worse than freezing a metric.
+- `content_reviews` — review notes live on the item. A review *thread* is a
+  feature for more than one reviewer; there is one.
+
+**Seeded**
+
+One brand profile, Tomorrows Tech AI, with the voice and banned-phrase list
+lifted from the ad-copy generator that already works — so the two speak with one
+voice instead of two. Seeded rather than left as a first-run chore, because
+content cannot be written without a voice to write it in.
+
+**Verified before applying**: 0001→0011 against a scratch PostgreSQL 16, twice
+(idempotency), then 25 assertions — the single-default constraint, slug
+uniqueness, every status/type/platform/goal check, the scheduled- and
+published-date constraints, `on delete restrict` from a brand in use, the
+repurposing self-reference surviving deletion of its source, storage-path
+uniqueness, link cascade, and RLS as `anon` (permission denied on all four).
+The storage section is guarded by `to_regclass('storage.buckets')` so it skips
+cleanly on a scratch database and was applied separately to Supabase.
