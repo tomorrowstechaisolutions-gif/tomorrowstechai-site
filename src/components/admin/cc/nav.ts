@@ -79,6 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Projects",
     links: [
       { href: "/admin/jobs", label: "Projects", icon: IconBriefcase, badge: "projectsAtRisk" },
+      { href: "/admin/intakes", label: "Client intake", icon: IconBriefcase },
       { href: "/admin/tasks", label: "Tasks", icon: IconCheckSquare, soon: true },
       { href: "/admin/calendar", label: "Calendar", icon: IconCalendar, soon: true },
     ],

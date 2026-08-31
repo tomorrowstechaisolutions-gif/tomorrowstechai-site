@@ -2,6 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { JOB_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
+import {
+  STARTER_PACKAGE,
+  STARTER_STAGES,
+  STARTER_STAGE_BLURB,
+} from "@/lib/intake/config";
+import type { IntakeRecord } from "@/lib/intake/config";
+import { openIntakeForJob } from "@/app/admin/actions";
 import { fmtMoney } from "@/lib/campaign/metrics";
 import { HOSTING_TRIAL_DAYS } from "@/lib/campaign/config";
 import type {
@@ -80,6 +87,20 @@ export default async function JobDetailPage({
   const customer = customerRow as Customer | null;
   const invoice = invoiceRow as Invoice | null;
 
+  // Which vocabulary this job speaks depends on what was sold.
+  const isStarter = job.package === STARTER_PACKAGE;
+  const stageOptions: readonly string[] = isStarter ? STARTER_STAGES : JOB_STAGES;
+  const stageBlurb: Record<string, string> = isStarter
+    ? STARTER_STAGE_BLURB
+    : (STAGE_BLURB as Record<string, string>);
+
+  // Starter jobs are gated on intake, so the job page has to say whether one
+  // exists and where it has got to. A Classic job has no intake and skips this.
+  const { data: intakeRow } = isStarter
+    ? await supabase.from("client_intakes").select("*").eq("job_id", job.id).maybeSingle()
+    : { data: null };
+  const intake = intakeRow as IntakeRecord | null;
+
   const done = tasks.filter((t) => t.done).length;
   const stageTasks = tasks.filter((t) => t.stage === job.stage);
   const overdue = isOverdue(job.due_at);
@@ -94,7 +115,7 @@ export default async function JobDetailPage({
         </p>
         <h1>{job.title}</h1>
         <p>
-          {STAGE_BLURB[job.stage]} · {done} of {tasks.length} steps done
+          {stageBlurb[job.stage] ?? ""} · {done} of {tasks.length} steps done
           {job.due_at && (
             <>
               {" · "}
@@ -108,12 +129,43 @@ export default async function JobDetailPage({
 
       <div className="ad-grid-2">
         <div>
+          {isStarter ? (
+            <section className="ad-panel">
+              <h2 className="ad-panel-title">Client intake</h2>
+              {intake ? (
+                <>
+                  <p className="ad-muted" style={{ fontSize: "0.8rem" }}>
+                    {intake.status === "submitted"
+                      ? `Submitted ${intake.submitted_at ? new Date(intake.submitted_at).toLocaleDateString() : ""}.`
+                      : `Waiting on the client — step ${intake.current_step} of 5.`}
+                  </p>
+                  <p style={{ marginTop: "0.5rem" }}>
+                    <Link href={`/admin/intakes/${intake.id}`} className="ad-link">
+                      Open the intake →
+                    </Link>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="ad-muted" style={{ fontSize: "0.8rem" }}>
+                    No intake yet. Issuing one moves this job to Intake Required
+                    and gives the client a link to send their content.
+                  </p>
+                  <form action={openIntakeForJob} className="ad-inline-form" style={{ marginTop: "0.75rem" }}>
+                    <input type="hidden" name="job_id" value={job.id} />
+                    <button type="submit" className="ad-btn">Issue an intake link</button>
+                  </form>
+                </>
+              )}
+            </section>
+          ) : null}
+
           <section className="ad-panel">
             <h2 className="ad-panel-title">Stage</h2>
             <form action={updateJobStage} className="ad-inline-form">
               <input type="hidden" name="job_id" value={job.id} />
               <select name="stage" defaultValue={job.stage} className="ad-input">
-                {JOB_STAGES.map((s: JobStage) => (
+                {stageOptions.map((s: string) => (
                   <option key={s} value={s}>
                     {s}
                   </option>

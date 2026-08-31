@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ACTIVE_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
+import {
+  STARTER_ACTIVE_STAGES,
+  STARTER_PACKAGE,
+  STARTER_STAGE_BLURB,
+  STARTER_STAGE_OWNER,
+} from "@/lib/intake/config";
 import type { Job } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -31,10 +37,33 @@ export default async function JobsPage() {
     .limit(200);
 
   const jobs = (data ?? []) as Job[];
-  const active = jobs.filter((j) => j.stage !== "Complete");
+  const active = jobs.filter((j) => j.stage !== "Complete" && j.stage !== "Live");
   const overdue = active.filter((j) => isOverdue(j.due_at)).length;
 
-  const columns: JobStage[] = [...ACTIVE_STAGES, "On Hold"];
+  // Two products, two processes, two boards. The $399 Classic runs Intake ->
+  // Handoff; the $149 Starter runs Purchased -> Live and has stages the other
+  // does not need, because intake is a gate there. Rendering both through one
+  // column list would silently hide every Starter job.
+  const boards = [
+    {
+      key: "launch_package",
+      label: "$399 Classic",
+      columns: [...ACTIVE_STAGES, "On Hold"] as string[],
+      blurb: STAGE_BLURB as Record<string, string>,
+      terminal: "Complete",
+      jobs: jobs.filter((j) => j.package !== STARTER_PACKAGE),
+    },
+    {
+      key: STARTER_PACKAGE,
+      label: "$149 Starter",
+      columns: [...STARTER_ACTIVE_STAGES, "On Hold"] as string[],
+      blurb: STARTER_STAGE_BLURB as Record<string, string>,
+      terminal: "Live",
+      jobs: jobs.filter((j) => j.package === STARTER_PACKAGE),
+    },
+  ].filter((b) => b.jobs.length > 0);
+
+  const done = jobs.filter((j) => j.stage === "Complete" || j.stage === "Live");
 
   return (
     <>
@@ -48,7 +77,7 @@ export default async function JobsPage() {
 
       <div className="ad-filters">
         <span className="ad-muted" style={{ alignSelf: "center" }}>
-          {active.length} in progress · {jobs.length - active.length} complete
+          {active.length} in progress · {jobs.length - active.length} delivered
           {overdue > 0 ? ` · ${overdue} past the ${jobs[0]?.promised_days ?? 14}-day promise` : ""}
         </span>
       </div>
@@ -61,43 +90,57 @@ export default async function JobsPage() {
           </p>
         </section>
       ) : (
-        <div className="ad-board">
-          {columns.map((stage) => {
-            const inStage = jobs.filter((j) => j.stage === stage);
-            return (
-              <section key={stage} className="ad-board-col">
-                <header className="ad-board-head">
-                  <h2>{stage}</h2>
-                  <span className="ad-board-count">{inStage.length}</span>
-                </header>
-                <p className="ad-board-blurb">{STAGE_BLURB[stage]}</p>
+        boards.map((board) => (
+          <section key={board.key} className="ad-board-group">
+            {boards.length > 1 ? (
+              <h2 className="ad-board-group-title">
+                {board.label}
+                <span className="ad-muted"> · {board.jobs.length}</span>
+              </h2>
+            ) : null}
 
-                {inStage.length === 0 ? (
-                  <p className="ad-board-empty">—</p>
-                ) : (
-                  inStage.map((job) => {
-                    const due = daysLeft(job.due_at);
-                    return (
-                      <Link
-                        key={job.id}
-                        href={`/admin/jobs/${job.id}`}
-                        className="ad-board-card"
-                      >
-                        <strong>{job.title}</strong>
-                        <span className={`ad-tag s-${due.tone}`}>{due.label}</span>
-                      </Link>
-                    );
-                  })
-                )}
-              </section>
-            );
-          })}
-        </div>
+            <div className="ad-board">
+              {board.columns.map((stage) => {
+                const inStage = board.jobs.filter((j) => j.stage === stage);
+                const waitingOnClient =
+                  board.key === STARTER_PACKAGE &&
+                  STARTER_STAGE_OWNER[stage as keyof typeof STARTER_STAGE_OWNER] === "client";
+                return (
+                  <section key={stage} className="ad-board-col" data-waiting={waitingOnClient}>
+                    <header className="ad-board-head">
+                      <h2>{stage}</h2>
+                      <span className="ad-board-count">{inStage.length}</span>
+                    </header>
+                    <p className="ad-board-blurb">{board.blurb[stage] ?? ""}</p>
+
+                    {inStage.length === 0 ? (
+                      <p className="ad-board-empty">—</p>
+                    ) : (
+                      inStage.map((job) => {
+                        const due = daysLeft(job.due_at);
+                        return (
+                          <Link
+                            key={job.id}
+                            href={`/admin/jobs/${job.id}`}
+                            className="ad-board-card"
+                          >
+                            <strong>{job.title}</strong>
+                            <span className={`ad-tag s-${due.tone}`}>{due.label}</span>
+                          </Link>
+                        );
+                      })
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          </section>
+        ))
       )}
 
-      {jobs.some((j) => j.stage === "Complete") && (
+      {done.length > 0 && (
         <section className="ad-panel" style={{ marginTop: "1.25rem" }}>
-          <h2 className="ad-panel-title">Complete</h2>
+          <h2 className="ad-panel-title">Delivered</h2>
           <div className="ad-table-scroll">
             <table className="ad-table">
               <thead>
@@ -110,9 +153,7 @@ export default async function JobsPage() {
                 </tr>
               </thead>
               <tbody>
-                {jobs
-                  .filter((j) => j.stage === "Complete")
-                  .map((j) => {
+                {done.map((j) => {
                     const days =
                       j.completed_at
                         ? Math.round(
@@ -151,7 +192,7 @@ export default async function JobsPage() {
                         <td>{days === null ? "—" : days}</td>
                       </tr>
                     );
-                  })}
+                })}
               </tbody>
             </table>
           </div>

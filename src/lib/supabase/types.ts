@@ -1,4 +1,13 @@
-import type { JobStage } from "@/lib/jobs/config";
+import type { JobStage as ClassicJobStage } from "@/lib/jobs/config";
+import type { StarterStage } from "@/lib/intake/config";
+
+/**
+ * A job's stage depends on its package: the $399 Classic runs the stages in
+ * lib/jobs/config, the $149 Starter the ones in lib/intake/config. One column
+ * holds both, so the type is the union and the check constraint in migration
+ * 0015 is what actually keeps a Starter stage off a Classic job.
+ */
+export type JobStage = ClassicJobStage | StarterStage;
 /**
  * Hand-written row types for the campaign CRM tables.
  * Kept in sync with supabase/migrations/0001_business_launch.sql.

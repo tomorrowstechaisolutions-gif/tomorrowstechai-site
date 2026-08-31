@@ -13,7 +13,14 @@ import {
   type BillingPeriod,
 } from "@/lib/supabase/types";
 import { OFFER_PRICE_CENTS, CAMPAIGN_NAME } from "@/lib/campaign/config";
-import { JOB_STAGES, type JobStage } from "@/lib/jobs/config";
+import { JOB_STAGES } from "@/lib/jobs/config";
+import type { JobStage } from "@/lib/supabase/types";
+import {
+  STARTER_PACKAGE,
+  STARTER_PROMISED_DAYS,
+  STARTER_STAGES,
+} from "@/lib/intake/config";
+import { createIntake, refreshToken } from "@/lib/intake/service";
 
 /**
  * Every action re-checks the admin. Server actions are public endpoints —
@@ -486,23 +493,48 @@ export async function deleteAd(formData: FormData) {
  * Jobs are opened by the Stripe webhook, not here — a job should only exist
  * because someone paid. These actions move one along.
  */
+/**
+ * Business days, because "2-3 business days" is what the ad and the client's
+ * acknowledgement both say. Counting calendar days would quietly turn a
+ * Friday hand-off into a missed promise over the weekend.
+ */
+function addBusinessDays(from: Date, days: number): Date {
+  const d = new Date(from);
+  let left = days;
+  while (left > 0) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) left -= 1;
+  }
+  return d;
+}
+
 export async function updateJobStage(formData: FormData) {
   const { supabase, actor } = await requireAdmin();
   const jobId = str(formData, "job_id", 40);
-  const stage = str(formData, "stage", 20) as JobStage;
-  if (!jobId || !JOB_STAGES.includes(stage)) return;
+  const stage = str(formData, "stage", 24) as JobStage;
+  const known = [...JOB_STAGES, ...STARTER_STAGES] as readonly string[];
+  if (!jobId || !known.includes(stage)) return;
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("stage")
+    .select("stage, package, promised_days")
     .eq("id", jobId)
     .maybeSingle();
   if (!job || job.stage === stage) return;
 
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = { stage };
-  if (stage === "Launch") patch.launched_at = now;
-  if (stage === "Complete") patch.completed_at = now;
+  if (stage === "Launch" || stage === "Launch Ready") patch.launched_at = now;
+  if (stage === "Complete" || stage === "Live") patch.completed_at = now;
+
+  // The Starter clock starts at Ready to Build, not at purchase. That is the
+  // literal promise the client ticked at the end of intake: the turnaround
+  // begins once we have everything. Setting the due date anywhere earlier
+  // would make the board lie about a deadline the client never agreed to.
+  if (job.package === STARTER_PACKAGE && stage === "Ready to Build") {
+    patch.due_at = addBusinessDays(new Date(), STARTER_PROMISED_DAYS).toISOString();
+  }
 
   const { error } = await supabase.from("jobs").update(patch).eq("id", jobId);
   if (error) return;
@@ -645,4 +677,94 @@ export async function restoreCatalogItem(formData: FormData) {
   if (!id) return;
   await supabase.from("catalog_items").update({ active: true }).eq("id", id);
   revalidatePath("/admin/catalog");
+}
+
+/**
+ * Pushes an intake link's expiry back out. Used when a client lets theirs go
+ * cold — the answers they already gave are still there, so minting a new
+ * token would throw away their progress for no reason.
+ */
+export async function extendIntakeLink(formData: FormData) {
+  await requireAdmin();
+  const intakeId = str(formData, "intake_id", 40);
+  if (!intakeId) return;
+
+  await refreshToken(intakeId);
+
+  revalidatePath("/admin/intakes");
+  revalidatePath(`/admin/intakes/${intakeId}`);
+}
+
+/**
+ * Opens the intake for a Starter job and moves it to Intake Required.
+ * Idempotent: calling it again returns the existing link rather than
+ * stranding the client on a token that no longer works.
+ */
+export async function openIntakeForJob(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const jobId = str(formData, "job_id", 40);
+  if (!jobId) return;
+
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("id, business_name, title, customer_id, lead_id")
+    .eq("id", jobId)
+    .maybeSingle();
+  if (!job) return;
+
+  await createIntake({
+    jobId: job.id as string,
+    customerId: (job.customer_id as string | null) ?? null,
+    leadId: (job.lead_id as string | null) ?? null,
+    businessName: (job.business_name as string | null) ?? (job.title as string),
+  });
+
+  revalidatePath("/admin/intakes");
+  revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+/**
+ * Opens a Starter job and its intake in one go, and returns nothing — the
+ * page re-reads and shows the link.
+ *
+ * This exists because the $149 Stripe price does not exist yet. Once it does,
+ * the webhook creates the job and calls createIntake itself, and this becomes
+ * the manual fallback for a sale taken over the phone.
+ */
+export async function startStarterJob(formData: FormData) {
+  const { supabase } = await requireAdmin();
+
+  const businessName = str(formData, "business_name", 200);
+  const contactName = str(formData, "contact_name", 200);
+  const email = str(formData, "email", 320);
+  const phone = str(formData, "phone", 40);
+
+  if (!businessName) return;
+
+  const { data: job } = await supabase
+    .from("jobs")
+    .insert({
+      title: `${businessName} — Starter Website`,
+      business_name: businessName,
+      package: STARTER_PACKAGE,
+      stage: "Purchased",
+      promised_days: STARTER_PROMISED_DAYS,
+      // Deliberately no due_at. The clock starts at Ready to Build, once the
+      // content is in and checked — not the moment the money lands.
+    })
+    .select("id")
+    .single();
+
+  if (!job) return;
+
+  await createIntake({
+    jobId: job.id as string,
+    businessName,
+    contactName: contactName || null,
+    email: email || null,
+    phone: phone || null,
+  });
+
+  revalidatePath("/admin/intakes");
+  revalidatePath("/admin/jobs");
 }
