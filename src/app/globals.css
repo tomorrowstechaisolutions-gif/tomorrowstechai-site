@@ -8459,7 +8459,31 @@ body {
 }
 
 .tier-card:hover {
-  border-color: rgba(0, 217, 255, 0.4);
+  border-color: rgba(0, 217, 255, 0.55);
+  background: rgba(0, 217, 255, 0.03);
+}
+
+/* The whole card is the click target.
+   These cards are ~850px tall and the only anchor was one line of small text
+   at the very bottom, so clicking the price, the title or any of the feature
+   list did nothing at all. The stretched-link overlay fixes that without
+   nesting interactive elements: one real <a> stays in the markup for screen
+   readers and keyboard focus, and its ::after covers the card for the mouse.
+   Same technique as .svc-trigger::after on the solutions below. */
+.tier-card {
+  cursor: pointer;
+}
+
+.tier-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* The badge must stay above the overlay or it swallows the top of the card. */
+.tier-flag {
+  z-index: 2;
 }
 
 .tier-card[data-featured="true"] {
