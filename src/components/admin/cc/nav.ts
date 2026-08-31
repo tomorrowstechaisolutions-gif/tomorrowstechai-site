@@ -87,7 +87,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Products & Services",
     links: [
       { href: "/admin/catalog", label: "Catalog", icon: IconLayers },
-      { href: "/admin/websites", label: "Websites", icon: IconGlobe, soon: true },
+      { href: "/admin/websites", label: "Websites", icon: IconGlobe },
       { href: "/admin/apps", label: "Apps", icon: IconLayers, soon: true },
       { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot, soon: true },
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
@@ -185,12 +185,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "A drag-between-stages board over the same leads. The stage counts, values and conversion rates are already on the dashboard, and every lead's stage is set from its own page.",
     nearest: { href: "/admin", label: "See the pipeline" },
-  },
-  "/admin/websites": {
-    title: "Websites",
-    blurb:
-      "Every site built and hosted, with its stack, domain, renewal and who it belongs to. Sites in build are projects; sites live are what this will list.",
-    nearest: { href: "/admin/jobs", label: "Open Projects" },
   },
   "/admin/apps": {
     title: "Apps",

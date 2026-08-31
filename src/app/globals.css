@@ -8036,6 +8036,41 @@ body {
     color: var(--cc-faint);
   }
 
+  /* ═══ Websites ════════════════════════════════════════════════════════
+
+     Two additions only. The portfolio table, the health donut, the renewal
+     list and the quick-action tiles all reuse shapes that already exist. */
+
+  /* A filter that is on or off rather than a list — "needs attention". */
+  .cc-toggle {
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  .cc-toggle.is-on {
+    border-color: rgba(56, 189, 248, 0.55);
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--cc-accent);
+  }
+
+  /* A renewal row carries a chip and an amount after the name and detail. */
+  .cc-health-row .cc-chip { margin-left: auto; }
+  .cc-health-row .cc-mono { min-width: 62px; text-align: right; }
+
+  /* The KPI cards, tabs and quick-action tiles are anchors on this screen and
+     plain elements elsewhere. Tailwind's reset already neutralises anchor
+     styling, but these say so explicitly so the cards cannot pick up a link
+     underline if that reset ever moves. */
+  a.cc-kpi,
+  a.cc-tab,
+  a.cc-job-btn {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  a.cc-kpi:hover { border-color: rgba(56, 189, 248, 0.4); }
+
   @media (max-width: 860px) {
     .cc-seo-health { flex-direction: column; align-items: stretch; gap: 12px; }
     .cc-inline-form { width: 100%; }

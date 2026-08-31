@@ -20,6 +20,7 @@ rather than a convincing empty list.
 | 0007 | `0007_command_center.sql` | The Business Command Center — see below. |
 | 0008 | `0008_client_record.sql` | The client record — see below. |
 | 0009 | `0009_seo.sql` | SEO Command Center — see below. |
+| 0010 | `0010_websites.sql` | The website portfolio — see below. |
 
 ## 0007 — Business Command Center
 
@@ -161,3 +162,83 @@ PostgREST grants are revoked from `anon`.
 (idempotency), then the severity and status check constraints, the
 `(date, query, page)` uniqueness, the cascade delete from `seo_audit_runs`
 through `seo_pages` and `seo_issues`, and RLS as `anon` (permission denied).
+
+## 0010 — The website portfolio
+
+Four tables, and the interesting part is the eight that were **not** created.
+
+**What already existed and is not duplicated**
+
+`jobs` is the BUILD — it already carries `site_url`, `project_type`, `package`,
+`stage`, `launched_at`, `value_cents`, `owner` and `next_milestone`. A site
+under construction is a job and stays one. `customers` is the OWNER, with
+`mrr_cents`, `stripe_subscription_id`, `renews_at` and `renewal_amount_cents`
+already synced from Stripe. `leads.landing_page` is what ties a lead to a site.
+`seo_*` is the audit.
+
+So `websites` exists for the one thing `jobs` cannot express: **a site outlives
+the project that built it, and one customer can own several.** It carries
+identity and operational state and nothing another table already owns.
+
+**New tables**
+
+`websites` — customer_id and job_id both nullable and both `on delete set
+null`: a site we took over from another agency has no build job, a site of our
+own has no customer, and deleting either must not delete the site. The unique
+index is on `lower(regexp_replace(domain, '^www\.', ''))`, so `Example.com`,
+`example.com` and `www.example.com` are one website and the most likely way
+this table gets dirty is closed off at the database.
+
+`website_integrations` — one row per site per provider, and the honest answer
+to "is this wired up?". **No row means not connected**, and nothing on the
+website screens is allowed to imply a connection without one. `account_ref`
+holds a display identifier only — a GA4 property id, a Vercel project name.
+**No secrets**: tokens stay in environment variables on the server.
+
+`website_deployments` — the abstraction layer for deployment history, shaped
+deliberately like Vercel's own deployment object so connecting a token later is
+a fetch loop and a column mapping rather than a redesign. Empty until then, and
+the panel says "no deployment data" rather than inventing a build. The unique
+index on `(provider, external_id)` is partial so rows entered by hand, with no
+external id, are still allowed.
+
+`website_renewals` — `customers.renews_at` answers "when does this client's
+subscription bill?" and cannot answer "when does this domain expire?". A site
+has domain, hosting, SSL and support renewals on different dates and sometimes
+to different vendors. Subscription renewals are **not** copied here; the screen
+unions the two sources.
+
+**NOT created, on purpose**
+
+- `website_analytics_daily` — nothing writes it. There is no GA4, Plausible or
+  any analytics credential in this project. An empty daily-rollup table is a
+  promise the system cannot keep; it arrives with the sync job that fills it.
+- `website_pages` — `seo_pages` already records every page of a crawl, keyed by
+  path. A second page table would drift from it the first time one was written
+  and the other was not.
+- `website_forms` / `website_form_submissions` — `leads` **is** the submission
+  table, and already carries source, campaign, utm and landing_page. A form is
+  identified by where it posted from.
+- `website_maintenance` / `website_requests` — `tasks` already exists with
+  `lead_id` and `job_id`. These become a `website_id` on tasks when the
+  maintenance screen is built, not a parallel task system.
+- `website_ai_recommendations` — `ai_actions` is the propose → review → approve
+  queue for the whole business and already enforces it in a constraint.
+- `monthly_revenue` on `websites` — derived from the client's subscription or
+  the site's own hosting renewal. A stored copy is a number that was true once.
+
+**Revenue, without double counting**
+
+A customer's `mrr_cents` is the *customer's* subscription, not one site's. When
+a client has two sites, attributing the same MRR to both would double the
+portfolio total. So: a per-site hosting renewal wins where one exists; the
+subscription is used only where the client owns exactly one site; otherwise the
+row shows an em dash rather than a made-up split. The portfolio KPI counts each
+paying customer once.
+
+**Verified before applying**: 0001→0010 against a scratch PostgreSQL 16, twice
+(idempotency), then the domain uniqueness (including the www and case
+variants), every status/type/provider/environment/kind check constraint, the
+partial unique index on deployments, the cascade from `websites` to all three
+child tables, `on delete set null` from both `customers` and `jobs`, the
+`updated_at` trigger, and RLS as `anon` (permission denied on all four).
