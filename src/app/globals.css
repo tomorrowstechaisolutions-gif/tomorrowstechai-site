@@ -8431,3 +8431,177 @@ body {
   }
 
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Website package tiers — .tier-*
+   The fixed-price ladder on /services: $149 / $399 / $699 / $999.
+   Four cards side by side on desktop, two up on tablet, stacked on phone.
+   The featured card is lifted with the cyan accent, never with scale(),
+   so the four cards stay on one baseline.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.tier-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 24px 20px 20px;
+  background: var(--color-surface);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tier-card:hover {
+  border-color: rgba(0, 217, 255, 0.4);
+}
+
+.tier-card[data-featured="true"] {
+  border-color: rgba(0, 217, 255, 0.45);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(0, 217, 255, 0.09), transparent 65%),
+    var(--color-surface);
+}
+
+.tier-flag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-cyan);
+  color: #04121a;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.tier-price-value {
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--color-cyan);
+}
+
+.tier-price-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.tier-hosting {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.tier-meta {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.tier-list-item {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.tier-list-item > span:first-child {
+  color: var(--color-cyan);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.tier-excludes {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.tier-excludes-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.tier-excludes p {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.tier-cta {
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 13px;
+  color: var(--color-cyan);
+  transition: opacity 0.2s ease;
+}
+
+.tier-cta:hover {
+  opacity: 0.75;
+}
+
+.tier-footnote {
+  max-width: 62ch;
+  margin-top: 28px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 1100px) {
+  .tier-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tier-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tier-price-value {
+    font-size: 34px;
+  }
+}

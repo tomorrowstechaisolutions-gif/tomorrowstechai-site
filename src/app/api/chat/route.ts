@@ -32,7 +32,8 @@ FEATURED CONTRACTOR PRODUCT:
 
 PRICING (general ranges only — final scope decided on discovery call):
 - Full custom business operating platforms: scoped proposal based on modules, users, integrations, and requirements
-- Standalone marketing websites: $1,500–$3,000 setup
+- Website packages (fixed price, one-time build, proven layouts): $149 Starter (up to 3 pages, 2–3 business days), $399 Classic (up to 5 pages, most popular, /business-launch), $699 Professional (up to 10 pages, lead workflows, CRM-ready), $999 E-Commerce (store, cart, checkout, up to 20 products entered). All four run on hosting and management at $29/month, free for the first 30 days. Details on /services.
+- Custom marketing website (original design and copy rather than a proven layout): $1,500–$3,000 setup
 - Smartsheet command centers and custom AI workflows: $5,000–$15,000 depending on complexity
 - Ongoing partnership for maintenance and small enhancements: from $200/month
 - All-in pricing given during the discovery call. No hourly meters.

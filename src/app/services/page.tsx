@@ -32,9 +32,129 @@ const paths = [
     href: "#workflow-automation",
   },
   {
+    problem: "I just need a website, not a whole system.",
+    answer: "Website packages",
+    href: "#website-packages",
+  },
+  {
     problem: "I’m not sure where to begin.",
     answer: "Start with discovery",
     href: "#how-we-work",
+  },
+];
+
+const websiteTiers = [
+  {
+    id: "starter",
+    name: "Starter Website",
+    tagline: "Get online fast, at the lowest price we offer.",
+    price: "$149",
+    turnaround: "2\u20133 business days after content",
+    featured: false,
+    includes: [
+      "Up to 3 pages \u2014 Home, Services, Contact",
+      "Professional starter layout customization",
+      "Mobile responsive design",
+      "Contact / lead form",
+      "Basic SEO setup",
+      "Domain connection and SSL",
+      "Deployment",
+      "1 revision round",
+    ],
+    excludes: [
+      "E-commerce",
+      "CRM",
+      "Booking systems",
+      "Advanced automation",
+      "Custom app development",
+      "Unlimited revisions",
+    ],
+    href: "/contact",
+    ctaLabel: "Start a Starter site",
+  },
+  {
+    id: "classic",
+    name: "Classic Business Website",
+    tagline: "Professional, polished, ready to launch.",
+    price: "$399",
+    turnaround: "7\u201314 days",
+    featured: true,
+    includes: [
+      "Up to 5 custom pages",
+      "More customized design and custom page layouts",
+      "Mobile responsive design",
+      "Contact / lead form and enhanced contact forms",
+      "Basic SEO setup",
+      "Social media integration",
+      "Google Maps / business location",
+      "Testimonials / reviews section",
+      "Basic analytics setup",
+      "CMS / editing access where applicable",
+      "Conversion-focused layout",
+      "2 revision rounds and launch support",
+    ],
+    excludes: [],
+    href: "/business-launch",
+    ctaLabel: "See the $399 package",
+  },
+  {
+    id: "professional",
+    name: "Professional Business Website",
+    tagline: "Built to generate and organize business, not just to exist.",
+    price: "$699",
+    turnaround: null,
+    featured: false,
+    includes: [
+      "Up to 10 custom pages",
+      "Premium custom design",
+      "Custom graphics and image treatment",
+      "Multiple lead forms plus a quote / request form",
+      "Lead capture workflow",
+      "CRM-ready integration",
+      "Appointment / inquiry workflow",
+      "Blog / news capability",
+      "Google Analytics and Search Console setup",
+      "Enhanced on-page SEO and conversion tracking",
+      "Email notification automation",
+      "Advanced testimonials and project galleries",
+      "3 revision rounds",
+      "30 days of launch support",
+    ],
+    excludes: [],
+    href: "/contact",
+    ctaLabel: "Talk through Professional",
+  },
+  {
+    id: "ecommerce",
+    name: "E-Commerce Website",
+    tagline: "Launch your online store and start selling.",
+    price: "$999",
+    turnaround: null,
+    featured: false,
+    includes: [
+      "Custom e-commerce website",
+      "Up to 8\u201310 informational pages",
+      "Product catalog with categories, collections and search",
+      "Up to 20 products entered by us \u2014 store supports 100+",
+      "Shopping cart and secure checkout",
+      "Payment integration (Stripe, PayPal and more)",
+      "Shipping setup and tax configuration",
+      "Order notifications",
+      "Customer accounts with order history",
+      "Social media integration",
+      "Mobile responsive store",
+      "Basic SEO and analytics setup",
+      "3 revision rounds and launch support",
+    ],
+    excludes: [
+      "Product data entry beyond 20 items",
+      "Custom app development",
+      "Advanced automation systems",
+      "CRM or business workflows",
+      "Ongoing management (available as an add-on)",
+    ],
+    href: "/contact",
+    ctaLabel: "Talk through E-Commerce",
   },
 ];
 
@@ -119,22 +239,23 @@ const solutions = [
   },
 ];
 
-const supporting = [
+type Supporting = {
+  title: string;
+  body: string;
+  meta: string;
+  href?: string;
+  hrefLabel?: string;
+};
+
+const supporting: Supporting[] = [
   {
     title: "Program management consulting",
     body: "PMO structure, schedule discipline, reporting cadence, and operational governance shaped by 18 years inside telecom and infrastructure programs.",
     meta: "4–12 weeks or ongoing",
   },
   {
-    title: "$399 Business Launch package",
-    body: "A five-page site on a layout we have already proven, plus lead capture, a starter CRM, booking, payments and one dashboard. Live in 7–14 days. For getting online now rather than getting something bespoke.",
-    meta: "$399 one-time · hosting from $29/month, free for 30 days",
-    href: "/business-launch",
-    hrefLabel: "See what's included →",
-  },
-  {
     title: "Custom marketing websites",
-    body: "When the design, the words and the structure have to be yours rather than ours. Original layout, copy written for your market, and as many pages as the business actually needs.",
+    body: "The step above the packages. When the design, the words and the structure have to be yours rather than ours — original layout, copy written for your market, and as many pages as the business actually needs.",
     meta: "$1,500–$3,000 · 2–4 weeks",
   },
   {
@@ -166,9 +287,9 @@ const pricing = [
     timeline: "6–12 weeks",
   },
   {
-    engagement: "$399 Business Launch package",
-    range: "$399 + $29/month",
-    timeline: "7–14 days",
+    engagement: "Website package (Starter → E-Commerce)",
+    range: "$149–$999 + $29/month",
+    timeline: "From 2–3 days",
   },
   {
     engagement: "Custom marketing website",
@@ -236,6 +357,78 @@ export default function ServicesPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section
+        id="website-packages"
+        className="border-b border-[color:var(--color-border)] scroll-mt-28"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-20 lg:py-24">
+          <div className="max-w-3xl mb-12">
+            <div className="eyebrow-muted mb-3">Website packages</div>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-tight leading-tight">
+              Four fixed-price ways to get online.
+            </h2>
+            <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4 max-w-2xl">
+              Proven layouts, a one-time build price, no hourly meter. Every
+              package runs on hosting and management at $29/month, free for the
+              first 30 days. When the design has to be original rather than
+              proven, that is a custom build \u2014 priced further down this page.
+            </p>
+          </div>
+
+          <div className="tier-grid">
+            {websiteTiers.map((tier) => (
+              <article
+                key={tier.id}
+                className="tier-card"
+                data-featured={tier.featured ? "true" : "false"}
+              >
+                {tier.featured ? (
+                  <div className="tier-flag">Most popular</div>
+                ) : null}
+                <h3 className="text-lg font-medium">{tier.name}</h3>
+                <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mt-1.5 min-h-[40px]">
+                  {tier.tagline}
+                </p>
+                <div className="tier-price">
+                  <span className="tier-price-value">{tier.price}</span>
+                  <span className="tier-price-note">one time</span>
+                </div>
+                <div className="tier-hosting">
+                  + $29/month hosting &middot; first 30 days free
+                </div>
+                {tier.turnaround ? (
+                  <div className="tier-meta">Typical turnaround &middot; {tier.turnaround}</div>
+                ) : null}
+                <ul className="tier-list">
+                  {tier.includes.map((item) => (
+                    <li key={item} className="tier-list-item">
+                      <span aria-hidden="true">&#10003;</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                {tier.excludes.length > 0 ? (
+                  <div className="tier-excludes">
+                    <div className="tier-excludes-label">Not included</div>
+                    <p>{tier.excludes.join(" \u00b7 ")}</p>
+                  </div>
+                ) : null}
+                <Link href={tier.href} className="tier-cta">
+                  {tier.ctaLabel} &rarr;
+                </Link>
+              </article>
+            ))}
+          </div>
+
+          <p className="tier-footnote">
+            Every package is a proven layout built fast. If the design, the
+            words and the structure have to be yours rather than ours, that is a
+            custom marketing website, and if the business needs systems behind
+            the site, that is a platform build. Both are below.
+          </p>
         </div>
       </section>
 
@@ -383,14 +576,14 @@ export default function ServicesPage() {
                   <div className="text-[11px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)] mt-3">
                     {item.meta}
                   </div>
-                  {"href" in item && item.href && (
+                  {item.href ? (
                     <Link
                       href={item.href}
                       className="inline-block mt-3 text-sm text-[color:var(--color-cyan)] border-b border-[color:var(--color-cyan)]/30 hover:border-[color:var(--color-cyan)] pb-0.5 transition-colors"
                     >
                       {item.hrefLabel ?? "Read more →"}
                     </Link>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}
