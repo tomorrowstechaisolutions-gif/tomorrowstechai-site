@@ -8209,7 +8209,213 @@ body {
     white-space: nowrap;
   }
 
+  /* ═══ Pipeline ════════════════════════════════════════════════════════
+
+     The kanban and the deal card are the only new shapes. Everything else
+     reuses the panels, tables, alert rows and bar lists already here. */
+
+  .cc-viewbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  /* Six columns that scroll sideways rather than shrinking into
+     unreadability. A 180px column is not a kanban, it is a list of
+     truncated words. */
+  .cc-kanban {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(232px, 1fr);
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+
+  .cc-kanban::-webkit-scrollbar { height: 8px; }
+  .cc-kanban::-webkit-scrollbar-thumb {
+    background: var(--cc-line);
+    border-radius: 999px;
+  }
+
+  .cc-kcol {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-radius: 12px;
+    border: 1px solid var(--cc-line-soft);
+    background: rgba(4, 8, 13, 0.32);
+  }
+
+  .cc-kcol-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--cc-line-soft);
+  }
+
+  .cc-kcol-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--cc-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cc-kcol-n {
+    min-width: 19px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--cc-line);
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--cc-dim);
+    text-align: center;
+  }
+
+  .cc-kcol-val {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-ok);
+    white-space: nowrap;
+  }
+
+  .cc-kcol-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    min-height: 80px;
+  }
+
+  .cc-kcol-empty {
+    font-size: 0.7rem;
+    color: var(--cc-faint);
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  /* One deal. Dense on purpose — six of these have to be readable at once. */
+  .cc-deal {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 11px 11px;
+    border-radius: 10px;
+    border: 1px solid var(--cc-line);
+    background: var(--cc-panel);
+    background-image: var(--cc-surface);
+    overflow: hidden;
+  }
+
+  /* A coloured edge, so a flagged deal is findable without reading. */
+  .cc-deal::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: transparent;
+  }
+
+  .cc-deal.p-critical::before,
+  .cc-deal.p-high::before { background: var(--cc-risk); }
+  .cc-deal.p-medium::before { background: var(--cc-warn); }
+  .cc-deal.p-low::before { background: var(--cc-accent); }
+
+  .cc-deal-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .cc-deal-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.78rem;
+    font-weight: 580;
+    line-height: 1.35;
+    color: var(--cc-text);
+  }
+
+  .cc-deal-company {
+    font-size: 0.7rem;
+    color: var(--cc-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-deal-contact {
+    font-size: 0.66rem;
+    color: var(--cc-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-deal-money {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin-top: 4px;
+  }
+
+  .cc-deal-value {
+    font-size: 0.86rem;
+    font-weight: 640;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-text);
+  }
+
+  .cc-deal-value .cc-faint { font-size: 0.68rem; font-weight: 500; }
+
+  .cc-deal-prob {
+    margin-left: auto;
+    font-size: 0.68rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--cc-accent);
+  }
+
+  .cc-deal-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.65rem;
+    color: var(--cc-faint);
+  }
+
+  .cc-deal-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-deal-next {
+    margin-top: 3px;
+    font-size: 0.66rem;
+    color: var(--cc-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-deal .cc-chip { align-self: flex-start; margin-top: 5px; }
+
   @media (max-width: 860px) {
+    /* One column at a time on a phone, swiped sideways. Six columns at
+       60px each would be six columns of nothing. */
+    .cc-kanban { grid-auto-columns: 84vw; }
     .cc-assets { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
     .cc-brandbar { flex-wrap: wrap; }
     .cc-brandbar .cc-filter-select { max-width: none; flex: 1; }

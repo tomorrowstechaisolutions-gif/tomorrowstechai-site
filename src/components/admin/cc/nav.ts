@@ -70,7 +70,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/leads", label: "Leads", icon: IconFunnel, badge: "leadsNeedingAttention" },
       { href: "/admin/crm", label: "CRM", icon: IconInbox },
-      { href: "/admin/pipeline", label: "Pipeline", icon: IconChart, soon: true },
+      { href: "/admin/pipeline", label: "Pipeline", icon: IconChart },
       { href: "/admin/proposals", label: "Proposals", icon: IconFile, soon: true },
       { href: "/admin/clients", label: "Clients", icon: IconUsers },
     ],
@@ -173,12 +173,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Everything that has happened across the company, filterable by module and date. The last twelve events are on the dashboard.",
     nearest: { href: "/admin", label: "See recent activity" },
-  },
-  "/admin/pipeline": {
-    title: "Pipeline",
-    blurb:
-      "A drag-between-stages board over the same leads. The stage counts, values and conversion rates are already on the dashboard, and every lead's stage is set from its own page.",
-    nearest: { href: "/admin", label: "See the pipeline" },
   },
   "/admin/apps": {
     title: "Apps",

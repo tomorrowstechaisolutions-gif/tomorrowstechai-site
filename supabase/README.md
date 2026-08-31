@@ -501,3 +501,98 @@ on one company (website / AI automation / app / hosting), the won- and
 lost-need-a-date constraints, invalid stage and billing, negative value, an
 invoice linking to a deal, `on delete set null` from company to both leads and
 deals, and RLS as `anon` (permission denied on both).
+
+---
+
+## 0014 — the Pipeline
+
+`deals` (0013) already had company, lead, customer, catalog item, stage,
+value, billing, expected close, won/lost dates, reason, owner and source, on
+the same eight stages the dashboard uses. **None of that was rebuilt.** 0014
+adds the four things a sales-execution screen needs that a deal record alone
+cannot answer, and one that no table can answer without being told over time.
+
+**Seven columns on `deals`**
+
+`probability`, `stage_entered_at`, `next_action`, `next_action_at`,
+`campaign`, `last_activity_at`, `committed`.
+
+`committed` is set by a person, never derived. Deriving commit from
+probability would make the commit number a restatement of the weighted
+number, and the whole point of having both is that one is a model's guess and
+the other is a promise somebody made.
+
+`probability` is nullable and **there is no backfill**. Null means "use the
+stage default", so an untouched deal's odds follow its stage automatically;
+a stored value would freeze a deal at 10% forever after it reached Proposal.
+`effectiveProbability()` in `src/lib/pipeline/forecast.ts` owns that fallback,
+and the null/not-null split is also how the Advisor tells "nobody has judged
+this" from "somebody said 40%".
+
+**`deal_stage_history` — and why the trigger is in the database**
+
+Counting deals currently sitting in each stage describes the pipeline's shape
+today. It cannot tell you that 24 deals entered Qualified and 17 went on to
+Discovery, because the other 7 have already moved past or out. Only a log of
+the transitions answers that, so `conversion()` reads this table and never
+current occupancy.
+
+The rows are written by `record_deal_stage_change()`, a trigger — `after
+insert` and `before update of stage` — rather than by the server action.
+A stage change made from a form, a script, the SQL editor or some future
+automation has to leave the same trail; history that depends on every caller
+remembering to write it is history with holes in it. `pipeline-actions.ts`
+therefore does **not** write history, on purpose.
+
+`value_cents` and `probability` are copied into each row at the moment of the
+move, because the deal's value changes afterwards and the record of what it
+was worth then must not change with it. `days_in_previous_stage` is computed
+from `stage_entered_at`, which the trigger then resets — so "days in stage"
+always means the current stage, not the age of the deal.
+
+**`sales_targets`**
+
+A forecast gap is meaningless without a number to miss, and a made-up target
+produces a made-up gap that somebody would change their week over. No target
+is invented: with no row, `targetCents` is null, and the gap, attainment bars
+and the Advisor's forecast line all render as "no sales target configured"
+with a control to set one.
+
+Unique on `(period, period_start)` — one target per month.
+
+**`pipeline_snapshots`**
+
+A past pipeline **cannot** be reconstructed from present rows: values change,
+deals open and close, and nothing today tells you what the total was three
+weeks ago. So the value-over-time chart starts empty and fills one day at a
+time from `/api/cron/pipeline-snapshot` (daily at 06:05 UTC in `vercel.json`,
+gated by `CRON_SECRET` with a constant-time compare, upserting on
+`captured_on`). Until there are two days of rows the panel says so rather
+than drawing a line through invented points.
+
+**Not created, on purpose**
+
+- `pipeline_stages` — the stage list is already `src/lib/crm/stages.ts` and
+  already matches `src/lib/dashboard/sales.ts`. A stages *table* would let the
+  two screens describe different funnels.
+- `deal_activities` — `lead_events` is the activity timeline and already has
+  the eight event kinds. `last_activity_at` on the deal is the denormalised
+  read for the "gone quiet" rule; the events stay where they are.
+- `deal_tasks` — `tasks` already carries `lead_id` and `customer_id`.
+- `forecasts` — every forecast number is derived from deals at read time.
+  A stored forecast is a number that was true once.
+- `proposals` — still an `invoice` with a `deal_id` (see 0013).
+
+**Verified before applying**: 0001→0014 against a scratch PostgreSQL 16,
+twice (idempotency), then 23 assertions — the opening history row on insert,
+a second row on the move, `days_in_previous_stage` ≈ 6 on a deal aged six
+days, `stage_entered_at` resetting, history keeping 250000 after the deal was
+raised to 300000, no row written for a value-only edit, no row for setting a
+stage to itself, cascade delete, probability rejected at 101 and −1, negative
+and invalid-period targets rejected, one target per period, one snapshot per
+day, and RLS as `anon` (permission denied on read and write across all three
+tables, 12 admin policies present).
+
+Plus 42 unit assertions on the pure logic in `scripts/verify-pipeline.mts`
+(`bash scripts/verify-pipeline.sh`) — forecast maths and the nine attention
+rules.
