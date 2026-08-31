@@ -69,8 +69,8 @@ const websiteTiers = [
       "Custom app development",
       "Unlimited revisions",
     ],
-    href: "/contact",
-    ctaLabel: "Start a Starter site",
+    href: "/starter-website",
+    ctaLabel: "See the $149 package",
   },
   {
     id: "classic",

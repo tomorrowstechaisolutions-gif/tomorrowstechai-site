@@ -9,6 +9,7 @@ import {
   HOSTING_DISCLOSURE,
 } from "@/lib/campaign/config";
 import { getAttribution } from "@/lib/campaign/attribution";
+import { BUSINESS_LAUNCH_OFFER, type Offer } from "@/lib/campaign/offers";
 import { newEventId, trackConversion } from "@/lib/analytics";
 
 const CONSENT_TEXT =
@@ -16,7 +17,18 @@ const CONSENT_TEXT =
 
 type FieldErrors = Partial<Record<string, string>>;
 
-export function LeadForm() {
+/**
+ * Shared by every campaign landing page. The offer decides what gets reported
+ * to Meta and GA and where the visitor lands afterwards, so a $149 Starter
+ * lead is never counted as a $399 conversion.
+ */
+export function LeadForm({
+  offer = BUSINESS_LAUNCH_OFFER,
+  hostingDisclosure = HOSTING_DISCLOSURE,
+}: {
+  offer?: Offer;
+  hostingDisclosure?: string;
+} = {}) {
   const router = useRouter();
   const [services, setServices] = useState<string[]>([]);
   const [website, setWebsite] = useState<"yes" | "no" | "">("");
@@ -59,6 +71,10 @@ export function LeadForm() {
       hp_company_url: String(fd.get("hp_company_url") ?? ""),
       elapsed_ms: elapsed,
       attribution: getAttribution(),
+      // Which page this was filled in on. The route trusts this over the
+      // attribution fallback, so the lead is tagged to the offer the visitor
+      // was actually reading.
+      offer_name: offer.name,
       event_id: newEventId(),
     };
 
@@ -94,18 +110,18 @@ export function LeadForm() {
       // to the Conversions API so Meta counts it once.
       trackConversion({
         meta: "Lead",
-        ga: "business_launch_lead",
+        ga: offer.gaLeadEvent,
         eventId: payload.event_id,
         params: {
-          content_name: "$399 Business Launch",
-          value: 399,
-          currency: "USD",
+          content_name: offer.name,
+          value: offer.price,
+          currency: offer.currency,
           business_type: payload.business_type || "unspecified",
           timeline: payload.timeline || "unspecified",
         },
       });
 
-      router.push("/business-launch/thank-you");
+      router.push(offer.thankYouPath);
     } catch (err) {
       setState("error");
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -224,7 +240,7 @@ export function LeadForm() {
 
       <p className="bl-fineprint">
         {CONSENT_TEXT} No payment now — we confirm the details first.{" "}
-        {HOSTING_DISCLOSURE}
+        {hostingDisclosure}
       </p>
     </form>
   );

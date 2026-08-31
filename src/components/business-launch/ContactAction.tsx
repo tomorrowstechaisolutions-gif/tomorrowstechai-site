@@ -2,6 +2,7 @@
 
 import { trackConversion } from "@/lib/analytics";
 import { sendServerEvent } from "@/lib/campaign/track-client";
+import { BUSINESS_LAUNCH_OFFER, type Offer } from "@/lib/campaign/offers";
 
 /**
  * A phone or email link that reports a Contact conversion when tapped.
@@ -12,22 +13,24 @@ export function ContactAction({
   children,
   className,
   method,
+  offer = BUSINESS_LAUNCH_OFFER,
 }: {
   href: string;
   children: React.ReactNode;
   className?: string;
   method: "phone" | "email";
+  offer?: Offer;
 }) {
   function onClick() {
     const eventId = trackConversion({
       meta: "Contact",
-      ga: "business_launch_contact",
-      params: { method, content_name: "$399 Business Launch" },
+      ga: offer.gaContactEvent,
+      params: { method, content_name: offer.name },
     });
     void sendServerEvent({
       event: "Contact",
       eventId,
-      customData: { method, content_name: "$399 Business Launch" },
+      customData: { method, content_name: offer.name },
     });
   }
 

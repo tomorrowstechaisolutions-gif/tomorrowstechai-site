@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { captureAttribution } from "@/lib/campaign/attribution";
 import { gaEvent, metaEvent, newEventId } from "@/lib/analytics";
+import { BUSINESS_LAUNCH_OFFER, type Offer } from "@/lib/campaign/offers";
 
 /**
  * Fires once per landing-page visit: stores the ad attribution for the
@@ -13,7 +14,11 @@ import { gaEvent, metaEvent, newEventId } from "@/lib/analytics";
  * browser signal is already good enough. Lead and everything downstream of it
  * go through the Conversions API as well.
  */
-export function CampaignTracking() {
+export function CampaignTracking({
+  offer = BUSINESS_LAUNCH_OFFER,
+}: {
+  offer?: Offer;
+} = {}) {
   useEffect(() => {
     const attribution = captureAttribution();
     const eventId = newEventId();
@@ -21,15 +26,15 @@ export function CampaignTracking() {
     metaEvent(
       "ViewContent",
       {
-        content_name: "$399 Business Launch",
+        content_name: offer.name,
         content_category: "campaign_landing",
-        value: 399,
-        currency: "USD",
+        value: offer.price,
+        currency: offer.currency,
       },
       eventId
     );
 
-    gaEvent("business_launch_view", {
+    gaEvent(offer.gaViewEvent, {
       event_id: eventId,
       campaign: attribution.utm_campaign ?? attribution.campaign ?? "(not set)",
       source: attribution.utm_source ?? attribution.source,
@@ -37,7 +42,7 @@ export function CampaignTracking() {
       ad: attribution.ad ?? "(not set)",
       placement: attribution.placement ?? "(not set)",
     });
-  }, []);
+  }, [offer]);
 
   return null;
 }

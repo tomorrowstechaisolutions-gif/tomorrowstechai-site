@@ -6,11 +6,10 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import {
   BUSINESS_TYPES,
-  CAMPAIGN_NAME,
-  OFFER_PRICE,
   SERVICE_OPTIONS,
   TIMELINES,
 } from "@/lib/campaign/config";
+import { offerByName } from "@/lib/campaign/offers";
 
 export const runtime = "nodejs";
 
@@ -51,6 +50,10 @@ export async function POST(req: Request) {
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Invalid request." }, { status: 400 });
     }
+
+    // Which landing page this came from. Resolved against a whitelist, so a
+    // crafted body cannot invent a campaign or a conversion value.
+    const offer = offerByName(text(body.offer_name, 200));
 
     // ── Spam traps ────────────────────────────────────────────────────────
     // Return 200 so a bot can't tell it was caught, but store nothing.
@@ -112,7 +115,7 @@ export async function POST(req: Request) {
       services_interested: services,
       timeline: pickFrom(TIMELINES, body.timeline),
       source: optional(a.source, 60) ?? "website",
-      campaign: optional(a.campaign, 200) ?? CAMPAIGN_NAME,
+      campaign: optional(a.campaign, 200) ?? offer.name,
       adset: optional(a.adset, 200),
       ad: optional(a.ad, 200),
       placement: optional(a.placement, 100),
@@ -153,7 +156,7 @@ export async function POST(req: Request) {
         duplicate: result.duplicate,
         stored: result.stored,
         source: optional(a.source, 60) ?? "website",
-        campaign: optional(a.campaign, 200) ?? CAMPAIGN_NAME,
+        campaign: optional(a.campaign, 200) ?? offer.name,
         ad: optional(a.ad, 200),
         placement: optional(a.placement, 100),
         landingPage: optional(a.landing_page, 500),
@@ -187,7 +190,7 @@ export async function POST(req: Request) {
         eventId,
         eventSourceUrl: optional(a.landing_page, 500)
           ? `https://tomorrowstechai.com${optional(a.landing_page, 500)}`
-          : "https://tomorrowstechai.com/business-launch",
+          : `https://tomorrowstechai.com/${offer.id}`,
         user: {
           email,
           phone,
@@ -201,9 +204,9 @@ export async function POST(req: Request) {
           userAgent: req.headers.get("user-agent"),
         },
         customData: {
-          content_name: CAMPAIGN_NAME,
-          value: OFFER_PRICE,
-          currency: "USD",
+          content_name: offer.name,
+          value: offer.price,
+          currency: offer.currency,
           lead_score: result.score,
         },
       });

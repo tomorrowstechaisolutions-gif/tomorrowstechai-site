@@ -53,7 +53,7 @@ const faqs = [
   },
   {
     q: "What does an engagement typically cost?",
-    a: "Website packages are fixed price: $149 Starter, $399 Classic, $699 Professional and $999 E-Commerce, each with hosting and management at $29/month after a free first 30 days. A custom marketing website, where the design and the words are original rather than proven, is $1,500–$3,000. Smartsheet command centers and custom AI workflows generally range from $5,000–$15,000. Full custom business operating platforms are scoped around the modules, users, integrations, and operating requirements involved. Ongoing partnership pricing starts at $200/month. We give you a clear, all-in number before work begins.",
+    a: "Website packages are fixed price: $149 Starter, $399 Classic, $699 Professional and $999 E-Commerce, each with hosting at $29/month after a free first 30 days. On Starter that $29 covers hosting, SSL, backups and security updates only — it is not a management plan, so content changes after launch are quoted separately. From $399 up it includes management and small content changes. A custom marketing website, where the design and the words are original rather than proven, is $1,500–$3,000. Smartsheet command centers and custom AI workflows generally range from $5,000–$15,000. Full custom business operating platforms are scoped around the modules, users, integrations, and operating requirements involved. Ongoing partnership pricing starts at $200/month. We give you a clear, all-in number before work begins.",
   },
 ];
 

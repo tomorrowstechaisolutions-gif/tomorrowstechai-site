@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
  * Children are passed in from the server layout, so Footer stays a server
  * component — only the show/hide decision runs on the client.
  */
-const BARE_PREFIXES = ["/business-launch", "/admin", "/intake"];
+const BARE_PREFIXES = ["/business-launch", "/starter-website", "/admin", "/intake"];
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
