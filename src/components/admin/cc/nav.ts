@@ -91,7 +91,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/apps", label: "Apps", icon: IconLayers, soon: true },
       { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot, soon: true },
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
-      { href: "/admin/hosting", label: "Hosting", icon: IconServer, soon: true },
+      { href: "/admin/hosting", label: "Hosting", icon: IconServer },
       { href: "/admin/software", label: "Software", icon: IconCode, soon: true },
       { href: "/admin/services", label: "Services", icon: IconZap, soon: true },
     ],
@@ -196,12 +196,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Chatbots, agents and automations built for clients — what each one does, what it runs on, and what it costs to keep running.",
     nearest: { href: "/admin/catalog", label: "Open the catalog" },
-  },
-  "/admin/hosting": {
-    title: "Hosting",
-    blurb:
-      "Which sites are hosted, on what, and what each one bills. The money side is already live: every hosting subscription shows on its client's record.",
-    nearest: { href: "/admin/clients", label: "Open Clients" },
   },
   "/admin/software": {
     title: "Software",

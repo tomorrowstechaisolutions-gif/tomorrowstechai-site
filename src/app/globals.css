@@ -8194,6 +8194,21 @@ body {
   .cc-table .cc-inline-form { margin-top: 0; }
   .cc-table .cc-btn { padding: 4px 10px; font-size: 0.72rem; }
 
+  /* An alert row can carry an action instead of a category label — the
+     incident list on Hosting resolves in place. */
+  .cc-alert form {
+    margin-left: auto;
+    margin-top: 0;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .cc-alert .cc-btn {
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
   @media (max-width: 860px) {
     .cc-assets { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
     .cc-brandbar { flex-wrap: wrap; }

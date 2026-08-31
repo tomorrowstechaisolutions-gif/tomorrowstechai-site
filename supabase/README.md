@@ -22,6 +22,7 @@ rather than a convincing empty list.
 | 0009 | `0009_seo.sql` | SEO Command Center — see below. |
 | 0010 | `0010_websites.sql` | The website portfolio — see below. |
 | 0011 | `0011_content_studio.sql` | Content Studio, brands and the asset library — see below. |
+| 0012 | `0012_hosting.sql` | Hosting: costs, incidents and plans — see below. |
 
 ## 0007 — Business Command Center
 
@@ -336,3 +337,86 @@ repurposing self-reference surviving deletion of its source, storage-path
 uniqueness, link cascade, and RLS as `anon` (permission denied on all four).
 The storage section is guarded by `to_regclass('storage.buckets')` so it skips
 cleanly on a scratch database and was applied separately to Supabase.
+
+## 0012 — Hosting
+
+The shortest migration here, and deliberately so.
+
+**There is no `hosting_accounts` table.** Migration 0010 already built the
+record a hosting account needs, and calling it `websites` does not make it
+less true:
+
+| a hosting account needs | already exists as |
+|---|---|
+| client, domain, status, provider, owner | `websites` |
+| the provider's project id | `website_integrations.account_ref` |
+| deploy status and history | `website_deployments` |
+| domain / SSL / support expiry | `website_renewals` |
+| subscription, MRR, next billing | `customers`, `invoices` |
+
+A `hosting_accounts` table would copy about ten of those columns and then
+disagree with them the first time one was updated and the other was not. The
+Hosting screen reads the same rows the Websites screen reads and asks
+different questions of them.
+
+**Three things really were missing.**
+
+`websites.hosting_plan_id` — a single foreign key to `catalog_items`, which
+already has a `hosting` category and is already where pricing lives. It simply
+had no hosting rows and nothing pointed at them. A `hosting_plans` table would
+have been `catalog_items` under another name, and then the Catalog screen and
+the Hosting screen could disagree about what a plan costs.
+
+`website_costs` — what a site costs us, so profitability is arithmetic rather
+than a guess. `expenses` already exists but is company-wide: a Vercel bill with
+no site attached. That is the right shape for accounting and the wrong shape
+for "is this $29 client profitable". Both are true at once; this is the
+per-site view and does not replace the ledger. Every row carries an `interval`,
+because a $12 annual domain and $20/month of hosting are not comparable until
+normalised, and the normalising belongs in one place. A cost that stops
+applying is **ended** (`effective_to`), never deleted, so last quarter's margin
+does not silently change when this year's bill does.
+
+`website_incidents` — something went wrong with a site, and when. This is what
+"Sites With Issues" reads and what a future uptime checker, SSL checker or
+deploy webhook writes into. `source` separates `manual` from `monitor` rows, so
+the screen can say which problems were actually detected versus merely logged.
+A `resolved` incident must carry `resolved_at`, enforced by a constraint.
+
+**Seeded**
+
+Three hosting plans into `catalog_items` — Starter $29, Pro $49, Business $99 —
+matching what the site and the ad campaign already promise ("hosting from
+$29/month after launch"). The insert is guarded by name so re-running adds
+nothing.
+
+**NOT created, on purpose**
+
+- `hosting_accounts`, `hosting_plans`, `hosting_integrations`,
+  `hosting_deployments`, `hosting_renewals` — each already exists under a
+  `website_` or `catalog_` name.
+- `hosting_health_checks` / `hosting_usage` — nothing writes them. No uptime
+  monitor, no usage API. Health is derived per read from the signals that do
+  exist, reusing `src/lib/websites/health.ts`.
+- `hosting_backups` — no backup system exists at all. The column reads "Not
+  configured" rather than implying a backup nobody takes.
+- `hosting_logs` — the events worth showing are already rows in
+  `website_deployments`, `website_incidents` and `invoices`.
+
+**Profitability, and what it refuses to do**
+
+`src/lib/hosting/profit.ts` returns `grossCents` and `marginPct` as
+`number | null`, null whenever the cost side is unknown, with an
+`unknownReason` sentence the screen prints. A margin computed from costs nobody
+entered is the number you would price against, so inventing one is worse than
+leaving it blank. Stripe's fee is the single cost derived rather than recorded —
+2.9% + 30¢, a published formula on money we know we collected — and it is
+labelled an estimate everywhere it appears.
+
+**Verified before applying**: 0001→0012 against a scratch PostgreSQL 16, twice
+(idempotency), then 20 assertions — plan seeding and its guard against
+duplication, `on delete set null` from a deleted plan, every category /
+interval / kind / severity / source check, the non-negative amount, the
+`effective_to >= effective_from` period check, the resolved-needs-a-time
+constraint, cascade from `websites` to both new tables, and RLS as `anon`
+(permission denied on both).
