@@ -69,7 +69,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Sales",
     links: [
       { href: "/admin/leads", label: "Leads", icon: IconFunnel, badge: "leadsNeedingAttention" },
-      { href: "/admin/crm", label: "CRM", icon: IconInbox, soon: true },
+      { href: "/admin/crm", label: "CRM", icon: IconInbox },
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChart, soon: true },
       { href: "/admin/proposals", label: "Proposals", icon: IconFile, soon: true },
       { href: "/admin/clients", label: "Clients", icon: IconUsers },
@@ -173,12 +173,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Everything that has happened across the company, filterable by module and date. The last twelve events are on the dashboard.",
     nearest: { href: "/admin", label: "See recent activity" },
-  },
-  "/admin/crm": {
-    title: "CRM",
-    blurb:
-      "A contact-centred view of the same records the Leads screen holds — one company, every person at it, every conversation. Today that screen IS the CRM: every lead carries its own timeline, notes, calls and follow-ups.",
-    nearest: { href: "/admin/leads", label: "Open Leads" },
   },
   "/admin/pipeline": {
     title: "Pipeline",

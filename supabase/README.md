@@ -23,6 +23,7 @@ rather than a convincing empty list.
 | 0010 | `0010_websites.sql` | The website portfolio — see below. |
 | 0011 | `0011_content_studio.sql` | Content Studio, brands and the asset library — see below. |
 | 0012 | `0012_hosting.sql` | Hosting: costs, incidents and plans — see below. |
+| 0013 | `0013_crm.sql` | CRM: companies and deals — see below. |
 
 ## 0007 — Business Command Center
 
@@ -420,3 +421,83 @@ interval / kind / severity / source check, the non-negative amount, the
 `effective_to >= effective_from` period check, the resolved-needs-a-time
 constraint, cascade from `websites` to both new tables, and RLS as `anon`
 (permission denied on both).
+
+## 0013 — CRM: companies and deals
+
+The chain this migration makes real:
+
+```
+Company → Contacts → Lead/Inquiry → Deals → Stage → Proposal → Won/Lost
+```
+
+**There is no `contacts` table.** A contact IS a lead, and a lead who bought is
+also a customer — the same person at two points in their life. Adding a third
+record for the same human is how a CRM ends up holding three spellings of one
+phone number. The multi-contact model instead falls out of `company_id`:
+**several leads pointing at one company are several contacts at one company.**
+Nothing else was needed for it.
+
+**What already existed and is not duplicated**
+
+`leads` is the contact record (name, email, phone, business name, nine
+statuses, score, owner, notes, last-contacted, next-follow-up, full
+attribution). `lead_events` is the activity timeline — note, call, sms,
+email_sent, form_submit, appointment, revenue, status_change. `lead_followups`
+is the sequence engine. `customers` is a contact who bought. `tasks` already
+carries `lead_id` and `customer_id`.
+
+**companies**
+
+`business_name` was a *string* on both `leads` and `customers`. That is fine
+while every buyer is an owner-operator, and stops being fine the moment a
+second person at the same firm gets in touch — the two are then unrelated rows
+that happen to share some text.
+
+Names are **not** unique (there is more than one "Austin Roofing"); domains
+are, on `lower(regexp_replace(domain, '^www\.', ''))`, because one website is
+one business. Both `leads.company_id` and `customers.company_id` are nullable
+with `on delete set null`: losing the company must never lose the person.
+
+**deals**
+
+A lead's status is its stage, right up until the same client buys a second
+thing. A website one year and a CRM the next are two sales to one company; a
+single status field can only describe one of them, and moving it back to
+"Proposal Sent" would erase the first.
+
+So a deal is its own row, and the lead keeps its status — **the dashboard
+pipeline still reads `leads.lead_status`, unchanged**. The deal stage list is
+deliberately the same five `src/lib/dashboard/sales.ts` already uses, plus
+negotiation and the two terminal states, so the two screens can never describe
+the same funnel differently.
+
+`billing` distinguishes one-off from recurring, because a $99/month deal and a
+$99 deal are not the same size. `comparableCents()` in `src/lib/crm/stages.ts`
+annualises recurring work before any total is taken, and the screen says so.
+
+Two constraints stop the reports disagreeing with the stage column:
+`stage = 'won'` requires `won_at`, `stage = 'lost'` requires `lost_at`.
+
+**The proposal is an invoice**
+
+`invoices` already carries `kind`, `amount_cents`, `checkout_url`, `sent_at`
+and `paid_at`, and the Stripe webhook already moves it. So `invoices.deal_id`
+was added rather than a `proposals` table existing to hold the same columns.
+
+**The backfill**
+
+Every `business_name` already in the system becomes a company, and the rows
+that named it point at it. Matching is on the trimmed, case-folded name, so
+`"Acme Roofing"` and `"acme roofing "` become one company rather than two.
+Run now, while there is almost nothing to migrate; the same backfill against a
+year of leads would be a project.
+
+**Verified before applying**: 0001→0013 against a scratch PostgreSQL 16, twice
+(idempotency), then 22 assertions on seeded data — the backfill folding a
+duplicate spelling into one company, two leads ending up on that one company
+(multi-contact), a lead with no business getting no company, domain uniqueness
+including the www and case variants, two companies sharing a name, four deals
+on one company (website / AI automation / app / hosting), the won- and
+lost-need-a-date constraints, invalid stage and billing, negative value, an
+invoice linking to a deal, `on delete set null` from company to both leads and
+deals, and RLS as `anon` (permission denied on both).
