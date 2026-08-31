@@ -153,8 +153,8 @@ const websiteTiers = [
       "CRM or business workflows",
       "Ongoing management (available as an add-on)",
     ],
-    href: "/contact",
-    ctaLabel: "Talk through E-Commerce",
+    href: "/ecommerce-website",
+    ctaLabel: "See the $999 package",
   },
 ];
 

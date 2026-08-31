@@ -9,6 +9,7 @@
 import { CAMPAIGN_ID, CAMPAIGN_NAME, OFFER_PRICE } from "./config";
 import { STARTER_CAMPAIGN_ID, STARTER_CAMPAIGN_NAME, STARTER_PRICE } from "./starter";
 import { PRO_CAMPAIGN_ID, PRO_CAMPAIGN_NAME, PRO_PRICE } from "./professional";
+import { ECOM_CAMPAIGN_ID, ECOM_CAMPAIGN_NAME, ECOM_PRICE } from "./ecommerce";
 
 export type Offer = {
   id: string;
@@ -56,10 +57,22 @@ export const PROFESSIONAL_OFFER: Offer = {
   gaContactEvent: "professional_website_contact",
 };
 
+export const ECOMMERCE_OFFER: Offer = {
+  id: ECOM_CAMPAIGN_ID,
+  name: ECOM_CAMPAIGN_NAME,
+  price: ECOM_PRICE,
+  currency: "USD",
+  thankYouPath: "/ecommerce-website/thank-you",
+  gaViewEvent: "ecommerce_website_view",
+  gaLeadEvent: "ecommerce_website_lead",
+  gaContactEvent: "ecommerce_website_contact",
+};
+
 export const OFFERS: Offer[] = [
   BUSINESS_LAUNCH_OFFER,
   STARTER_OFFER,
   PROFESSIONAL_OFFER,
+  ECOMMERCE_OFFER,
 ];
 
 /**

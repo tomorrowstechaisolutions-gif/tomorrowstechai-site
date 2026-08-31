@@ -13,6 +13,7 @@ const BARE_PREFIXES = [
   "/business-launch",
   "/starter-website",
   "/professional-website",
+  "/ecommerce-website",
   "/admin",
   "/intake",
 ];
