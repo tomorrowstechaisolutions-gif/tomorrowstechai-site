@@ -121,8 +121,8 @@ const websiteTiers = [
       "30 days of launch support",
     ],
     excludes: [],
-    href: "/contact",
-    ctaLabel: "Talk through Professional",
+    href: "/professional-website",
+    ctaLabel: "See the $699 package",
   },
   {
     id: "ecommerce",

@@ -8,6 +8,7 @@
 
 import { CAMPAIGN_ID, CAMPAIGN_NAME, OFFER_PRICE } from "./config";
 import { STARTER_CAMPAIGN_ID, STARTER_CAMPAIGN_NAME, STARTER_PRICE } from "./starter";
+import { PRO_CAMPAIGN_ID, PRO_CAMPAIGN_NAME, PRO_PRICE } from "./professional";
 
 export type Offer = {
   id: string;
@@ -44,7 +45,22 @@ export const STARTER_OFFER: Offer = {
   gaContactEvent: "starter_website_contact",
 };
 
-export const OFFERS: Offer[] = [BUSINESS_LAUNCH_OFFER, STARTER_OFFER];
+export const PROFESSIONAL_OFFER: Offer = {
+  id: PRO_CAMPAIGN_ID,
+  name: PRO_CAMPAIGN_NAME,
+  price: PRO_PRICE,
+  currency: "USD",
+  thankYouPath: "/professional-website/thank-you",
+  gaViewEvent: "professional_website_view",
+  gaLeadEvent: "professional_website_lead",
+  gaContactEvent: "professional_website_contact",
+};
+
+export const OFFERS: Offer[] = [
+  BUSINESS_LAUNCH_OFFER,
+  STARTER_OFFER,
+  PROFESSIONAL_OFFER,
+];
 
 /**
  * Resolves what the visitor's form said they were looking at. Falls back to

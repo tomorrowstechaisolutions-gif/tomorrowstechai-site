@@ -2,22 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ScheduleCta } from "@/components/business-launch/ScheduleCta";
 import { ContactAction } from "@/components/business-launch/ContactAction";
-import { STARTER_OFFER } from "@/lib/campaign/offers";
-import {
-  STARTER_HOSTING,
-  STARTER_PRICE,
-  STARTER_TURNAROUND_DAYS,
-} from "@/lib/campaign/starter";
+import { PROFESSIONAL_OFFER } from "@/lib/campaign/offers";
+import { PRO_HOSTING, PRO_PRICE } from "@/lib/campaign/professional";
 
 export const metadata: Metadata = {
   title: "Request received",
-  description: "Your $149 Starter Website request is in.",
-  // Never index a confirmation page — it would rank for the campaign and hand
-  // people the thank-you instead of the offer.
+  description: "Your $699 Professional Website request is in.",
   robots: { index: false, follow: false },
 };
 
-export default function StarterThankYouPage() {
+export default function ProfessionalThankYouPage() {
   return (
     <div className="bl-page">
       <header className="bl-topbar">
@@ -41,12 +35,12 @@ export default function StarterThankYouPage() {
           <div className="bl-thanks-next">
             <h2 className="bl-h3">Want to skip the wait?</h2>
             <p>
-              Book a 30-minute call and we&rsquo;ll plan your ${STARTER_PRICE}{" "}
-              build on the spot.
+              Book a 30-minute call and we&rsquo;ll scope your ten pages on the
+              spot — and give you a real delivery date.
             </p>
             <ScheduleCta
               href="https://cal.com/tomorrowstechai/discovery"
-              offer={STARTER_OFFER}
+              offer={PROFESSIONAL_OFFER}
               className="bl-cta"
             >
               Book my 30-minute call
@@ -63,10 +57,10 @@ export default function StarterThankYouPage() {
               <li className="bl-step">
                 <span className="bl-step-n">01</span>
                 <div>
-                  <h3>We check the fit</h3>
+                  <h3>We scope the pages together</h3>
                   <p>
-                    Three pages is the right answer for a lot of businesses and
-                    the wrong one for some. We&rsquo;ll tell you which you are.
+                    Your services, your customers and what the site has to make
+                    happen. This is where the delivery date comes from.
                   </p>
                 </div>
               </li>
@@ -83,11 +77,11 @@ export default function StarterThankYouPage() {
               <li className="bl-step">
                 <span className="bl-step-n">03</span>
                 <div>
-                  <h3>We build it in {STARTER_TURNAROUND_DAYS} business days</h3>
+                  <h3>We design, build and hand it over</h3>
                   <p>
-                    ${STARTER_PRICE} one time, then ${STARTER_HOSTING}/month
-                    hosting after the first 30 days. The build clock starts once
-                    your content is in, not the day you pay.
+                    ${PRO_PRICE} one time, then ${PRO_HOSTING}/month hosting
+                    after the first 30 days. Three revision rounds and 30 days
+                    of launch support are part of it.
                   </p>
                 </div>
               </li>
@@ -99,7 +93,7 @@ export default function StarterThankYouPage() {
             <ContactAction
               href="tel:+12545632130"
               method="phone"
-              offer={STARTER_OFFER}
+              offer={PROFESSIONAL_OFFER}
               className="bl-link"
             >
               Call (254) 563-2130
@@ -108,7 +102,7 @@ export default function StarterThankYouPage() {
             <ContactAction
               href="mailto:john@tomorrowstechai.com"
               method="email"
-              offer={STARTER_OFFER}
+              offer={PROFESSIONAL_OFFER}
               className="bl-link"
             >
               email John

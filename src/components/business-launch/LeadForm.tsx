@@ -235,7 +235,7 @@ export function LeadForm({
       )}
 
       <button type="submit" className="bl-submit" disabled={state === "sending"}>
-        {state === "sending" ? "Sending…" : "Get My $399 Business Launch"}
+        {state === "sending" ? "Sending…" : `Get My ${offer.name}`}
       </button>
 
       <p className="bl-fineprint">
