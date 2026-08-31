@@ -41,11 +41,6 @@ const PIPELINE = "/admin/pipeline";
 
 const STAGES = ["new", "qualified", "discovery", "proposal", "negotiation", "won", "lost", "on_hold"];
 
-export const LOST_REASONS = [
-  "Price", "Timing", "No budget", "Chose competitor",
-  "No response", "Scope or fit", "Internal delay", "Duplicate", "Other",
-];
-
 /**
  * Move a deal.
  *
@@ -84,16 +79,24 @@ export async function moveDealAction(formData: FormData) {
     patch.won_at = null;
     patch.lost_at = null;
     patch.lost_reason = null;
-    // Re-opening a deal returns it to the stage default UNLESS the owner had
-    // set their own number. An override is a judgement and survives the move.
+    // Three cases, and only one of them writes a number.
+    //
+    //   probability is null   → nobody has judged this deal, so it follows the
+    //                           stage on its own. LEAVE IT NULL. Writing the
+    //                           new stage default here would pin it forever
+    //                           and make every later move wrong.
+    //   equals the old default → the owner never overrode it, so carry it to
+    //                           the new stage's default.
+    //   anything else          → a judgement. It survives the move untouched.
     const { data: current } = await supabase
       .from("deals")
       .select("probability, stage")
       .eq("id", id)
       .maybeSingle();
     const wasDefault =
-      current && current.probability === (STAGE_PROBABILITY[current.stage] ?? 20);
-    if (!current?.probability || wasDefault) patch.probability = STAGE_PROBABILITY[stage] ?? 20;
+      current?.probability != null &&
+      current.probability === (STAGE_PROBABILITY[current.stage] ?? 20);
+    if (wasDefault) patch.probability = STAGE_PROBABILITY[stage] ?? 20;
   }
 
   await supabase.from("deals").update(patch).eq("id", id);

@@ -8048,6 +8048,10 @@ body {
     text-align: left;
   }
 
+  /* The lost-reason picker sits beside the stage select in the deal table.
+     Narrow, because it is empty and ignored on every move except one. */
+  .cc-reason { max-width: 116px; }
+
   .cc-toggle.is-on {
     border-color: rgba(56, 189, 248, 0.55);
     background: rgba(56, 189, 248, 0.12);

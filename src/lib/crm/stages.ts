@@ -72,3 +72,17 @@ export function comparableCents(valueCents: number | null, billing: string): num
   if (valueCents === null) return 0;
   return billing === "monthly" ? valueCents * 12 : valueCents;
 }
+
+/**
+ * The reasons a deal is lost.
+ *
+ * A short fixed list rather than free text, because "what are we losing deals
+ * over" is a counting question and free text does not count. Lives here, in a
+ * plain module, so both the form that offers them and the server action that
+ * validates them read the same list — and because a "use server" file may
+ * only export async functions, so a constant cannot live beside the action.
+ */
+export const LOST_REASONS = [
+  "Price", "Timing", "No budget", "Chose competitor",
+  "No response", "Scope or fit", "Internal delay", "Duplicate", "Other",
+];

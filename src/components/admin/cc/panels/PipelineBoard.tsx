@@ -8,6 +8,7 @@ import {
 } from "@/lib/pipeline/queries";
 import { STAGE_TONE } from "@/lib/crm/stages";
 import { moveDealAction, toggleCommitAction } from "@/app/admin/pipeline-actions";
+import { LOST_REASONS } from "@/lib/crm/stages";
 import { EmptyState, Panel, PanelSkeleton } from "../Panel";
 import { Donut, Legend } from "../Viz";
 import MiniBars from "../MiniBars";
@@ -264,6 +265,21 @@ function TableView({ board }: { board: Board }) {
                           </option>
                         ))}
                       </select>
+                      {/* Only read when the stage above is Lost, and required
+                          then — the server refuses the move without it. Kept
+                          visible rather than revealed by script so the form
+                          works with nothing but HTML. */}
+                      <select
+                        name="lost_reason"
+                        className="cc-filter-select cc-reason"
+                        defaultValue={d.lostReason ?? ""}
+                        aria-label={`Reason, if losing ${d.title}`}
+                      >
+                        <option value="">If lost&hellip;</option>
+                        {LOST_REASONS.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
                       <button type="submit" className="cc-btn">Move</button>
                     </form>
                   </td>
@@ -276,8 +292,9 @@ function TableView({ board }: { board: Board }) {
       <p className="cc-note">
         Moving a deal here writes an audited stage-history row — including how long it sat in the
         stage it left — through a database trigger, so a move made from anywhere leaves the same
-        trail. Marking one <strong>Lost</strong> requires a reason; that field is the only evidence
-        the business will ever have about why it loses.
+        trail. Marking one <strong>Lost</strong> requires a reason — pick one from the second
+        dropdown, or the move is refused. That field is the only evidence the business will ever
+        have about why it loses.
       </p>
     </Panel>
   );
