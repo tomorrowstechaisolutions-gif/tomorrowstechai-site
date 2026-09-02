@@ -34,9 +34,15 @@ function toCents(raw: string): number {
 const CLIENTS = "/admin/clients";
 
 export async function updateClientFields(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, actor } = await requireAdmin();
   const id = str(formData, "customer_id", 40);
   if (!id) return;
+
+  const { data: current } = await supabase
+    .from("customers")
+    .select("company_id, lead_id")
+    .eq("id", id)
+    .maybeSingle();
 
   // Tags arrive as free text. Split, trim, drop blanks, de-duplicate, cap —
   // a tag list is a filter, and one that grows without limit stops filtering.
@@ -66,10 +72,80 @@ export async function updateClientFields(formData: FormData) {
   const email = str(formData, "email", 200).toLowerCase();
   if (email) patch.email = email;
 
-  await supabase.from("customers").update(patch).eq("id", id);
+  const { error } = await supabase.from("customers").update(patch).eq("id", id);
+  if (error) throw new Error(`Could not save client: ${error.message}`);
+
+  // A client remains the same person and company they were as a lead. Keep
+  // those linked records aligned so CRM screens never show conflicting data.
+  if (current?.lead_id) {
+    await supabase
+      .from("leads")
+      .update({
+        email: email || undefined,
+        phone: patch.phone,
+        business_name: patch.business_name,
+        business_type: patch.business_type,
+        assigned_to: patch.owner,
+        company_id: current.company_id,
+      })
+      .eq("id", current.lead_id);
+  }
+
+  if (str(formData, "sync_company", 2) === "1") {
+    const companyPatch = {
+      name: str(formData, "business_name", 200) || "Unnamed company",
+      domain: str(formData, "company_domain", 240)
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .replace(/\/.*$/, "") || null,
+      business_type: patch.business_type,
+      phone: str(formData, "company_phone", 40) || null,
+      city: patch.city,
+      state: patch.state,
+      owner: patch.owner,
+      tags,
+      notes: str(formData, "company_notes", 4000) || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (current?.company_id) {
+      const { error: companyError } = await supabase
+        .from("companies")
+        .update(companyPatch)
+        .eq("id", current.company_id);
+      if (companyError) throw new Error(`Client saved, but company could not be saved: ${companyError.message}`);
+    } else {
+      const { data: company, error: companyError } = await supabase
+        .from("companies")
+        .insert(companyPatch)
+        .select("id")
+        .single();
+      if (companyError) throw new Error(`Client saved, but company could not be created: ${companyError.message}`);
+      if (company?.id) {
+        await supabase.from("customers").update({ company_id: company.id }).eq("id", id);
+        if (current?.lead_id) {
+          await supabase.from("leads").update({ company_id: company.id }).eq("id", current.lead_id);
+        }
+      }
+    }
+  }
+
+  if (current?.lead_id) {
+    await supabase.from("lead_events").insert({
+      lead_id: current.lead_id,
+      type: "system",
+      body: "Client record updated",
+      actor,
+    });
+  }
 
   revalidatePath(CLIENTS);
   revalidatePath(`${CLIENTS}/${id}`);
+  revalidatePath("/admin/crm");
+  if (str(formData, "return_to", 20) === "edit") {
+    redirect(`${CLIENTS}/${id}/edit?saved=details`);
+  }
 }
 
 /**
@@ -118,6 +194,9 @@ export async function updateClientBilling(formData: FormData) {
 
   revalidatePath(CLIENTS);
   revalidatePath(`${CLIENTS}/${id}`);
+  if (str(formData, "return_to", 20) === "edit") {
+    redirect(`${CLIENTS}/${id}/edit?saved=billing`);
+  }
 }
 
 /**

@@ -23,6 +23,7 @@ import {
   IconFunnel,
   IconLink,
   IconMapPin,
+  IconPen,
   IconPulse,
   IconRepeat,
   IconStar,
@@ -99,6 +100,9 @@ export default async function ClientPage({
 
         <div className="cc-greet-actions">
           <Link href="/admin/clients" className="cc-btn">All clients</Link>
+          <Link href={`/admin/clients/${client.id}/edit`} className="cc-btn primary">
+            <IconPen size={13} /> Edit client
+          </Link>
           {client.origin ? (
             <Link href={`/admin/leads/${client.origin.leadId}`} className="cc-btn">
               <IconFunnel size={13} /> Original lead

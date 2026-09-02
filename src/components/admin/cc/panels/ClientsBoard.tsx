@@ -14,6 +14,7 @@ import {
   IconDollar,
   IconGlobe,
   IconPulse,
+  IconPen,
   IconRepeat,
   IconStar,
   IconUsers,
@@ -169,6 +170,7 @@ export default async function ClientsBoard({ filters }: { filters: ClientFilters
                       <th>Rating</th>
                       <th>Owner</th>
                       <th>Activity</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -481,6 +483,12 @@ function Row({ row }: { row: ClientRow }) {
       <td>{row.owner ?? <span className="cc-faint">unassigned</span>}</td>
 
       <td>{row.lastActivityAt ? ago(row.lastActivityAt) : <span className="cc-faint">—</span>}</td>
+
+      <td>
+        <Link href={`${row.href}/edit`} className="cc-btn" aria-label={`Edit ${row.businessName}`}>
+          <IconPen size={12} /> Edit
+        </Link>
+      </td>
     </tr>
   );
 }

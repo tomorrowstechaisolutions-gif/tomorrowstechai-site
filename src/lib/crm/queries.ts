@@ -50,6 +50,7 @@ export type ContactRow = {
 
 export type CompanyRow = {
   id: string;
+  clientId: string | null;
   name: string;
   domain: string | null;
   businessType: string | null;
@@ -336,6 +337,7 @@ export async function loadCrmBoard(
     const won = theirDeals.filter((d) => d.stage === "won");
     return {
       id: c.id,
+      clientId: customerRows.find((customer) => customer.company_id === c.id)?.id ?? null,
       name: c.name,
       domain: c.domain,
       businessType: c.business_type,

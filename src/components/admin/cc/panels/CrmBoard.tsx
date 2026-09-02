@@ -150,7 +150,7 @@ function Records({ board, filters }: { board: Board; filters: CrmFilters }) {
                 <tr>
                   <th>Contact</th><th>Company</th><th>Email</th><th>Phone</th>
                   <th>Status</th><th>Interested in</th><th>Owner</th>
-                  <th>Last activity</th><th>Next</th><th className="num">Open deals</th>
+                  <th>Last activity</th><th>Next</th><th className="num">Open deals</th><th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -176,6 +176,14 @@ function Records({ board, filters }: { board: Board; filters: CrmFilters }) {
                     </td>
                     <td className="cc-dim">{c.nextActionAt ? due(c.nextActionAt) : DASH}</td>
                     <td className="num">{c.openDeals === 0 ? <span className="cc-dim">{DASH}</span> : count(c.openDeals)}</td>
+                    <td>
+                      <Link
+                        href={c.kind === "customer" ? `/admin/clients/${c.id}/edit` : `/admin/leads/${c.id}`}
+                        className="cc-btn"
+                      >
+                        {c.kind === "customer" ? "Edit client" : "Open lead"}
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -192,7 +200,7 @@ function Records({ board, filters }: { board: Board; filters: CrmFilters }) {
                 <tr>
                   <th>Company</th><th>Type</th><th>Location</th>
                   <th className="num">Contacts</th><th className="num">Open deals</th>
-                  <th className="num">Pipeline</th><th className="num">Won</th><th>Status</th>
+                  <th className="num">Pipeline</th><th className="num">Won</th><th>Status</th><th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -210,6 +218,13 @@ function Records({ board, filters }: { board: Board; filters: CrmFilters }) {
                     <td className="num">{c.wonCents > 0 ? money(c.wonCents) : <span className="cc-dim">{DASH}</span>}</td>
                     <td>
                       {c.isClient ? <span className="cc-chip t-ok">Client</span> : <span className="cc-chip t-muted">Prospect</span>}
+                    </td>
+                    <td>
+                      {c.clientId ? (
+                        <Link href={`/admin/clients/${c.clientId}/edit`} className="cc-btn">Edit client</Link>
+                      ) : (
+                        <span className="cc-faint">No client record</span>
+                      )}
                     </td>
                   </tr>
                 ))}

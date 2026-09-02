@@ -27,6 +27,12 @@ export type ClientDetail = {
   tags: string[];
   notes: string | null;
   notesInternal: string | null;
+  company: {
+    id: string;
+    domain: string | null;
+    phone: string | null;
+    notes: string | null;
+  } | null;
   status: ClientStatus;
   wonAt: string;
   churnedAt: string | null;
@@ -115,7 +121,7 @@ export async function loadClient(
     await sb
       .from("customers")
       .select(
-        "id, name, business_name, email, phone, business_type, city, state, owner, tags, status, won_at, churned_at, mrr_cents, renews_at, renewal_amount_cents, notes, notes_internal, stripe_customer_id, stripe_subscription_id, lead_id"
+        "id, name, business_name, email, phone, business_type, city, state, owner, tags, status, won_at, churned_at, mrr_cents, renews_at, renewal_amount_cents, notes, notes_internal, stripe_customer_id, stripe_subscription_id, lead_id, company_id, companies(id, domain, phone, notes)"
       )
       .eq("id", id)
       .maybeSingle()
@@ -141,9 +147,18 @@ export async function loadClient(
     stripe_customer_id: string | null;
     stripe_subscription_id: string | null;
     lead_id: string | null;
+    company_id: string | null;
+    companies:
+      | { id: string; domain: string | null; phone: string | null; notes: string | null }
+      | { id: string; domain: string | null; phone: string | null; notes: string | null }[]
+      | null;
   } | null;
 
   if (!customer) return null;
+
+  const linkedCompany = Array.isArray(customer.companies)
+    ? (customer.companies[0] ?? null)
+    : customer.companies;
 
   const [revenue, invoices, jobs, ratings, lead] = await Promise.all([
     sb
@@ -378,6 +393,14 @@ export async function loadClient(
     tags: customer.tags ?? [],
     notes: customer.notes,
     notesInternal: customer.notes_internal,
+    company: linkedCompany
+      ? {
+          id: linkedCompany.id,
+          domain: linkedCompany.domain,
+          phone: linkedCompany.phone,
+          notes: linkedCompany.notes,
+        }
+      : null,
     status: customer.status,
     wonAt: customer.won_at,
     churnedAt: customer.churned_at,
