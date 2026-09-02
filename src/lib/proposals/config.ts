@@ -123,16 +123,11 @@ export const PAYMENT_MODE_HELP: Record<PaymentMode, string> = {
     "Signing is acceptance only. No card is asked for, and the project can be created as soon as the agreement is signed.",
 };
 
-/** What is actually due the moment they sign, in cents. */
-export function amountDueAtSignature(p: {
-  payment_mode: PaymentMode;
-  total_cents: number;
-  deposit_amount_cents: number;
-}): number {
-  if (p.payment_mode === "invoice_later") return 0;
-  if (p.payment_mode === "full") return p.total_cents;
-  return p.deposit_amount_cents;
-}
+/**
+ * What is due at signature. The rule itself lives in pricing.ts — this
+ * re-export keeps the import path every caller already uses.
+ */
+export { amountDueAtSignature } from "./pricing";
 
 // ── The four confirmations ───────────────────────────────────────────
 

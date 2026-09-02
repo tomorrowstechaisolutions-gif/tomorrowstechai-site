@@ -82,6 +82,23 @@ export function computePricing(input: {
   };
 }
 
+/**
+ * What is actually due the moment they sign, in cents.
+ *
+ * Lives here rather than in config.ts because it is a pricing rule, and
+ * because keeping it out of config's import chain lets the email templates
+ * be rendered and inspected without dragging the campaign modules in.
+ */
+export function amountDueAtSignature(p: {
+  payment_mode: PaymentMode;
+  total_cents: number;
+  deposit_amount_cents: number;
+}): number {
+  if (p.payment_mode === "invoice_later") return 0;
+  if (p.payment_mode === "full") return p.total_cents;
+  return p.deposit_amount_cents;
+}
+
 /** $399, $1,250.50 — the one formatter the proposal and its emails share. */
 export function formatMoney(cents: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", {
