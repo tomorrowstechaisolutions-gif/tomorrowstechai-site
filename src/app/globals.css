@@ -104,6 +104,9 @@
   .proposal-scope { min-height: 170px; }
   .proposal-submit { justify-content: flex-start; }
   .proposal-submit span { color: var(--cc-faint); font-size: .68rem; }
+  .proposal-record-callout { display: grid; justify-items: start; gap: 14px; padding: 4px; }
+  .proposal-record-callout h3 { color: var(--cc-text); font-size: 1.05rem; letter-spacing: -.02em; }
+  .proposal-record-callout p { max-width: 680px; color: var(--cc-dim); font-size: .8rem; line-height: 1.65; }
 
   .proposal-list { display: grid; gap: 9px; }
   .proposal-list article { padding: 13px; border: 1px solid var(--cc-line-soft); border-radius: 11px; background: rgba(4,8,13,.25); }

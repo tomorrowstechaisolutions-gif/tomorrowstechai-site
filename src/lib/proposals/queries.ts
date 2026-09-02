@@ -103,7 +103,7 @@ function proposalSteps(input: {
 }
 
 export async function loadProposalWorkspace(sb: SupabaseClient): Promise<ProposalWorkspace> {
-  const [dealRows, invoiceRows] = await Promise.all([
+  const [dealRows, invoiceRows, leadRows] = await Promise.all([
     sb
       .from("deals")
       .select("id, lead_id, title, stage, value_cents, billing, expected_close, next_action, next_action_at, notes, updated_at, companies(name), leads(first_name, last_name, email, phone, business_name)")
@@ -115,6 +115,12 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
       .select("id, deal_id, lead_id, status, kind, amount_cents, launch_cents, hosting_cents, billing, description, checkout_url, sent_at, paid_at, notes, updated_at")
       .order("updated_at", { ascending: false })
       .then((r) => unwrap(r, "proposal invoices")),
+    sb
+      .from("leads")
+      .select("id, first_name, last_name, email, phone, business_name, company_id, companies(name), updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(500)
+      .then((r) => unwrap(r, "proposal candidate leads")),
   ]);
 
   type LeadLite = { first_name: string | null; last_name: string | null; email: string | null; phone: string | null; business_name: string | null };
@@ -132,6 +138,10 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
     billing: "one_time" | "monthly"; description: string | null;
     checkout_url: string | null; sent_at: string | null; paid_at: string | null;
     notes: string | null; updated_at: string;
+  };
+  type LeadCandidateRaw = LeadLite & {
+    id: string; company_id: string | null; updated_at: string;
+    companies: { name: string } | { name: string }[] | null;
   };
 
   const invoices = invoiceRows as InvoiceRaw[];
@@ -182,6 +192,47 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
 
     return { ...base, steps: proposalSteps(base) };
   });
+
+  // A proposal can be agreed in conversation before somebody has remembered
+  // to create the deal row. Do not hide that real work behind an empty-state
+  // filter: surface Cory from the lead record, then let the explicit sync
+  // action create the missing deal and invoice atomically under admin RLS.
+  if (!proposals.some((proposal) => proposal.isKeyKonnect)) {
+    const cory = (leadRows as LeadCandidateRaw[]).find((lead) => {
+      const identity = `${lead.first_name ?? ""} ${lead.last_name ?? ""} ${lead.business_name ?? ""} ${lead.email ?? ""}`.toLowerCase();
+      return identity.includes("cory simek") || identity.includes("key konnect") || identity.includes("corywiththekeys");
+    });
+    if (cory) {
+      const company = one(cory.companies);
+      const base = {
+        id: `lead-${cory.id}`,
+        dealId: "",
+        leadId: cory.id,
+        companyName: company?.name ?? cory.business_name ?? "The Key Konnect",
+        contactName: [cory.first_name, cory.last_name].filter(Boolean).join(" ") || "Cory Simek",
+        email: cory.email ?? "corywiththekeys@gmail.com",
+        phone: cory.phone,
+        title: "The Key Konnect website launch",
+        stage: "proposal" as DealStage,
+        valueCents: 39900,
+        hostingCents: 2900,
+        billing: "one_time" as const,
+        expectedClose: null,
+        nextAction: "Save the agreement to CRM, send the proposal, and collect launch assets",
+        nextActionAt: null,
+        previewUrl: "https://corywiththekeys.vercel.app/",
+        notes: "4–5 page website with working vehicle inventory, an initial merchandise shop, music experience, and starter CRM. $399 build + $29/month hosting.",
+        invoiceId: null,
+        invoiceStatus: null,
+        checkoutUrl: null,
+        sentAt: null,
+        paidAt: null,
+        updatedAt: cory.updated_at,
+        isKeyKonnect: true,
+      };
+      proposals.unshift({ ...base, steps: proposalSteps(base) });
+    }
+  }
 
   const active = proposals.filter((p) => !["won", "lost"].includes(p.stage));
   return {

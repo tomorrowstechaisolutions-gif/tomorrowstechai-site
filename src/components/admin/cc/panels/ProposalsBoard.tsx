@@ -100,7 +100,7 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
           <form action={syncKeyKonnectConversationAction}>
             <input type="hidden" name="deal_id" value={proposal.dealId} />
             <input type="hidden" name="lead_id" value={proposal.leadId} />
-            <button className="cc-btn" type="submit"><IconCheck size={13} /> Save agreement to Cory’s CRM</button>
+            <button className="cc-btn" type="submit"><IconCheck size={13} /> {proposal.dealId ? "Update Cory’s CRM proposal" : "Create Cory’s CRM proposal"}</button>
           </form>
         ) : null}
       </div>
@@ -128,6 +128,23 @@ function ProposalEditor({ proposal }: { proposal: ProposalRow }) {
         </div>
         <div className="proposal-submit"><button className="cc-btn primary" type="submit">Save proposal brief <IconArrowRight size={13} /></button><span>Saving creates or updates a draft invoice. It does not claim payment.</span></div>
       </form>
+    </Panel>
+  );
+}
+
+function CreateProposalRecord({ proposal }: { proposal: ProposalRow }) {
+  if (!proposal.leadId) return null;
+  return (
+    <Panel title="Record this agreement" sub="One click creates the missing CRM records" icon={<IconFile size={15} />} className="cc-s7">
+      <div className="proposal-record-callout">
+        <span className="cc-chip t-warn">CRM deal missing</span>
+        <h3>The proposal exists, but the database record does not.</h3>
+        <p>Create the proposal record to attach the $399 build, $29/month hosting, scope, draft invoice, conversation note, and follow-up task to Cory’s existing lead.</p>
+        <form action={syncKeyKonnectConversationAction}>
+          <input type="hidden" name="lead_id" value={proposal.leadId} />
+          <button className="cc-btn primary" type="submit">Create proposal record <IconArrowRight size={13} /></button>
+        </form>
+      </div>
     </Panel>
   );
 }
@@ -168,7 +185,7 @@ export default async function ProposalsBoard() {
           {current.isKeyKonnect ? <KeyKonnectBrief proposal={current} /> : null}
           <div className="cc-board proposal-board">
             <Panel title="Workflow progress" sub={current.companyName} icon={<IconCheck size={15} />} className="cc-s12"><Progress proposal={current} /></Panel>
-            <ProposalEditor proposal={current} />
+            {current.dealId ? <ProposalEditor proposal={current} /> : <CreateProposalRecord proposal={current} />}
             <ProposalList proposals={data.proposals} current={current} />
           </div>
         </>

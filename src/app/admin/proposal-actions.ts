@@ -85,17 +85,72 @@ export async function saveProposalAction(formData: FormData) {
 /** Imports the supplied Facebook conversation once, without claiming a sale. */
 export async function syncKeyKonnectConversationAction(formData: FormData) {
   const { supabase, actor } = await requireAdmin();
-  const dealId = str(formData, "deal_id", 40);
+  const requestedDealId = str(formData, "deal_id", 40);
   const leadId = str(formData, "lead_id", 40);
-  if (!dealId || !leadId) return;
+  if (!leadId) return;
 
   const { data: lead } = await supabase
     .from("leads")
-    .select("first_name, last_name, business_name, services_interested")
+    .select("first_name, last_name, business_name, services_interested, company_id")
     .eq("id", leadId)
     .maybeSingle();
   const identity = `${lead?.first_name ?? ""} ${lead?.last_name ?? ""} ${lead?.business_name ?? ""}`.toLowerCase();
   if (!lead || (!identity.includes("cory simek") && !identity.includes("key konnect"))) return;
+
+  let companyId = lead.company_id as string | null;
+  if (!companyId) {
+    const companyName = lead.business_name || "The Key Konnect";
+    const { data: existingCompany } = await supabase
+      .from("companies")
+      .select("id")
+      .ilike("name", companyName)
+      .limit(1)
+      .maybeSingle();
+    if (existingCompany) companyId = existingCompany.id as string;
+    else {
+      const { data: createdCompany } = await supabase
+        .from("companies")
+        .insert({ name: companyName, city: "Killeen", state: "TX", owner: actor })
+        .select("id")
+        .single();
+      companyId = (createdCompany?.id as string | undefined) ?? null;
+    }
+    if (companyId) await supabase.from("leads").update({ company_id: companyId }).eq("id", leadId);
+  }
+
+  let dealId = requestedDealId;
+  if (dealId) {
+    const { data: requestedDeal } = await supabase.from("deals").select("id, lead_id").eq("id", dealId).maybeSingle();
+    if (!requestedDeal || requestedDeal.lead_id !== leadId) return;
+  } else {
+    const { data: existingDeal } = await supabase
+      .from("deals")
+      .select("id")
+      .eq("lead_id", leadId)
+      .not("stage", "in", "(won,lost)")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existingDeal) dealId = existingDeal.id as string;
+    else {
+      const { data: createdDeal } = await supabase
+        .from("deals")
+        .insert({
+          lead_id: leadId,
+          company_id: companyId,
+          title: "The Key Konnect website launch",
+          stage: "proposal",
+          value_cents: 39900,
+          billing: "one_time",
+          owner: actor,
+          source: "facebook",
+        })
+        .select("id")
+        .single();
+      dealId = (createdDeal?.id as string | undefined) ?? "";
+    }
+  }
+  if (!dealId) return;
 
   const nextFollowup = new Date("2026-09-02T14:00:00.000Z");
   const services = Array.from(new Set([...(lead.services_interested ?? []), "Website", "CRM", "E-commerce"]));
