@@ -48,7 +48,7 @@ function moneyRows(p: Proposal, dueLabel = "Due when you sign"): MoneyRow[] {
 
   if (p.recurring_price_cents > 0) {
     rows.push({
-      label: "Hosting & management",
+      label: "Hosting",
       value: `${formatMoney(p.recurring_price_cents, p.currency)}/${p.recurring_interval}`,
       note: "begins after launch",
     });
@@ -268,7 +268,7 @@ export function buildPaymentEmail(
   }
   if (p.recurring_price_cents > 0) {
     rows.push({
-      label: "Hosting & management",
+      label: "Hosting",
       value: `${formatMoney(p.recurring_price_cents, p.currency)}/${p.recurring_interval}`,
       note: "begins after launch",
     });
