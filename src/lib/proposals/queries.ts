@@ -1,0 +1,196 @@
+import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { unwrap } from "@/lib/dashboard/panel";
+import type { DealStage } from "@/lib/crm/stages";
+
+export type ProposalStep = {
+  label: string;
+  detail: string;
+  state: "done" | "active" | "waiting";
+};
+
+export type ProposalRow = {
+  id: string;
+  dealId: string;
+  leadId: string | null;
+  companyName: string;
+  contactName: string;
+  email: string | null;
+  phone: string | null;
+  title: string;
+  stage: DealStage;
+  valueCents: number | null;
+  billing: "one_time" | "monthly";
+  expectedClose: string | null;
+  nextAction: string | null;
+  nextActionAt: string | null;
+  previewUrl: string | null;
+  notes: string | null;
+  invoiceId: string | null;
+  invoiceStatus: string | null;
+  checkoutUrl: string | null;
+  sentAt: string | null;
+  paidAt: string | null;
+  updatedAt: string;
+  isKeyKonnect: boolean;
+  steps: ProposalStep[];
+};
+
+export type ProposalWorkspace = {
+  proposals: ProposalRow[];
+  kpis: {
+    active: number;
+    drafts: number;
+    sent: number;
+    awaitingPrice: number;
+    pipelineCents: number;
+    won: number;
+  };
+};
+
+const one = <T,>(value: T | T[] | null): T | null =>
+  Array.isArray(value) ? value[0] ?? null : value;
+
+function urlFrom(text: string | null): string | null {
+  const match = text?.match(/https?:\/\/[^\s)]+/i);
+  return match?.[0] ?? null;
+}
+
+function proposalSteps(input: {
+  isKeyKonnect: boolean;
+  stage: DealStage;
+  valueCents: number | null;
+  invoiceStatus: string | null;
+  checkoutUrl: string | null;
+  paidAt: string | null;
+}): ProposalStep[] {
+  const sent = Boolean(input.checkoutUrl) || ["sent", "paid", "refunded"].includes(input.invoiceStatus ?? "");
+  const paid = Boolean(input.paidAt) || input.invoiceStatus === "paid" || input.stage === "won";
+
+  return [
+    { label: "Opportunity qualified", detail: "Contact and business need are identified.", state: "done" },
+    {
+      label: "Working preview delivered",
+      detail: input.isKeyKonnect
+        ? "Custom website teaser shared with Cory on September 1."
+        : "Share a concrete preview or discovery summary.",
+      state: input.isKeyKonnect ? "done" : "active",
+    },
+    {
+      label: "Assets and feedback",
+      detail: input.isKeyKonnect
+        ? "Waiting on the ‘13 Years Old’ MP3, company logo, and preview feedback."
+        : "Collect brand assets, content, and decision-maker feedback.",
+      state: input.isKeyKonnect ? "active" : "waiting",
+    },
+    {
+      label: "Scope and price approved",
+      detail: input.valueCents ? "Commercial scope has a recorded value." : "Price is intentionally open until scope is agreed.",
+      state: input.valueCents ? "done" : "waiting",
+    },
+    {
+      label: "Proposal sent",
+      detail: sent ? "Checkout or proposal link is recorded." : "Send the final scope, price, and payment link.",
+      state: sent ? "done" : input.valueCents ? "active" : "waiting",
+    },
+    {
+      label: "Accepted and paid",
+      detail: paid ? "Payment is recorded; delivery can begin." : "Do not count this as revenue until acceptance or payment is recorded.",
+      state: paid ? "done" : sent ? "active" : "waiting",
+    },
+  ];
+}
+
+export async function loadProposalWorkspace(sb: SupabaseClient): Promise<ProposalWorkspace> {
+  const [dealRows, invoiceRows] = await Promise.all([
+    sb
+      .from("deals")
+      .select("id, lead_id, title, stage, value_cents, billing, expected_close, next_action, next_action_at, notes, updated_at, companies(name), leads(first_name, last_name, email, phone, business_name)")
+      .in("stage", ["proposal", "negotiation", "won", "lost", "on_hold"])
+      .order("updated_at", { ascending: false })
+      .then((r) => unwrap(r, "proposal deals")),
+    sb
+      .from("invoices")
+      .select("id, deal_id, lead_id, status, kind, amount_cents, launch_cents, billing, description, checkout_url, sent_at, paid_at, notes, updated_at")
+      .order("updated_at", { ascending: false })
+      .then((r) => unwrap(r, "proposal invoices")),
+  ]);
+
+  type LeadLite = { first_name: string | null; last_name: string | null; email: string | null; phone: string | null; business_name: string | null };
+  type DealRaw = {
+    id: string; lead_id: string | null; title: string; stage: DealStage;
+    value_cents: number | null; billing: "one_time" | "monthly";
+    expected_close: string | null; next_action: string | null; next_action_at: string | null;
+    notes: string | null; updated_at: string;
+    companies: { name: string } | { name: string }[] | null;
+    leads: LeadLite | LeadLite[] | null;
+  };
+  type InvoiceRaw = {
+    id: string; deal_id: string | null; lead_id: string | null; status: string;
+    kind: "launch" | "upsell"; amount_cents: number; launch_cents: number;
+    billing: "one_time" | "monthly"; description: string | null;
+    checkout_url: string | null; sent_at: string | null; paid_at: string | null;
+    notes: string | null; updated_at: string;
+  };
+
+  const invoices = invoiceRows as InvoiceRaw[];
+  const invoiceByDeal = new Map<string, InvoiceRaw>();
+  for (const invoice of invoices) {
+    if (invoice.deal_id && !invoiceByDeal.has(invoice.deal_id)) invoiceByDeal.set(invoice.deal_id, invoice);
+  }
+
+  const proposals = (dealRows as DealRaw[]).map((deal): ProposalRow => {
+    const lead = one(deal.leads);
+    const company = one(deal.companies);
+    const invoice = invoiceByDeal.get(deal.id) ?? null;
+    const contactName = [lead?.first_name, lead?.last_name].filter(Boolean).join(" ") || "Contact not linked";
+    const companyName = company?.name ?? lead?.business_name ?? "Business not linked";
+    const identity = `${contactName} ${companyName}`.toLowerCase();
+    const isKeyKonnect = identity.includes("cory simek") || identity.includes("key konnect");
+    const valueCents = deal.value_cents ?? (invoice ? (invoice.kind === "launch" ? invoice.launch_cents : invoice.amount_cents) : null);
+    const previewUrl = isKeyKonnect
+      ? "https://corywiththekeys.vercel.app/"
+      : urlFrom(`${deal.notes ?? ""} ${invoice?.notes ?? ""}`);
+
+    const base = {
+      id: invoice?.id ?? deal.id,
+      dealId: deal.id,
+      leadId: deal.lead_id,
+      companyName,
+      contactName,
+      email: lead?.email ?? null,
+      phone: lead?.phone ?? null,
+      title: deal.title,
+      stage: deal.stage,
+      valueCents: valueCents && valueCents > 0 ? valueCents : null,
+      billing: deal.billing,
+      expectedClose: deal.expected_close,
+      nextAction: deal.next_action,
+      nextActionAt: deal.next_action_at,
+      previewUrl,
+      notes: deal.notes ?? invoice?.description ?? invoice?.notes ?? null,
+      invoiceId: invoice?.id ?? null,
+      invoiceStatus: invoice?.status ?? null,
+      checkoutUrl: invoice?.checkout_url ?? null,
+      sentAt: invoice?.sent_at ?? null,
+      paidAt: invoice?.paid_at ?? null,
+      updatedAt: invoice && invoice.updated_at > deal.updated_at ? invoice.updated_at : deal.updated_at,
+      isKeyKonnect,
+    };
+
+    return { ...base, steps: proposalSteps(base) };
+  });
+
+  const active = proposals.filter((p) => !["won", "lost"].includes(p.stage));
+  return {
+    proposals,
+    kpis: {
+      active: active.length,
+      drafts: proposals.filter((p) => !p.invoiceId || p.invoiceStatus === "draft").length,
+      sent: proposals.filter((p) => p.invoiceStatus === "sent").length,
+      awaitingPrice: active.filter((p) => !p.valueCents).length,
+      pipelineCents: active.reduce((sum, p) => sum + (p.valueCents ?? 0), 0),
+      won: proposals.filter((p) => p.stage === "won" || p.invoiceStatus === "paid").length,
+    },
+  };
+}

@@ -71,7 +71,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/leads", label: "Leads", icon: IconFunnel, badge: "leadsNeedingAttention" },
       { href: "/admin/crm", label: "CRM", icon: IconInbox },
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChart },
-      { href: "/admin/proposals", label: "Proposals", icon: IconFile, soon: true },
+      { href: "/admin/proposals", label: "Proposals", icon: IconFile },
       { href: "/admin/clients", label: "Clients", icon: IconUsers },
     ],
   },
@@ -202,12 +202,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Multi-step sequences across modules — a lead converts, a job opens, a welcome email goes out, a check-in is scheduled. Each step proposes before it acts.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/proposals": {
-    title: "Proposals",
-    blurb:
-      "Scoped quotes with line items. Today a quote is sent as a Stripe checkout link from the lead's own page, which is the part that takes the money.",
-    nearest: { href: "/admin/leads", label: "Open the CRM" },
   },
   "/admin/tasks": {
     title: "Tasks",
