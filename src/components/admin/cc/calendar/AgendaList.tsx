@@ -4,6 +4,7 @@ import {
   EVENT_STATUS_LABELS, EVENT_STATUS_TONE,
 } from "@/lib/calendar/config";
 import type { CalendarItem } from "@/lib/calendar/types";
+import { itemHref } from "@/lib/calendar/links";
 import { EmptyState } from "../Panel";
 import { IconCalendar } from "../Icons";
 
@@ -44,11 +45,11 @@ function shortName(email: string | null): string {
 export default function AgendaList({
   items,
   today,
-  itemHref,
+  query,
 }: {
   items: CalendarItem[];
   today: string;
-  itemHref: (item: CalendarItem) => string;
+  query: string;
 }) {
   if (items.length === 0) {
     return (
@@ -126,7 +127,7 @@ export default function AgendaList({
                       </span>
                     </td>
                     <td>
-                      <Link href={itemHref(entry)} scroll={false} className="cc-strong">
+                      <Link href={itemHref(query, entry.id)} scroll={false} className="cc-strong">
                         {entry.title}
                       </Link>
                       {entry.subtitle ? (

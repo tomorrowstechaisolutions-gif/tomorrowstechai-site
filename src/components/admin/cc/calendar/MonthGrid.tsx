@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BUSINESS_TIMEZONE, CATEGORY_TONE } from "@/lib/calendar/config";
 import type { CalendarItem } from "@/lib/calendar/types";
+import { itemHref, dayHref } from "@/lib/calendar/links";
 
 /**
  * The month view.
@@ -29,15 +30,13 @@ export default function MonthGrid({
   items,
   today,
   anchor,
-  itemHref,
-  dayHref,
+  query,
 }: {
   days: string[];
   items: CalendarItem[];
   today: string;
   anchor: string;
-  itemHref: (item: CalendarItem) => string;
-  dayHref: (day: string) => string;
+  query: string;
 }) {
   const byDay = new Map<string, CalendarItem[]>();
   for (const entry of items) {
@@ -66,7 +65,7 @@ export default function MonthGrid({
               key={day}
               className={`cal-month-cell ${outside ? "is-outside" : ""} ${day === today ? "is-today" : ""}`}
             >
-              <Link href={dayHref(day)} scroll={false} className="cal-month-date">
+              <Link href={dayHref(query, day)} scroll={false} className="cal-month-date">
                 {Number(day.slice(8, 10))}
                 {dayItems.length > 0 ? <b>{dayItems.length}</b> : null}
               </Link>
@@ -75,7 +74,7 @@ export default function MonthGrid({
                 {visible.map((entry) => (
                   <Link
                     key={entry.id}
-                    href={itemHref(entry)}
+                    href={itemHref(query, entry.id)}
                     scroll={false}
                     className={`cal-mini ${CATEGORY_TONE[entry.category]} ${
                       entry.status === "completed" ? "is-done" : ""
@@ -88,7 +87,7 @@ export default function MonthGrid({
                 ))}
 
                 {hidden > 0 ? (
-                  <Link href={dayHref(day)} scroll={false} className="cal-more">
+                  <Link href={dayHref(query, day)} scroll={false} className="cal-more">
                     + {hidden} more
                   </Link>
                 ) : null}

@@ -7,6 +7,7 @@ import {
   CATEGORY_TONE, GRID_END_HOUR, GRID_START_HOUR, BUSINESS_TIMEZONE,
 } from "@/lib/calendar/config";
 import type { CalendarItem } from "@/lib/calendar/types";
+import { itemHref } from "@/lib/calendar/links";
 
 /**
  * The week and day time grid.
@@ -105,13 +106,15 @@ export default function TimeGrid({
   days,
   items,
   today,
-  itemHref,
+  query,
   rescheduleAction,
 }: {
   days: string[];
   items: CalendarItem[];
   today: string;
-  itemHref: (item: CalendarItem) => string;
+  /** The page's current search string. A function prop would not survive
+   *  the trip from the server component that renders this one. */
+  query: string;
   rescheduleAction: (formData: FormData) => void | Promise<void>;
 }) {
   const router = useRouter();
@@ -237,7 +240,7 @@ export default function TimeGrid({
                 .map((entry) => (
                   <Link
                     key={entry.id}
-                    href={itemHref(entry)}
+                    href={itemHref(query, entry.id)}
                     scroll={false}
                     className={`cal-pill ${CATEGORY_TONE[entry.category]} ${
                       entry.status === "completed" ? "is-done" : ""
@@ -320,7 +323,7 @@ export default function TimeGrid({
                   return (
                     <Link
                       key={entry.id}
-                      href={itemHref(entry)}
+                      href={itemHref(query, entry.id)}
                       scroll={false}
                       draggable={entry.reschedulable}
                       onDragStart={(event) => {

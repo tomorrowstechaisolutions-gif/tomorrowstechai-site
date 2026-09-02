@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { itemHref, agendaHref } from "@/lib/calendar/links";
 import {
   BUSINESS_TIMEZONE, CALENDAR_LEGEND, CATEGORY_TONE, type CalendarView,
 } from "@/lib/calendar/config";
@@ -62,26 +63,6 @@ export default function CalendarBoard({
   viewer: string;
   query: string;
 }) {
-  const itemHref = (item: CalendarItem) => {
-    const params = new URLSearchParams(query);
-    params.set("item", item.id);
-    return `/admin/calendar?${params.toString()}`;
-  };
-
-  const dayHref = (day: string) => {
-    const params = new URLSearchParams(query);
-    params.set("view", "day");
-    params.set("anchor", day);
-    params.delete("item");
-    return `/admin/calendar?${params.toString()}`;
-  };
-
-  const agendaHref = () => {
-    const params = new URLSearchParams(query);
-    params.set("view", "agenda");
-    params.delete("item");
-    return `/admin/calendar?${params.toString()}`;
-  };
 
   return (
     <>
@@ -107,17 +88,16 @@ export default function CalendarBoard({
               items={items}
               today={today}
               anchor={anchor}
-              itemHref={itemHref}
-              dayHref={dayHref}
+              query={query}
             />
           ) : view === "agenda" ? (
-            <AgendaList items={items} today={today} itemHref={itemHref} />
+            <AgendaList items={items} today={today} query={query} />
           ) : (
             <TimeGrid
               days={win.days}
               items={items}
               today={today}
-              itemHref={itemHref}
+              query={query}
               rescheduleAction={rescheduleItemAction}
             />
           )}
@@ -141,7 +121,7 @@ export default function CalendarBoard({
           <div className="cc-panel-head">
             <IconCalendar size={15} />
             <h2>Today — {longToday(today)}</h2>
-            <Link href={agendaHref()} className="cc-more" scroll={false}>
+            <Link href={agendaHref(query)} className="cc-more" scroll={false}>
               View agenda <IconArrowRight size={13} />
             </Link>
           </div>
@@ -161,7 +141,7 @@ export default function CalendarBoard({
                       {entry.allDay ? "All day" : clock(entry.start)}
                     </span>
                     <i className={`cal-swatch ${CATEGORY_TONE[entry.category]}`} aria-hidden="true" />
-                    <Link href={itemHref(entry)} scroll={false}>
+                    <Link href={itemHref(query, entry.id)} scroll={false}>
                       <b>{entry.title}</b>
                       {entry.subtitle ? <span>{entry.subtitle}</span> : null}
                     </Link>
@@ -176,7 +156,7 @@ export default function CalendarBoard({
           <div className="cc-panel-head">
             <IconArrowRight size={15} />
             <h2>Coming Up</h2>
-            <Link href={agendaHref()} className="cc-more" scroll={false}>
+            <Link href={agendaHref(query)} className="cc-more" scroll={false}>
               View all <IconArrowRight size={13} />
             </Link>
           </div>
@@ -194,7 +174,7 @@ export default function CalendarBoard({
                   <li key={entry.id}>
                     <span className="cal-list-when">{shortDay(entry.start)}</span>
                     <i className={`cal-swatch ${CATEGORY_TONE[entry.category]}`} aria-hidden="true" />
-                    <Link href={itemHref(entry)} scroll={false}>
+                    <Link href={itemHref(query, entry.id)} scroll={false}>
                       <b>{entry.title}</b>
                       {entry.subtitle ? <span>{entry.subtitle}</span> : null}
                     </Link>
