@@ -1,302 +1,297 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { unwrap } from "@/lib/dashboard/panel";
-import type { DealStage } from "@/lib/crm/stages";
+import { isExpired } from "./service";
+import {
+  CLOSED_PROPOSAL_STATUSES,
+  type ProposalStatus,
+} from "./config";
+import type { Proposal, ProposalEvent } from "./types";
 
-export type ProposalStep = {
-  label: string;
-  detail: string;
-  state: "done" | "active" | "waiting";
+/**
+ * The admin's read side.
+ *
+ * Everything here takes the request-scoped Supabase client, so it runs as the
+ * signed-in admin and RLS applies. The service role never appears in this
+ * file — the only code that needs it is the public token flow in service.ts.
+ */
+
+export type ProposalListRow = {
+  id: string;
+  number: string;
+  title: string;
+  status: ProposalStatus;
+  /** True when valid_until has passed but nothing has re-stamped the row. */
+  staleExpired: boolean;
+  kind: "proposal" | "change_order";
+  clientName: string;
+  clientEmail: string | null;
+  companyName: string | null;
+  packageName: string | null;
+  oneTimeCents: number;
+  recurringCents: number;
+  recurringInterval: "month" | "year";
+  owner: string | null;
+  publicToken: string;
+  sentAt: string | null;
+  viewedAt: string | null;
+  signedAt: string | null;
+  paidAt: string | null;
+  validUntil: string | null;
+  jobId: string | null;
+  leadId: string | null;
+  dealId: string | null;
+  updatedAt: string;
 };
 
-export type ProposalRow = {
-  id: string;
-  dealId: string;
-  leadId: string | null;
-  companyName: string;
-  contactName: string;
-  email: string | null;
-  phone: string | null;
-  title: string;
-  stage: DealStage;
-  valueCents: number | null;
-  hostingCents: number | null;
-  billing: "one_time" | "monthly";
-  expectedClose: string | null;
-  nextAction: string | null;
-  nextActionAt: string | null;
-  previewUrl: string | null;
-  notes: string | null;
-  invoiceId: string | null;
-  invoiceStatus: string | null;
-  checkoutUrl: string | null;
-  sentAt: string | null;
-  paidAt: string | null;
-  proposalSentAt: string | null;
-  proposalAcceptedAt: string | null;
-  proposalAcceptedBy: string | null;
-  assetsReceivedAt: string | null;
-  buildReadyAt: string | null;
-  reviewApprovedAt: string | null;
-  launchedAt: string | null;
-  updatedAt: string;
-  isKeyKonnect: boolean;
-  steps: ProposalStep[];
+export type ProposalFilters = {
+  status?: string;
+  owner?: string;
+  packageKey?: string;
+  search?: string;
+  /** ISO date; matches proposals created on or after it. */
+  since?: string;
 };
 
 export type ProposalWorkspace = {
-  proposals: ProposalRow[];
-  kpis: {
-    active: number;
-    drafts: number;
-    sent: number;
-    accepted: number;
-    pipelineCents: number;
-    paid: number;
-  };
+  rows: ProposalListRow[];
+  /** Counts across everything, not just the filtered view. */
+  summary: Record<
+    "draft" | "sent" | "viewed" | "awaiting_signature" | "awaiting_payment" | "accepted" | "paid" | "expired",
+    number
+  >;
+  /** Open one-time value still winnable, in cents. */
+  openValueCents: number;
+  wonValueCents: number;
+  owners: string[];
+  packages: { key: string; name: string }[];
+  total: number;
 };
 
-const one = <T,>(value: T | T[] | null): T | null =>
-  Array.isArray(value) ? value[0] ?? null : value;
-
-function urlFrom(text: string | null): string | null {
-  const match = text?.match(/https?:\/\/[^\s)]+/i);
-  return match?.[0] ?? null;
+function clientNameOf(p: Proposal): string {
+  return (
+    p.client_business_name ||
+    p.client_contact_name ||
+    p.client_email ||
+    "No client recorded"
+  );
 }
 
-function proposalSteps(input: {
-  isKeyKonnect: boolean;
-  stage: DealStage;
-  valueCents: number | null;
-  invoiceStatus: string | null;
-  checkoutUrl: string | null;
-  paidAt: string | null;
-  proposalSentAt: string | null;
-  proposalAcceptedAt: string | null;
-  assetsReceivedAt: string | null;
-  buildReadyAt: string | null;
-  reviewApprovedAt: string | null;
-  launchedAt: string | null;
-}): ProposalStep[] {
-  const paid = Boolean(input.paidAt) || input.invoiceStatus === "paid" || input.stage === "won";
-  const buildReady = Boolean(input.assetsReceivedAt) && Boolean(input.buildReadyAt);
-
-  return [
-    { label: "Scope and price captured", detail: input.valueCents ? "The discovery agreement has a recorded value." : "Finish discovery and record the agreed scope and price.", state: input.valueCents ? "done" : "active" },
-    {
-      label: "Proposal sent",
-      detail: input.proposalSentAt ? "The written scope and price were sent to the client." : "Send the written agreement after the first sit-down; no payment is requested yet.",
-      state: input.proposalSentAt ? "done" : input.valueCents ? "active" : "waiting",
-    },
-    {
-      label: "Agreement accepted",
-      detail: input.proposalAcceptedAt ? "The client’s acceptance is recorded; this is not a payment." : "Record the client’s written approval before treating the scope as authorized.",
-      state: input.proposalAcceptedAt ? "done" : input.proposalSentAt ? "active" : "waiting",
-    },
-    {
-      label: "Assets and build ready",
-      detail: buildReady ? "Required assets are received and the working build is ready for review." : "Collect the agreed assets and prepare the working build.",
-      state: buildReady ? "done" : input.proposalAcceptedAt ? "active" : "waiting",
-    },
-    {
-      label: "Final review approved",
-      detail: input.reviewApprovedAt ? "The client approved the finished site for launch." : "Review the finished site with the client and record approval.",
-      state: input.reviewApprovedAt ? "done" : buildReady ? "active" : "waiting",
-    },
-    {
-      label: ".com live and invoice due",
-      detail: input.launchedAt ? "The approved site is live on its production domain; payment may now be requested." : "Connect the approved site to its .com, then issue the final invoice.",
-      state: input.launchedAt ? "done" : input.reviewApprovedAt ? "active" : "waiting",
-    },
-    {
-      label: "Paid",
-      detail: paid ? "Payment is recorded as revenue." : "Do not count revenue until payment is actually recorded.",
-      state: paid ? "done" : input.launchedAt ? "active" : "waiting",
-    },
-  ];
+function toRow(p: Proposal, companyName: string | null): ProposalListRow {
+  return {
+    id: p.id,
+    number: p.proposal_number,
+    title: p.title,
+    status: p.status,
+    staleExpired: isExpired(p) && !CLOSED_PROPOSAL_STATUSES.includes(p.status),
+    kind: p.kind,
+    clientName: clientNameOf(p),
+    clientEmail: p.client_email,
+    companyName,
+    packageName: p.package_name,
+    oneTimeCents: p.total_cents,
+    recurringCents: p.recurring_price_cents,
+    recurringInterval: p.recurring_interval,
+    owner: p.owner,
+    publicToken: p.public_token,
+    sentAt: p.sent_at,
+    viewedAt: p.first_viewed_at,
+    signedAt: p.signed_at,
+    paidAt: p.paid_at,
+    validUntil: p.valid_until,
+    jobId: p.job_id,
+    leadId: p.lead_id,
+    dealId: p.deal_id,
+    updatedAt: p.updated_at,
+  };
 }
 
-export async function loadProposalWorkspace(sb: SupabaseClient): Promise<ProposalWorkspace> {
-  const [dealRows, invoiceRows, leadRows, milestoneRows] = await Promise.all([
-    sb
-      .from("deals")
-      .select("id, lead_id, title, stage, value_cents, billing, expected_close, next_action, next_action_at, notes, updated_at, companies(name), leads(first_name, last_name, email, phone, business_name)")
-      .in("stage", ["proposal", "negotiation", "won", "lost", "on_hold"])
-      .order("updated_at", { ascending: false })
-      .then((r) => unwrap(r, "proposal deals")),
-    sb
-      .from("invoices")
-      .select("id, deal_id, lead_id, status, kind, amount_cents, launch_cents, hosting_cents, billing, description, checkout_url, sent_at, paid_at, notes, updated_at")
-      .order("updated_at", { ascending: false })
-      .then((r) => unwrap(r, "proposal invoices")),
-    sb
-      .from("leads")
-      .select("id, first_name, last_name, email, phone, business_name, company_id, companies(name), updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(500)
-      .then((r) => unwrap(r, "proposal candidate leads")),
-    sb
-      .from("lead_events")
-      .select("lead_id, created_at, meta")
-      .eq("type", "system")
-      .order("created_at", { ascending: false })
-      .limit(1000)
-      .then((r) => (r.error ? [] : (r.data ?? []))),
-  ]);
+export async function loadProposalWorkspace(
+  sb: SupabaseClient,
+  filters: ProposalFilters = {}
+): Promise<ProposalWorkspace> {
+  const { data, error } = await sb
+    .from("proposals")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(500);
 
-  type LeadLite = { first_name: string | null; last_name: string | null; email: string | null; phone: string | null; business_name: string | null };
-  type DealRaw = {
-    id: string; lead_id: string | null; title: string; stage: DealStage;
-    value_cents: number | null; billing: "one_time" | "monthly";
-    expected_close: string | null; next_action: string | null; next_action_at: string | null;
-    notes: string | null; updated_at: string;
-    companies: { name: string } | { name: string }[] | null;
-    leads: LeadLite | LeadLite[] | null;
-  };
-  type InvoiceRaw = {
-    id: string; deal_id: string | null; lead_id: string | null; status: string;
-    kind: "launch" | "upsell"; amount_cents: number; launch_cents: number; hosting_cents: number;
-    billing: "one_time" | "monthly"; description: string | null;
-    checkout_url: string | null; sent_at: string | null; paid_at: string | null;
-    notes: string | null; updated_at: string;
-  };
-  type LeadCandidateRaw = LeadLite & {
-    id: string; company_id: string | null; updated_at: string;
-    companies: { name: string } | { name: string }[] | null;
-  };
+  if (error) throw new Error(`Could not load proposals: ${error.message}`);
+  const all = (data ?? []) as Proposal[];
 
-  const invoices = invoiceRows as InvoiceRaw[];
-  type MilestoneEventRaw = {
-    lead_id: string;
-    created_at: string;
-    meta: { proposal_milestone?: string; cleared?: boolean; accepted_by?: string | null } | null;
-  };
-  const latestMilestone = new Map<string, MilestoneEventRaw>();
-  for (const event of milestoneRows as MilestoneEventRaw[]) {
-    const key = event.meta?.proposal_milestone;
-    if (!key) continue;
-    const mapKey = `${event.lead_id}:${key}`;
-    if (!latestMilestone.has(mapKey)) latestMilestone.set(mapKey, event);
-  }
-  const milestone = (leadId: string | null, key: string) =>
-    leadId ? latestMilestone.get(`${leadId}:${key}`) ?? null : null;
-  const milestoneDate = (leadId: string | null, key: string) => {
-    const event = milestone(leadId, key);
-    return event && !event.meta?.cleared ? event.created_at : null;
-  };
-  const invoiceByDeal = new Map<string, InvoiceRaw>();
-  for (const invoice of invoices) {
-    if (invoice.deal_id && !invoiceByDeal.has(invoice.deal_id)) invoiceByDeal.set(invoice.deal_id, invoice);
-  }
-
-  const proposals = (dealRows as DealRaw[]).map((deal): ProposalRow => {
-    const lead = one(deal.leads);
-    const company = one(deal.companies);
-    const invoice = invoiceByDeal.get(deal.id) ?? null;
-    const contactName = [lead?.first_name, lead?.last_name].filter(Boolean).join(" ") || "Contact not linked";
-    const companyName = company?.name ?? lead?.business_name ?? "Business not linked";
-    const identity = `${contactName} ${companyName}`.toLowerCase();
-    const isKeyKonnect = identity.includes("cory simek") || identity.includes("key konnect");
-    const valueCents = deal.value_cents ?? (invoice ? (invoice.kind === "launch" ? invoice.launch_cents : invoice.amount_cents) : null);
-    const previewUrl = isKeyKonnect
-      ? "https://corywiththekeys.vercel.app/"
-      : urlFrom(`${deal.notes ?? ""} ${invoice?.notes ?? ""}`);
-
-    const base = {
-      id: invoice?.id ?? deal.id,
-      dealId: deal.id,
-      leadId: deal.lead_id,
-      companyName,
-      contactName,
-      email: lead?.email ?? null,
-      phone: lead?.phone ?? null,
-      title: deal.title,
-      stage: deal.stage,
-      valueCents: valueCents && valueCents > 0 ? valueCents : null,
-      hostingCents: invoice?.hosting_cents && invoice.hosting_cents > 0 ? invoice.hosting_cents : (isKeyKonnect ? 2900 : null),
-      billing: deal.billing,
-      expectedClose: deal.expected_close,
-      nextAction: deal.next_action,
-      nextActionAt: deal.next_action_at,
-      previewUrl,
-      notes: deal.notes ?? invoice?.description ?? invoice?.notes ?? null,
-      invoiceId: invoice?.id ?? null,
-      invoiceStatus: invoice?.status ?? null,
-      checkoutUrl: invoice?.checkout_url ?? null,
-      sentAt: invoice?.sent_at ?? null,
-      paidAt: invoice?.paid_at ?? null,
-      proposalSentAt: milestoneDate(deal.lead_id, "proposal_sent"),
-      proposalAcceptedAt: milestoneDate(deal.lead_id, "proposal_accepted"),
-      proposalAcceptedBy: milestone(deal.lead_id, "proposal_accepted")?.meta?.accepted_by ?? null,
-      assetsReceivedAt: milestoneDate(deal.lead_id, "assets_received"),
-      buildReadyAt: milestoneDate(deal.lead_id, "build_ready"),
-      reviewApprovedAt: milestoneDate(deal.lead_id, "review_approved"),
-      launchedAt: milestoneDate(deal.lead_id, "launched"),
-      updatedAt: invoice && invoice.updated_at > deal.updated_at ? invoice.updated_at : deal.updated_at,
-      isKeyKonnect,
-    };
-
-    return { ...base, steps: proposalSteps(base) };
-  });
-
-  // A proposal can be agreed in conversation before somebody has remembered
-  // to create the deal row. Do not hide that real work behind an empty-state
-  // filter: surface Cory from the lead record, then let the explicit sync
-  // action create the missing deal and invoice atomically under admin RLS.
-  if (!proposals.some((proposal) => proposal.isKeyKonnect)) {
-    const cory = (leadRows as LeadCandidateRaw[]).find((lead) => {
-      const identity = `${lead.first_name ?? ""} ${lead.last_name ?? ""} ${lead.business_name ?? ""} ${lead.email ?? ""}`.toLowerCase();
-      return identity.includes("cory simek") || identity.includes("key konnect") || identity.includes("corywiththekeys");
-    });
-    if (cory) {
-      const company = one(cory.companies);
-      const base = {
-        id: `lead-${cory.id}`,
-        dealId: "",
-        leadId: cory.id,
-        companyName: company?.name ?? cory.business_name ?? "The Key Konnect",
-        contactName: [cory.first_name, cory.last_name].filter(Boolean).join(" ") || "Cory Simek",
-        email: cory.email ?? "corywiththekeys@gmail.com",
-        phone: cory.phone,
-        title: "The Key Konnect website launch",
-        stage: "proposal" as DealStage,
-        valueCents: 39900,
-        hostingCents: 2900,
-        billing: "one_time" as const,
-        expectedClose: null,
-        nextAction: "Save the agreement to CRM, send the final proposal, and record acceptance or payment",
-        nextActionAt: null,
-        previewUrl: "https://corywiththekeys.vercel.app/",
-        notes: "4–5 page website with working vehicle inventory, an initial merchandise shop, music experience, and starter CRM. $399 build + $29/month hosting.",
-        invoiceId: null,
-        invoiceStatus: null,
-        checkoutUrl: null,
-        sentAt: null,
-        paidAt: null,
-        proposalSentAt: null,
-        proposalAcceptedAt: null,
-        proposalAcceptedBy: null,
-        assetsReceivedAt: "2026-09-01T12:39:00.000Z",
-        buildReadyAt: "2026-09-01T12:39:00.000Z",
-        reviewApprovedAt: null,
-        launchedAt: null,
-        updatedAt: cory.updated_at,
-        isKeyKonnect: true,
-      };
-      proposals.unshift({ ...base, steps: proposalSteps(base) });
+  // Company names in one pass rather than a join per row.
+  const companyIds = Array.from(
+    new Set(all.map((p) => p.company_id).filter((id): id is string => Boolean(id)))
+  );
+  const companyNames = new Map<string, string>();
+  if (companyIds.length > 0) {
+    const { data: companies } = await sb
+      .from("companies")
+      .select("id, name")
+      .in("id", companyIds);
+    for (const company of (companies ?? []) as { id: string; name: string }[]) {
+      companyNames.set(company.id, company.name);
     }
   }
 
-  const active = proposals.filter((p) => !["won", "lost"].includes(p.stage));
+  const rows = all.map((p) => toRow(p, p.company_id ? companyNames.get(p.company_id) ?? null : null));
+
+  // ── Summary over EVERYTHING, so the cards do not change when a filter is
+  // applied. A filtered "3 awaiting payment" would be a different claim.
+  const summary = {
+    draft: 0, sent: 0, viewed: 0, awaiting_signature: 0,
+    awaiting_payment: 0, accepted: 0, paid: 0, expired: 0,
+  };
+  let openValueCents = 0;
+  let wonValueCents = 0;
+
+  for (const row of rows) {
+    if (row.staleExpired || row.status === "expired") summary.expired += 1;
+    switch (row.status) {
+      case "draft": summary.draft += 1; break;
+      case "sent": summary.sent += 1; break;
+      case "viewed": summary.viewed += 1; break;
+      case "accepted": summary.accepted += 1; summary.awaiting_signature += 1; break;
+      case "signed": summary.accepted += 1; break;
+      case "payment_pending": summary.awaiting_payment += 1; break;
+      case "paid":
+      case "converted": summary.paid += 1; break;
+      default: break;
+    }
+    if (!CLOSED_PROPOSAL_STATUSES.includes(row.status) && !row.staleExpired) {
+      openValueCents += row.oneTimeCents;
+    }
+    if (row.status === "paid" || row.status === "converted") {
+      wonValueCents += row.oneTimeCents;
+    }
+  }
+
+  const owners = Array.from(
+    new Set(all.map((p) => p.owner).filter((o): o is string => Boolean(o)))
+  ).sort();
+  const packages = Array.from(
+    new Map(
+      all
+        .filter((p) => p.package_key)
+        .map((p) => [p.package_key as string, p.package_name ?? p.package_key ?? ""])
+    ).entries()
+  ).map(([key, name]) => ({ key, name }));
+
+  // ── Filters, applied after the summary is fixed.
+  const needle = (filters.search ?? "").trim().toLowerCase();
+  const filtered = rows.filter((row) => {
+    if (filters.status && filters.status !== "all") {
+      if (filters.status === "expired") {
+        if (!(row.staleExpired || row.status === "expired")) return false;
+      } else if (row.status !== filters.status) return false;
+    }
+    if (filters.owner && filters.owner !== "all" && row.owner !== filters.owner) return false;
+    if (filters.packageKey && filters.packageKey !== "all") {
+      const source = all.find((p) => p.id === row.id);
+      if (source?.package_key !== filters.packageKey) return false;
+    }
+    if (filters.since) {
+      const source = all.find((p) => p.id === row.id);
+      if (!source || source.created_at < filters.since) return false;
+    }
+    if (needle) {
+      const hay = [
+        row.number, row.title, row.clientName, row.clientEmail,
+        row.companyName, row.packageName,
+      ].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(needle)) return false;
+    }
+    return true;
+  });
+
   return {
-    proposals,
-    kpis: {
-      active: active.length,
-      drafts: proposals.filter((p) => !p.proposalSentAt).length,
-      sent: proposals.filter((p) => Boolean(p.proposalSentAt)).length,
-      accepted: active.filter((p) => Boolean(p.proposalAcceptedAt)).length,
-      pipelineCents: active.reduce((sum, p) => sum + (p.valueCents ?? 0), 0),
-      paid: proposals.filter((p) => p.invoiceStatus === "paid").length,
-    },
+    rows: filtered,
+    summary,
+    openValueCents,
+    wonValueCents,
+    owners,
+    packages,
+    total: rows.length,
+  };
+}
+
+export async function loadProposalTimeline(
+  sb: SupabaseClient,
+  proposalId: string
+): Promise<ProposalEvent[]> {
+  const { data } = await sb
+    .from("proposal_events")
+    .select("*")
+    .eq("proposal_id", proposalId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return (data ?? []) as ProposalEvent[];
+}
+
+// ── What the builder needs to attach a proposal to something real ────
+
+export type LinkCandidate = {
+  id: string;
+  label: string;
+  sub: string | null;
+  email: string | null;
+  phone: string | null;
+  businessName: string | null;
+  companyId: string | null;
+};
+
+export async function loadLinkCandidates(sb: SupabaseClient): Promise<{
+  leads: LinkCandidate[];
+  customers: LinkCandidate[];
+  deals: { id: string; label: string; leadId: string | null; companyId: string | null }[];
+}> {
+  const [leadRows, customerRows, dealRows] = await Promise.all([
+    sb.from("leads")
+      .select("id, first_name, last_name, email, phone, business_name, company_id, lead_status, updated_at")
+      .order("updated_at", { ascending: false }).limit(300),
+    sb.from("customers")
+      .select("id, name, business_name, email, phone, company_id, status, updated_at")
+      .order("updated_at", { ascending: false }).limit(300),
+    sb.from("deals")
+      .select("id, title, lead_id, company_id, stage, updated_at")
+      .not("stage", "in", "(won,lost)")
+      .order("updated_at", { ascending: false }).limit(300),
+  ]);
+
+  type LeadRaw = {
+    id: string; first_name: string | null; last_name: string | null;
+    email: string | null; phone: string | null; business_name: string | null;
+    company_id: string | null; lead_status: string | null;
+  };
+  type CustomerRaw = {
+    id: string; name: string | null; business_name: string | null;
+    email: string | null; phone: string | null; company_id: string | null; status: string | null;
+  };
+  type DealRaw = { id: string; title: string; lead_id: string | null; company_id: string | null; stage: string };
+
+  return {
+    leads: ((leadRows.data ?? []) as LeadRaw[]).map((lead) => ({
+      id: lead.id,
+      label: [lead.first_name, lead.last_name].filter(Boolean).join(" ") || lead.email || "Unnamed lead",
+      sub: lead.business_name || lead.lead_status,
+      email: lead.email,
+      phone: lead.phone,
+      businessName: lead.business_name,
+      companyId: lead.company_id,
+    })),
+    customers: ((customerRows.data ?? []) as CustomerRaw[]).map((customer) => ({
+      id: customer.id,
+      label: customer.business_name || customer.name || customer.email || "Unnamed client",
+      sub: customer.name && customer.business_name ? customer.name : customer.status,
+      email: customer.email,
+      phone: customer.phone,
+      businessName: customer.business_name,
+      companyId: customer.company_id,
+    })),
+    deals: ((dealRows.data ?? []) as DealRaw[]).map((deal) => ({
+      id: deal.id,
+      label: `${deal.title} · ${deal.stage}`,
+      leadId: deal.lead_id,
+      companyId: deal.company_id,
+    })),
   };
 }

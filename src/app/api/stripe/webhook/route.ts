@@ -107,6 +107,16 @@ async function handleCheckoutCompleted(event: StripeEvent) {
     return;
   }
 
+  // A signed proposal being paid. It has its own bookkeeping — the proposal
+  // row, its own invoice and a revenue line that says what it was for — and
+  // deliberately does NOT open a job. Converting a paid proposal into a
+  // project is an explicit admin action, because somebody still has to decide
+  // the work is ready to start.
+  if (m.kind === "proposal") {
+    await handleProposalPaid(event);
+    return;
+  }
+
   // This Stripe account is shared with the other storefronts, and Stripe
   // delivers every checkout.session.completed to every endpoint subscribed to
   // it. Without this guard a t-shirt order from another site would create a
@@ -554,6 +564,103 @@ async function handleSubscriptionCancelled(event: StripeEvent) {
       mrr_cents: 0,
     })
     .eq("stripe_customer_id", stripeCustomerId);
+}
+
+// ── Proposal payment ────────────────────────────────────────────────────────
+
+/**
+ * Money against a signed proposal.
+ *
+ * Idempotent on two keys, because Stripe redelivers: the invoice row refuses
+ * to be marked paid twice, and revenue_events dedupes on external_id. What is
+ * booked is what Stripe says was collected, never the proposal's asking price.
+ */
+async function handleProposalPaid(event: StripeEvent) {
+  const db = supabaseAdmin();
+  const session = event.data.object;
+
+  const sessionId = str(session, "id");
+  const m = meta(session);
+  const proposalId = m.proposal_id || null;
+  const invoiceId = m.invoice_id || null;
+  if (!proposalId || !invoiceId) return;
+
+  const amountTotal = num(session, "amount_total");
+  const now = new Date().toISOString();
+
+  const { data: proposalRow } = await db
+    .from("proposals")
+    .select("id, proposal_number, title, status, total_cents, amount_paid_cents, lead_id, customer_id, client_business_name")
+    .eq("id", proposalId)
+    .maybeSingle();
+  if (!proposalRow) return;
+
+  const { data: invoiceRow } = await db
+    .from("invoices")
+    .select("id, status")
+    .eq("id", invoiceId)
+    .maybeSingle();
+
+  // A replay of an event already booked.
+  if (invoiceRow && invoiceRow.status === "paid") return;
+
+  if (invoiceRow) {
+    await db
+      .from("invoices")
+      .update({
+        status: "paid",
+        paid_at: now,
+        stripe_session_id: sessionId,
+        stripe_invoice_id: str(session, "invoice"),
+        stripe_payment_intent: str(session, "payment_intent"),
+      })
+      .eq("id", invoiceRow.id);
+  }
+
+  const paidSoFar = Number(proposalRow.amount_paid_cents ?? 0) + amountTotal;
+  const settled = paidSoFar >= Number(proposalRow.total_cents ?? 0);
+
+  await db
+    .from("proposals")
+    .update({
+      status: "paid",
+      paid_at: now,
+      amount_paid_cents: paidSoFar,
+      stripe_session_id: sessionId,
+    })
+    .eq("id", proposalId);
+
+  await db.from("proposal_events").insert({
+    proposal_id: proposalId,
+    event_type: "paid",
+    body: `Stripe collected ${(amountTotal / 100).toFixed(2)} USD.${settled ? " The one-time amount is now settled in full." : " A balance remains."}`,
+    actor: "stripe",
+    metadata: { session_id: sessionId, amount_cents: amountTotal, settled },
+  });
+
+  await db.from("revenue_events").upsert(
+    {
+      customer_id: proposalRow.customer_id ?? null,
+      lead_id: proposalRow.lead_id ?? null,
+      kind: "initial",
+      category: "launch_package",
+      description: `Proposal ${proposalRow.proposal_number} — ${proposalRow.title}`,
+      amount_cents: amountTotal,
+      occurred_at: now,
+      external_id: `${sessionId}:proposal`,
+    },
+    { onConflict: "external_id", ignoreDuplicates: true }
+  );
+
+  if (proposalRow.lead_id) {
+    await db.from("lead_events").insert({
+      lead_id: proposalRow.lead_id,
+      type: "revenue",
+      body: `Proposal ${proposalRow.proposal_number} paid — ${(amountTotal / 100).toFixed(2)} USD.`,
+      actor: "stripe",
+      meta: { proposal_id: proposalId, session_id: sessionId },
+    });
+  }
 }
 
 // ── Delivery ────────────────────────────────────────────────────────────────

@@ -3,11 +3,51 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
+import { currentAgreement } from "@/lib/proposals/agreement";
+import {
+  DEFAULT_VALID_DAYS,
+  canTransition,
+  templateByKey,
+  type ProposalStatus,
+} from "@/lib/proposals/config";
+import { computePricing } from "@/lib/proposals/pricing";
+import { newProposalToken, proposalUrl, logProposalEvent } from "@/lib/proposals/service";
+import { sendProposalEmail } from "@/lib/proposals/emails";
+import type { Proposal, ProposalItemType, ProposalSectionType } from "@/lib/proposals/types";
+import { DEFAULT_JOB_TASKS, PROMISED_DAYS, dueDateFrom } from "@/lib/jobs/config";
+import { createIntake } from "@/lib/intake/service";
+
+/**
+ * Every write the admin can make to a proposal.
+ *
+ * A `"use server"` file may export nothing but async functions — an exported
+ * const is a build error Next only raises at page-data collection, which cost
+ * a deploy once. Shared constants live in src/lib/proposals/config.ts, which
+ * both this file and the forms import.
+ *
+ * All of these run on the request-scoped client, so RLS applies and an
+ * account that is not in admin_users writes nothing. The service role appears
+ * only in the public token path.
+ */
+
+const REVALIDATE = ["/admin/proposals", "/admin/pipeline", "/admin/crm", "/admin"];
+
+function touch(id?: string | null) {
+  for (const path of REVALIDATE) revalidatePath(path);
+  if (id) {
+    revalidatePath(`/admin/proposals/${id}`);
+    revalidatePath(`/admin/proposals/${id}/edit`);
+    revalidatePath(`/admin/proposals/${id}/preview`);
+  }
+}
 
 async function requireAdmin() {
   const session = await getAdminUser();
   if (!session) redirect("/admin/login");
-  return { supabase: await createSupabaseServerClient(), actor: session.admin.email };
+  return {
+    supabase: await createSupabaseServerClient(),
+    actor: session.admin.email,
+  };
 }
 
 function str(fd: FormData, key: string, max = 4000): string {
@@ -15,310 +55,914 @@ function str(fd: FormData, key: string, max = 4000): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
-function cents(raw: string): number | null {
+function flag(fd: FormData, key: string): boolean {
+  const value = fd.get(key);
+  return value === "on" || value === "1" || value === "true";
+}
+
+/** "$1,250.50" → 125050. Anything unparseable is zero, never NaN. */
+function cents(raw: string): number {
   const value = Number.parseFloat(raw.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(value) && value > 0 ? Math.round(value * 100) : null;
+  return Number.isFinite(value) && value > 0 ? Math.round(value * 100) : 0;
 }
 
-const REVALIDATE = ["/admin/proposals", "/admin/pipeline", "/admin/crm", "/admin"];
+function intOrNull(raw: string): number | null {
+  const value = Number.parseInt(raw, 10);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
 
-const PROPOSAL_MILESTONES = [
-  "proposal_sent",
-  "proposal_accepted",
-  "assets_received",
-  "build_ready",
-  "review_approved",
-  "launched",
-] as const;
+function isoDateOrNull(raw: string): string | null {
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
+}
 
-export async function setProposalMilestoneAction(formData: FormData) {
-  const { supabase, actor } = await requireAdmin();
-  const dealId = str(formData, "deal_id", 40);
-  const milestone = str(formData, "milestone", 40) as (typeof PROPOSAL_MILESTONES)[number];
-  if (!dealId || !PROPOSAL_MILESTONES.includes(milestone)) return;
+function defaultValidUntil(): string {
+  const date = new Date(Date.now() + DEFAULT_VALID_DAYS * 86_400_000);
+  return date.toISOString().slice(0, 10);
+}
 
-  const clearing = str(formData, "clear", 4) === "1";
-  const { data: deal, error } = await supabase
-    .from("deals")
-    .select("lead_id")
-    .eq("id", dealId)
-    .maybeSingle();
-  if (error || !deal?.lead_id) throw new Error("Could not find the lead attached to this proposal.");
+/** Copies a row without the columns the destination generates for itself. */
+function without<T extends Record<string, unknown>>(row: T, keys: string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (!keys.includes(key)) out[key] = value;
+  }
+  return out;
+}
 
-  const labels: Record<(typeof PROPOSAL_MILESTONES)[number], string> = {
-    proposal_sent: "Proposal sent",
-    proposal_accepted: "Written proposal accepted",
-    assets_received: "Required assets received",
-    build_ready: "Working build ready for review",
-    review_approved: "Client approved final review",
-    launched: "Approved site launched on its production domain",
-  };
-  const acceptedBy = milestone === "proposal_accepted" && !clearing
-    ? str(formData, "accepted_by", 200) || "Client approval recorded by admin"
-    : null;
-  const { error: eventError } = await supabase.from("lead_events").insert({
-    lead_id: deal.lead_id,
-    type: "system",
-    body: `${labels[milestone]}${acceptedBy ? ` by ${acceptedBy}` : ""}${clearing ? " — milestone cleared" : "."}`,
-    actor,
-    meta: { proposal_milestone: milestone, cleared: clearing, accepted_by: acceptedBy },
+const ITEM_TYPES: ProposalItemType[] = [
+  "scope", "deliverable", "page", "integration", "addon",
+  "discount", "recurring", "exclusion",
+  "client_responsibility", "provider_responsibility",
+];
+
+const SECTION_TYPES: ProposalSectionType[] = [
+  "executive_summary", "scope", "deliverables", "timeline",
+  "pricing", "hosting", "ownership", "client_responsibilities",
+  "provider_responsibilities", "exclusions", "agreement", "custom",
+];
+
+type ParsedItem = {
+  item_type: ProposalItemType;
+  title: string;
+  description: string | null;
+  quantity: number;
+  unit_price_cents: number;
+  total_price_cents: number;
+  is_billable: boolean;
+  is_optional: boolean;
+  sort_order: number;
+};
+
+/**
+ * The builder posts its rows as one JSON field rather than fifty numbered
+ * inputs. Everything is re-validated here: a title that is not a string, a
+ * type that is not in the vocabulary, or a negative price simply does not
+ * survive into the database.
+ */
+function parseItems(raw: string): ParsedItem[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw || "[]");
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const out: ParsedItem[] = [];
+  for (const entry of parsed.slice(0, 200)) {
+    if (!entry || typeof entry !== "object") continue;
+    const row = entry as Record<string, unknown>;
+
+    const title = typeof row.title === "string" ? row.title.trim().slice(0, 300) : "";
+    if (!title) continue;
+
+    const type = ITEM_TYPES.includes(row.item_type as ProposalItemType)
+      ? (row.item_type as ProposalItemType)
+      : "scope";
+
+    const quantityRaw = Number(row.quantity);
+    const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0
+      ? Math.min(9999, Math.round(quantityRaw * 100) / 100)
+      : 1;
+
+    const unit = typeof row.unit_price === "string"
+      ? cents(row.unit_price)
+      : Number.isFinite(Number(row.unit_price_cents))
+        ? Math.max(0, Math.round(Number(row.unit_price_cents)))
+        : 0;
+
+    out.push({
+      item_type: type,
+      title,
+      description:
+        typeof row.description === "string" && row.description.trim()
+          ? row.description.trim().slice(0, 4000)
+          : null,
+      quantity,
+      unit_price_cents: unit,
+      total_price_cents: Math.round(quantity * unit),
+      is_billable: row.is_billable === true && unit > 0,
+      is_optional: row.is_optional === true,
+      sort_order: out.length,
+    });
+  }
+  return out;
+}
+
+type ParsedSection = {
+  section_type: ProposalSectionType;
+  title: string;
+  content: string | null;
+  is_visible: boolean;
+  sort_order: number;
+};
+
+function parseSections(raw: string): ParsedSection[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw || "[]");
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const out: ParsedSection[] = [];
+  for (const entry of parsed.slice(0, 40)) {
+    if (!entry || typeof entry !== "object") continue;
+    const row = entry as Record<string, unknown>;
+    const title = typeof row.title === "string" ? row.title.trim().slice(0, 200) : "";
+    if (!title) continue;
+    out.push({
+      section_type: SECTION_TYPES.includes(row.section_type as ProposalSectionType)
+        ? (row.section_type as ProposalSectionType)
+        : "custom",
+      title,
+      content:
+        typeof row.content === "string" && row.content.trim()
+          ? row.content.trim().slice(0, 20000)
+          : null,
+      is_visible: row.is_visible !== false,
+      sort_order: out.length,
+    });
+  }
+  return out;
+}
+
+/**
+ * Reads the commercial fields off the form and recomputes every total.
+ *
+ * The form shows a running total, but what it shows is never what is saved:
+ * the numbers are derived here, from the line items and the typed build
+ * price, so a hand-edited hidden field cannot change what a client is asked
+ * to pay.
+ */
+function commercialsFrom(fd: FormData, items: ParsedItem[]) {
+  const basePriceCents = cents(str(fd, "one_time_price", 30));
+  const recurringCents = cents(str(fd, "recurring_price", 30));
+  const depositRaw = cents(str(fd, "deposit_amount", 30));
+  const discountCents = cents(str(fd, "discount_amount", 30));
+
+  const paymentModeRaw = str(fd, "payment_mode", 20);
+  const payment_mode =
+    paymentModeRaw === "full" || paymentModeRaw === "invoice_later"
+      ? paymentModeRaw
+      : "deposit";
+
+  // A typed discount is treated as one more discount line so there is exactly
+  // one code path that knows how a discount reduces a total.
+  const withDiscount = discountCents > 0
+    ? [
+        ...items,
+        {
+          item_type: "discount" as ProposalItemType,
+          title: "Discount",
+          description: null,
+          quantity: 1,
+          unit_price_cents: discountCents,
+          total_price_cents: discountCents,
+          is_billable: true,
+          is_optional: false,
+          sort_order: items.length,
+        },
+      ]
+    : items;
+
+  const pricing = computePricing({
+    items: withDiscount,
+    basePriceCents,
+    recurringCents,
+    depositCents: depositRaw,
+    paymentMode: payment_mode,
   });
-  if (eventError) throw new Error(`Could not record proposal milestone: ${eventError.message}`);
 
-  for (const path of REVALIDATE) revalidatePath(path);
-  revalidatePath(`/admin/leads/${deal.lead_id}`);
-}
+  const recurring_interval = str(fd, "recurring_interval", 10) === "year" ? "year" : "month";
 
-export async function saveProposalAction(formData: FormData) {
-  const { supabase } = await requireAdmin();
-  const dealId = str(formData, "deal_id", 40);
-  if (!dealId) return;
-
-  const amount = cents(str(formData, "amount", 30));
-  const hosting = cents(str(formData, "hosting", 30)) ?? 0;
-  const billing = str(formData, "billing", 20) === "monthly" ? "monthly" : "one_time";
-  const title = str(formData, "title", 200);
-  const scope = str(formData, "scope", 6000);
-  const nextAction = str(formData, "next_action", 300);
-  const nextActionAt = str(formData, "next_action_at", 40);
-  const expectedClose = str(formData, "expected_close", 20);
-
-  const { data: deal } = await supabase
-    .from("deals")
-    .select("id, lead_id, stage")
-    .eq("id", dealId)
-    .maybeSingle();
-  if (!deal) return;
-
-  await supabase.from("deals").update({
-    title: title || undefined,
-    stage: ["won", "lost"].includes(deal.stage) ? deal.stage : "proposal",
-    value_cents: amount,
-    billing,
-    notes: scope || null,
-    next_action: nextAction || null,
-    next_action_at: nextActionAt ? new Date(nextActionAt).toISOString() : null,
-    expected_close: expectedClose || null,
-    last_activity_at: new Date().toISOString(),
-  }).eq("id", dealId);
-
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select("id, status, kind")
-    .eq("deal_id", dealId)
-    .in("status", ["draft", "sent"])
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const isLaunch = invoice?.kind === "launch" || hosting > 0;
-  const invoicePatch = {
-    lead_id: deal.lead_id,
-    deal_id: dealId,
-    kind: isLaunch ? "launch" : "upsell",
-    amount_cents: isLaunch ? 0 : amount ?? 0,
-    launch_cents: isLaunch ? amount ?? 0 : 0,
-    hosting_cents: isLaunch ? hosting : 0,
-    billing: isLaunch ? "one_time" : billing,
-    description: scope || title || "Custom proposal",
-    notes: amount ? null : "Pricing intentionally left open until scope is confirmed.",
+  return {
+    subtotal_cents: pricing.subtotalCents,
+    discount_amount_cents: pricing.discountCents,
+    one_time_price_cents: pricing.oneTimeCents,
+    total_cents: pricing.totalCents,
+    recurring_price_cents: pricing.recurringCents,
+    recurring_interval,
+    deposit_amount_cents: pricing.depositCents,
+    payment_mode,
   };
-  if (invoice) await supabase.from("invoices").update(invoicePatch).eq("id", invoice.id);
-  else await supabase.from("invoices").insert({ ...invoicePatch, status: "draft" });
-
-  for (const path of REVALIDATE) revalidatePath(path);
 }
 
-/** Imports the supplied Facebook conversation once, without claiming a sale. */
-export async function syncKeyKonnectConversationAction(formData: FormData) {
+function clientFieldsFrom(fd: FormData) {
+  return {
+    client_business_name: str(fd, "client_business_name", 200) || null,
+    client_contact_name: str(fd, "client_contact_name", 200) || null,
+    client_email: str(fd, "client_email", 320).toLowerCase() || null,
+    client_phone: str(fd, "client_phone", 40) || null,
+    client_title: str(fd, "client_title", 200) || null,
+    client_billing_address: str(fd, "client_billing_address", 600) || null,
+  };
+}
+
+async function replaceChildren(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  proposalId: string,
+  items: ParsedItem[],
+  sections: ParsedSection[]
+) {
+  await supabase.from("proposal_items").delete().eq("proposal_id", proposalId);
+  if (items.length > 0) {
+    await supabase
+      .from("proposal_items")
+      .insert(items.map((item) => ({ ...item, proposal_id: proposalId })));
+  }
+
+  await supabase.from("proposal_sections").delete().eq("proposal_id", proposalId);
+  if (sections.length > 0) {
+    await supabase
+      .from("proposal_sections")
+      .insert(sections.map((section) => ({ ...section, proposal_id: proposalId })));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Create, edit, duplicate
+// ═══════════════════════════════════════════════════════════════════════
+
+export async function createProposalAction(formData: FormData) {
   const { supabase, actor } = await requireAdmin();
-  const requestedDealId = str(formData, "deal_id", 40);
-  const leadId = str(formData, "lead_id", 40);
-  if (!leadId) return;
 
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("first_name, last_name, business_name, services_interested, company_id")
-    .eq("id", leadId)
-    .maybeSingle();
-  const identity = `${lead?.first_name ?? ""} ${lead?.last_name ?? ""} ${lead?.business_name ?? ""}`.toLowerCase();
-  if (!lead || (!identity.includes("cory simek") && !identity.includes("key konnect"))) return;
-
-  let companyId = lead.company_id as string | null;
-  if (!companyId) {
-    const companyName = lead.business_name || "The Key Konnect";
-    const { data: existingCompany } = await supabase
-      .from("companies")
-      .select("id")
-      .ilike("name", companyName)
-      .limit(1)
-      .maybeSingle();
-    if (existingCompany) companyId = existingCompany.id as string;
-    else {
-      const { data: createdCompany } = await supabase
-        .from("companies")
-        .insert({ name: companyName, city: "Killeen", state: "TX", owner: actor })
-        .select("id")
-        .single();
-      companyId = (createdCompany?.id as string | undefined) ?? null;
-    }
-    if (companyId) await supabase.from("leads").update({ company_id: companyId }).eq("id", leadId);
+  const agreement = await currentAgreement(supabase);
+  if (!agreement) {
+    throw new Error(
+      "No published agreement version. Publish one under Settings → Agreements before writing a proposal."
+    );
   }
 
-  let dealId = requestedDealId;
-  if (dealId) {
-    const { data: requestedDeal } = await supabase.from("deals").select("id, lead_id").eq("id", dealId).maybeSingle();
-    if (!requestedDeal || requestedDeal.lead_id !== leadId) return;
-  } else {
-    const { data: existingDeal } = await supabase
-      .from("deals")
-      .select("id")
-      .eq("lead_id", leadId)
-      .not("stage", "in", "(won,lost)")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (existingDeal) dealId = existingDeal.id as string;
-    else {
-      const { data: createdDeal } = await supabase
-        .from("deals")
-        .insert({
-          lead_id: leadId,
-          company_id: companyId,
-          title: "The Key Konnect website launch",
-          stage: "proposal",
-          value_cents: 39900,
-          billing: "one_time",
-          owner: actor,
-          source: "facebook",
-        })
-        .select("id")
-        .single();
-      dealId = (createdDeal?.id as string | undefined) ?? "";
-    }
+  const packageKey = str(formData, "package_key", 60) || "custom";
+  const template = templateByKey(packageKey);
+  const items = parseItems(str(formData, "items_json", 200_000));
+  const sections = parseSections(str(formData, "sections_json", 200_000));
+  const commercials = commercialsFrom(formData, items);
+
+  const leadId = str(formData, "lead_id", 40) || null;
+  const customerId = str(formData, "customer_id", 40) || null;
+  const dealId = str(formData, "deal_id", 40) || null;
+  let companyId = str(formData, "company_id", 40) || null;
+
+  // Inherit the company from whatever the proposal was attached to, so a
+  // proposal written from a lead lands on the same company record the CRM
+  // already uses rather than floating unattached.
+  if (!companyId && leadId) {
+    const { data } = await supabase.from("leads").select("company_id").eq("id", leadId).maybeSingle();
+    companyId = (data?.company_id as string | undefined) ?? null;
   }
-  if (!dealId) return;
+  if (!companyId && customerId) {
+    const { data } = await supabase.from("customers").select("company_id").eq("id", customerId).maybeSingle();
+    companyId = (data?.company_id as string | undefined) ?? null;
+  }
 
-  const nextFollowup = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const services = Array.from(new Set([...(lead.services_interested ?? []), "Website", "CRM", "E-commerce"]));
-  // Keep the factual contact update separate so a pre-existing duplicate
-  // email cannot prevent the rest of the proposal sync from saving.
-  await supabase.from("leads").update({ email: "corywiththekeys@gmail.com" }).eq("id", leadId);
-  await supabase.from("leads").update({
-    services_interested: services,
-    source: "facebook",
-    last_contacted_at: "2026-09-01T12:39:00.000Z",
-    next_followup_at: nextFollowup.toISOString(),
-  }).eq("id", leadId);
-
-  const brief = [
-    "The Key Konnect — $399 website launch + $29/month hosting.",
-    "Agreed scope: 4–5 pages, working vehicle inventory, an initial merchandise shop, and a music experience.",
-    "Working website built: https://corywiththekeys.vercel.app/",
-    "Assets received: Cory supplied his company logos and the ‘13 Years Old’ audio; both are incorporated into the website.",
-    "Current commercial step: send the final proposal and record acceptance or payment.",
-    "Contact originated through Facebook. Do not mark Won until acceptance or payment is recorded.",
-  ].join("\n");
-
-  await supabase.from("deals").update({
-    title: "The Key Konnect website launch",
-    stage: "proposal",
-    value_cents: 39900,
-    billing: "one_time",
-    notes: brief,
-    next_action: "Send the final proposal and record Cory’s acceptance or payment",
-    next_action_at: nextFollowup.toISOString(),
-    last_activity_at: "2026-09-01T12:39:00.000Z",
-  }).eq("id", dealId);
-
-  const { data: existingEvent } = await supabase
-    .from("lead_events")
-    .select("id, meta")
-    .eq("lead_id", leadId)
-    .eq("type", "note")
-    .order("created_at", { ascending: false })
-    .limit(30);
-  const alreadyImported = (existingEvent ?? []).some((event) =>
-    (event.meta as { import_key?: string } | null)?.import_key === "key-konnect-build-ready-2026-09-01"
-  );
-  if (!alreadyImported) {
-    await supabase.from("lead_events").insert({
+  const { data, error } = await supabase
+    .from("proposals")
+    .insert({
       lead_id: leadId,
-      type: "note",
-      body: brief,
+      customer_id: customerId,
+      deal_id: dealId,
+      company_id: companyId,
+      created_by: actor,
+      owner: str(formData, "owner", 200) || actor,
+      status: "draft",
+      title: str(formData, "title", 200) || template.defaultTitle,
+      summary: str(formData, "summary", 6000) || null,
+      package_key: packageKey,
+      package_name: str(formData, "package_name", 200) || template.name,
+      ...clientFieldsFrom(formData),
+      ...commercials,
+      turnaround_note: str(formData, "turnaround_note", 500) || null,
+      revision_limit: intOrNull(str(formData, "revision_limit", 5)),
+      hosting_note: str(formData, "hosting_note", 2000) || template.hostingNote,
+      valid_until: isoDateOrNull(str(formData, "valid_until", 20)) ?? defaultValidUntil(),
+      public_token: newProposalToken(),
+      agreement_version_id: agreement.id,
+      notes_internal: str(formData, "notes_internal", 6000) || null,
+    })
+    .select("id, proposal_number")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Could not create the proposal: ${error?.message ?? "unknown"}`);
+  }
+
+  await replaceChildren(supabase, data.id as string, items, sections);
+  await logProposalEvent(supabase, {
+    proposalId: data.id as string,
+    type: "created",
+    body: `Proposal ${data.proposal_number} created from the ${template.name} template.`,
+    actor,
+  });
+
+  touch(data.id as string);
+  redirect(`/admin/proposals/${data.id}`);
+}
+
+export async function updateProposalAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const id = str(formData, "proposal_id", 40);
+  if (!id) return;
+
+  const { data: existing } = await supabase
+    .from("proposals")
+    .select("id, locked_at, proposal_number")
+    .eq("id", id)
+    .maybeSingle();
+  if (!existing) return;
+
+  if (existing.locked_at) {
+    throw new Error(
+      `${existing.proposal_number} has been signed and cannot be edited. Duplicate it as a revision, or raise a change order.`
+    );
+  }
+
+  const items = parseItems(str(formData, "items_json", 200_000));
+  const sections = parseSections(str(formData, "sections_json", 200_000));
+  const commercials = commercialsFrom(formData, items);
+  const packageKey = str(formData, "package_key", 60) || "custom";
+  const template = templateByKey(packageKey);
+
+  const { error } = await supabase
+    .from("proposals")
+    .update({
+      title: str(formData, "title", 200) || template.defaultTitle,
+      summary: str(formData, "summary", 6000) || null,
+      package_key: packageKey,
+      package_name: str(formData, "package_name", 200) || template.name,
+      owner: str(formData, "owner", 200) || actor,
+      ...clientFieldsFrom(formData),
+      ...commercials,
+      turnaround_note: str(formData, "turnaround_note", 500) || null,
+      revision_limit: intOrNull(str(formData, "revision_limit", 5)),
+      hosting_note: str(formData, "hosting_note", 2000) || null,
+      valid_until: isoDateOrNull(str(formData, "valid_until", 20)),
+      notes_internal: str(formData, "notes_internal", 6000) || null,
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(`Could not save the proposal: ${error.message}`);
+
+  await replaceChildren(supabase, id, items, sections);
+  await logProposalEvent(supabase, {
+    proposalId: id,
+    type: "edited",
+    body: "Proposal content and pricing updated.",
+    actor,
+  });
+
+  touch(id);
+  redirect(`/admin/proposals/${id}`);
+}
+
+/**
+ * Copies a proposal into a fresh draft with a new number and a new token.
+ *
+ * This is also how a signed proposal is revised: the original stays frozen,
+ * the copy records what it supersedes, and the client never sees two live
+ * links to the same work.
+ */
+export async function duplicateProposalAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const id = str(formData, "proposal_id", 40);
+  if (!id) return;
+
+  const { data: source } = await supabase.from("proposals").select("*").eq("id", id).maybeSingle();
+  if (!source) return;
+
+  const original = source as Proposal;
+  const asRevision = flag(formData, "as_revision");
+
+  const agreement = await currentAgreement(supabase);
+
+  const { data: copy, error } = await supabase
+    .from("proposals")
+    .insert({
+      lead_id: original.lead_id,
+      company_id: original.company_id,
+      deal_id: original.deal_id,
+      customer_id: original.customer_id,
+      kind: flag(formData, "as_change_order") ? "change_order" : "proposal",
+      supersedes_id: asRevision || flag(formData, "as_change_order") ? original.id : null,
+      created_by: actor,
+      owner: original.owner ?? actor,
+      status: "draft",
+      title: asRevision ? original.title : `${original.title} (copy)`,
+      summary: original.summary,
+      package_key: original.package_key,
+      package_name: original.package_name,
+      client_business_name: original.client_business_name,
+      client_contact_name: original.client_contact_name,
+      client_email: original.client_email,
+      client_phone: original.client_phone,
+      client_title: original.client_title,
+      client_billing_address: original.client_billing_address,
+      currency: original.currency,
+      subtotal_cents: original.subtotal_cents,
+      discount_amount_cents: original.discount_amount_cents,
+      one_time_price_cents: original.one_time_price_cents,
+      total_cents: original.total_cents,
+      recurring_price_cents: original.recurring_price_cents,
+      recurring_interval: original.recurring_interval,
+      deposit_amount_cents: original.deposit_amount_cents,
+      payment_mode: original.payment_mode,
+      turnaround_note: original.turnaround_note,
+      revision_limit: original.revision_limit,
+      hosting_note: original.hosting_note,
+      valid_until: defaultValidUntil(),
+      public_token: newProposalToken(),
+      // A copy carries today's wording, not the wording of a year ago.
+      agreement_version_id: agreement?.id ?? original.agreement_version_id,
+      notes_internal: original.notes_internal,
+    })
+    .select("id, proposal_number")
+    .single();
+
+  if (error || !copy) throw new Error(`Could not duplicate: ${error?.message ?? "unknown"}`);
+
+  const [{ data: items }, { data: sections }] = await Promise.all([
+    supabase.from("proposal_items").select("*").eq("proposal_id", id).order("sort_order"),
+    supabase.from("proposal_sections").select("*").eq("proposal_id", id).order("sort_order"),
+  ]);
+
+  type Row = Record<string, unknown>;
+  if (items && items.length > 0) {
+    await supabase.from("proposal_items").insert(
+      (items as Row[]).map((row) => ({
+        ...without(row, ["id", "proposal_id", "created_at"]),
+        proposal_id: copy.id,
+      }))
+    );
+  }
+  if (sections && sections.length > 0) {
+    await supabase.from("proposal_sections").insert(
+      (sections as Row[]).map((row) => ({
+        ...without(row, ["id", "proposal_id", "created_at", "updated_at"]),
+        proposal_id: copy.id,
+      }))
+    );
+  }
+
+  await logProposalEvent(supabase, {
+    proposalId: copy.id as string,
+    type: "duplicated",
+    body: `Created from ${original.proposal_number}${asRevision ? " as a revision" : ""}.`,
+    actor,
+  });
+  if (asRevision || flag(formData, "as_change_order")) {
+    await logProposalEvent(supabase, {
+      proposalId: original.id,
+      type: "revised",
+      body: `Superseded by ${copy.proposal_number}.`,
       actor,
-      meta: { import_key: "key-konnect-build-ready-2026-09-01", channel: "facebook" },
-      created_at: "2026-09-01T12:39:00.000Z",
     });
   }
 
-  const { data: milestoneEvents } = await supabase
-    .from("lead_events")
-    .select("meta")
-    .eq("lead_id", leadId)
-    .eq("type", "system")
-    .limit(100);
-  const recordedMilestones = new Set(
-    (milestoneEvents ?? []).map((event) => (event.meta as { proposal_milestone?: string } | null)?.proposal_milestone)
-  );
-  for (const [milestone, body] of [
-    ["assets_received", "Required assets received: Cory’s logos and ‘13 Years Old’ audio."],
-    ["build_ready", "Working website ready for client review."],
-  ] as const) {
-    if (!recordedMilestones.has(milestone)) {
-      await supabase.from("lead_events").insert({
-        lead_id: leadId,
-        type: "system",
-        body,
-        actor,
-        meta: { proposal_milestone: milestone, cleared: false },
-        created_at: "2026-09-01T12:39:00.000Z",
-      });
-    }
+  touch(copy.id as string);
+  redirect(`/admin/proposals/${copy.id}/edit`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Sending, status, conversion
+// ═══════════════════════════════════════════════════════════════════════
+
+export async function sendProposalAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const id = str(formData, "proposal_id", 40);
+  if (!id) return;
+
+  const { data } = await supabase.from("proposals").select("*").eq("id", id).maybeSingle();
+  if (!data) return;
+  const proposal = data as Proposal;
+
+  if (!proposal.client_email) {
+    throw new Error("This proposal has no client email address. Add one before sending.");
+  }
+  if (!proposal.agreement_version_id) {
+    throw new Error("This proposal has no agreement attached. Reopen it and save again.");
+  }
+  if (!canTransition(proposal.status, "sent")) {
+    throw new Error(`A ${proposal.status} proposal cannot be sent.`);
   }
 
-  const { data: openTask } = await supabase
-    .from("tasks")
-    .select("id")
-    .eq("lead_id", leadId)
-    .eq("done", false)
-    .in("kind", ["followup", "callback"])
-    .limit(1)
-    .maybeSingle();
-  const task = {
-    title: "Send Cory the final proposal",
-    notes: "The working website is built and Cory’s logos and ‘13 Years Old’ audio are incorporated. Send the final proposal, confirm approval, and record acceptance or payment.",
-    kind: "followup",
-    priority: "high",
-    due_at: nextFollowup.toISOString(),
-    owner: actor,
-    lead_id: leadId,
-    source: "manual",
-  };
-  if (openTask) await supabase.from("tasks").update(task).eq("id", openTask.id);
-  else await supabase.from("tasks").insert(task);
+  const url = proposalUrl(proposal.public_token);
+  const resend = Boolean(proposal.sent_at);
+  const note = str(formData, "note", 2000) || null;
 
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select("id")
-    .eq("deal_id", dealId)
-    .in("status", ["draft", "sent"])
-    .limit(1)
-    .maybeSingle();
-  const proposalInvoice = {
-    deal_id: dealId,
-    lead_id: leadId,
-    kind: "launch",
-    amount_cents: 0,
-    launch_cents: 39900,
-    hosting_cents: 2900,
-    billing: "one_time",
-    description: "4–5 page website for The Key Konnect with vehicle inventory, merchandise shop, music experience, and starter CRM.",
-    notes: "$399 one-time build and $29/month hosting. Working website is built; logos and music are received. Awaiting formal acceptance or payment.",
-  };
-  if (invoice) await supabase.from("invoices").update(proposalInvoice).eq("id", invoice.id);
-  else await supabase.from("invoices").insert({ ...proposalInvoice, status: "draft" });
+  const delivered = await sendProposalEmail(proposal, url, note);
 
-  for (const path of REVALIDATE) revalidatePath(path);
-  revalidatePath(`/admin/leads/${leadId}`);
+  await supabase
+    .from("proposals")
+    .update({
+      status: "sent",
+      sent_at: proposal.sent_at ?? new Date().toISOString(),
+      // Re-sending after a decline or an expiry puts it back in play.
+      declined_at: null,
+      decline_reason: null,
+      expired_at: null,
+    })
+    .eq("id", id);
+
+  await logProposalEvent(supabase, {
+    proposalId: id,
+    type: resend ? "resent" : "sent",
+    body: delivered
+      ? `Emailed to ${proposal.client_email}.`
+      : `Marked as sent. The email did NOT go out — RESEND_API_KEY is not configured, so send the link manually: ${url}`,
+    actor,
+    metadata: { delivered, url },
+  });
+
+  touch(id);
+}
+
+/**
+ * Any other status change an admin makes by hand, checked against the
+ * transition map rather than written straight through.
+ *
+ * Dragging a paid proposal back to draft is not a state this business has —
+ * the document was signed and the money moved — so the map refuses it and
+ * says so instead of quietly corrupting the funnel numbers.
+ */
+export async function setProposalStatusAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const id = str(formData, "proposal_id", 40);
+  const next = str(formData, "status", 30) as ProposalStatus;
+  if (!id || !next) return;
+
+  const { data } = await supabase
+    .from("proposals")
+    .select("id, status, proposal_number, total_cents, amount_paid_cents")
+    .eq("id", id)
+    .maybeSingle();
+  if (!data) return;
+
+  const current = data.status as ProposalStatus;
+  if (!canTransition(current, next)) {
+    throw new Error(
+      `${data.proposal_number} is ${current}; it cannot be moved to ${next}.`
+    );
+  }
+
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = { status: next };
+  if (next === "cancelled") patch.cancelled_at = now;
+  if (next === "expired") patch.expired_at = now;
+  if (next === "declined") {
+    patch.declined_at = now;
+    patch.decline_reason = str(formData, "reason", 2000) || null;
+  }
+  if (next === "draft") {
+    // Putting it back in the builder clears the closing stamps, but never
+    // sent_at — that it went out once is a fact, not a status.
+    patch.cancelled_at = null;
+    patch.expired_at = null;
+    patch.declined_at = null;
+    patch.decline_reason = null;
+  }
+  if (next === "paid") {
+    patch.paid_at = now;
+    // Recorded on the proposal only. Revenue stays Stripe-sourced so the
+    // campaign dashboard cannot count one sale twice; a payment taken
+    // outside Stripe is entered wherever that money is actually booked.
+    patch.amount_paid_cents = Math.max(
+      Number(data.amount_paid_cents ?? 0),
+      Number(data.total_cents ?? 0)
+    );
+  }
+
+  const { error } = await supabase.from("proposals").update(patch).eq("id", id);
+  if (error) throw new Error(`Could not update status: ${error.message}`);
+
+  await logProposalEvent(supabase, {
+    proposalId: id,
+    type: next === "paid" ? "paid" : next === "declined" ? "declined" : next === "cancelled" ? "cancelled" : "note",
+    body:
+      next === "paid"
+        ? "Marked paid by hand in the admin. No Stripe payment is attached to this."
+        : `Status changed from ${current} to ${next}.`,
+    actor,
+  });
+
+  touch(id);
+}
+
+/**
+ * Turns a signed proposal into a project.
+ *
+ * Gated on what was actually agreed: a proposal that asks for money at
+ * signature has to have been paid, and one that does not can convert as soon
+ * as it is signed. The gate is read from the proposal, never from a checkbox
+ * on the form.
+ *
+ * Idempotent: if a job already exists it links to it rather than opening a
+ * second one, and a client is looked up before being created so one business
+ * does not end up as two customer records.
+ */
+export async function convertProposalToProjectAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const id = str(formData, "proposal_id", 40);
+  if (!id) return;
+
+  const { data } = await supabase.from("proposals").select("*").eq("id", id).maybeSingle();
+  if (!data) return;
+  const p = data as Proposal;
+
+  if (!p.signed_at) throw new Error("This proposal has not been signed yet.");
+
+  const dueAtSignature =
+    p.payment_mode === "invoice_later"
+      ? 0
+      : p.payment_mode === "full"
+        ? p.total_cents
+        : p.deposit_amount_cents;
+
+  if (dueAtSignature > 0 && p.amount_paid_cents < dueAtSignature) {
+    throw new Error(
+      "The payment agreed at signature has not been received yet, so the project cannot be created."
+    );
+  }
+  if (p.job_id) throw new Error("A project already exists for this proposal.");
+
+  // ── The client record. Found before created.
+  let customerId = p.customer_id;
+  if (!customerId && p.lead_id) {
+    const { data: byLead } = await supabase
+      .from("customers").select("id").eq("lead_id", p.lead_id).maybeSingle();
+    customerId = (byLead?.id as string | undefined) ?? null;
+  }
+  if (!customerId && p.client_email) {
+    const { data: byEmail } = await supabase
+      .from("customers").select("id").ilike("email", p.client_email).limit(1).maybeSingle();
+    customerId = (byEmail?.id as string | undefined) ?? null;
+  }
+  if (!customerId) {
+    const { data: created, error: customerError } = await supabase
+      .from("customers")
+      .insert({
+        lead_id: p.lead_id,
+        company_id: p.company_id,
+        name: p.client_contact_name,
+        business_name: p.client_business_name,
+        email: p.client_email ?? "",
+        phone: p.client_phone,
+        status: "active",
+        mrr_cents: p.recurring_price_cents,
+        owner: p.owner ?? actor,
+        notes: `Converted from proposal ${p.proposal_number}.`,
+      })
+      .select("id")
+      .single();
+    if (customerError || !created) {
+      throw new Error(`Could not create the client record: ${customerError?.message ?? "unknown"}`);
+    }
+    customerId = created.id as string;
+  }
+
+  // ── The project.
+  const isStarter = p.package_key === "starter_149";
+  const started = new Date();
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .insert({
+      customer_id: customerId,
+      lead_id: p.lead_id,
+      invoice_id: p.invoice_id,
+      title: p.title,
+      business_name: p.client_business_name,
+      stage: isStarter ? "Purchased" : "Intake",
+      package: isStarter ? "starter_149" : "launch_package",
+      promised_days: PROMISED_DAYS,
+      started_at: started.toISOString(),
+      due_at: dueDateFrom(started),
+      notes: [
+        `From proposal ${p.proposal_number}.`,
+        p.turnaround_note ? `Turnaround quoted: ${p.turnaround_note}` : null,
+        p.revision_limit !== null ? `Revision rounds included: ${p.revision_limit}` : null,
+        p.recurring_price_cents > 0
+          ? `Hosting: ${(p.recurring_price_cents / 100).toFixed(2)}/${p.recurring_interval}`
+          : null,
+      ].filter(Boolean).join("\n"),
+    })
+    .select("id")
+    .single();
+
+  if (jobError || !job) {
+    throw new Error(`Could not open the project: ${jobError?.message ?? "unknown"}`);
+  }
+  const jobId = job.id as string;
+
+  // The proven per-stage checklist, for the packages whose jobs run it.
+  if (!isStarter) {
+    await supabase.from("job_tasks").insert(
+      DEFAULT_JOB_TASKS.map((task, index) => ({
+        job_id: jobId,
+        stage: task.stage,
+        label: task.label,
+        position: index,
+      }))
+    );
+  }
+
+  await supabase.from("job_events").insert({
+    job_id: jobId,
+    kind: "note",
+    body: `Project opened from signed proposal ${p.proposal_number}.`,
+    to_stage: isStarter ? "Purchased" : "Intake",
+    actor,
+  });
+
+  // ── The onboarding questionnaire. Same wizard the Starter sale uses; for
+  // every other package it is issued without touching the job's stage, whose
+  // vocabulary is the 0004 one.
+  let intakeUrl: string | null = null;
+  try {
+    const { url } = await createIntake({
+      jobId,
+      customerId,
+      leadId: p.lead_id,
+      businessName: p.client_business_name,
+      contactName: p.client_contact_name,
+      email: p.client_email,
+      phone: p.client_phone,
+      packageKey: p.package_key,
+      advanceJobStage: isStarter,
+    });
+    intakeUrl = url;
+  } catch {
+    // An intake that could not be opened is a follow-up, not a failed
+    // conversion — the project and the client record are already real.
+  }
+
+  // ── Close the loop on the records this came from.
+  await supabase
+    .from("proposals")
+    .update({
+      status: "converted",
+      converted_at: new Date().toISOString(),
+      job_id: jobId,
+      customer_id: customerId,
+    })
+    .eq("id", id);
+
+  if (p.deal_id) {
+    await supabase
+      .from("deals")
+      .update({ stage: "won", won_at: new Date().toISOString(), customer_id: customerId })
+      .eq("id", p.deal_id);
+  }
+  if (p.lead_id) {
+    await supabase.from("leads").update({ lead_status: "Won" }).eq("id", p.lead_id);
+  }
+
+  await logProposalEvent(supabase, {
+    proposalId: id,
+    type: "converted_to_project",
+    body: `Project opened${intakeUrl ? " and an onboarding link issued" : ""}.`,
+    actor,
+    metadata: { job_id: jobId, customer_id: customerId, intake_url: intakeUrl },
+  });
+
+  touch(id);
+  revalidatePath("/admin/jobs");
+  revalidatePath("/admin/clients");
+  redirect(`/admin/jobs/${jobId}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Agreement versions — Settings → Agreements
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Saves agreement wording as a NEW version, never over an old one.
+ *
+ * Editing a published version in place would change what somebody has already
+ * signed, which is the one thing this whole feature exists to prevent. A
+ * version already pointed at by a proposal is therefore copied, not modified.
+ */
+export async function saveAgreementVersionAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+
+  const version = str(formData, "version", 40);
+  const title = str(formData, "title", 300);
+  if (!version || !title) throw new Error("A version number and a title are both required.");
+
+  let sections: unknown;
+  let ownership: unknown;
+  try {
+    sections = JSON.parse(str(formData, "sections_json", 400_000) || "[]");
+    ownership = JSON.parse(str(formData, "ownership_json", 100_000) || "[]");
+  } catch {
+    throw new Error("The clause or ownership JSON is not valid. Nothing was saved.");
+  }
+  if (!Array.isArray(sections) || !Array.isArray(ownership)) {
+    throw new Error("Clauses and ownership rows must each be a JSON array.");
+  }
+
+  const id = str(formData, "agreement_id", 40);
+  const payload = {
+    version,
+    title,
+    intro: str(formData, "intro", 20_000) || null,
+    sections,
+    ownership_rows: ownership,
+    created_by: actor,
+  };
+
+  if (id) {
+    const { data: existing } = await supabase
+      .from("agreement_versions").select("id, status").eq("id", id).maybeSingle();
+    if (!existing) throw new Error("That agreement version no longer exists.");
+
+    const { count } = await supabase
+      .from("proposals").select("id", { count: "exact", head: true })
+      .eq("agreement_version_id", id);
+
+    if (existing.status === "draft" && (count ?? 0) === 0) {
+      const { error } = await supabase.from("agreement_versions").update(payload).eq("id", id);
+      if (error) throw new Error(`Could not save: ${error.message}`);
+      revalidatePath("/admin/settings/agreements");
+      return;
+    }
+    // Published, or already in use: this becomes a new draft version instead.
+  }
+
+  const { error } = await supabase
+    .from("agreement_versions")
+    .insert({ ...payload, status: "draft" });
+  if (error) {
+    throw new Error(
+      error.message.includes("agreement_versions_version_key")
+        ? `Version ${version} already exists. Give this one a new number.`
+        : `Could not save: ${error.message}`
+    );
+  }
+
+  revalidatePath("/admin/settings/agreements");
+}
+
+export async function publishAgreementVersionAction(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "agreement_id", 40);
+  if (!id) return;
+
+  const { error } = await supabase
+    .from("agreement_versions")
+    .update({ status: "published", published_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(`Could not publish: ${error.message}`);
+
+  revalidatePath("/admin/settings/agreements");
+  revalidatePath("/admin/proposals");
+}
+
+/**
+ * Retires wording without deleting it. Archived versions still render on
+ * every proposal that pinned them — a signed agreement must stay readable
+ * long after it stops being what we offer.
+ */
+export async function archiveAgreementVersionAction(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = str(formData, "agreement_id", 40);
+  if (!id) return;
+
+  const { count } = await supabase
+    .from("agreement_versions")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published")
+    .neq("id", id);
+
+  if ((count ?? 0) === 0) {
+    throw new Error(
+      "This is the only published agreement version. Publish its replacement first, or new proposals will have no terms to attach."
+    );
+  }
+
+  const { error } = await supabase
+    .from("agreement_versions").update({ status: "archived" }).eq("id", id);
+  if (error) throw new Error(`Could not archive: ${error.message}`);
+
+  revalidatePath("/admin/settings/agreements");
 }

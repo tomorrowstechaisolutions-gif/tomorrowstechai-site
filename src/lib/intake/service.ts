@@ -82,6 +82,21 @@ export async function createIntake(input: {
   contactName?: string | null;
   email?: string | null;
   phone?: string | null;
+  /**
+   * Which product this intake belongs to. Defaults to Starter, which is the
+   * only thing that used it until proposals began converting into projects —
+   * the QUESTIONS are the same whatever was bought (logo, business details,
+   * photos, domain), only the label differs.
+   */
+  packageKey?: string | null;
+  /**
+   * Whether issuing the link should move the job to "Intake Required".
+   * True for Starter, where intake IS the gate that starts the build clock.
+   * False for the $399 Classic and above, whose jobs run the 0004 stage
+   * vocabulary — pushing a Starter stage onto one of those would make the
+   * projects board describe the job in words its own pipeline does not use.
+   */
+  advanceJobStage?: boolean;
 }): Promise<{ intake: IntakeRecord; url: string }> {
   const db = supabaseAdmin();
 
@@ -106,7 +121,7 @@ export async function createIntake(input: {
       job_id: input.jobId ?? null,
       customer_id: input.customerId ?? null,
       lead_id: input.leadId ?? null,
-      package: STARTER_PACKAGE,
+      package: input.packageKey || STARTER_PACKAGE,
       token,
       // Prefilled from what the sale already told us, so the client is not
       // retyping the name they just paid under.
@@ -123,7 +138,9 @@ export async function createIntake(input: {
   }
 
   if (input.jobId) {
-    await db.from("jobs").update({ stage: "Intake Required" }).eq("id", input.jobId);
+    if (input.advanceJobStage !== false) {
+      await db.from("jobs").update({ stage: "Intake Required" }).eq("id", input.jobId);
+    }
     await db.from("job_events").insert({
       job_id: input.jobId,
       kind: "note",

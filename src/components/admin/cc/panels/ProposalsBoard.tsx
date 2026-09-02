@@ -1,251 +1,220 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { loadProposalWorkspace, type ProposalRow } from "@/lib/proposals/queries";
-import { saveProposalAction, setProposalMilestoneAction, syncKeyKonnectConversationAction } from "@/app/admin/proposal-actions";
-import { EmptyState, Panel, PanelSkeleton } from "../Panel";
+import { loadProposalWorkspace, type ProposalFilters } from "@/lib/proposals/queries";
+import { proposalUrl } from "@/lib/proposals/service";
+import { STATUS_LABELS, STATUS_TONE } from "@/lib/proposals/config";
+import { duplicateProposalAction } from "@/app/admin/proposal-actions";
+import ProposalFiltersBar from "../ProposalFilters";
+import CopyLink from "../CopyLink";
+import { EmptyState, PanelSkeleton } from "../Panel";
 import { DASH, money, shortDate } from "../format";
 import {
-  IconArrowRight,
-  IconCheck,
-  IconDollar,
-  IconFile,
-  IconInbox,
-  IconLink,
-  IconSend,
-  IconUsers,
+  IconCheck, IconDollar, IconFile, IconInbox,
+  IconPen, IconSend, IconAlert, IconSearch,
 } from "../Icons";
 
-const STATUS_TONE: Record<string, string> = {
-  draft: "t-muted", sent: "t-info", paid: "t-ok", expired: "t-warn",
-  void: "t-risk", refunded: "t-warn", proposal: "t-info",
-  negotiation: "t-warn", won: "t-ok", lost: "t-risk", on_hold: "t-muted",
-};
+/**
+ * The proposal list.
+ *
+ * The summary cards count EVERYTHING, deliberately, while the table below
+ * respects the filters. A card that changed when you filtered would be
+ * answering a different question from the one it is labelled with.
+ */
 
-function Kpis({ data }: { data: Awaited<ReturnType<typeof loadProposalWorkspace>> }) {
-  const cards = [
-    { label: "Active proposals", value: String(data.kpis.active), foot: "Still winnable", icon: IconFile },
-    { label: "Drafts", value: String(data.kpis.drafts), foot: "Written, not yet sent", icon: IconInbox },
-    { label: "Sent", value: String(data.kpis.sent), foot: "Agreement delivered", icon: IconSend },
-    { label: "Accepted", value: String(data.kpis.accepted), foot: "Approved on paper", icon: IconCheck },
-    { label: "Proposal value", value: data.kpis.pipelineCents ? money(data.kpis.pipelineCents) : DASH, foot: "Recorded active value", icon: IconDollar },
-    { label: "Paid", value: String(data.kpis.paid), foot: "Revenue actually collected", icon: IconCheck },
-  ];
-
-  return (
-    <div className="cc-kpis">
-      {cards.map(({ label, value, foot, icon: Icon }) => (
-        <div className="cc-kpi" key={label}>
-          <div className="cc-kpi-top"><span className="cc-kpi-icon"><Icon size={14} /></span><span className="cc-kpi-label">{label}</span></div>
-          <span className="cc-kpi-value">{value}</span>
-          <div className="cc-kpi-foot"><span>{foot}</span></div>
-        </div>
-      ))}
-    </div>
-  );
+export async function ProposalsBoardSkeleton() {
+  return <PanelSkeleton title="Proposals" rows={8} />;
 }
 
-function Progress({ proposal }: { proposal: ProposalRow }) {
-  const done = proposal.steps.filter((step) => step.state === "done").length;
-  const percentage = Math.round((done / proposal.steps.length) * 100);
-  return (
-    <div className="proposal-progress">
-      <div className="proposal-progress-head">
-        <div><span className="proposal-eyebrow">Close plan</span><strong>{percentage}% through the proposal workflow</strong></div>
-        <span className="cc-chip t-info">{done} of {proposal.steps.length} verified</span>
-      </div>
-      <div className="proposal-meter" aria-label={`${percentage}% complete`}><span style={{ width: `${percentage}%` }} /></div>
-      <ol className="proposal-steps">
-        {proposal.steps.map((step, index) => (
-          <li className={`is-${step.state}`} key={step.label}>
-            <span className="proposal-step-mark">{step.state === "done" ? <IconCheck size={13} /> : index + 1}</span>
-            <div><strong>{step.label}</strong><p>{step.detail}</p></div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
-  const proposalStatus = proposal.paidAt
-    ? "Paid"
-    : proposal.proposalAcceptedAt
-      ? "Proposal accepted"
-      : proposal.proposalSentAt
-        ? "Proposal sent"
-        : "Proposal draft";
-  return (
-    <section className="proposal-spotlight">
-      <div className="proposal-spotlight-top">
-        <div>
-          <span className="proposal-eyebrow">First live opportunity · Facebook</span>
-          <h2>The Key Konnect</h2>
-          <p>Cory Simek · Owner &amp; visionary · Killeen, Texas · corywiththekeys@gmail.com</p>
-        </div>
-        <div className="proposal-spotlight-status">
-          <span className={`cc-chip ${STATUS_TONE[proposal.invoiceStatus ?? proposal.stage] ?? "t-muted"}`}>
-            {proposalStatus}
-          </span>
-          <span className="proposal-value">$399 build <span>+ $29/mo hosting</span></span>
-        </div>
-      </div>
-
-      <div className="proposal-facts">
-        <div><span>Agreed scope</span><strong>4–5 page website</strong><p>Vehicle inventory, merchandise shop, music experience, and starter CRM.</p></div>
-        <div><span>Investment</span><strong>$399 + $29/month</strong><p>One-time website build plus ongoing hosting and management.</p></div>
-        <div><span>Current position</span><strong>Build ahead of paperwork</strong><p>Logos and music are implemented. Send the written proposal, record acceptance, then review and launch before requesting payment.</p></div>
-      </div>
-
-      <div className="proposal-actions-row">
-        {proposal.previewUrl ? (
-          <a className="cc-btn primary" href={proposal.previewUrl} target="_blank" rel="noreferrer"><IconLink size={13} /> Open working preview</a>
-        ) : null}
-        <Link className="cc-btn primary" href="/proposal/the-key-konnect" target="_blank"><IconFile size={13} /> Open client proposal</Link>
-        {proposal.leadId ? <Link className="cc-btn" href={`/admin/leads/${proposal.leadId}`}><IconUsers size={13} /> Open Cory’s CRM record</Link> : null}
-        {proposal.leadId ? (
-          <form action={syncKeyKonnectConversationAction}>
-            <input type="hidden" name="deal_id" value={proposal.dealId} />
-            <input type="hidden" name="lead_id" value={proposal.leadId} />
-            <button className="cc-btn" type="submit"><IconCheck size={13} /> {proposal.dealId ? "Sync Cory’s latest progress" : "Save Cory’s proposal to CRM"}</button>
-          </form>
-        ) : null}
-      </div>
-      <p className="proposal-truth-note">The website is built and the agreed assets are in place. Revenue still books only when Cory accepts the proposal or pays.</p>
-    </section>
-  );
-}
-
-const MILESTONES = [
-  { key: "proposal_sent", label: "Proposal sent", field: "proposalSentAt" },
-  { key: "proposal_accepted", label: "Agreement accepted", field: "proposalAcceptedAt" },
-  { key: "assets_received", label: "Assets received", field: "assetsReceivedAt" },
-  { key: "build_ready", label: "Build ready", field: "buildReadyAt" },
-  { key: "review_approved", label: "Final review approved", field: "reviewApprovedAt" },
-  { key: "launched", label: ".com live", field: "launchedAt" },
-] as const;
-
-function MilestoneControls({ proposal }: { proposal: ProposalRow }) {
-  return (
-    <Panel title="Agreement & delivery milestones" sub="Acceptance is separate from payment" icon={<IconCheck size={15} />} className="cc-s12">
-      <div className="proposal-milestone-controls">
-        {MILESTONES.map((milestone) => {
-          const completedAt = proposal[milestone.field];
-          return (
-            <div className="proposal-milestone-control" key={milestone.key}>
-              <div>
-                <strong>{milestone.label}</strong>
-                <span>
-                  {completedAt
-                    ? `${shortDate(completedAt)}${milestone.key === "proposal_accepted" && proposal.proposalAcceptedBy ? ` · ${proposal.proposalAcceptedBy}` : ""}`
-                    : "Not recorded"}
-                </span>
-              </div>
-              <form action={setProposalMilestoneAction}>
-                <input type="hidden" name="deal_id" value={proposal.dealId} />
-                <input type="hidden" name="milestone" value={milestone.key} />
-                {milestone.key === "proposal_accepted" && !completedAt ? (
-                  <input className="cc-input" name="accepted_by" placeholder="Accepted by (name/email)" required />
-                ) : null}
-                {completedAt ? <input type="hidden" name="clear" value="1" /> : null}
-                <button className={`cc-btn ${completedAt ? "" : "primary"}`} type="submit">
-                  {completedAt ? "Undo" : "Record"}
-                </button>
-              </form>
-            </div>
-          );
-        })}
-      </div>
-      <p className="cc-note">Record payment only through the invoice/payment flow after the approved site is live. These buttons never book revenue.</p>
-    </Panel>
-  );
-}
-
-function ProposalEditor({ proposal }: { proposal: ProposalRow }) {
-  return (
-    <Panel title="Proposal brief" sub="Scope, value, and next move" icon={<IconFile size={15} />} className="cc-s7">
-      <form action={saveProposalAction} className="proposal-form">
-        <input type="hidden" name="deal_id" value={proposal.dealId} />
-        <label className="cc-field"><span>Proposal title</span><input className="cc-input" name="title" defaultValue={proposal.title} required /></label>
-        <div className="proposal-form-row four">
-          <label className="cc-field"><span>Build price</span><input className="cc-input" name="amount" inputMode="decimal" placeholder="Leave open until agreed" defaultValue={proposal.valueCents ? (proposal.valueCents / 100).toFixed(2) : proposal.isKeyKonnect ? "399.00" : ""} /></label>
-          <label className="cc-field"><span>Monthly hosting</span><input className="cc-input" name="hosting" inputMode="decimal" placeholder="0.00" defaultValue={proposal.hostingCents ? (proposal.hostingCents / 100).toFixed(2) : proposal.isKeyKonnect ? "29.00" : ""} /></label>
-          <label className="cc-field"><span>Billing</span><select className="cc-select" name="billing" defaultValue={proposal.billing}><option value="one_time">One time</option><option value="monthly">Monthly</option></select></label>
-          <label className="cc-field"><span>Expected close</span><input className="cc-input" name="expected_close" type="date" defaultValue={proposal.expectedClose ?? ""} /></label>
-        </div>
-        <label className="cc-field"><span>Scope and working notes</span><textarea className="cc-textarea proposal-scope" name="scope" defaultValue={proposal.notes ?? ""} placeholder="What is included, what is excluded, and what the client still owes you." /></label>
-        <div className="proposal-form-row two">
-          <label className="cc-field"><span>Next action</span><input className="cc-input" name="next_action" defaultValue={proposal.nextAction ?? ""} placeholder="One concrete move" /></label>
-          <label className="cc-field"><span>Due</span><input className="cc-input" name="next_action_at" type="datetime-local" defaultValue={proposal.nextActionAt?.slice(0, 16) ?? ""} /></label>
-        </div>
-        <div className="proposal-submit"><button className="cc-btn primary" type="submit">Save proposal brief <IconArrowRight size={13} /></button><span>Saving creates or updates a draft invoice. It does not claim payment.</span></div>
-      </form>
-    </Panel>
-  );
-}
-
-function CreateProposalRecord({ proposal }: { proposal: ProposalRow }) {
-  if (!proposal.leadId) return null;
-  return (
-    <Panel title="Record this agreement" sub="One click creates the missing CRM records" icon={<IconFile size={15} />} className="cc-s7">
-      <div className="proposal-record-callout">
-        <span className="cc-chip t-warn">CRM deal missing</span>
-        <h3>This progress has not been saved as a permanent CRM deal yet.</h3>
-        <p>Save it once to attach the completed working build, received assets, $399 build, $29/month hosting, draft invoice, conversation history, and final follow-up to Cory’s lead.</p>
-        <form action={syncKeyKonnectConversationAction}>
-          <input type="hidden" name="lead_id" value={proposal.leadId} />
-          <button className="cc-btn primary" type="submit">Save current progress to CRM <IconArrowRight size={13} /></button>
-        </form>
-      </div>
-    </Panel>
-  );
-}
-
-function ProposalList({ proposals, current }: { proposals: ProposalRow[]; current: ProposalRow }) {
-  return (
-    <Panel title="Proposal register" sub={`${proposals.length} total`} icon={<IconInbox size={15} />} className="cc-s5 cc-stretch">
-      <div className="proposal-list">
-        {proposals.map((proposal) => (
-          <article className={proposal.id === current.id ? "is-current" : ""} key={proposal.id}>
-            <div className="proposal-list-top"><strong>{proposal.companyName}</strong><span className={`cc-chip ${STATUS_TONE[proposal.invoiceStatus ?? proposal.stage] ?? "t-muted"}`}>{proposal.invoiceStatus ?? proposal.stage}</span></div>
-            <p>{proposal.title}</p>
-            <div><span>{proposal.contactName}</span><span>{proposal.valueCents ? money(proposal.valueCents) : "Price open"}</span></div>
-            <div><span>{proposal.nextAction ?? "Set next action"}</span><span>{proposal.updatedAt ? shortDate(proposal.updatedAt) : DASH}</span></div>
-          </article>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
-export default async function ProposalsBoard() {
+export default async function ProposalsBoard({
+  filters,
+}: {
+  filters: ProposalFilters;
+}) {
   const supabase = await createSupabaseServerClient();
-  const data = await loadProposalWorkspace(supabase);
-  const current = data.proposals.find((proposal) => proposal.isKeyKonnect) ?? data.proposals[0];
+
+  let board: Awaited<ReturnType<typeof loadProposalWorkspace>>;
+  try {
+    board = await loadProposalWorkspace(supabase, filters);
+  } catch (err) {
+    return (
+      <div className="cc-error">
+        <IconAlert size={15} />
+        <span>{err instanceof Error ? err.message : "Proposals could not be loaded."}</span>
+      </div>
+    );
+  }
+
+  const cards = [
+    { label: "Draft", value: board.summary.draft, foot: "Written, not sent", icon: IconInbox },
+    { label: "Sent", value: board.summary.sent, foot: "Delivered, not opened", icon: IconSend },
+    { label: "Viewed", value: board.summary.viewed, foot: "Client has read it", icon: IconSearch },
+    { label: "Awaiting signature", value: board.summary.awaiting_signature, foot: "Accepted, not signed", icon: IconPen },
+    { label: "Awaiting payment", value: board.summary.awaiting_payment, foot: "Signed, money not in", icon: IconDollar },
+    { label: "Accepted", value: board.summary.accepted, foot: "Agreed on paper", icon: IconCheck },
+    { label: "Paid", value: board.summary.paid, foot: "Payment recorded", icon: IconCheck },
+    { label: "Expired", value: board.summary.expired, foot: "Past its valid-until date", icon: IconAlert },
+  ];
 
   return (
     <>
       <div className="cc-greet">
-        <div><h1>Proposals</h1><p>Turn active conversations into clear scope, a price, a decision, and then real delivery.</p></div>
-        <div className="cc-greet-meta"><span className="cc-chip t-info">Truth-first pipeline</span></div>
+        <div>
+          <h1>Proposals</h1>
+          <p>
+            Scope, price, agreement, signature and payment — one document per
+            sale, from the first draft to the project it becomes.
+          </p>
+        </div>
+        <Link href="/admin/proposals/new" className="cc-btn primary">
+          <IconFile size={14} /> New proposal
+        </Link>
       </div>
-      <Kpis data={data} />
-      {!current ? (
-        <div className="cc-board"><Panel title="No proposals yet" icon={<IconFile size={15} />} className="cc-s12"><EmptyState title="Move a qualified deal into Proposal" text="This page reads proposal-stage deals and their draft or sent invoices. Add the opportunity in CRM, then move it forward in Pipeline." cta={{ href: "/admin/crm?tab=deals", label: "Open CRM" }} /></Panel></div>
-      ) : (
-        <>
-          {current.isKeyKonnect ? <KeyKonnectBrief proposal={current} /> : null}
-          <div className="cc-board proposal-board">
-            <Panel title="Workflow progress" sub={current.companyName} icon={<IconCheck size={15} />} className="cc-s12"><Progress proposal={current} /></Panel>
-            {current.dealId ? <MilestoneControls proposal={current} /> : null}
-            {current.dealId ? <ProposalEditor proposal={current} /> : <CreateProposalRecord proposal={current} />}
-            <ProposalList proposals={data.proposals} current={current} />
+
+      <div className="cc-kpis">
+        {cards.map(({ label, value, foot, icon: Icon }) => (
+          <div className="cc-kpi" key={label}>
+            <div className="cc-kpi-top">
+              <span className="cc-kpi-icon"><Icon size={14} /></span>
+              <span className="cc-kpi-label">{label}</span>
+            </div>
+            <span className="cc-kpi-value">{value}</span>
+            <div className="cc-kpi-foot"><span>{foot}</span></div>
           </div>
-        </>
-      )}
+        ))}
+      </div>
+
+      <div className="cc-board">
+        <section className="cc-panel cc-s12 cc-m1">
+          <div className="cc-panel-head">
+            <IconFile size={15} />
+            <h2>All proposals</h2>
+            <span className="cc-sub">
+              {board.openValueCents > 0
+                ? `${money(board.openValueCents)} still open · ${money(board.wonValueCents)} closed`
+                : "Nothing open right now"}
+            </span>
+          </div>
+
+          <div className="cc-panel-body">
+            <ProposalFiltersBar owners={board.owners} packages={board.packages} />
+          </div>
+
+          {board.rows.length === 0 ? (
+            <div className="cc-panel-body">
+              <EmptyState
+                title={board.total === 0 ? "No proposals yet" : "Nothing matches those filters"}
+                text={
+                  board.total === 0
+                    ? "Start one from a lead, a client, or from scratch. The package templates fill in the scope and the pricing for you."
+                    : "Clear the filters to see the whole list again."
+                }
+                cta={{ href: "/admin/proposals/new", label: "Write a proposal" }}
+                icon={<IconFile size={17} />}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="cc-scroll">
+                <table className="cc-table dense">
+                  <thead>
+                    <tr>
+                      <th>Proposal</th>
+                      <th>Client</th>
+                      <th>Project / package</th>
+                      <th className="num">One-time</th>
+                      <th className="num">Monthly</th>
+                      <th>Status</th>
+                      <th>Sent</th>
+                      <th>Viewed</th>
+                      <th>Expires</th>
+                      <th>Owner</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {board.rows.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <Link href={`/admin/proposals/${row.id}`} className="cc-strong">
+                            {row.number}
+                          </Link>
+                          {row.kind === "change_order" ? (
+                            <>
+                              <br />
+                              <span className="cc-chip t-info">Change order</span>
+                            </>
+                          ) : null}
+                        </td>
+                        <td>
+                          <span className="cc-client-name">{row.clientName}</span>
+                          {row.clientEmail ? (
+                            <>
+                              <br />
+                              <span className="cc-client-sub">{row.clientEmail}</span>
+                            </>
+                          ) : null}
+                        </td>
+                        <td>
+                          {row.title}
+                          {row.packageName ? (
+                            <>
+                              <br />
+                              <span className="cc-client-sub">{row.packageName}</span>
+                            </>
+                          ) : null}
+                        </td>
+                        <td className="num">{row.oneTimeCents > 0 ? money(row.oneTimeCents) : DASH}</td>
+                        <td className="num">
+                          {row.recurringCents > 0 ? `${money(row.recurringCents)}/${row.recurringInterval === "year" ? "yr" : "mo"}` : DASH}
+                        </td>
+                        <td>
+                          <span className={`cc-chip ${STATUS_TONE[row.status]}`}>
+                            {STATUS_LABELS[row.status]}
+                          </span>
+                          {row.staleExpired && row.status !== "expired" ? (
+                            <>
+                              {" "}
+                              <span className="cc-chip t-risk">Past date</span>
+                            </>
+                          ) : null}
+                        </td>
+                        <td>{shortDate(row.sentAt)}</td>
+                        <td>{shortDate(row.viewedAt)}</td>
+                        <td>{row.validUntil ? shortDate(`${row.validUntil}T12:00:00Z`) : DASH}</td>
+                        <td>{row.owner ?? DASH}</td>
+                        <td>
+                          <div className="cc-rowacts">
+                            <Link href={`/admin/proposals/${row.id}`} className="cc-btn">View</Link>
+                            {row.signedAt ? null : (
+                              <Link href={`/admin/proposals/${row.id}/edit`} className="cc-btn">Edit</Link>
+                            )}
+                            <Link href={`/admin/proposals/${row.id}/preview`} className="cc-btn">Preview</Link>
+                            <CopyLink url={proposalUrl(row.publicToken)} label="Link" />
+                            <form action={duplicateProposalAction}>
+                              <input type="hidden" name="proposal_id" value={row.id} />
+                              <button type="submit" className="cc-btn">Duplicate</button>
+                            </form>
+                            {row.jobId ? (
+                              <Link href={`/admin/jobs/${row.jobId}`} className="cc-btn">Project</Link>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="cc-panel-foot">
+                <span className="cc-faint" style={{ fontSize: "0.73rem" }}>
+                  Showing {board.rows.length} of {board.total}
+                  {board.rows.length === board.total ? "" : " (filtered)"}
+                </span>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
     </>
   );
-}
-
-export function ProposalsBoardSkeleton() {
-  return <><div className="cc-greet"><div><h1>Proposals</h1><p>Loading proposal workspace…</p></div></div><div className="cc-board"><div className="cc-s12"><PanelSkeleton title="Proposals" /></div></div></>;
 }
