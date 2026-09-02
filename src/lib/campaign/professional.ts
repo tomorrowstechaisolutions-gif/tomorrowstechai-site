@@ -18,7 +18,7 @@ export const PRO_HOSTING = 29;
 export const PRO_HOSTING_TRIAL_DAYS = 30;
 
 export const PRO_HOSTING_DISCLOSURE =
-  "Hosting & management: $29/month, free for the first 30 days. Covers hosting, SSL, backups, security updates and small content changes. Cancel any time and we hand you the files.";
+  "Hosting: $29/month, free for the first 30 days. Covers hosting, SSL, backups and security updates. It is not a management retainer — content changes after launch are quoted separately. Cancel any time and we hand you the files.";
 
 /**
  * The ad states no turnaround for this tier, so neither does the page.
@@ -108,7 +108,7 @@ export const PRO_FAQ = [
   },
   {
     q: "Is $699 really the total build price?",
-    a: "Yes. $699 one time, then hosting and management at $29/month after the first 30 days free. That covers hosting, SSL, backups, security updates and small content changes. Anything in the 'not included' list above is quoted separately and never assumed.",
+    a: "Yes. $699 one time, then hosting at $29/month after the first 30 days free. That covers hosting, SSL, backups and security updates — it is not a management retainer, so content changes after launch are quoted separately. Anything in the 'not included' list above is quoted separately and never assumed.",
   },
   {
     q: "What do I need to have ready?",

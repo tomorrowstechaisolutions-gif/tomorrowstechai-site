@@ -441,7 +441,7 @@ async function handleInvoicePaid(event: StripeEvent) {
   const subMeta = subDetails?.metadata ?? {};
 
   let category = "hosting";
-  let description = "Hosting & management";
+  let description = "Hosting";
 
   if (subMeta.kind === "upsell" && subMeta.catalog_item_id) {
     const { data: item } = await db

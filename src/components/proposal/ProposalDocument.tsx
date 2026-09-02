@@ -167,7 +167,7 @@ export default function ProposalDocument({
               <div>
                 <b>{money(p.recurring_price_cents)}</b>
                 {" "}
-                per {p.recurring_interval} hosting &amp; management
+                per {p.recurring_interval} hosting
               </div>
             ) : null}
           </aside>
@@ -250,7 +250,7 @@ export default function ProposalDocument({
             </div>
             {p.recurring_price_cents > 0 ? (
               <div>
-                <span>Hosting &amp; management</span>
+                <span>Hosting</span>
                 <strong>{money(p.recurring_price_cents)}</strong>
                 <small>per {p.recurring_interval}</small>
               </div>
@@ -287,7 +287,7 @@ export default function ProposalDocument({
         {/* 7 · Hosting ----------------------------------------------- */}
         {p.recurring_price_cents > 0 || p.hosting_note ? (
           <section className="pr-block">
-            <div className="pr-head"><span>05</span><h2>Hosting &amp; management</h2></div>
+            <div className="pr-head"><span>05</span><h2>Hosting</h2></div>
             <div className="pr-prose">
               <Paragraphs text={p.hosting_note} />
               {extra("hosting").map((section) => (

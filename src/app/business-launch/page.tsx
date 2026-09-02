@@ -15,7 +15,7 @@ import {
 export const metadata: Metadata = {
   title: "Launch Your Business Online for $399",
   description:
-    "A professional 5-page website plus the tools to capture leads, book customers and take payments — $399 one-time. Hosting and management from $29/month.",
+    "A professional 5-page website plus the tools to capture leads, book customers and take payments — $399 one-time. Hosting from $29/month.",
   alternates: { canonical: "/business-launch" },
   openGraph: {
     title: "Launch Your Business Online for $399 · Tomorrow’s Tech AI",
@@ -97,7 +97,7 @@ export default function BusinessLaunchPage() {
               <span className="bl-pricebox-unit">one-time build</span>
             </div>
             <div className="bl-pricebox-note">
-              Then hosting &amp; management from{" "}
+              Then hosting from{" "}
               <strong>${HOSTING_FROM}/month</strong> once your site is live.
               Cancel any time.
             </div>
@@ -142,7 +142,7 @@ export default function BusinessLaunchPage() {
             ))}
           </ul>
           <p className="bl-disclosure">
-            ${OFFER_PRICE} one-time. Hosting &amp; management from ${HOSTING_FROM}
+            ${OFFER_PRICE} one-time. Hosting from ${HOSTING_FROM}
             /month after launch — that&rsquo;s the entire price list.
           </p>
         </div>

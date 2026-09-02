@@ -67,7 +67,7 @@ export default function ProfessionalWebsitePage() {
               <span className="bl-pricebox-unit">one-time build</span>
             </div>
             <div className="bl-pricebox-note">
-              Then hosting &amp; management at{" "}
+              Then hosting at{" "}
               <strong>${PRO_HOSTING}/month</strong>, free for the first 30 days.
               Cancel any time.
             </div>

@@ -225,7 +225,7 @@ export type PackageTemplate = {
 
 /** The same sentence on every package, because the service is the same one. */
 const HOSTING_NOTE =
-  "Hosting and management covers managed hosting, SSL, backups, security updates, uptime monitoring and small content changes. New features or major additions are scoped and quoted separately before work begins.";
+  "Hosting covers managed hosting, SSL, backups, security updates and uptime monitoring. It is not a management retainer — content changes, new features and major additions are scoped and quoted separately before work begins.";
 
 /** Half, to the nearest whole dollar. Never more than the total. */
 function halfDeposit(cents: number): number {

@@ -124,7 +124,7 @@ export default async function PublicProposalPage({
           { label: "Website build", value: formatMoney(p.total_cents, p.currency) },
           ...(p.recurring_price_cents > 0
             ? [{
-                label: "Hosting & management",
+                label: "Hosting",
                 value: `${formatMoney(p.recurring_price_cents, p.currency)}/${p.recurring_interval}`,
               }]
             : []),

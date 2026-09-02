@@ -372,7 +372,7 @@ export default function ServicesPage() {
             </h2>
             <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4 max-w-2xl">
               Proven layouts, a one-time build price, no hourly meter. Every
-              package runs on hosting and management at $29/month, free for the
+              package runs on hosting at $29/month, free for the
               first 30 days. When the design has to be original rather than
               proven, that is a custom build \u2014 priced further down this page.
             </p>

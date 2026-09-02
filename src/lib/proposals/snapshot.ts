@@ -226,7 +226,7 @@ export function renderSignedDocument(
           ? `${esc(money(p.subtotal_cents))} less ${esc(money(p.discount_amount_cents))} discount`
           : "Total for the work described above"
       }</small></div>
-    <div class="card"><span>Hosting &amp; management</span><strong>${
+    <div class="card"><span>Hosting</span><strong>${
       p.recurring_price_cents > 0 ? esc(money(p.recurring_price_cents)) : "—"
     }</strong><small>${
       p.recurring_price_cents > 0 ? `per ${esc(p.recurring_interval)}` : "No recurring service quoted"

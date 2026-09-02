@@ -45,7 +45,7 @@ export default function KeyKonnectProposalPage() {
             <span>Project investment</span>
             <strong>$399</strong>
             <p>one-time website build</p>
-            <div><b>$29/month</b> hosting &amp; management</div>
+            <div><b>$29/month</b> hosting</div>
           </aside>
         </section>
 
@@ -67,8 +67,8 @@ export default function KeyKonnectProposalPage() {
         <section className="client-proposal-split">
           <div>
             <div className="client-proposal-section-head"><span>02</span><h2>Investment</h2></div>
-            <div className="client-proposal-price"><div><span>Website design &amp; build</span><strong>$399</strong><small>one time</small></div><div><span>Hosting &amp; management</span><strong>$29</strong><small>per month</small></div></div>
-            <p className="client-proposal-fine">The recurring hosting covers managed hosting, SSL, backups, security updates, and small content changes. New features or major additions are scoped separately before work begins.</p>
+            <div className="client-proposal-price"><div><span>Website design &amp; build</span><strong>$399</strong><small>one time</small></div><div><span>Hosting</span><strong>$29</strong><small>per month</small></div></div>
+            <p className="client-proposal-fine">The recurring hosting covers managed hosting, SSL, backups and security updates. It is not a management retainer — content changes, new features and major additions are scoped separately before work begins.</p>
           </div>
           <div>
             <div className="client-proposal-section-head"><span>03</span><h2>What we need from Cory</h2></div>

@@ -76,7 +76,7 @@ export default function ThankYouPage() {
                 <div>
                   <h3>We confirm the plan and start</h3>
                   <p>
-                    ${OFFER_PRICE} one-time, then hosting &amp; management from{" "}
+                    ${OFFER_PRICE} one-time, then hosting from{" "}
                     ${HOSTING_FROM}/month once you&rsquo;re live. Nothing is
                     charged before you approve the plan.
                   </p>

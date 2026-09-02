@@ -28,7 +28,7 @@ const SYSTEM = `You write Facebook and Instagram ad copy for Tomorrow's Tech AI,
 
 THE OFFER YOU ARE SELLING — do not change these numbers or invent others:
 - $${OFFER_PRICE} one-time for the Business Launch package.
-- Hosting and management from $${HOSTING_FROM}/month after launch. This must be disclosed in the primary text. Never hide it.
+- Hosting from $${HOSTING_FROM}/month after launch. This must be disclosed in the primary text. Never hide it, and never call it management — it covers hosting, SSL, backups and security updates only.
 - Live in 7 to 14 days once we have the customer's content.
 - The customer owns the site.
 

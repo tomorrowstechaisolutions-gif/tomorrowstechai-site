@@ -490,7 +490,7 @@ export async function loadClientsBoard(
       what:
         c.services.length > 0
           ? c.services.map((s) => s.label).slice(0, 2).join(" + ")
-          : "Hosting & management",
+          : "Hosting",
       renewsAt: c.renewsAt!,
       amountCents: c.renewalAmountCents || c.mrrCents,
       daysAway: Math.ceil((new Date(c.renewsAt!).getTime() - now) / DAY),

@@ -54,9 +54,9 @@ Here's what happens next:
    we have your content.
 
 The price, plainly: $${OFFER_PRICE} one-time for the build. After you're live,
-hosting and management is $${HOSTING_FROM}/month and covers hosting, SSL,
-backups, security updates and small content changes. Nothing is charged before
-you approve the plan.
+hosting is $${HOSTING_FROM}/month and covers hosting, SSL, backups and
+security updates. It is not a management retainer, so content changes after
+launch are quoted separately. Nothing is charged before you approve the plan.
 
 Want to skip the wait? Book a 30-minute call and we'll plan it on the spot:
 ${BOOKING}

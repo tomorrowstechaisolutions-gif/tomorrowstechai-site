@@ -18,7 +18,7 @@ export const HOSTING_FROM_CENTS = 2900;
 export const HOSTING_TRIAL_DAYS = 30;
 
 export const HOSTING_DISCLOSURE =
-  "Hosting & management from $29/month. Free for the first 30 days, so billing starts well after your site is live. Cancel any time.";
+  "Hosting from $29/month. Free for the first 30 days, so billing starts well after your site is live. It covers hosting, SSL, backups and security updates — it is not a management retainer. Cancel any time.";
 
 export const BUSINESS_TYPES = [
   "Contractor",
@@ -109,7 +109,7 @@ export const UPGRADES = [
 ];
 
 export const FAQ = [
-  { q: "Is $399 really the total price?", a: "Yes — $399 is the one-time build. After your site is live, hosting and management is $29/month and covers hosting, SSL, backups, security updates and small content changes. That's the whole price list for this package. Nothing else is required." },
+  { q: "Is $399 really the total price?", a: "Yes — $399 is the one-time build. After your site is live, hosting is $29/month and covers hosting, SSL, backups and security updates. It is not a management retainer, so content changes after launch are quoted separately. That's the whole price list for this package. Nothing else is required." },
   { q: "How long does it take?", a: "Most builds go live in 7 to 14 days from the day we have your content — logo, photos, services and hours. The clock is usually waiting on content, not on us." },
   { q: "What do I need to have ready?", a: "Your business name, services, service area, hours, contact details, and any photos or logo you already have. If you don't have a logo, we can set you up with one." },
   { q: "Do I own the site?", a: "Yes. The site, the domain and the content are yours. If you ever leave, you take it with you." },

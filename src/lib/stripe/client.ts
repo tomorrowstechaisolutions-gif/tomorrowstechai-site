@@ -159,7 +159,7 @@ export async function launchPriceId(): Promise<string> {
 export async function hostingPriceId(): Promise<string> {
   return findOrCreatePrice({
     lookupKey: HOSTING_LOOKUP_KEY,
-    productName: "Hosting & management",
+    productName: "Hosting",
     unitAmount: HOSTING_FROM_CENTS,
     recurringMonthly: true,
   });
@@ -397,7 +397,7 @@ export async function createProposalCheckoutSession(opts: {
         currency: "usd",
         unit_amount: opts.recurringCents,
         recurring: { interval: opts.recurringInterval },
-        product_data: { name: "Hosting & management" },
+        product_data: { name: "Hosting" },
       },
       quantity: 1,
     });

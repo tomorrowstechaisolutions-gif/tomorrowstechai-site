@@ -502,7 +502,7 @@ export default function ProposalBuilder({
           </div>
           <div className="cc-field row2">
             <span>
-              <label className="cc-label" htmlFor="recurring_price">Hosting &amp; management</label>
+              <label className="cc-label" htmlFor="recurring_price">Hosting</label>
               <input id="recurring_price" name="recurring_price" className="cc-input" inputMode="decimal"
                 value={form.recurringPrice}
                 onChange={(e) => field("recurringPrice", e.target.value)}
