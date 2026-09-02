@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadProposalWorkspace, type ProposalRow } from "@/lib/proposals/queries";
-import { saveProposalAction, syncKeyKonnectConversationAction } from "@/app/admin/proposal-actions";
+import { saveProposalAction, setProposalMilestoneAction, syncKeyKonnectConversationAction } from "@/app/admin/proposal-actions";
 import { EmptyState, Panel, PanelSkeleton } from "../Panel";
 import { DASH, money, shortDate } from "../format";
 import {
   IconArrowRight,
   IconCheck,
-  IconClock,
   IconDollar,
   IconFile,
   IconInbox,
@@ -25,11 +24,11 @@ const STATUS_TONE: Record<string, string> = {
 function Kpis({ data }: { data: Awaited<ReturnType<typeof loadProposalWorkspace>> }) {
   const cards = [
     { label: "Active proposals", value: String(data.kpis.active), foot: "Still winnable", icon: IconFile },
-    { label: "Drafts", value: String(data.kpis.drafts), foot: "Not sent yet", icon: IconInbox },
-    { label: "Sent", value: String(data.kpis.sent), foot: "Waiting on a decision", icon: IconSend },
-    { label: "Needs pricing", value: String(data.kpis.awaitingPrice), foot: "Scope before dollars", icon: IconClock },
+    { label: "Drafts", value: String(data.kpis.drafts), foot: "Written, not yet sent", icon: IconInbox },
+    { label: "Sent", value: String(data.kpis.sent), foot: "Agreement delivered", icon: IconSend },
+    { label: "Accepted", value: String(data.kpis.accepted), foot: "Approved on paper", icon: IconCheck },
     { label: "Proposal value", value: data.kpis.pipelineCents ? money(data.kpis.pipelineCents) : DASH, foot: "Recorded active value", icon: IconDollar },
-    { label: "Won", value: String(data.kpis.won), foot: "Accepted or paid", icon: IconCheck },
+    { label: "Paid", value: String(data.kpis.paid), foot: "Revenue actually collected", icon: IconCheck },
   ];
 
   return (
@@ -68,6 +67,13 @@ function Progress({ proposal }: { proposal: ProposalRow }) {
 }
 
 function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
+  const proposalStatus = proposal.paidAt
+    ? "Paid"
+    : proposal.proposalAcceptedAt
+      ? "Proposal accepted"
+      : proposal.proposalSentAt
+        ? "Proposal sent"
+        : "Proposal draft";
   return (
     <section className="proposal-spotlight">
       <div className="proposal-spotlight-top">
@@ -78,7 +84,7 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
         </div>
         <div className="proposal-spotlight-status">
           <span className={`cc-chip ${STATUS_TONE[proposal.invoiceStatus ?? proposal.stage] ?? "t-muted"}`}>
-            {proposal.invoiceStatus === "paid" ? "Paid" : "Proposal in progress"}
+            {proposalStatus}
           </span>
           <span className="proposal-value">$399 build <span>+ $29/mo hosting</span></span>
         </div>
@@ -87,7 +93,7 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
       <div className="proposal-facts">
         <div><span>Agreed scope</span><strong>4–5 page website</strong><p>Vehicle inventory, merchandise shop, music experience, and starter CRM.</p></div>
         <div><span>Investment</span><strong>$399 + $29/month</strong><p>One-time website build plus ongoing hosting and management.</p></div>
-        <div><span>Current position</span><strong>Website built · proposal next</strong><p>Logos and music are received and implemented. Final acceptance and payment are not yet recorded.</p></div>
+        <div><span>Current position</span><strong>Build ahead of paperwork</strong><p>Logos and music are implemented. Send the written proposal, record acceptance, then review and launch before requesting payment.</p></div>
       </div>
 
       <div className="proposal-actions-row">
@@ -106,6 +112,51 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
       </div>
       <p className="proposal-truth-note">The website is built and the agreed assets are in place. Revenue still books only when Cory accepts the proposal or pays.</p>
     </section>
+  );
+}
+
+const MILESTONES = [
+  { key: "proposal_sent", label: "Proposal sent", field: "proposalSentAt" },
+  { key: "proposal_accepted", label: "Agreement accepted", field: "proposalAcceptedAt" },
+  { key: "assets_received", label: "Assets received", field: "assetsReceivedAt" },
+  { key: "build_ready", label: "Build ready", field: "buildReadyAt" },
+  { key: "review_approved", label: "Final review approved", field: "reviewApprovedAt" },
+  { key: "launched", label: ".com live", field: "launchedAt" },
+] as const;
+
+function MilestoneControls({ proposal }: { proposal: ProposalRow }) {
+  return (
+    <Panel title="Agreement & delivery milestones" sub="Acceptance is separate from payment" icon={<IconCheck size={15} />} className="cc-s12">
+      <div className="proposal-milestone-controls">
+        {MILESTONES.map((milestone) => {
+          const completedAt = proposal[milestone.field];
+          return (
+            <div className="proposal-milestone-control" key={milestone.key}>
+              <div>
+                <strong>{milestone.label}</strong>
+                <span>
+                  {completedAt
+                    ? `${shortDate(completedAt)}${milestone.key === "proposal_accepted" && proposal.proposalAcceptedBy ? ` · ${proposal.proposalAcceptedBy}` : ""}`
+                    : "Not recorded"}
+                </span>
+              </div>
+              <form action={setProposalMilestoneAction}>
+                <input type="hidden" name="deal_id" value={proposal.dealId} />
+                <input type="hidden" name="milestone" value={milestone.key} />
+                {milestone.key === "proposal_accepted" && !completedAt ? (
+                  <input className="cc-input" name="accepted_by" placeholder="Accepted by (name/email)" required />
+                ) : null}
+                {completedAt ? <input type="hidden" name="clear" value="1" /> : null}
+                <button className={`cc-btn ${completedAt ? "" : "primary"}`} type="submit">
+                  {completedAt ? "Undo" : "Record"}
+                </button>
+              </form>
+            </div>
+          );
+        })}
+      </div>
+      <p className="cc-note">Record payment only through the invoice/payment flow after the approved site is live. These buttons never book revenue.</p>
+    </Panel>
   );
 }
 
@@ -185,6 +236,7 @@ export default async function ProposalsBoard() {
           {current.isKeyKonnect ? <KeyKonnectBrief proposal={current} /> : null}
           <div className="cc-board proposal-board">
             <Panel title="Workflow progress" sub={current.companyName} icon={<IconCheck size={15} />} className="cc-s12"><Progress proposal={current} /></Panel>
+            {current.dealId ? <MilestoneControls proposal={current} /> : null}
             {current.dealId ? <ProposalEditor proposal={current} /> : <CreateProposalRecord proposal={current} />}
             <ProposalList proposals={data.proposals} current={current} />
           </div>

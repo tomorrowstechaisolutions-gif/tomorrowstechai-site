@@ -87,7 +87,7 @@
   .proposal-progress-head strong { display: block; color: var(--cc-text); font-size: 0.92rem; }
   .proposal-meter { height: 7px; margin: 16px 0 20px; border-radius: 99px; overflow: hidden; background: rgba(255,255,255,.06); }
   .proposal-meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cc-accent), var(--cc-violet)); box-shadow: 0 0 18px rgba(56,189,248,.3); }
-  .proposal-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; list-style: none; }
+  .proposal-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; list-style: none; }
   .proposal-steps li { min-width: 0; padding: 12px; border: 1px solid var(--cc-line-soft); border-radius: 11px; background: rgba(4,8,13,.28); }
   .proposal-step-mark { display: grid; place-items: center; width: 24px; height: 24px; margin-bottom: 10px; border: 1px solid var(--cc-line); border-radius: 50%; color: var(--cc-faint); font-size: .68rem; }
   .proposal-steps strong { color: var(--cc-dim); font-size: .73rem; line-height: 1.35; }
@@ -108,6 +108,14 @@
   .proposal-record-callout h3 { color: var(--cc-text); font-size: 1.05rem; letter-spacing: -.02em; }
   .proposal-record-callout p { max-width: 680px; color: var(--cc-dim); font-size: .8rem; line-height: 1.65; }
 
+  .proposal-milestone-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .proposal-milestone-control { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 12px; border: 1px solid var(--cc-line-soft); border-radius: 11px; background: rgba(4,8,13,.25); }
+  .proposal-milestone-control > div { display: grid; gap: 4px; min-width: 0; }
+  .proposal-milestone-control strong { color: var(--cc-text); font-size: .76rem; }
+  .proposal-milestone-control span { color: var(--cc-faint); font-size: .67rem; }
+  .proposal-milestone-control form { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+  .proposal-milestone-control .cc-input { width: min(220px, 20vw); min-width: 150px; }
+
   .proposal-list { display: grid; gap: 9px; }
   .proposal-list article { padding: 13px; border: 1px solid var(--cc-line-soft); border-radius: 11px; background: rgba(4,8,13,.25); }
   .proposal-list article.is-current { border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.045); }
@@ -116,10 +124,12 @@
   .proposal-list article > div:not(.proposal-list-top) { display: flex; justify-content: space-between; gap: 10px; margin-top: 5px; color: var(--cc-faint); font-size: .68rem; }
   .proposal-list article > div:not(.proposal-list-top) span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  @media (max-width: 1150px) { .proposal-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 1150px) { .proposal-steps, .proposal-milestone-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 760px) {
     .proposal-facts, .proposal-form-row, .proposal-form-row.two, .proposal-form-row.four { grid-template-columns: 1fr; }
-    .proposal-steps { grid-template-columns: 1fr; }
+    .proposal-steps, .proposal-milestone-controls { grid-template-columns: 1fr; }
+    .proposal-milestone-control { align-items: flex-start; flex-direction: column; }
+    .proposal-milestone-control form, .proposal-milestone-control .cc-input { width: 100%; }
     .proposal-spotlight-status { align-items: flex-start; }
   }
 }

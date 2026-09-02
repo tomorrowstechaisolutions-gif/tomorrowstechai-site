@@ -32,6 +32,13 @@ export type ProposalRow = {
   checkoutUrl: string | null;
   sentAt: string | null;
   paidAt: string | null;
+  proposalSentAt: string | null;
+  proposalAcceptedAt: string | null;
+  proposalAcceptedBy: string | null;
+  assetsReceivedAt: string | null;
+  buildReadyAt: string | null;
+  reviewApprovedAt: string | null;
+  launchedAt: string | null;
   updatedAt: string;
   isKeyKonnect: boolean;
   steps: ProposalStep[];
@@ -43,9 +50,9 @@ export type ProposalWorkspace = {
     active: number;
     drafts: number;
     sent: number;
-    awaitingPrice: number;
+    accepted: number;
     pipelineCents: number;
-    won: number;
+    paid: number;
   };
 };
 
@@ -64,46 +71,53 @@ function proposalSteps(input: {
   invoiceStatus: string | null;
   checkoutUrl: string | null;
   paidAt: string | null;
+  proposalSentAt: string | null;
+  proposalAcceptedAt: string | null;
+  assetsReceivedAt: string | null;
+  buildReadyAt: string | null;
+  reviewApprovedAt: string | null;
+  launchedAt: string | null;
 }): ProposalStep[] {
-  const sent = Boolean(input.checkoutUrl) || ["sent", "paid", "refunded"].includes(input.invoiceStatus ?? "");
   const paid = Boolean(input.paidAt) || input.invoiceStatus === "paid" || input.stage === "won";
+  const buildReady = Boolean(input.assetsReceivedAt) && Boolean(input.buildReadyAt);
 
   return [
-    { label: "Opportunity qualified", detail: "Contact and business need are identified.", state: "done" },
-    {
-      label: input.isKeyKonnect ? "Working website built" : "Working preview delivered",
-      detail: input.isKeyKonnect
-        ? "The Key Konnect website is built and available at the working preview."
-        : "Share a concrete preview or discovery summary.",
-      state: input.isKeyKonnect ? "done" : "active",
-    },
-    {
-      label: input.isKeyKonnect ? "Brand and music received" : "Assets and feedback",
-      detail: input.isKeyKonnect
-        ? "Cory delivered his logos and ‘13 Years Old’ audio; both are incorporated into the website."
-        : "Collect brand assets, content, and decision-maker feedback.",
-      state: input.isKeyKonnect ? "done" : "waiting",
-    },
-    {
-      label: "Scope and price approved",
-      detail: input.valueCents ? "Commercial scope has a recorded value." : "Price is intentionally open until scope is agreed.",
-      state: input.valueCents ? "done" : "waiting",
-    },
+    { label: "Scope and price captured", detail: input.valueCents ? "The discovery agreement has a recorded value." : "Finish discovery and record the agreed scope and price.", state: input.valueCents ? "done" : "active" },
     {
       label: "Proposal sent",
-      detail: sent ? "Checkout or proposal link is recorded." : "Send the final scope, price, and payment link.",
-      state: sent ? "done" : input.valueCents ? "active" : "waiting",
+      detail: input.proposalSentAt ? "The written scope and price were sent to the client." : "Send the written agreement after the first sit-down; no payment is requested yet.",
+      state: input.proposalSentAt ? "done" : input.valueCents ? "active" : "waiting",
     },
     {
-      label: "Accepted and paid",
-      detail: paid ? "Payment is recorded; delivery can begin." : "Do not count this as revenue until acceptance or payment is recorded.",
-      state: paid ? "done" : sent ? "active" : "waiting",
+      label: "Agreement accepted",
+      detail: input.proposalAcceptedAt ? "The client’s acceptance is recorded; this is not a payment." : "Record the client’s written approval before treating the scope as authorized.",
+      state: input.proposalAcceptedAt ? "done" : input.proposalSentAt ? "active" : "waiting",
+    },
+    {
+      label: "Assets and build ready",
+      detail: buildReady ? "Required assets are received and the working build is ready for review." : "Collect the agreed assets and prepare the working build.",
+      state: buildReady ? "done" : input.proposalAcceptedAt ? "active" : "waiting",
+    },
+    {
+      label: "Final review approved",
+      detail: input.reviewApprovedAt ? "The client approved the finished site for launch." : "Review the finished site with the client and record approval.",
+      state: input.reviewApprovedAt ? "done" : buildReady ? "active" : "waiting",
+    },
+    {
+      label: ".com live and invoice due",
+      detail: input.launchedAt ? "The approved site is live on its production domain; payment may now be requested." : "Connect the approved site to its .com, then issue the final invoice.",
+      state: input.launchedAt ? "done" : input.reviewApprovedAt ? "active" : "waiting",
+    },
+    {
+      label: "Paid",
+      detail: paid ? "Payment is recorded as revenue." : "Do not count revenue until payment is actually recorded.",
+      state: paid ? "done" : input.launchedAt ? "active" : "waiting",
     },
   ];
 }
 
 export async function loadProposalWorkspace(sb: SupabaseClient): Promise<ProposalWorkspace> {
-  const [dealRows, invoiceRows, leadRows] = await Promise.all([
+  const [dealRows, invoiceRows, leadRows, milestoneRows] = await Promise.all([
     sb
       .from("deals")
       .select("id, lead_id, title, stage, value_cents, billing, expected_close, next_action, next_action_at, notes, updated_at, companies(name), leads(first_name, last_name, email, phone, business_name)")
@@ -121,6 +135,13 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
       .order("updated_at", { ascending: false })
       .limit(500)
       .then((r) => unwrap(r, "proposal candidate leads")),
+    sb
+      .from("lead_events")
+      .select("lead_id, created_at, meta")
+      .eq("type", "system")
+      .order("created_at", { ascending: false })
+      .limit(1000)
+      .then((r) => (r.error ? [] : (r.data ?? []))),
   ]);
 
   type LeadLite = { first_name: string | null; last_name: string | null; email: string | null; phone: string | null; business_name: string | null };
@@ -145,6 +166,24 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
   };
 
   const invoices = invoiceRows as InvoiceRaw[];
+  type MilestoneEventRaw = {
+    lead_id: string;
+    created_at: string;
+    meta: { proposal_milestone?: string; cleared?: boolean; accepted_by?: string | null } | null;
+  };
+  const latestMilestone = new Map<string, MilestoneEventRaw>();
+  for (const event of milestoneRows as MilestoneEventRaw[]) {
+    const key = event.meta?.proposal_milestone;
+    if (!key) continue;
+    const mapKey = `${event.lead_id}:${key}`;
+    if (!latestMilestone.has(mapKey)) latestMilestone.set(mapKey, event);
+  }
+  const milestone = (leadId: string | null, key: string) =>
+    leadId ? latestMilestone.get(`${leadId}:${key}`) ?? null : null;
+  const milestoneDate = (leadId: string | null, key: string) => {
+    const event = milestone(leadId, key);
+    return event && !event.meta?.cleared ? event.created_at : null;
+  };
   const invoiceByDeal = new Map<string, InvoiceRaw>();
   for (const invoice of invoices) {
     if (invoice.deal_id && !invoiceByDeal.has(invoice.deal_id)) invoiceByDeal.set(invoice.deal_id, invoice);
@@ -186,6 +225,13 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
       checkoutUrl: invoice?.checkout_url ?? null,
       sentAt: invoice?.sent_at ?? null,
       paidAt: invoice?.paid_at ?? null,
+      proposalSentAt: milestoneDate(deal.lead_id, "proposal_sent"),
+      proposalAcceptedAt: milestoneDate(deal.lead_id, "proposal_accepted"),
+      proposalAcceptedBy: milestone(deal.lead_id, "proposal_accepted")?.meta?.accepted_by ?? null,
+      assetsReceivedAt: milestoneDate(deal.lead_id, "assets_received"),
+      buildReadyAt: milestoneDate(deal.lead_id, "build_ready"),
+      reviewApprovedAt: milestoneDate(deal.lead_id, "review_approved"),
+      launchedAt: milestoneDate(deal.lead_id, "launched"),
       updatedAt: invoice && invoice.updated_at > deal.updated_at ? invoice.updated_at : deal.updated_at,
       isKeyKonnect,
     };
@@ -227,6 +273,13 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
         checkoutUrl: null,
         sentAt: null,
         paidAt: null,
+        proposalSentAt: null,
+        proposalAcceptedAt: null,
+        proposalAcceptedBy: null,
+        assetsReceivedAt: "2026-09-01T12:39:00.000Z",
+        buildReadyAt: "2026-09-01T12:39:00.000Z",
+        reviewApprovedAt: null,
+        launchedAt: null,
         updatedAt: cory.updated_at,
         isKeyKonnect: true,
       };
@@ -239,11 +292,11 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
     proposals,
     kpis: {
       active: active.length,
-      drafts: proposals.filter((p) => !p.invoiceId || p.invoiceStatus === "draft").length,
-      sent: proposals.filter((p) => p.invoiceStatus === "sent").length,
-      awaitingPrice: active.filter((p) => !p.valueCents).length,
+      drafts: proposals.filter((p) => !p.proposalSentAt).length,
+      sent: proposals.filter((p) => Boolean(p.proposalSentAt)).length,
+      accepted: active.filter((p) => Boolean(p.proposalAcceptedAt)).length,
       pipelineCents: active.reduce((sum, p) => sum + (p.valueCents ?? 0), 0),
-      won: proposals.filter((p) => p.stage === "won" || p.invoiceStatus === "paid").length,
+      paid: proposals.filter((p) => p.invoiceStatus === "paid").length,
     },
   };
 }

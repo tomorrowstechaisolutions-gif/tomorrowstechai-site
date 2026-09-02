@@ -22,6 +22,53 @@ function cents(raw: string): number | null {
 
 const REVALIDATE = ["/admin/proposals", "/admin/pipeline", "/admin/crm", "/admin"];
 
+const PROPOSAL_MILESTONES = [
+  "proposal_sent",
+  "proposal_accepted",
+  "assets_received",
+  "build_ready",
+  "review_approved",
+  "launched",
+] as const;
+
+export async function setProposalMilestoneAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const dealId = str(formData, "deal_id", 40);
+  const milestone = str(formData, "milestone", 40) as (typeof PROPOSAL_MILESTONES)[number];
+  if (!dealId || !PROPOSAL_MILESTONES.includes(milestone)) return;
+
+  const clearing = str(formData, "clear", 4) === "1";
+  const { data: deal, error } = await supabase
+    .from("deals")
+    .select("lead_id")
+    .eq("id", dealId)
+    .maybeSingle();
+  if (error || !deal?.lead_id) throw new Error("Could not find the lead attached to this proposal.");
+
+  const labels: Record<(typeof PROPOSAL_MILESTONES)[number], string> = {
+    proposal_sent: "Proposal sent",
+    proposal_accepted: "Written proposal accepted",
+    assets_received: "Required assets received",
+    build_ready: "Working build ready for review",
+    review_approved: "Client approved final review",
+    launched: "Approved site launched on its production domain",
+  };
+  const acceptedBy = milestone === "proposal_accepted" && !clearing
+    ? str(formData, "accepted_by", 200) || "Client approval recorded by admin"
+    : null;
+  const { error: eventError } = await supabase.from("lead_events").insert({
+    lead_id: deal.lead_id,
+    type: "system",
+    body: `${labels[milestone]}${acceptedBy ? ` by ${acceptedBy}` : ""}${clearing ? " — milestone cleared" : "."}`,
+    actor,
+    meta: { proposal_milestone: milestone, cleared: clearing, accepted_by: acceptedBy },
+  });
+  if (eventError) throw new Error(`Could not record proposal milestone: ${eventError.message}`);
+
+  for (const path of REVALIDATE) revalidatePath(path);
+  revalidatePath(`/admin/leads/${deal.lead_id}`);
+}
+
 export async function saveProposalAction(formData: FormData) {
   const { supabase } = await requireAdmin();
   const dealId = str(formData, "deal_id", 40);
@@ -152,7 +199,7 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
   }
   if (!dealId) return;
 
-  const nextFollowup = new Date("2026-09-02T14:00:00.000Z");
+  const nextFollowup = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const services = Array.from(new Set([...(lead.services_interested ?? []), "Website", "CRM", "E-commerce"]));
   // Keep the factual contact update separate so a pre-existing duplicate
   // email cannot prevent the rest of the proposal sync from saving.
@@ -203,6 +250,31 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
       meta: { import_key: "key-konnect-build-ready-2026-09-01", channel: "facebook" },
       created_at: "2026-09-01T12:39:00.000Z",
     });
+  }
+
+  const { data: milestoneEvents } = await supabase
+    .from("lead_events")
+    .select("meta")
+    .eq("lead_id", leadId)
+    .eq("type", "system")
+    .limit(100);
+  const recordedMilestones = new Set(
+    (milestoneEvents ?? []).map((event) => (event.meta as { proposal_milestone?: string } | null)?.proposal_milestone)
+  );
+  for (const [milestone, body] of [
+    ["assets_received", "Required assets received: Cory’s logos and ‘13 Years Old’ audio."],
+    ["build_ready", "Working website ready for client review."],
+  ] as const) {
+    if (!recordedMilestones.has(milestone)) {
+      await supabase.from("lead_events").insert({
+        lead_id: leadId,
+        type: "system",
+        body,
+        actor,
+        meta: { proposal_milestone: milestone, cleared: false },
+        created_at: "2026-09-01T12:39:00.000Z",
+      });
+    }
   }
 
   const { data: openTask } = await supabase

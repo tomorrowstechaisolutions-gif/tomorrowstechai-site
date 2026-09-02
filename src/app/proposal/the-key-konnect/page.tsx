@@ -78,9 +78,9 @@ export default function KeyKonnectProposalPage() {
 
         <section className="client-proposal-next">
           <span>THE NEXT MOVE</span>
-          <h2>Review the finished direction. Approve the launch.</h2>
-          <p>The working website is built with Cory’s supplied logos and “13 Years Old” audio in place. The remaining move is final review, approval, and the launch details needed to publish the live business experience.</p>
-          <div><a href="mailto:john@tomorrowstechai.com?subject=The%20Key%20Konnect%20website%20proposal">Reply about this proposal</a><a className="secondary" href="https://corywiththekeys.vercel.app/" target="_blank" rel="noreferrer">View working preview</a></div>
+          <h2>Put the agreement in writing. Then finish, review, and launch.</h2>
+          <p>Accepting this proposal confirms the listed scope and pricing so work can proceed with a clear written agreement. No payment is due at acceptance. After the finished site is reviewed and approved, Tomorrow’s Tech AI will connect the live .com and issue the $399 build invoice; $29/month hosting begins with the live launch.</p>
+          <div><a href="mailto:john@tomorrowstechai.com?subject=Acceptance%20of%20The%20Key%20Konnect%20proposal%20TTAI-001&body=I%20approve%20proposal%20TTAI-001%20for%20The%20Key%20Konnect%2C%20including%20the%20listed%20scope%2C%20the%20%24399%20website%20build%2C%20and%20%2429%2Fmonth%20hosting%20beginning%20at%20launch.%20I%20understand%20the%20build%20payment%20is%20due%20after%20final%20review%20and%20the%20live%20.com%20launch.">Accept proposal in writing</a><a className="secondary" href="https://corywiththekeys.vercel.app/" target="_blank" rel="noreferrer">View working website</a></div>
         </section>
 
         <footer className="client-proposal-footer"><span>Tomorrow’s Tech AI · Solutions for tomorrow. Results today.</span><span>john@tomorrowstechai.com</span></footer>
