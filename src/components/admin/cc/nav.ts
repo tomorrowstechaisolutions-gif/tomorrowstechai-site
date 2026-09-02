@@ -49,7 +49,9 @@ export type NavLink = {
   icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
   soon?: boolean;
   /** Which dashboard counter, if any, badges this link. */
-  badge?: "leadsNeedingAttention" | "projectsAtRisk" | "aiProposals" | "tasksNeedingAttention";
+  badge?:
+    | "leadsNeedingAttention" | "projectsAtRisk"
+    | "aiProposals" | "tasksNeedingAttention" | "eventsToday";
   /** External to the admin (opens the public site). */
   external?: boolean;
 };
@@ -81,7 +83,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/jobs", label: "Projects", icon: IconBriefcase, badge: "projectsAtRisk" },
       { href: "/admin/intakes", label: "Client intake", icon: IconBriefcase },
       { href: "/admin/tasks", label: "Tasks", icon: IconCheckSquare, badge: "tasksNeedingAttention" },
-      { href: "/admin/calendar", label: "Calendar", icon: IconCalendar, soon: true },
+      { href: "/admin/calendar", label: "Calendar", icon: IconCalendar, badge: "eventsToday" },
     ],
   },
   {
@@ -203,11 +205,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Multi-step sequences across modules — a lead converts, a job opens, a welcome email goes out, a check-in is scheduled. Each step proposes before it acts.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/calendar": {
-    title: "Calendar",
-    blurb: "Meetings, deadlines and scheduled content on one calendar.",
-    nearest: { href: "/admin", label: "See today" },
   },
   "/admin/services": {
     title: "Service lines",

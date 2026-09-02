@@ -1,4 +1,5 @@
 import "server-only";
+import { chicagoDate, offsetMinutes, zonedMidnightUtc } from "@/lib/time/chicago";
 
 /**
  * Month boundaries for the executive KPIs, resolved in America/Chicago.
@@ -9,60 +10,12 @@ import "server-only";
  * and the card would be worse than useless.
  */
 
-const TZ = "America/Chicago";
-
-/** Minutes the zone is ahead of UTC at a given instant (negative for Chicago). */
-function offsetMinutes(at: Date): number {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: TZ,
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-      .formatToParts(at)
-      .map((p) => [p.type, p.value])
-  ) as Record<string, string>;
-
-  const asUtc = Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour) % 24,
-    Number(parts.minute),
-    Number(parts.second)
-  );
-  return (asUtc - Math.floor(at.getTime() / 1000) * 1000) / 60000;
-}
-
-/** The UTC instant of 00:00 local on a YYYY-MM-DD. */
-export function zonedMidnightUtc(isoDate: string): Date {
-  const [y, m, d] = isoDate.split("-").map(Number);
-  const guess = Date.UTC(y, m - 1, d, 0, 0, 0);
-
-  // Two passes: the first guess can land on the wrong side of a DST change,
-  // in which case the offset it measured is the wrong one.
-  const first = offsetMinutes(new Date(guess));
-  let ts = guess - first * 60000;
-  const second = offsetMinutes(new Date(ts));
-  if (second !== first) ts = guess - second * 60000;
-
-  return new Date(ts);
-}
-
-/** YYYY-MM-DD for an instant, in Chicago. */
-export function chicagoDate(at: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(at);
-}
+/**
+ * The zone maths lives in src/lib/time/chicago.ts because the calendar needs
+ * it in the browser too, and this file is server-only. Re-exported here so
+ * every existing caller keeps importing it from where it always did.
+ */
+export { offsetMinutes, zonedMidnightUtc, chicagoDate };
 
 export type Period = {
   label: string;

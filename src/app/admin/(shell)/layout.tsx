@@ -23,13 +23,16 @@ async function loadBadges() {
   const now = new Date();
   const dayAgo = new Date(now.getTime() - 24 * 3600_000).toISOString();
   const nowIso = now.toISOString();
-  // Midnight tonight, Chicago — so "due today" counts all of today.
-  const endOfToday = new Date(
-    `${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(now)}T23:59:59-05:00`
-  ).toISOString();
+  // Today, Chicago — so "due today" counts all of today and nothing else.
+  const chicagoToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+  }).format(now);
+  const startOfToday = new Date(`${chicagoToday}T00:00:00-05:00`).toISOString();
+  const endOfToday = new Date(`${chicagoToday}T23:59:59-05:00`).toISOString();
   const openFilter = `(${CLOSED_STATUSES.join(",")})`;
 
-  const [followupsDue, uncontacted, atRisk, proposals, tasksDue] = await Promise.all([
+  const [followupsDue, uncontacted, atRisk, proposals, tasksDue, eventsToday] =
+    await Promise.all([
     supabase
       .from("leads")
       .select("id", { count: "exact", head: true })
@@ -66,6 +69,16 @@ async function loadBadges() {
       .not("status", "in", "(completed,canceled)")
       .lt("due_at", endOfToday)
       .then((r) => r.count ?? 0),
+    // Events on the calendar's own table today. Deliberately not the full
+    // aggregated count: this runs on every admin page, and nine queries for
+    // a sidebar number is not a trade worth making.
+    supabase
+      .from("calendar_events")
+      .select("id", { count: "exact", head: true })
+      .not("status", "in", "(completed,canceled)")
+      .gte("start_at", startOfToday)
+      .lt("start_at", endOfToday)
+      .then((r) => r.count ?? 0),
   ]);
 
   return {
@@ -73,6 +86,7 @@ async function loadBadges() {
     projectsAtRisk: atRisk,
     aiProposals: proposals,
     tasksNeedingAttention: tasksDue,
+    eventsToday,
   };
 }
 
@@ -148,6 +162,7 @@ export default async function AdminShellLayout({
     projectsAtRisk: 0,
     aiProposals: 0,
     tasksNeedingAttention: 0,
+    eventsToday: 0,
   }));
 
   const alertCount =
