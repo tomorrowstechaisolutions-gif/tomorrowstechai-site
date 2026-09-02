@@ -152,6 +152,92 @@ export async function updateLeadFields(formData: FormData) {
   revalidatePath(`/admin/leads/${leadId}`);
 }
 
+/**
+ * Edit the person's core CRM record. Consent is intentionally excluded: a
+ * phone number may be recorded without implying that the person opted into
+ * automated text messages.
+ */
+export async function updateLeadContact(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const leadId = str(formData, "lead_id", 40);
+  if (!leadId) return;
+
+  const firstName = str(formData, "first_name", 100);
+  const lastName = str(formData, "last_name", 100);
+  const email = str(formData, "email", 200).toLowerCase();
+  if (!firstName || !email) return;
+
+  const services = [
+    ...new Set(
+      str(formData, "services_interested", 600)
+        .split(",")
+        .map((service) => service.trim().toLowerCase())
+        .filter(Boolean)
+    ),
+  ].slice(0, 16);
+  const websiteAnswer = str(formData, "current_website", 10);
+
+  const patch = {
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    phone: str(formData, "phone", 40) || null,
+    business_name: str(formData, "business_name", 200) || null,
+    business_type: str(formData, "business_type", 120) || null,
+    current_website: ["yes", "no"].includes(websiteAnswer) ? websiteAnswer : null,
+    website_url: str(formData, "website_url", 500) || null,
+    services_interested: services,
+    timeline: str(formData, "timeline", 300) || null,
+  };
+
+  const { data: lead, error } = await supabase
+    .from("leads")
+    .update(patch)
+    .eq("id", leadId)
+    .select("company_id")
+    .single();
+  if (error) throw new Error(`Could not save lead: ${error.message}`);
+
+  // A won lead and its client record are the same person. Keep both views of
+  // that person accurate if the edit happens after conversion.
+  const { error: customerError } = await supabase
+    .from("customers")
+    .update({
+      name: [firstName, lastName].filter(Boolean).join(" "),
+      email,
+      phone: patch.phone,
+      business_name: patch.business_name,
+      business_type: patch.business_type,
+    })
+    .eq("lead_id", leadId);
+  if (customerError) throw new Error(`Lead saved, but linked client could not be updated: ${customerError.message}`);
+
+  if (lead?.company_id && patch.business_name) {
+    const { error: companyError } = await supabase
+      .from("companies")
+      .update({
+        name: patch.business_name,
+        business_type: patch.business_type,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", lead.company_id);
+    if (companyError) throw new Error(`Lead saved, but linked company could not be updated: ${companyError.message}`);
+  }
+
+  await supabase.from("lead_events").insert({
+    lead_id: leadId,
+    type: "system",
+    body: "Lead contact details updated.",
+    actor,
+  });
+
+  revalidatePath("/admin/leads");
+  revalidatePath(`/admin/leads/${leadId}`);
+  revalidatePath("/admin/crm");
+  revalidatePath("/admin/clients");
+  redirect(`/admin/leads/${leadId}?saved=contact`);
+}
+
 // ── Appointments ────────────────────────────────────────────────────────────
 
 export async function addAppointment(formData: FormData) {

@@ -19,6 +19,7 @@ import {
   addLeadNote,
   addRevenue,
   recordLaunchSale,
+  updateLeadContact,
   updateLeadFields,
   updateLeadStatus,
 } from "../../../actions";
@@ -32,10 +33,14 @@ function dateInput(value: string | null): string {
 
 export default async function LeadDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
+  const saved = (Array.isArray(query.saved) ? query.saved[0] : query.saved) === "contact";
   const supabase = await createSupabaseServerClient();
 
   const { data: leadRow } = await supabase
@@ -123,61 +128,71 @@ export default async function LeadDetailPage({
         <div className="ad-col-main">
           <section className="ad-panel">
             <div className="ad-panel-head">
-              <h2>Contact</h2>
+              <h2>Contact &amp; business</h2>
               <span className={`ad-score t-${band.tone}`}>
                 {lead.lead_score} · {band.label}
               </span>
             </div>
-            <dl className="ad-dl">
-              <div>
-                <dt>Phone</dt>
-                <dd>
-                  {lead.phone ? (
-                    <a href={`tel:${lead.phone}`} className="ad-link">
-                      {lead.phone}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
+            {saved ? (
+              <p className="ad-note" role="status" style={{ color: "var(--cc-ok)", marginTop: 0 }}>
+                Contact record saved.
+              </p>
+            ) : null}
+            <form action={updateLeadContact} className="ad-form">
+              <input type="hidden" name="lead_id" value={lead.id} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
+                <label className="ad-field">
+                  <span className="ad-label">First name</span>
+                  <input name="first_name" defaultValue={lead.first_name} className="ad-input" required />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Last name</span>
+                  <input name="last_name" defaultValue={lead.last_name} className="ad-input" />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Phone</span>
+                  <input name="phone" type="tel" defaultValue={lead.phone ?? ""} className="ad-input" placeholder="(254) 555-0123" />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Email</span>
+                  <input name="email" type="email" defaultValue={lead.email} className="ad-input" required />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Business name</span>
+                  <input name="business_name" defaultValue={lead.business_name ?? ""} className="ad-input" />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Business type</span>
+                  <input name="business_type" defaultValue={lead.business_type ?? ""} className="ad-input" />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Has a website</span>
+                  <select name="current_website" defaultValue={lead.current_website ?? ""} className="ad-input">
+                    <option value="">Not recorded</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Website URL</span>
+                  <input name="website_url" type="url" defaultValue={lead.website_url ?? ""} className="ad-input" placeholder="https://example.com" />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Timeline</span>
+                  <input name="timeline" defaultValue={lead.timeline ?? ""} className="ad-input" placeholder="ASAP, 2–4 weeks…" />
+                </label>
+                <label className="ad-field">
+                  <span className="ad-label">Needs / services</span>
+                  <input name="services_interested" defaultValue={lead.services_interested.join(", ")} className="ad-input" placeholder="website, crm, merch" />
+                </label>
               </div>
-              <div>
-                <dt>Email</dt>
-                <dd>
-                  <a href={`mailto:${lead.email}`} className="ad-link">
-                    {lead.email}
-                  </a>
-                </dd>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <span className="ad-muted">
+                  SMS consent: {lead.sms_consent ? "given" : "not given — recording a phone number does not grant texting permission"}
+                </span>
+                <button type="submit" className="ad-btn primary">Save contact</button>
               </div>
-              <div>
-                <dt>Has a website</dt>
-                <dd>{lead.current_website ?? "—"}</dd>
-              </div>
-              <div>
-                <dt>Timeline</dt>
-                <dd>{lead.timeline ?? "—"}</dd>
-              </div>
-              <div>
-                <dt>Needs</dt>
-                <dd>
-                  {lead.services_interested.length
-                    ? lead.services_interested.join(", ")
-                    : "—"}
-                </dd>
-              </div>
-              <div>
-                <dt>Submissions</dt>
-                <dd>{lead.submission_count}</dd>
-              </div>
-              <div>
-                <dt>SMS consent</dt>
-                <dd>{lead.sms_consent ? "Given" : "Not given — do not text"}</dd>
-              </div>
-              <div>
-                <dt>Do not contact</dt>
-                <dd>{lead.do_not_contact ? "Yes" : "No"}</dd>
-              </div>
-            </dl>
+            </form>
           </section>
 
           <section className="ad-panel">
