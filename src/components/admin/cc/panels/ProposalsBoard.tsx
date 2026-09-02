@@ -148,19 +148,13 @@ export default async function ProposalsBoard({
                         <td>
                           <span className="cc-client-name">{row.clientName}</span>
                           {row.clientEmail ? (
-                            <>
-                              <br />
-                              <span className="cc-client-sub">{row.clientEmail}</span>
-                            </>
+                            <span className="cc-client-sub">{row.clientEmail}</span>
                           ) : null}
                         </td>
                         <td>
-                          {row.title}
+                          <span className="cc-client-name">{row.title}</span>
                           {row.packageName ? (
-                            <>
-                              <br />
-                              <span className="cc-client-sub">{row.packageName}</span>
-                            </>
+                            <span className="cc-client-sub">{row.packageName}</span>
                           ) : null}
                         </td>
                         <td className="num">{row.oneTimeCents > 0 ? money(row.oneTimeCents) : DASH}</td>

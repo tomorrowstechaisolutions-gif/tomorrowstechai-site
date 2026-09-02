@@ -9,6 +9,7 @@ import {
   type ProposalStatus,
 } from "./config";
 import { storeSignedDocument } from "./snapshot";
+import { onProposalAccepted } from "@/lib/tasks/automation";
 import type {
   AgreementVersion, FullProposal, Proposal, ProposalEventType,
   ProposalItem, ProposalSection, ProposalSignature,
@@ -337,6 +338,22 @@ export async function acceptAndSign(input: SignInput): Promise<SignResult> {
     metadata: { agreement_version: signature.agreement_version, document_hash: stored.hash },
     ip: input.ip,
   });
+
+  // The next step, as a real task rather than something to remember.
+  // Non-fatal on purpose: the signature is already recorded and locked, and
+  // a follow-up task that failed to open must not turn that into an error.
+  try {
+    await onProposalAccepted(db, {
+      proposalId: p.id,
+      proposalNumber: p.proposal_number,
+      clientName: p.client_business_name,
+      owner: p.owner,
+      actor: "system",
+      paymentDue: dueNowCents > 0,
+    });
+  } catch {
+    // Visible by its absence on the task board, not by failing the signature.
+  }
 
   // Mirror it onto the CRM timeline the rest of the admin already reads.
   if (p.lead_id) {

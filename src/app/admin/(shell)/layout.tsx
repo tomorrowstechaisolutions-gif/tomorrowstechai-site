@@ -23,9 +23,13 @@ async function loadBadges() {
   const now = new Date();
   const dayAgo = new Date(now.getTime() - 24 * 3600_000).toISOString();
   const nowIso = now.toISOString();
+  // Midnight tonight, Chicago — so "due today" counts all of today.
+  const endOfToday = new Date(
+    `${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(now)}T23:59:59-05:00`
+  ).toISOString();
   const openFilter = `(${CLOSED_STATUSES.join(",")})`;
 
-  const [followupsDue, uncontacted, atRisk, proposals] = await Promise.all([
+  const [followupsDue, uncontacted, atRisk, proposals, tasksDue] = await Promise.all([
     supabase
       .from("leads")
       .select("id", { count: "exact", head: true })
@@ -53,12 +57,22 @@ async function loadBadges() {
       .select("id", { count: "exact", head: true })
       .eq("status", "proposed")
       .then((r) => r.count ?? 0),
+    // Overdue plus due today. Not "open tasks" — a badge that reads 60
+    // because sixty things exist is a badge nobody looks at twice.
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("is_template", false)
+      .not("status", "in", "(completed,canceled)")
+      .lt("due_at", endOfToday)
+      .then((r) => r.count ?? 0),
   ]);
 
   return {
     leadsNeedingAttention: followupsDue + uncontacted,
     projectsAtRisk: atRisk,
     aiProposals: proposals,
+    tasksNeedingAttention: tasksDue,
   };
 }
 
@@ -133,6 +147,7 @@ export default async function AdminShellLayout({
     leadsNeedingAttention: 0,
     projectsAtRisk: 0,
     aiProposals: 0,
+    tasksNeedingAttention: 0,
   }));
 
   const alertCount =

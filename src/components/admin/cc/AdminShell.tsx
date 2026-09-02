@@ -22,6 +22,7 @@ export type ShellBadges = {
   leadsNeedingAttention: number;
   projectsAtRisk: number;
   aiProposals: number;
+  tasksNeedingAttention: number;
 };
 
 export default function AdminShell({

@@ -16,6 +16,7 @@ import { sendProposalEmail } from "@/lib/proposals/emails";
 import type { Proposal, ProposalItemType, ProposalSectionType } from "@/lib/proposals/types";
 import { DEFAULT_JOB_TASKS, PROMISED_DAYS, dueDateFrom } from "@/lib/jobs/config";
 import { createIntake } from "@/lib/intake/service";
+import { onProjectCreated } from "@/lib/tasks/automation";
 
 /**
  * Every write the admin can make to a proposal.
@@ -786,6 +787,33 @@ export async function convertProposalToProjectAction(formData: FormData) {
     );
   }
 
+  // ── The delivery workflow for what was actually sold.
+  //
+  // job_tasks above is the project board's own per-stage checklist. This is
+  // the schedulable, assignable work register — dated, prioritised and
+  // visible on /admin/tasks alongside everything else. Two different things
+  // that happen to both be lists.
+  //
+  // Deliberately not fatal: a workflow that failed to open is a button press
+  // away on the project, and must never undo a conversion that has already
+  // created a client, a project and taken a payment.
+  let generatedTasks = 0;
+  try {
+    const workflow = await onProjectCreated(supabase, {
+      jobId,
+      packageKey: p.package_key,
+      customerId,
+      leadId: p.lead_id,
+      proposalId: p.id,
+      owner: p.owner ?? actor,
+      actor,
+      startDate: started,
+    });
+    generatedTasks = workflow.created;
+  } catch {
+    // Recorded by its absence on the task board rather than by failing here.
+  }
+
   await supabase.from("job_events").insert({
     job_id: jobId,
     kind: "note",
@@ -840,14 +868,22 @@ export async function convertProposalToProjectAction(formData: FormData) {
   await logProposalEvent(supabase, {
     proposalId: id,
     type: "converted_to_project",
-    body: `Project opened${intakeUrl ? " and an onboarding link issued" : ""}.`,
+    body: [
+      "Project opened",
+      generatedTasks > 0 ? `with ${generatedTasks} delivery tasks` : null,
+      intakeUrl ? "and an onboarding link issued" : null,
+    ].filter(Boolean).join(" ") + ".",
     actor,
-    metadata: { job_id: jobId, customer_id: customerId, intake_url: intakeUrl },
+    metadata: {
+      job_id: jobId, customer_id: customerId,
+      intake_url: intakeUrl, generated_tasks: generatedTasks,
+    },
   });
 
   touch(id);
   revalidatePath("/admin/jobs");
   revalidatePath("/admin/clients");
+  revalidatePath("/admin/tasks");
   redirect(`/admin/jobs/${jobId}`);
 }
 

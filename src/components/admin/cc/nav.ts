@@ -49,7 +49,7 @@ export type NavLink = {
   icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
   soon?: boolean;
   /** Which dashboard counter, if any, badges this link. */
-  badge?: "leadsNeedingAttention" | "projectsAtRisk" | "aiProposals";
+  badge?: "leadsNeedingAttention" | "projectsAtRisk" | "aiProposals" | "tasksNeedingAttention";
   /** External to the admin (opens the public site). */
   external?: boolean;
 };
@@ -80,7 +80,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/jobs", label: "Projects", icon: IconBriefcase, badge: "projectsAtRisk" },
       { href: "/admin/intakes", label: "Client intake", icon: IconBriefcase },
-      { href: "/admin/tasks", label: "Tasks", icon: IconCheckSquare, soon: true },
+      { href: "/admin/tasks", label: "Tasks", icon: IconCheckSquare, badge: "tasksNeedingAttention" },
       { href: "/admin/calendar", label: "Calendar", icon: IconCalendar, soon: true },
     ],
   },
@@ -203,12 +203,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Multi-step sequences across modules — a lead converts, a job opens, a welcome email goes out, a check-in is scheduled. Each step proposes before it acts.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/tasks": {
-    title: "Tasks",
-    blurb:
-      "The full task list, assignable and filterable. Today's tasks — and everything else due today — are already on the dashboard.",
-    nearest: { href: "/admin", label: "See today" },
   },
   "/admin/calendar": {
     title: "Calendar",
