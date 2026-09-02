@@ -71,18 +71,18 @@ function proposalSteps(input: {
   return [
     { label: "Opportunity qualified", detail: "Contact and business need are identified.", state: "done" },
     {
-      label: "Working preview delivered",
+      label: input.isKeyKonnect ? "Working website built" : "Working preview delivered",
       detail: input.isKeyKonnect
-        ? "Custom website teaser shared with Cory on September 1."
+        ? "The Key Konnect website is built and available at the working preview."
         : "Share a concrete preview or discovery summary.",
       state: input.isKeyKonnect ? "done" : "active",
     },
     {
-      label: "Assets and feedback",
+      label: input.isKeyKonnect ? "Brand and music received" : "Assets and feedback",
       detail: input.isKeyKonnect
-        ? "Waiting on the ‘13 Years Old’ MP3, company logo, and preview feedback."
+        ? "Cory delivered his logos and ‘13 Years Old’ audio; both are incorporated into the website."
         : "Collect brand assets, content, and decision-maker feedback.",
-      state: input.isKeyKonnect ? "active" : "waiting",
+      state: input.isKeyKonnect ? "done" : "waiting",
     },
     {
       label: "Scope and price approved",
@@ -218,7 +218,7 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
         hostingCents: 2900,
         billing: "one_time" as const,
         expectedClose: null,
-        nextAction: "Save the agreement to CRM, send the proposal, and collect launch assets",
+        nextAction: "Save the agreement to CRM, send the final proposal, and record acceptance or payment",
         nextActionAt: null,
         previewUrl: "https://corywiththekeys.vercel.app/",
         notes: "4–5 page website with working vehicle inventory, an initial merchandise shop, music experience, and starter CRM. $399 build + $29/month hosting.",

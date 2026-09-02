@@ -167,9 +167,9 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
   const brief = [
     "The Key Konnect — $399 website launch + $29/month hosting.",
     "Agreed scope: 4–5 pages, working vehicle inventory, an initial merchandise shop, and a music experience.",
-    "Working preview delivered: https://corywiththekeys.vercel.app/",
-    "Music direction confirmed: ‘13 Years Old.’ Cory has the MP3; file requested by email.",
-    "Company logo/assets requested. Awaiting MP3, logo, vehicle details/photos, merchandise catalog, and preview feedback.",
+    "Working website built: https://corywiththekeys.vercel.app/",
+    "Assets received: Cory supplied his company logos and the ‘13 Years Old’ audio; both are incorporated into the website.",
+    "Current commercial step: send the final proposal and record acceptance or payment.",
     "Contact originated through Facebook. Do not mark Won until acceptance or payment is recorded.",
   ].join("\n");
 
@@ -179,7 +179,7 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
     value_cents: 39900,
     billing: "one_time",
     notes: brief,
-    next_action: "Send proposal and collect MP3, logo, vehicle inventory, merch catalog, and preview feedback",
+    next_action: "Send the final proposal and record Cory’s acceptance or payment",
     next_action_at: nextFollowup.toISOString(),
     last_activity_at: "2026-09-01T12:39:00.000Z",
   }).eq("id", dealId);
@@ -192,7 +192,7 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
     .order("created_at", { ascending: false })
     .limit(30);
   const alreadyImported = (existingEvent ?? []).some((event) =>
-    (event.meta as { import_key?: string } | null)?.import_key === "key-konnect-facebook-2026-09-01"
+    (event.meta as { import_key?: string } | null)?.import_key === "key-konnect-build-ready-2026-09-01"
   );
   if (!alreadyImported) {
     await supabase.from("lead_events").insert({
@@ -200,7 +200,7 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
       type: "note",
       body: brief,
       actor,
-      meta: { import_key: "key-konnect-facebook-2026-09-01", channel: "facebook" },
+      meta: { import_key: "key-konnect-build-ready-2026-09-01", channel: "facebook" },
       created_at: "2026-09-01T12:39:00.000Z",
     });
   }
@@ -214,8 +214,8 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
     .limit(1)
     .maybeSingle();
   const task = {
-    title: "Follow up with Cory Simek",
-    notes: "Send the formal proposal. Ask for the ‘13 Years Old’ MP3, company logo, vehicle photos/details, merchandise products/prices, and preview feedback.",
+    title: "Send Cory the final proposal",
+    notes: "The working website is built and Cory’s logos and ‘13 Years Old’ audio are incorporated. Send the final proposal, confirm approval, and record acceptance or payment.",
     kind: "followup",
     priority: "high",
     due_at: nextFollowup.toISOString(),
@@ -242,7 +242,7 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
     hosting_cents: 2900,
     billing: "one_time",
     description: "4–5 page website for The Key Konnect with vehicle inventory, merchandise shop, music experience, and starter CRM.",
-    notes: "$399 one-time build and $29/month hosting. Assets and final content are still being collected.",
+    notes: "$399 one-time build and $29/month hosting. Working website is built; logos and music are received. Awaiting formal acceptance or payment.",
   };
   if (invoice) await supabase.from("invoices").update(proposalInvoice).eq("id", invoice.id);
   else await supabase.from("invoices").insert({ ...proposalInvoice, status: "draft" });

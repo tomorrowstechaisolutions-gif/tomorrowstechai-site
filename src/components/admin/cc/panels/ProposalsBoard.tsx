@@ -87,7 +87,7 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
       <div className="proposal-facts">
         <div><span>Agreed scope</span><strong>4–5 page website</strong><p>Vehicle inventory, merchandise shop, music experience, and starter CRM.</p></div>
         <div><span>Investment</span><strong>$399 + $29/month</strong><p>One-time website build plus ongoing hosting and management.</p></div>
-        <div><span>Waiting on</span><strong>Content and assets</strong><p>MP3, logo, vehicle details, merchandise catalog, and preview feedback.</p></div>
+        <div><span>Current position</span><strong>Website built · proposal next</strong><p>Logos and music are received and implemented. Final acceptance and payment are not yet recorded.</p></div>
       </div>
 
       <div className="proposal-actions-row">
@@ -100,11 +100,11 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
           <form action={syncKeyKonnectConversationAction}>
             <input type="hidden" name="deal_id" value={proposal.dealId} />
             <input type="hidden" name="lead_id" value={proposal.leadId} />
-            <button className="cc-btn" type="submit"><IconCheck size={13} /> {proposal.dealId ? "Update Cory’s CRM proposal" : "Create Cory’s CRM proposal"}</button>
+            <button className="cc-btn" type="submit"><IconCheck size={13} /> {proposal.dealId ? "Sync Cory’s latest progress" : "Save Cory’s proposal to CRM"}</button>
           </form>
         ) : null}
       </div>
-      <p className="proposal-truth-note">The price and scope are agreed. Revenue still books only when Cory accepts the proposal or pays.</p>
+      <p className="proposal-truth-note">The website is built and the agreed assets are in place. Revenue still books only when Cory accepts the proposal or pays.</p>
     </section>
   );
 }
@@ -138,11 +138,11 @@ function CreateProposalRecord({ proposal }: { proposal: ProposalRow }) {
     <Panel title="Record this agreement" sub="One click creates the missing CRM records" icon={<IconFile size={15} />} className="cc-s7">
       <div className="proposal-record-callout">
         <span className="cc-chip t-warn">CRM deal missing</span>
-        <h3>The proposal exists, but the database record does not.</h3>
-        <p>Create the proposal record to attach the $399 build, $29/month hosting, scope, draft invoice, conversation note, and follow-up task to Cory’s existing lead.</p>
+        <h3>This progress has not been saved as a permanent CRM deal yet.</h3>
+        <p>Save it once to attach the completed working build, received assets, $399 build, $29/month hosting, draft invoice, conversation history, and final follow-up to Cory’s lead.</p>
         <form action={syncKeyKonnectConversationAction}>
           <input type="hidden" name="lead_id" value={proposal.leadId} />
-          <button className="cc-btn primary" type="submit">Create proposal record <IconArrowRight size={13} /></button>
+          <button className="cc-btn primary" type="submit">Save current progress to CRM <IconArrowRight size={13} /></button>
         </form>
       </div>
     </Panel>

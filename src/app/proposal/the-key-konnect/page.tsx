@@ -17,11 +17,10 @@ const scope = [
 ];
 
 const needed = [
-  "The “13 Years Old” MP3 and confirmation Cory has the rights to publish it",
-  "Company logo and preferred brand assets",
+  "Final confirmation that the supplied music and artwork are approved for publication",
   "Vehicle photos, descriptions, prices, and availability",
   "Initial merchandise photos, names, prices, and fulfillment details",
-  "Contact information, social links, and final preview feedback",
+  "Final contact information, social links, and launch approval",
 ];
 
 export default function KeyKonnectProposalPage() {
@@ -79,8 +78,8 @@ export default function KeyKonnectProposalPage() {
 
         <section className="client-proposal-next">
           <span>THE NEXT MOVE</span>
-          <h2>Approve the direction. Send the assets. We finish the build.</h2>
-          <p>The working preview is already underway. Once the listed content is received, Tomorrow’s Tech AI can complete the agreed pages and features for final review.</p>
+          <h2>Review the finished direction. Approve the launch.</h2>
+          <p>The working website is built with Cory’s supplied logos and “13 Years Old” audio in place. The remaining move is final review, approval, and the launch details needed to publish the live business experience.</p>
           <div><a href="mailto:john@tomorrowstechai.com?subject=The%20Key%20Konnect%20website%20proposal">Reply about this proposal</a><a className="secondary" href="https://corywiththekeys.vercel.app/" target="_blank" rel="noreferrer">View working preview</a></div>
         </section>
 
