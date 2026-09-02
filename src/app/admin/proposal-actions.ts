@@ -28,6 +28,7 @@ export async function saveProposalAction(formData: FormData) {
   if (!dealId) return;
 
   const amount = cents(str(formData, "amount", 30));
+  const hosting = cents(str(formData, "hosting", 30)) ?? 0;
   const billing = str(formData, "billing", 20) === "monthly" ? "monthly" : "one_time";
   const title = str(formData, "title", 200);
   const scope = str(formData, "scope", 6000);
@@ -56,19 +57,22 @@ export async function saveProposalAction(formData: FormData) {
 
   const { data: invoice } = await supabase
     .from("invoices")
-    .select("id, status")
+    .select("id, status, kind")
     .eq("deal_id", dealId)
     .in("status", ["draft", "sent"])
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
+  const isLaunch = invoice?.kind === "launch" || hosting > 0;
   const invoicePatch = {
     lead_id: deal.lead_id,
     deal_id: dealId,
-    kind: "upsell",
-    amount_cents: amount ?? 0,
-    billing,
+    kind: isLaunch ? "launch" : "upsell",
+    amount_cents: isLaunch ? 0 : amount ?? 0,
+    launch_cents: isLaunch ? amount ?? 0 : 0,
+    hosting_cents: isLaunch ? hosting : 0,
+    billing: isLaunch ? "one_time" : billing,
     description: scope || title || "Custom proposal",
     notes: amount ? null : "Pricing intentionally left open until scope is confirmed.",
   };
@@ -94,9 +98,11 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
   if (!lead || (!identity.includes("cory simek") && !identity.includes("key konnect"))) return;
 
   const nextFollowup = new Date("2026-09-02T14:00:00.000Z");
-  const services = Array.from(new Set([...(lead.services_interested ?? []), "website", "crm"]));
+  const services = Array.from(new Set([...(lead.services_interested ?? []), "Website", "CRM", "E-commerce"]));
+  // Keep the factual contact update separate so a pre-existing duplicate
+  // email cannot prevent the rest of the proposal sync from saving.
+  await supabase.from("leads").update({ email: "corywiththekeys@gmail.com" }).eq("id", leadId);
   await supabase.from("leads").update({
-    lead_status: "Proposal/Checkout Sent",
     services_interested: services,
     source: "facebook",
     last_contacted_at: "2026-09-01T12:39:00.000Z",
@@ -104,17 +110,21 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
   }).eq("id", leadId);
 
   const brief = [
-    "The Key Konnect — custom website + CRM opportunity.",
+    "The Key Konnect — $399 website launch + $29/month hosting.",
+    "Agreed scope: 4–5 pages, working vehicle inventory, an initial merchandise shop, and a music experience.",
     "Working preview delivered: https://corywiththekeys.vercel.app/",
     "Music direction confirmed: ‘13 Years Old.’ Cory has the MP3; file requested by email.",
-    "Company logo/assets requested. Awaiting MP3, logo, preview feedback, final scope, and price.",
+    "Company logo/assets requested. Awaiting MP3, logo, vehicle details/photos, merchandise catalog, and preview feedback.",
     "Contact originated through Facebook. Do not mark Won until acceptance or payment is recorded.",
   ].join("\n");
 
   await supabase.from("deals").update({
+    title: "The Key Konnect website launch",
     stage: "proposal",
+    value_cents: 39900,
+    billing: "one_time",
     notes: brief,
-    next_action: "Follow up for MP3, logo, and preview feedback; then confirm scope and price",
+    next_action: "Send proposal and collect MP3, logo, vehicle inventory, merch catalog, and preview feedback",
     next_action_at: nextFollowup.toISOString(),
     last_activity_at: "2026-09-01T12:39:00.000Z",
   }).eq("id", dealId);
@@ -150,7 +160,7 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
     .maybeSingle();
   const task = {
     title: "Follow up with Cory Simek",
-    notes: "Ask for the ‘13 Years Old’ MP3, company logo, preview feedback, and confirm scope and price.",
+    notes: "Send the formal proposal. Ask for the ‘13 Years Old’ MP3, company logo, vehicle photos/details, merchandise products/prices, and preview feedback.",
     kind: "followup",
     priority: "high",
     due_at: nextFollowup.toISOString(),
@@ -168,18 +178,19 @@ export async function syncKeyKonnectConversationAction(formData: FormData) {
     .in("status", ["draft", "sent"])
     .limit(1)
     .maybeSingle();
-  if (!invoice) {
-    await supabase.from("invoices").insert({
-      deal_id: dealId,
-      lead_id: leadId,
-      kind: "upsell",
-      amount_cents: 0,
-      billing: "one_time",
-      status: "draft",
-      description: "Custom website and CRM for The Key Konnect",
-      notes: "Price not set. Awaiting assets, feedback, and final scope.",
-    });
-  }
+  const proposalInvoice = {
+    deal_id: dealId,
+    lead_id: leadId,
+    kind: "launch",
+    amount_cents: 0,
+    launch_cents: 39900,
+    hosting_cents: 2900,
+    billing: "one_time",
+    description: "4–5 page website for The Key Konnect with vehicle inventory, merchandise shop, music experience, and starter CRM.",
+    notes: "$399 one-time build and $29/month hosting. Assets and final content are still being collected.",
+  };
+  if (invoice) await supabase.from("invoices").update(proposalInvoice).eq("id", invoice.id);
+  else await supabase.from("invoices").insert({ ...proposalInvoice, status: "draft" });
 
   for (const path of REVALIDATE) revalidatePath(path);
   revalidatePath(`/admin/leads/${leadId}`);

@@ -20,6 +20,7 @@ export type ProposalRow = {
   title: string;
   stage: DealStage;
   valueCents: number | null;
+  hostingCents: number | null;
   billing: "one_time" | "monthly";
   expectedClose: string | null;
   nextAction: string | null;
@@ -111,7 +112,7 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
       .then((r) => unwrap(r, "proposal deals")),
     sb
       .from("invoices")
-      .select("id, deal_id, lead_id, status, kind, amount_cents, launch_cents, billing, description, checkout_url, sent_at, paid_at, notes, updated_at")
+      .select("id, deal_id, lead_id, status, kind, amount_cents, launch_cents, hosting_cents, billing, description, checkout_url, sent_at, paid_at, notes, updated_at")
       .order("updated_at", { ascending: false })
       .then((r) => unwrap(r, "proposal invoices")),
   ]);
@@ -127,7 +128,7 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
   };
   type InvoiceRaw = {
     id: string; deal_id: string | null; lead_id: string | null; status: string;
-    kind: "launch" | "upsell"; amount_cents: number; launch_cents: number;
+    kind: "launch" | "upsell"; amount_cents: number; launch_cents: number; hosting_cents: number;
     billing: "one_time" | "monthly"; description: string | null;
     checkout_url: string | null; sent_at: string | null; paid_at: string | null;
     notes: string | null; updated_at: string;
@@ -163,6 +164,7 @@ export async function loadProposalWorkspace(sb: SupabaseClient): Promise<Proposa
       title: deal.title,
       stage: deal.stage,
       valueCents: valueCents && valueCents > 0 ? valueCents : null,
+      hostingCents: invoice?.hosting_cents && invoice.hosting_cents > 0 ? invoice.hosting_cents : (isKeyKonnect ? 2900 : null),
       billing: deal.billing,
       expectedClose: deal.expected_close,
       nextAction: deal.next_action,

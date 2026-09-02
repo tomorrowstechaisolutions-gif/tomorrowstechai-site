@@ -74,36 +74,37 @@ function KeyKonnectBrief({ proposal }: { proposal: ProposalRow }) {
         <div>
           <span className="proposal-eyebrow">First live opportunity · Facebook</span>
           <h2>The Key Konnect</h2>
-          <p>Cory Simek · Owner &amp; visionary · Killeen, Texas</p>
+          <p>Cory Simek · Owner &amp; visionary · Killeen, Texas · corywiththekeys@gmail.com</p>
         </div>
         <div className="proposal-spotlight-status">
           <span className={`cc-chip ${STATUS_TONE[proposal.invoiceStatus ?? proposal.stage] ?? "t-muted"}`}>
             {proposal.invoiceStatus === "paid" ? "Paid" : "Proposal in progress"}
           </span>
-          <span className="proposal-value">{proposal.valueCents ? money(proposal.valueCents) : "Price not set"}</span>
+          <span className="proposal-value">$399 build <span>+ $29/mo hosting</span></span>
         </div>
       </div>
 
       <div className="proposal-facts">
-        <div><span>Need</span><strong>Custom website + CRM</strong><p>A modern brand site with a music-led experience and the business tools behind it.</p></div>
-        <div><span>Creative direction</span><strong>“13 Years Old”</strong><p>Cory selected the song and confirmed he has the MP3.</p></div>
-        <div><span>Waiting on</span><strong>MP3, logo, feedback</strong><p>Those assets unlock final scope, pricing, and the formal proposal.</p></div>
+        <div><span>Agreed scope</span><strong>4–5 page website</strong><p>Vehicle inventory, merchandise shop, music experience, and starter CRM.</p></div>
+        <div><span>Investment</span><strong>$399 + $29/month</strong><p>One-time website build plus ongoing hosting and management.</p></div>
+        <div><span>Waiting on</span><strong>Content and assets</strong><p>MP3, logo, vehicle details, merchandise catalog, and preview feedback.</p></div>
       </div>
 
       <div className="proposal-actions-row">
         {proposal.previewUrl ? (
           <a className="cc-btn primary" href={proposal.previewUrl} target="_blank" rel="noreferrer"><IconLink size={13} /> Open working preview</a>
         ) : null}
+        <Link className="cc-btn primary" href="/proposal/the-key-konnect" target="_blank"><IconFile size={13} /> Open client proposal</Link>
         {proposal.leadId ? <Link className="cc-btn" href={`/admin/leads/${proposal.leadId}`}><IconUsers size={13} /> Open Cory’s CRM record</Link> : null}
         {proposal.leadId ? (
           <form action={syncKeyKonnectConversationAction}>
             <input type="hidden" name="deal_id" value={proposal.dealId} />
             <input type="hidden" name="lead_id" value={proposal.leadId} />
-            <button className="cc-btn" type="submit"><IconCheck size={13} /> Save supplied conversation to CRM</button>
+            <button className="cc-btn" type="submit"><IconCheck size={13} /> Save agreement to Cory’s CRM</button>
           </form>
         ) : null}
       </div>
-      <p className="proposal-truth-note">“First customer” is treated here as your first serious live customer opportunity. It becomes Won only when Cory accepts or pays.</p>
+      <p className="proposal-truth-note">The price and scope are agreed. Revenue still books only when Cory accepts the proposal or pays.</p>
     </section>
   );
 }
@@ -114,8 +115,9 @@ function ProposalEditor({ proposal }: { proposal: ProposalRow }) {
       <form action={saveProposalAction} className="proposal-form">
         <input type="hidden" name="deal_id" value={proposal.dealId} />
         <label className="cc-field"><span>Proposal title</span><input className="cc-input" name="title" defaultValue={proposal.title} required /></label>
-        <div className="proposal-form-row">
-          <label className="cc-field"><span>Price</span><input className="cc-input" name="amount" inputMode="decimal" placeholder="Leave open until agreed" defaultValue={proposal.valueCents ? (proposal.valueCents / 100).toFixed(2) : ""} /></label>
+        <div className="proposal-form-row four">
+          <label className="cc-field"><span>Build price</span><input className="cc-input" name="amount" inputMode="decimal" placeholder="Leave open until agreed" defaultValue={proposal.valueCents ? (proposal.valueCents / 100).toFixed(2) : proposal.isKeyKonnect ? "399.00" : ""} /></label>
+          <label className="cc-field"><span>Monthly hosting</span><input className="cc-input" name="hosting" inputMode="decimal" placeholder="0.00" defaultValue={proposal.hostingCents ? (proposal.hostingCents / 100).toFixed(2) : proposal.isKeyKonnect ? "29.00" : ""} /></label>
           <label className="cc-field"><span>Billing</span><select className="cc-select" name="billing" defaultValue={proposal.billing}><option value="one_time">One time</option><option value="monthly">Monthly</option></select></label>
           <label className="cc-field"><span>Expected close</span><input className="cc-input" name="expected_close" type="date" defaultValue={proposal.expectedClose ?? ""} /></label>
         </div>

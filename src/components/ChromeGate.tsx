@@ -16,6 +16,7 @@ const BARE_PREFIXES = [
   "/ecommerce-website",
   "/admin",
   "/intake",
+  "/proposal",
 ];
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {
