@@ -1,13 +1,16 @@
 /**
  * Pricing, computed in one place and never in the browser.
  *
- * The public page posts a token and a name — never an amount. Everything the
- * client is charged is recomputed here from the stored rows immediately
- * before a checkout session is created, so a tampered form body can change
- * nothing about what Stripe is asked for.
+ * A proposal quotes a price. It does not collect one — there is no card, no
+ * deposit and no "due today" anywhere in this module. Signing is agreement;
+ * money is asked for on the invoice that follows the work. That split is
+ * deliberate and it is why the deposit/due-now arithmetic that used to live
+ * here is gone rather than merely switched off.
+ *
+ * The stored `deposit_amount_cents` and `payment_mode` columns survive on the
+ * table for the rows that predate the change. Nothing reads them.
  */
 
-import type { PaymentMode } from "./config";
 import type { ProposalItem } from "./types";
 
 export type PriceBreakdown = {
@@ -18,11 +21,6 @@ export type PriceBreakdown = {
   oneTimeCents: number;
   totalCents: number;
   recurringCents: number;
-  depositCents: number;
-  /** What Stripe is asked for at signature. Zero means no card is collected. */
-  dueNowCents: number;
-  /** Whatever is left after the amount due now. */
-  balanceCents: number;
 };
 
 export function lineTotal(item: {
@@ -44,8 +42,6 @@ export function computePricing(input: {
   /** Set when the admin typed a build price directly instead of itemising. */
   basePriceCents?: number;
   recurringCents: number;
-  depositCents: number;
-  paymentMode: PaymentMode;
 }): PriceBreakdown {
   let itemised = 0;
   let discount = 0;
@@ -61,42 +57,14 @@ export function computePricing(input: {
   const subtotalCents = Math.max(0, (input.basePriceCents ?? 0) + itemised);
   const discountCents = Math.min(discount, subtotalCents);
   const oneTimeCents = Math.max(0, subtotalCents - discountCents);
-  const totalCents = oneTimeCents;
-
-  const depositCents = Math.min(Math.max(0, input.depositCents), totalCents);
-
-  const dueNowCents =
-    input.paymentMode === "invoice_later" ? 0
-      : input.paymentMode === "full" ? totalCents
-      : depositCents;
 
   return {
     subtotalCents,
     discountCents,
     oneTimeCents,
-    totalCents,
+    totalCents: oneTimeCents,
     recurringCents: Math.max(0, input.recurringCents),
-    depositCents,
-    dueNowCents,
-    balanceCents: Math.max(0, totalCents - dueNowCents),
   };
-}
-
-/**
- * What is actually due the moment they sign, in cents.
- *
- * Lives here rather than in config.ts because it is a pricing rule, and
- * because keeping it out of config's import chain lets the email templates
- * be rendered and inspected without dragging the campaign modules in.
- */
-export function amountDueAtSignature(p: {
-  payment_mode: PaymentMode;
-  total_cents: number;
-  deposit_amount_cents: number;
-}): number {
-  if (p.payment_mode === "invoice_later") return 0;
-  if (p.payment_mode === "full") return p.total_cents;
-  return p.deposit_amount_cents;
 }
 
 /** $399, $1,250.50 — the one formatter the proposal and its emails share. */

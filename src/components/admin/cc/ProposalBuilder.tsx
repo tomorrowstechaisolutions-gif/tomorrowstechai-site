@@ -4,11 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   PACKAGE_TEMPLATES,
-  PAYMENT_MODES,
-  PAYMENT_MODE_HELP,
-  PAYMENT_MODE_LABELS,
+  PAYMENT_NOTE,
   templateByKey,
-  type PaymentMode,
 } from "@/lib/proposals/config";
 import { computePricing, formatMoney } from "@/lib/proposals/pricing";
 import type { ProposalItemType, ProposalSectionType } from "@/lib/proposals/types";
@@ -22,7 +19,10 @@ import { IconPlus, IconX, IconLayers, IconUsers, IconDollar, IconFile } from "./
  * JSON fields rather than as fifty numbered inputs. The running total shown
  * here is a preview only — the server recomputes every figure from the same
  * function before anything is saved, so what is displayed can never become
- * what is charged.
+ * what is quoted.
+ *
+ * There is no deposit field and no payment mode. A proposal states a price;
+ * the invoice raised after the work is what asks for it.
  */
 
 const ITEM_GROUPS: { type: ProposalItemType; label: string; priced: boolean; hint: string }[] = [
@@ -84,8 +84,6 @@ export type BuilderInitial = {
   discountAmount: string;
   recurringPrice: string;
   recurringInterval: "month" | "year";
-  depositAmount: string;
-  paymentMode: PaymentMode;
   turnaroundNote: string;
   revisionLimit: string;
   hostingNote: string;
@@ -162,8 +160,6 @@ export default function ProposalBuilder({
       summary: prev.summary || template.summary,
       oneTimePrice: dollars(template.oneTimeCents),
       recurringPrice: dollars(template.recurringCents),
-      depositAmount: dollars(template.depositCents),
-      paymentMode: template.paymentMode,
       turnaroundNote: template.turnaroundNote ?? "",
       revisionLimit: template.revisionLimit === null ? "" : String(template.revisionLimit),
       hostingNote: template.hostingNote,
@@ -207,10 +203,8 @@ export default function ProposalBuilder({
       items: parsed,
       basePriceCents: Math.round(Number.parseFloat(form.oneTimePrice || "0") * 100) || 0,
       recurringCents: Math.round(Number.parseFloat(form.recurringPrice || "0") * 100) || 0,
-      depositCents: Math.round(Number.parseFloat(form.depositAmount || "0") * 100) || 0,
-      paymentMode: form.paymentMode,
     });
-  }, [items, form.oneTimePrice, form.discountAmount, form.recurringPrice, form.depositAmount, form.paymentMode]);
+  }, [items, form.oneTimePrice, form.discountAmount, form.recurringPrice]);
 
   const addItem = (type: ProposalItemType) =>
     setItems((prev) => [
@@ -518,27 +512,8 @@ export default function ProposalBuilder({
               </select>
             </span>
           </div>
-          <div className="cc-field">
-            <label className="cc-label" htmlFor="payment_mode">When payment is due</label>
-            <select id="payment_mode" name="payment_mode" className="cc-select"
-              value={form.paymentMode}
-              onChange={(e) => field("paymentMode", e.target.value as PaymentMode)}>
-              {PAYMENT_MODES.map((mode) => (
-                <option key={mode} value={mode}>{PAYMENT_MODE_LABELS[mode]}</option>
-              ))}
-            </select>
-            <span className="cc-note">{PAYMENT_MODE_HELP[form.paymentMode]}</span>
-          </div>
-          {form.paymentMode === "deposit" ? (
-            <div className="cc-field">
-              <label className="cc-label" htmlFor="deposit_amount">Deposit due at signature</label>
-              <input id="deposit_amount" name="deposit_amount" className="cc-input" inputMode="decimal"
-                value={form.depositAmount}
-                onChange={(e) => field("depositAmount", e.target.value)} />
-            </div>
-          ) : (
-            <input type="hidden" name="deposit_amount" value={form.depositAmount} />
-          )}
+          <p className="cc-note">{PAYMENT_NOTE} Raise the invoice from this
+          proposal when the work is done.</p>
 
           <div className="pr-total">
             <div><span>Subtotal</span><b>{formatMoney(pricing.subtotalCents)}</b></div>
@@ -556,11 +531,8 @@ export default function ProposalBuilder({
             </div>
             <div className="is-due">
               <span>Due at signature</span>
-              <b>{pricing.dueNowCents > 0 ? formatMoney(pricing.dueNowCents) : "Nothing"}</b>
+              <b>Nothing</b>
             </div>
-            {pricing.balanceCents > 0 && pricing.dueNowCents > 0 ? (
-              <div><span>Balance after</span><b>{formatMoney(pricing.balanceCents)}</b></div>
-            ) : null}
           </div>
         </div>
       </section>

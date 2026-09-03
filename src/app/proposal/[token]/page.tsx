@@ -4,10 +4,7 @@ import { headers } from "next/headers";
 import { BrandMark } from "@/components/BrandMark";
 import ProposalDocument from "@/components/proposal/ProposalDocument";
 import AcceptForm from "@/components/proposal/AcceptForm";
-import PaymentBlock from "@/components/proposal/PaymentBlock";
 import { getProposalByToken, recordProposalView } from "@/lib/proposals/service";
-import { amountDueAtSignature } from "@/lib/proposals/config";
-import { formatMoney } from "@/lib/proposals/pricing";
 import { clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +14,9 @@ export const dynamic = "force-dynamic";
  *
  * Never indexed and never cached: the URL is a credential, and a proposal
  * that changed status two minutes ago must not render from a stale copy.
+ *
+ * There is no payment step. Signing records agreement to the scope and the
+ * price; the invoice that follows the work is what asks for money.
  * Nothing on this page requires an account — the token is the whole of the
  * client's access, and it only ever reaches the service role through
  * src/lib/proposals/service.ts.
@@ -47,13 +47,10 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
 
 export default async function PublicProposalPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { token } = await params;
-  const query = await searchParams;
   const loaded = await getProposalByToken(token);
 
   if (loaded === "not_found") notFound();
@@ -94,9 +91,6 @@ export default async function PublicProposalPage({
   );
 
   const p = loaded.proposal;
-  const dueNow = amountDueAtSignature(p);
-  const outstanding = Math.max(0, dueNow - p.amount_paid_cents);
-  const paymentFlag = typeof query.payment === "string" ? query.payment : null;
 
   const acceptance = loaded.signature ? null : (
     <AcceptForm
@@ -104,47 +98,10 @@ export default async function PublicProposalPage({
       defaultName={p.client_contact_name ?? ""}
       defaultEmail={p.client_email ?? ""}
       defaultTitle={p.client_title ?? ""}
-      dueLabel={dueNow > 0 ? `${formatMoney(dueNow, p.currency)} due today` : ""}
     />
   );
 
-  const payment =
-    loaded.signature && dueNow > 0 ? (
-      <PaymentBlock
-        token={p.public_token}
-        dueLabel={formatMoney(outstanding > 0 ? outstanding : dueNow, p.currency)}
-        state={
-          p.status === "paid" || p.status === "converted" || outstanding === 0
-            ? "paid"
-            : paymentFlag === "cancelled"
-              ? "cancelled"
-              : "due"
-        }
-        breakdown={[
-          { label: "Website build", value: formatMoney(p.total_cents, p.currency) },
-          ...(p.recurring_price_cents > 0
-            ? [{
-                label: "Hosting",
-                value: `${formatMoney(p.recurring_price_cents, p.currency)}/${p.recurring_interval}`,
-              }]
-            : []),
-          { label: "Due today", value: formatMoney(outstanding, p.currency), strong: true },
-          ...(p.total_cents - dueNow > 0
-            ? [{
-                label: "Remaining balance",
-                value: formatMoney(p.total_cents - dueNow, p.currency),
-              }]
-            : []),
-        ]}
-      />
-    ) : null;
-
   return (
-    <ProposalDocument
-      full={loaded}
-      mode="public"
-      acceptance={acceptance}
-      payment={payment}
-    />
+    <ProposalDocument full={loaded} mode="public" acceptance={acceptance} />
   );
 }

@@ -9,7 +9,7 @@ import CopyLink from "../CopyLink";
 import { EmptyState, PanelSkeleton } from "../Panel";
 import { DASH, money, shortDate } from "../format";
 import {
-  IconCheck, IconDollar, IconFile, IconInbox,
+  IconCheck, IconFile, IconInbox,
   IconPen, IconSend, IconAlert, IconSearch,
 } from "../Icons";
 
@@ -49,9 +49,8 @@ export default async function ProposalsBoard({
     { label: "Sent", value: board.summary.sent, foot: "Delivered, not opened", icon: IconSend },
     { label: "Viewed", value: board.summary.viewed, foot: "Client has read it", icon: IconSearch },
     { label: "Awaiting signature", value: board.summary.awaiting_signature, foot: "Accepted, not signed", icon: IconPen },
-    { label: "Awaiting payment", value: board.summary.awaiting_payment, foot: "Signed, money not in", icon: IconDollar },
     { label: "Accepted", value: board.summary.accepted, foot: "Agreed on paper", icon: IconCheck },
-    { label: "Paid", value: board.summary.paid, foot: "Payment recorded", icon: IconCheck },
+    { label: "Signed", value: board.summary.signed, foot: "Ready to start and invoice", icon: IconCheck },
     { label: "Expired", value: board.summary.expired, foot: "Past its valid-until date", icon: IconAlert },
   ];
 
@@ -61,8 +60,9 @@ export default async function ProposalsBoard({
         <div>
           <h1>Proposals</h1>
           <p>
-            Scope, price, agreement, signature and payment — one document per
-            sale, from the first draft to the project it becomes.
+            Scope, price, agreement and signature — one document per sale,
+            from the first draft to the project it becomes. Nothing is charged
+            here; the invoice comes after the work.
           </p>
         </div>
         <Link href="/admin/proposals/new" className="cc-btn primary">
@@ -90,7 +90,7 @@ export default async function ProposalsBoard({
             <h2>All proposals</h2>
             <span className="cc-sub">
               {board.openValueCents > 0
-                ? `${money(board.openValueCents)} still open · ${money(board.wonValueCents)} closed`
+                ? `${money(board.openValueCents)} still open · ${money(board.wonValueCents)} agreed`
                 : "Nothing open right now"}
             </span>
           </div>

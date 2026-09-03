@@ -337,95 +337,13 @@ export async function createUpsellCheckoutSession(opts: {
 }
 
 /**
- * The payment a signed proposal asks for.
+ * Proposals do not open checkout sessions.
  *
- * Every amount here comes from the proposal row the server just read — the
- * browser posts a token and nothing else. Prices are passed inline as
- * price_data rather than stored Prices, for the same reason upsells are:
- * each proposal is priced for its own job, and a permanent Stripe Price per
- * quote would litter the dashboard with hundreds of dead objects and make it
- * possible to charge somebody last quarter's number.
- *
- * When hosting is part of the deal the session is a subscription with the
- * one-time amount on the first invoice and the recurring line on the same
- * 30-day trial the campaign checkout uses, so the client is charged exactly
- * the amount due today and the first hosting invoice is booked as recurring
- * revenue when Stripe actually raises it.
+ * There used to be a createProposalCheckoutSession() here. It was removed
+ * when the proposal became a quote rather than a till: signing records
+ * agreement, and the money is asked for on the invoice that follows the work.
+ * createInvoiceCheckoutSession() below is the only per-job session now.
  */
-export async function createProposalCheckoutSession(opts: {
-  proposalId: string;
-  proposalNumber: string;
-  invoiceId: string;
-  title: string;
-  email: string;
-  businessName?: string | null;
-  /** What is due right now, in cents. Must be greater than zero. */
-  dueNowCents: number;
-  dueLabel: string;
-  recurringCents: number;
-  recurringInterval: "month" | "year";
-  token: string;
-}): Promise<CheckoutSession> {
-  const origin = siteOrigin();
-  const withHosting = opts.recurringCents > 0;
-
-  const metadata = {
-    kind: "proposal",
-    proposal_id: opts.proposalId,
-    proposal_number: opts.proposalNumber,
-    invoice_id: opts.invoiceId,
-    business_name: opts.businessName ?? "",
-  };
-
-  const lineItems: Record<string, unknown>[] = [
-    {
-      price_data: {
-        currency: "usd",
-        unit_amount: opts.dueNowCents,
-        product_data: {
-          name: `${opts.title} — ${opts.dueLabel}`,
-          description: `Proposal ${opts.proposalNumber}`.slice(0, 500),
-        },
-      },
-      quantity: 1,
-    },
-  ];
-
-  if (withHosting) {
-    lineItems.push({
-      price_data: {
-        currency: "usd",
-        unit_amount: opts.recurringCents,
-        recurring: { interval: opts.recurringInterval },
-        product_data: { name: "Hosting" },
-      },
-      quantity: 1,
-    });
-  }
-
-  return stripeRequest<CheckoutSession>(
-    "POST",
-    "/checkout/sessions",
-    {
-      mode: withHosting ? "subscription" : "payment",
-      customer_email: opts.email,
-      line_items: lineItems,
-      metadata,
-      ...(withHosting
-        ? {
-            subscription_data: {
-              trial_period_days: HOSTING_TRIAL_DAYS,
-              metadata,
-            },
-          }
-        : { payment_intent_data: { metadata } }),
-      success_url: `${origin}/proposal/${opts.token}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/proposal/${opts.token}?payment=cancelled`,
-    },
-    // One live link per invoice row. Pressing pay twice reuses it.
-    `proposal:${opts.invoiceId}`
-  );
-}
 
 /**
  * Paying an invoice.

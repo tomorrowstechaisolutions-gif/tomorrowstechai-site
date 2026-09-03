@@ -11,9 +11,7 @@ import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { getProposalById, proposalUrl, isExpired } from "@/lib/proposals/service";
 import { loadProposalTimeline } from "@/lib/proposals/queries";
-import {
-  PAYMENT_MODE_LABELS, STATUS_LABELS, STATUS_TONE, amountDueAtSignature,
-} from "@/lib/proposals/config";
+import { STATUS_LABELS, STATUS_TONE } from "@/lib/proposals/config";
 import { formatMoney } from "@/lib/proposals/pricing";
 import {
   convertProposalToProjectAction, duplicateProposalAction, markProposalSentAction,
@@ -71,8 +69,6 @@ export default async function ProposalDetailPage({
     : { data: null };
 
   const money = (cents: number) => formatMoney(cents, p.currency);
-  const dueNow = amountDueAtSignature(p);
-  const outstanding = Math.max(0, dueNow - p.amount_paid_cents);
   const publicLink = proposalUrl(p.public_token);
 
   // Schedule Proposal Review — the type, the title and the linked proposal
@@ -100,10 +96,12 @@ export default async function ProposalDetailPage({
   ) : null;
   const of = (type: string) => items.filter((item) => item.item_type === type);
 
+  // Signed is the whole gate. A proposal never collects, so waiting on money
+  // before the work can start would be waiting on something that cannot
+  // arrive here — the invoice is raised after the work, not before it.
   const readyToConvert =
     Boolean(p.signed_at) &&
-    (!p.job_id || linkedJob?.engagement_status === "pre_contract") &&
-    (dueNow === 0 || p.amount_paid_cents >= dueNow);
+    (!p.job_id || linkedJob?.engagement_status === "pre_contract");
 
   const facts: { label: string; value: string }[] = [
     { label: "Client", value: p.client_business_name || DASH },
@@ -112,7 +110,7 @@ export default async function ProposalDetailPage({
     { label: "Phone", value: p.client_phone || DASH },
     { label: "Package", value: p.package_name || DASH },
     { label: "Owner", value: p.owner || DASH },
-    { label: "Payment terms", value: PAYMENT_MODE_LABELS[p.payment_mode] },
+    { label: "Payment terms", value: "Invoiced separately — nothing due at signature" },
     { label: "Turnaround", value: p.turnaround_note || DASH },
     {
       label: "Revisions",
@@ -230,15 +228,6 @@ export default async function ProposalDetailPage({
               </form>
             ) : null}
 
-            {p.status === "payment_pending" ? (
-              <form action={setProposalStatusAction}>
-                <input type="hidden" name="proposal_id" value={p.id} />
-                <input type="hidden" name="status" value="paid" />
-                <button type="submit" className="cc-btn" title="Records payment on the proposal only — revenue stays Stripe-sourced">
-                  Mark paid by hand
-                </button>
-              </form>
-            ) : null}
           </div>
         </section>
 
@@ -283,23 +272,13 @@ export default async function ProposalDetailPage({
                 <span>Hosting</span>
                 <b>{p.recurring_price_cents > 0 ? `${money(p.recurring_price_cents)}/${p.recurring_interval}` : DASH}</b>
               </li>
-              <li><span>Due at signature</span><b>{dueNow > 0 ? money(dueNow) : "Nothing"}</b></li>
-              <li><span>Collected</span><b>{money(p.amount_paid_cents)}</b></li>
-              {outstanding > 0 ? (
-                <li className="is-strong"><span>Outstanding now</span><b>{money(outstanding)}</b></li>
-              ) : null}
+              <li><span>Due at signature</span><b>Nothing</b></li>
             </ul>
-            {p.invoice_id ? (
-              <p className="cc-note">
-                Invoice {p.invoice_id.slice(0, 8)} raised against this proposal.
-                {p.stripe_session_id ? " A Stripe checkout session is attached." : ""}
-              </p>
-            ) : (
-              <p className="cc-note">
-                No invoice yet. One is raised automatically the moment the client
-                signs, if anything is due at signature.
-              </p>
-            )}
+            <p className="cc-note">
+              This proposal quotes; it does not collect. Nothing is charged when
+              the client signs. Raise the invoice from the panel below when the
+              work is done — or now, if this one is being paid up front.
+            </p>
           </div>
         </section>
 

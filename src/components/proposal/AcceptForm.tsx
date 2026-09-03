@@ -11,20 +11,20 @@ import { ACCEPTANCE_CHECKS } from "@/lib/proposals/config";
  * courtesy rather than a control: the route handler re-checks all four, and a
  * database constraint refuses a signature row that is missing any of them.
  *
- * No amount is posted. The server reads what is owed from the proposal.
+ * No amount is posted, and none is collected. Signing records agreement to
+ * the scope and the price; the invoice that follows the work is what asks
+ * for money.
  */
 export default function AcceptForm({
   token,
   defaultName,
   defaultEmail,
   defaultTitle,
-  dueLabel,
 }: {
   token: string;
   defaultName: string;
   defaultEmail: string;
   defaultTitle: string;
-  dueLabel: string;
 }) {
   const router = useRouter();
   const canvas = useRef<HTMLCanvasElement | null>(null);
@@ -105,18 +105,11 @@ export default function AcceptForm({
           confirmations: checks,
         }),
       });
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        checkout_url?: string | null;
-      };
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
 
       if (!response.ok) {
         setError(body.error ?? "That did not go through. Please try again.");
         setBusy(false);
-        return;
-      }
-      if (body.checkout_url) {
-        window.location.href = body.checkout_url;
         return;
       }
       router.refresh();
@@ -230,7 +223,7 @@ export default function AcceptForm({
       {error ? <p className="pr-error">{error}</p> : null}
 
       <button type="button" className="pr-submit" disabled={!ready} onClick={submit}>
-        {busy ? "Recording your signature…" : `Accept and sign${dueLabel ? ` — ${dueLabel}` : ""}`}
+        {busy ? "Recording your signature…" : "Accept and sign"}
       </button>
 
       <p className="pr-note">

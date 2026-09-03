@@ -62,8 +62,6 @@ export default async function EditProposalPage({
     discountAmount: dollars(p.discount_amount_cents),
     recurringPrice: dollars(p.recurring_price_cents),
     recurringInterval: p.recurring_interval,
-    depositAmount: dollars(p.deposit_amount_cents),
-    paymentMode: p.payment_mode,
     turnaroundNote: p.turnaround_note ?? "",
     revisionLimit: p.revision_limit === null ? "" : String(p.revision_limit),
     hostingNote: p.hosting_note ?? "",

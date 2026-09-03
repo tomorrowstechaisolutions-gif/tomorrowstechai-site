@@ -13,7 +13,7 @@
  * from the same rows, so they can never quote different numbers.
  */
 
-import { formatMoney, amountDueAtSignature } from "./pricing";
+import { formatMoney } from "./pricing";
 import type { Proposal, ProposalSignature } from "./types";
 import {
   BRAND, C, renderEmail, eyebrow, heading, paragraph, subheading,
@@ -40,7 +40,14 @@ function expiryDate(p: Proposal): string | null {
 
 type MoneyRow = { label: string; value: string; strong?: boolean; note?: string };
 
-/** The figures, once. Both the panel and the text version are built from this. */
+/**
+ * The figures, once. Both the panel and the text version are built from this.
+ *
+ * The last row always says Nothing, because a proposal quotes and does not
+ * collect. It is still printed rather than left out: "due now: nothing" is
+ * the reassurance, and a price with no due line beside it invites the
+ * question this email exists to answer.
+ */
 function moneyRows(p: Proposal, dueLabel = "Due when you sign"): MoneyRow[] {
   const rows: MoneyRow[] = [
     { label: "Website build", value: formatMoney(p.total_cents, p.currency), note: "one-time" },
@@ -54,25 +61,12 @@ function moneyRows(p: Proposal, dueLabel = "Due when you sign"): MoneyRow[] {
     });
   }
 
-  const due = amountDueAtSignature(p);
-  if (due > 0) {
-    rows.push({ label: dueLabel, value: formatMoney(due, p.currency), strong: true });
-    const balance = p.total_cents - due;
-    if (balance > 0) {
-      rows.push({
-        label: "Remaining balance",
-        value: formatMoney(balance, p.currency),
-        note: "invoiced as agreed",
-      });
-    }
-  } else {
-    rows.push({
-      label: dueLabel,
-      value: "Nothing",
-      strong: true,
-      note: "your signature is the approval",
-    });
-  }
+  rows.push({
+    label: dueLabel,
+    value: "Nothing",
+    strong: true,
+    note: "invoiced separately",
+  });
 
   return rows;
 }
@@ -83,7 +77,7 @@ function rowsAsText(rows: MoneyRow[]): string {
 
 const WHATS_ON_THE_PAGE = [
   "The full scope of work, line by line, and what is deliberately not in it",
-  "The price, and exactly what is due the moment you sign",
+  "The price, in full — and confirmation that nothing is due when you sign",
   "Ownership and software license terms, in plain language before the legal wording",
   "The complete Website Development, Hosting & Software License Agreement",
   "A signature box. No printing, no scanning, nothing to post back",
@@ -178,7 +172,6 @@ export function buildSignedEmail(
   url: string
 ): BuiltEmail {
   const name = signature.signer_name.split(/\s+/)[0];
-  const due = amountDueAtSignature(p);
   const signedAt = new Date(signature.signed_at).toLocaleString("en-US", {
     dateStyle: "long",
     timeStyle: "short",
@@ -192,9 +185,7 @@ export function buildSignedEmail(
   ];
 
   const next =
-    due > 0
-      ? "The payment page is on that same link. As soon as it clears, we start."
-      : "We will be in touch shortly with what we need from you to get started.";
+    "We will be in touch shortly with what we need from you to get started. An invoice follows separately — nothing is owed at the moment you sign.";
 
   const html = renderEmail({
     preheader: `${p.proposal_number} signed on ${signedAt}. Your copy is kept at the same link.`,
@@ -243,77 +234,12 @@ ${SIGNOFF_TEXT}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Receipt for a proposal payment.
+// There is no proposal payment email.
+//
+// buildPaymentEmail() used to live here. A proposal never collects now, so a
+// receipt for one cannot exist; buildInvoiceReceiptEmail() in
+// src/lib/invoices/email-content.ts is the receipt this business sends.
 // ═══════════════════════════════════════════════════════════════════════
-
-export function buildPaymentEmail(
-  p: Proposal,
-  amountCents: number,
-  url: string,
-  receiptUrl?: string | null
-): BuiltEmail {
-  const paid = formatMoney(amountCents, p.currency);
-  const balance = Math.max(0, p.total_cents - p.amount_paid_cents - amountCents);
-
-  const rows: MoneyRow[] = [
-    { label: "Paid today", value: paid, strong: true, note: longDate(new Date()) },
-    { label: "Proposal", value: p.proposal_number },
-  ];
-  if (balance > 0) {
-    rows.push({
-      label: "Remaining balance",
-      value: formatMoney(balance, p.currency),
-      note: "invoiced as agreed",
-    });
-  }
-  if (p.recurring_price_cents > 0) {
-    rows.push({
-      label: "Hosting",
-      value: `${formatMoney(p.recurring_price_cents, p.currency)}/${p.recurring_interval}`,
-      note: "begins after launch",
-    });
-  }
-
-  const settled =
-    balance > 0
-      ? `${formatMoney(balance, p.currency)} remains on the build.`
-      : "Nothing further is outstanding on the build.";
-
-  const html = renderEmail({
-    preheader: `${paid} received against ${p.proposal_number}. ${settled}`,
-    headerMeta: p.proposal_number,
-    tone: "success",
-    blocks: [
-      eyebrow("Payment received"),
-      heading(`Thank you — ${paid} received`),
-      paragraph(
-        `That clears the payment agreed at signature for <strong style="color:${C.text};">${esc(p.title)}</strong>. ${esc(settled)}`
-      ),
-      factPanel(rows),
-      paragraph("We will be in touch with the next step shortly.", { dim: true }),
-      button("Open your proposal and signed agreement", url),
-      receiptUrl ? linkFallback(receiptUrl) : linkFallback(url),
-      signoff(),
-    ].filter(Boolean),
-    footnote: FOOTNOTE_CLIENT,
-  });
-
-  const text = `Thank you — your payment of ${paid} has been received.
-
-Proposal: ${p.proposal_number}
-Project: ${p.title}
-
-${rowsAsText(rows)}
-
-Your signed agreement and this proposal stay available here:
-${url}
-${receiptUrl ? `\nStripe receipt: ${receiptUrl}\n` : ""}
-We will be in touch with the next step shortly.
-
-${SIGNOFF_TEXT}`;
-
-  return { subject: `Payment received — ${paid}, ${p.proposal_number}`, html, text };
-}
 
 // ═══════════════════════════════════════════════════════════════════════
 // Internal notification. Says what happened and what it is worth.

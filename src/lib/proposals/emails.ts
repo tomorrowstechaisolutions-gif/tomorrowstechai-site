@@ -2,7 +2,7 @@ import "server-only";
 import { Resend } from "resend";
 import type { Proposal, ProposalSignature } from "./types";
 import {
-  buildProposalEmail, buildSignedEmail, buildPaymentEmail, buildAdminEmail,
+  buildProposalEmail, buildSignedEmail, buildAdminEmail,
   type AdminEventKind, type BuiltEmail,
 } from "./email-content";
 
@@ -16,6 +16,9 @@ import {
  *
  * Nothing here ever includes an /admin URL. The client's only link is their
  * own tokenised proposal page.
+ *
+ * There is no payment confirmation here. A proposal does not collect; the
+ * receipt for money is sent by src/lib/invoices/emails.ts.
  */
 
 function resend(): Resend | null {
@@ -73,21 +76,6 @@ export async function sendSignedConfirmation(
   url: string
 ): Promise<boolean> {
   return deliver(signature.signer_email, buildSignedEmail(p, signature, url), "Signed confirmation");
-}
-
-/** Receipt for a proposal payment. */
-export async function sendPaymentConfirmation(
-  p: Proposal,
-  amountCents: number,
-  url: string,
-  receiptUrl?: string | null
-): Promise<boolean> {
-  if (!p.client_email) return false;
-  return deliver(
-    p.client_email,
-    buildPaymentEmail(p, amountCents, url, receiptUrl),
-    "Payment confirmation"
-  );
 }
 
 /** Internal notification. Says what happened and what it is worth. */

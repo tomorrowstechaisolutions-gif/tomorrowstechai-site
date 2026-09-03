@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { supabaseConfigured } from "@/lib/supabase/admin";
 import { acceptAndSign } from "@/lib/proposals/service";
-import { ensureProposalCheckout } from "@/lib/proposals/payment";
 import { notifyAdmin, sendSignedConfirmation } from "@/lib/proposals/emails";
 import { proposalUrl } from "@/lib/proposals/service";
 
@@ -13,9 +12,12 @@ export const dynamic = "force-dynamic";
  * The signature endpoint.
  *
  * Rate limited per IP, because this is the one public route that writes a
- * legal record. Everything it decides — whether the proposal is signable,
- * which agreement version applies, how much is due — is read from the
- * database, so the request body can only supply who is signing.
+ * legal record. Everything it decides — whether the proposal is signable and
+ * which agreement version applies — is read from the database, so the request
+ * body can only supply who is signing.
+ *
+ * It asks for no money. Signing a proposal records agreement; the invoice
+ * that follows the work is what collects.
  */
 export async function POST(req: Request) {
   if (!supabaseConfigured()) {
@@ -71,15 +73,8 @@ export async function POST(req: Request) {
     ),
   ]);
 
-  let checkoutUrl: string | null = null;
-  if (result.dueNowCents > 0) {
-    const checkout = await ensureProposalCheckout(result.proposal);
-    if (checkout.ok) checkoutUrl = checkout.url;
-  }
-
   return NextResponse.json({
     ok: true,
     proposal_number: result.proposal.proposal_number,
-    checkout_url: checkoutUrl,
   });
 }

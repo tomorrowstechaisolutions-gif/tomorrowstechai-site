@@ -80,8 +80,6 @@ export default async function NewProposalPage({
     discountAmount: "",
     recurringPrice: dollars(template.recurringCents),
     recurringInterval: "month",
-    depositAmount: dollars(template.depositCents),
-    paymentMode: template.paymentMode,
     turnaroundNote: template.turnaroundNote ?? "",
     revisionLimit: template.revisionLimit === null ? "" : String(template.revisionLimit),
     hostingNote: template.hostingNote,

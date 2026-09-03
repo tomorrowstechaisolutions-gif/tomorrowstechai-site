@@ -40,7 +40,7 @@ async function ensureTask(
     customerId?: string | null;
     jobId?: string | null;
     proposalId?: string | null;
-    /** Uniqueness is per entity: one "chase the deposit" per proposal. */
+    /** Uniqueness is per entity: one "start delivery" task per proposal. */
     dedupeOn: { column: "lead_id" | "customer_id" | "job_id" | "proposal_id"; value: string };
   }
 ): Promise<boolean> {
@@ -100,18 +100,13 @@ export async function onProposalAccepted(
     clientName: string | null;
     owner?: string | null;
     actor?: string | null;
-    paymentDue: boolean;
   }
 ): Promise<AutomationResult> {
   const who = input.clientName ? ` — ${input.clientName}` : "";
   const created = await ensureTask(sb, {
-    title: input.paymentDue
-      ? `Confirm payment on ${input.proposalNumber}`
-      : `Start delivery for ${input.proposalNumber}`,
-    notes: input.paymentDue
-      ? `Signed${who}. The project cannot be created until the agreed payment clears.`
-      : `Signed${who}. Nothing is due at signature, so this can be converted into a project now.`,
-    type: input.paymentDue ? "billing" : "proposal",
+    title: `Start delivery for ${input.proposalNumber}`,
+    notes: `Signed${who}. Nothing is due at signature — a proposal never collects — so this can be converted into a project now, and invoiced when the work is done.`,
+    type: "proposal",
     priority: "high",
     dueInDays: 1,
     owner: input.owner,

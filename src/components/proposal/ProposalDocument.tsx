@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { BrandMark } from "@/components/BrandMark";
-import { OWNERSHIP_SUMMARY } from "@/lib/proposals/config";
+import { OWNERSHIP_SUMMARY, PAYMENT_NOTE } from "@/lib/proposals/config";
 import { formatMoney } from "@/lib/proposals/pricing";
 import type { FullProposal, ProposalItem } from "@/lib/proposals/types";
 
@@ -24,6 +24,9 @@ const NAV = [
   { id: "agreement", label: "Agreement" },
   { id: "accept", label: "Accept & sign" },
 ];
+
+// There is no payment section, and there never should be one. A proposal
+// quotes; the invoice raised after the work is what collects.
 
 function Paragraphs({ text }: { text: string | null | undefined }) {
   if (!text) return null;
@@ -86,14 +89,11 @@ export default function ProposalDocument({
   full,
   mode,
   acceptance,
-  payment,
 }: {
   full: FullProposal;
   mode: "public" | "preview";
   /** The acceptance and signature form. Absent on the admin preview. */
   acceptance?: ReactNode;
-  /** The payment block, once there is something to pay. */
-  payment?: ReactNode;
 }) {
   const { proposal: p, items, sections, agreement, signature } = full;
   const money = (cents: number) => formatMoney(cents, p.currency);
@@ -107,12 +107,6 @@ export default function ProposalDocument({
   const exclusions = of("exclusion");
   const clientDuties = of("client_responsibility");
   const providerDuties = of("provider_responsibility");
-
-  const dueNow =
-    p.payment_mode === "invoice_later" ? 0
-      : p.payment_mode === "full" ? p.total_cents
-      : p.deposit_amount_cents;
-  const balance = Math.max(0, p.total_cents - dueNow);
 
   const extra = (position: string) =>
     sections.filter((section) => section.is_visible && section.content && section.section_type === position);
@@ -257,21 +251,12 @@ export default function ProposalDocument({
             ) : null}
             <div className="is-due">
               <span>Due today</span>
-              <strong>{dueNow > 0 ? money(dueNow) : "Nothing"}</strong>
-              <small>
-                {dueNow > 0
-                  ? p.payment_mode === "full" ? "full payment on signature" : "deposit on signature"
-                  : "signing records your approval only"}
-              </small>
+              <strong>Nothing</strong>
+              <small>signing records your approval only</small>
             </div>
-            {dueNow > 0 && balance > 0 ? (
-              <div>
-                <span>Remaining balance</span>
-                <strong>{money(balance)}</strong>
-                <small>invoiced as agreed</small>
-              </div>
-            ) : null}
           </div>
+
+          <p className="pr-note">{PAYMENT_NOTE}</p>
 
           {addons.length > 0 ? (
             <>
@@ -412,7 +397,7 @@ export default function ProposalDocument({
           )}
         </section>
 
-        {/* 10–12 · Acceptance, signature, payment --------------------- */}
+        {/* 10 · Acceptance and signature ------------------------------ */}
         {signature ? (
           <section id="accept" className="pr-block">
             <div className="pr-head"><span>09</span><h2>Signed</h2></div>
@@ -434,8 +419,6 @@ export default function ProposalDocument({
         ) : (
           acceptance
         )}
-
-        {payment}
 
         <footer className="pr-foot">
           <span>Tomorrow&rsquo;s Tech AI · Solutions for tomorrow. Results today.</span>

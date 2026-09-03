@@ -6,6 +6,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { currentAgreement } from "@/lib/proposals/agreement";
 import {
   DEFAULT_VALID_DAYS,
+  PAYMENT_MODE_ON_WRITE,
   canTransition,
   templateByKey,
   type ProposalStatus,
@@ -214,20 +215,16 @@ function parseSections(raw: string): ParsedSection[] {
  *
  * The form shows a running total, but what it shows is never what is saved:
  * the numbers are derived here, from the line items and the typed build
- * price, so a hand-edited hidden field cannot change what a client is asked
- * to pay.
+ * price, so a hand-edited hidden field cannot change what a client is quoted.
+ *
+ * `deposit_amount_cents` and `payment_mode` are written flat, because a
+ * proposal no longer collects anything. They stay on the row only so the
+ * column type matches the table.
  */
 function commercialsFrom(fd: FormData, items: ParsedItem[]) {
   const basePriceCents = cents(str(fd, "one_time_price", 30));
   const recurringCents = cents(str(fd, "recurring_price", 30));
-  const depositRaw = cents(str(fd, "deposit_amount", 30));
   const discountCents = cents(str(fd, "discount_amount", 30));
-
-  const paymentModeRaw = str(fd, "payment_mode", 20);
-  const payment_mode =
-    paymentModeRaw === "full" || paymentModeRaw === "invoice_later"
-      ? paymentModeRaw
-      : "deposit";
 
   // A typed discount is treated as one more discount line so there is exactly
   // one code path that knows how a discount reduces a total.
@@ -252,8 +249,6 @@ function commercialsFrom(fd: FormData, items: ParsedItem[]) {
     items: withDiscount,
     basePriceCents,
     recurringCents,
-    depositCents: depositRaw,
-    paymentMode: payment_mode,
   });
 
   const recurring_interval = str(fd, "recurring_interval", 10) === "year" ? "year" : "month";
@@ -265,8 +260,8 @@ function commercialsFrom(fd: FormData, items: ParsedItem[]) {
     total_cents: pricing.totalCents,
     recurring_price_cents: pricing.recurringCents,
     recurring_interval,
-    deposit_amount_cents: pricing.depositCents,
-    payment_mode,
+    deposit_amount_cents: 0,
+    payment_mode: PAYMENT_MODE_ON_WRITE,
   };
 }
 
@@ -487,8 +482,8 @@ export async function duplicateProposalAction(formData: FormData) {
       total_cents: original.total_cents,
       recurring_price_cents: original.recurring_price_cents,
       recurring_interval: original.recurring_interval,
-      deposit_amount_cents: original.deposit_amount_cents,
-      payment_mode: original.payment_mode,
+      deposit_amount_cents: 0,
+      payment_mode: PAYMENT_MODE_ON_WRITE,
       turnaround_note: original.turnaround_note,
       revision_limit: original.revision_limit,
       hosting_note: original.hosting_note,
@@ -697,18 +692,8 @@ export async function convertProposalToProjectAction(formData: FormData) {
 
   if (!p.signed_at) throw new Error("This proposal has not been signed yet.");
 
-  const dueAtSignature =
-    p.payment_mode === "invoice_later"
-      ? 0
-      : p.payment_mode === "full"
-        ? p.total_cents
-        : p.deposit_amount_cents;
-
-  if (dueAtSignature > 0 && p.amount_paid_cents < dueAtSignature) {
-    throw new Error(
-      "The payment agreed at signature has not been received yet, so the project cannot be created."
-    );
-  }
+  // Signed is the whole gate. A proposal never collects, so there is no
+  // payment to wait for here — the invoice is raised after the work.
   // ── The client record. Found before created.
   let customerId = p.customer_id;
   if (!customerId && p.lead_id) {
@@ -771,7 +756,7 @@ export async function convertProposalToProjectAction(formData: FormData) {
       .update({
         customer_id: customerId,
         invoice_id: p.invoice_id,
-        engagement_status: dueAtSignature > p.amount_paid_cents ? "awaiting_payment" : "contracted",
+        engagement_status: "contracted",
       })
       .eq("id", jobId);
     if (promoteError) {
@@ -790,7 +775,7 @@ export async function convertProposalToProjectAction(formData: FormData) {
         business_name: p.client_business_name,
         stage: isStarter ? "Purchased" : "Intake",
         package: deliveryPackage,
-        engagement_status: dueAtSignature > p.amount_paid_cents ? "awaiting_payment" : "contracted",
+        engagement_status: "contracted",
         recurring_value_cents: p.recurring_price_cents,
         promised_days: PROMISED_DAYS,
         started_at: started.toISOString(),

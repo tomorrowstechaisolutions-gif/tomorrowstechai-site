@@ -56,11 +56,12 @@ export type ProposalWorkspace = {
   rows: ProposalListRow[];
   /** Counts across everything, not just the filtered view. */
   summary: Record<
-    "draft" | "sent" | "viewed" | "awaiting_signature" | "awaiting_payment" | "accepted" | "paid" | "expired",
+    "draft" | "sent" | "viewed" | "awaiting_signature" | "accepted" | "signed" | "expired",
     number
   >;
   /** Open one-time value still winnable, in cents. */
   openValueCents: number;
+  /** One-time value on proposals that have actually been signed. */
   wonValueCents: number;
   owners: string[];
   packages: { key: string; name: string }[];
@@ -136,10 +137,10 @@ export async function loadProposalWorkspace(
   const rows = all.map((p) => toRow(p, p.company_id ? companyNames.get(p.company_id) ?? null : null));
 
   // ── Summary over EVERYTHING, so the cards do not change when a filter is
-  // applied. A filtered "3 awaiting payment" would be a different claim.
+  // applied. A filtered "3 awaiting signature" would be a different claim.
   const summary = {
     draft: 0, sent: 0, viewed: 0, awaiting_signature: 0,
-    awaiting_payment: 0, accepted: 0, paid: 0, expired: 0,
+    accepted: 0, signed: 0, expired: 0,
   };
   let openValueCents = 0;
   let wonValueCents = 0;
@@ -151,16 +152,18 @@ export async function loadProposalWorkspace(
       case "sent": summary.sent += 1; break;
       case "viewed": summary.viewed += 1; break;
       case "accepted": summary.accepted += 1; summary.awaiting_signature += 1; break;
-      case "signed": summary.accepted += 1; break;
-      case "payment_pending": summary.awaiting_payment += 1; break;
+      case "signed": summary.accepted += 1; summary.signed += 1; break;
+      // Old rows only — a proposal has not collected money since 2026-09-03.
+      case "payment_pending":
       case "paid":
-      case "converted": summary.paid += 1; break;
+      case "converted": summary.signed += 1; break;
       default: break;
     }
     if (!CLOSED_PROPOSAL_STATUSES.includes(row.status) && !row.staleExpired) {
       openValueCents += row.oneTimeCents;
     }
-    if (row.status === "paid" || row.status === "converted") {
+    // Won means agreed, not collected — the money is the invoice's business.
+    if (row.signedAt || row.status === "paid" || row.status === "converted") {
       wonValueCents += row.oneTimeCents;
     }
   }

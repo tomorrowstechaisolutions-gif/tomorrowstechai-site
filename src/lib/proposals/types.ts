@@ -3,7 +3,7 @@
  * Kept in sync with supabase/migrations/0016_proposals.sql.
  */
 
-import type { PaymentMode, ProposalStatus } from "./config";
+import type { ProposalStatus } from "./config";
 
 export type AgreementSection = {
   n: string;
@@ -146,8 +146,13 @@ export type Proposal = {
   total_cents: number;
   recurring_price_cents: number;
   recurring_interval: "month" | "year";
+  /**
+   * Both survive from before proposals stopped collecting payment. Every new
+   * row is written `invoice_later` with a zero deposit, and nothing reads
+   * either one — they are here so the row type matches the table.
+   */
   deposit_amount_cents: number;
-  payment_mode: PaymentMode;
+  payment_mode: string;
 
   turnaround_note: string | null;
   revision_limit: number | null;

@@ -81,8 +81,11 @@ export const ALLOWED_TRANSITIONS: Record<ProposalStatus, ProposalStatus[]> = {
   sent:            ["viewed", "accepted", "declined", "expired", "cancelled", "draft"],
   viewed:          ["accepted", "declined", "expired", "cancelled", "sent"],
   accepted:        ["signed", "declined", "cancelled"],
-  signed:          ["payment_pending", "paid", "converted", "cancelled"],
-  payment_pending: ["paid", "signed", "cancelled"],
+  // Signed goes straight to converted. `payment_pending` and `paid` are kept
+  // in the vocabulary so an old row still renders, but nothing reaches them:
+  // a proposal is never waiting on money.
+  signed:          ["converted", "cancelled"],
+  payment_pending: ["signed", "converted", "cancelled"],
   paid:            ["converted"],
   declined:        ["draft", "sent", "cancelled"],
   expired:         ["draft", "sent", "cancelled"],
@@ -101,33 +104,30 @@ export const CLOSED_PROPOSAL_STATUSES: ProposalStatus[] =
 
 /** Statuses where the client can still act on the public link. */
 export const LIVE_PROPOSAL_STATUSES: ProposalStatus[] =
-  ["sent", "viewed", "accepted", "signed", "payment_pending"];
+  ["sent", "viewed", "accepted", "signed"];
 
-// ── Payment ──────────────────────────────────────────────────────────
-
-export const PAYMENT_MODES = ["deposit", "full", "invoice_later"] as const;
-export type PaymentMode = (typeof PAYMENT_MODES)[number];
-
-export const PAYMENT_MODE_LABELS: Record<PaymentMode, string> = {
-  deposit: "Deposit due at signature",
-  full: "Full payment due at signature",
-  invoice_later: "Invoice after launch — nothing due at signature",
-};
-
-export const PAYMENT_MODE_HELP: Record<PaymentMode, string> = {
-  deposit:
-    "The client pays the deposit when they sign; the balance is invoiced later. The project cannot be created until the deposit clears.",
-  full:
-    "The client pays the whole one-time amount when they sign. The project cannot be created until it clears.",
-  invoice_later:
-    "Signing is acceptance only. No card is asked for, and the project can be created as soon as the agreement is signed.",
-};
+// ── Money ────────────────────────────────────────────────────────────
 
 /**
- * What is due at signature. The rule itself lives in pricing.ts — this
- * re-export keeps the import path every caller already uses.
+ * A proposal quotes. It does not collect.
+ *
+ * There is no card on the proposal, no deposit and no "due today" — signing
+ * records agreement to the scope and the price, and nothing else. The money
+ * is asked for on the invoice that follows the work, which is the document
+ * built for exactly that job.
+ *
+ * This is the sentence the client reads under the price, so it lives here
+ * rather than being retyped in the document, the email and the snapshot.
  */
-export { amountDueAtSignature } from "./pricing";
+export const PAYMENT_NOTE =
+  "Nothing is due today. Signing records your approval of the scope and the price; an invoice follows separately.";
+
+/**
+ * `payment_mode` and `deposit_amount_cents` still exist on the table for the
+ * rows written before proposals stopped collecting payment. Every new
+ * proposal is written as `invoice_later`, and nothing reads either column.
+ */
+export const PAYMENT_MODE_ON_WRITE = "invoice_later" as const;
 
 // ── The four confirmations ───────────────────────────────────────────
 
@@ -139,7 +139,7 @@ export { amountDueAtSignature } from "./pricing";
  */
 export const ACCEPTANCE_CHECKS = [
   { key: "accepted_scope", label: "I have reviewed and agree to the Scope of Work." },
-  { key: "accepted_pricing", label: "I understand the one-time project price and any recurring hosting/management fees." },
+  { key: "accepted_pricing", label: "I understand the one-time project price, any recurring hosting/management fees, and that these are invoiced separately." },
   { key: "accepted_ownership", label: "I understand the Ownership & Software License terms." },
   { key: "accepted_agreement", label: "I have reviewed and agree to the Website Development, Hosting & Software License Agreement." },
 ] as const;
@@ -214,9 +214,6 @@ export type PackageTemplate = {
   summary: string;
   oneTimeCents: number;
   recurringCents: number;
-  /** Half the build, rounded to the dollar. 0 means no deposit by default. */
-  depositCents: number;
-  paymentMode: PaymentMode;
   turnaroundNote: string | null;
   revisionLimit: number | null;
   hostingNote: string;
@@ -226,11 +223,6 @@ export type PackageTemplate = {
 /** The same sentence on every package, because the service is the same one. */
 const HOSTING_NOTE =
   "Hosting covers managed hosting, SSL, backups, security updates and uptime monitoring. It is not a management retainer — content changes, new features and major additions are scoped and quoted separately before work begins.";
-
-/** Half, to the nearest whole dollar. Never more than the total. */
-function halfDeposit(cents: number): number {
-  return Math.round(cents / 200) * 100;
-}
 
 const PROVIDER_RESPONSIBILITIES: TemplateItem[] = [
   { item_type: "provider_responsibility", title: "Design", description: "Layout, branding application and the visual design of every page in scope." },
@@ -271,8 +263,6 @@ export const PACKAGE_TEMPLATES: PackageTemplate[] = [
       "A clean, fast three-page website that gives your business a credible home online and a working way for customers to contact you.",
     oneTimeCents: STARTER_PRICE_CENTS,
     recurringCents: STARTER_HOSTING * 100,
-    depositCents: 0,
-    paymentMode: "full",
     turnaroundNote: `${STARTER_TURNAROUND_DAYS} business days from the moment your content is submitted.`,
     revisionLimit: 1,
     hostingNote: HOSTING_NOTE,
@@ -295,8 +285,6 @@ export const PACKAGE_TEMPLATES: PackageTemplate[] = [
       "A professional five-page website with lead capture, a starter CRM and online payments — everything a local business needs to be found, believed and contacted.",
     oneTimeCents: OFFER_PRICE_CENTS,
     recurringCents: HOSTING_FROM_CENTS,
-    depositCents: halfDeposit(OFFER_PRICE_CENTS),
-    paymentMode: "deposit",
     turnaroundNote: "7–14 days from the moment your content is received.",
     revisionLimit: 1,
     hostingNote: HOSTING_NOTE,
@@ -315,8 +303,6 @@ export const PACKAGE_TEMPLATES: PackageTemplate[] = [
       "A custom-designed site of up to ten pages with multiple lead paths, conversion tracking and a CRM-ready workflow behind it.",
     oneTimeCents: PRO_PRICE_CENTS,
     recurringCents: PRO_HOSTING * 100,
-    depositCents: halfDeposit(PRO_PRICE_CENTS),
-    paymentMode: "deposit",
     turnaroundNote: null,
     revisionLimit: 3,
     hostingNote: HOSTING_NOTE,
@@ -335,8 +321,6 @@ export const PACKAGE_TEMPLATES: PackageTemplate[] = [
       "A real online store: product catalog, cart, secure checkout, payments, shipping and tax configured for how you actually sell.",
     oneTimeCents: ECOM_PRICE_CENTS,
     recurringCents: ECOM_HOSTING * 100,
-    depositCents: halfDeposit(ECOM_PRICE_CENTS),
-    paymentMode: "deposit",
     turnaroundNote: null,
     revisionLimit: 3,
     hostingNote: HOSTING_NOTE,
@@ -354,8 +338,6 @@ export const PACKAGE_TEMPLATES: PackageTemplate[] = [
     summary: "",
     oneTimeCents: 0,
     recurringCents: 0,
-    depositCents: 0,
-    paymentMode: "deposit",
     turnaroundNote: null,
     revisionLimit: null,
     hostingNote: HOSTING_NOTE,

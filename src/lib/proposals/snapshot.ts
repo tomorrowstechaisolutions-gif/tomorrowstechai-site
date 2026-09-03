@@ -124,14 +124,10 @@ export function renderSignedDocument(
       }`
     : `<p class="warn">No agreement version was attached to this proposal.</p>`;
 
-  const dueNow =
-    p.payment_mode === "invoice_later"
-      ? "Nothing due at signature — invoiced per the terms below."
-      : p.payment_mode === "full"
-        ? `${money(p.total_cents)} due at signature`
-        : `${money(p.deposit_amount_cents)} deposit due at signature, ${money(
-            Math.max(0, p.total_cents - p.deposit_amount_cents)
-          )} balance to follow`;
+  // A proposal quotes; it never collects. The frozen copy has to say the same
+  // thing the live page said, so this is a constant rather than a branch on
+  // the legacy payment_mode column.
+  const dueNow = "Nothing due at signature — invoiced separately per the terms below.";
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>

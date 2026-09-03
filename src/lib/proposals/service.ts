@@ -5,8 +5,6 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   ACCEPTANCE_CHECKS,
   LIVE_PROPOSAL_STATUSES,
-  amountDueAtSignature,
-  type ProposalStatus,
 } from "./config";
 import { storeSignedDocument } from "./snapshot";
 import { onProposalAccepted } from "@/lib/tasks/automation";
@@ -190,7 +188,7 @@ export type SignInput = {
 };
 
 export type SignResult =
-  | { ok: true; proposal: Proposal; signature: ProposalSignature; dueNowCents: number }
+  | { ok: true; proposal: Proposal; signature: ProposalSignature }
   | { ok: false; error: string };
 
 /**
@@ -204,8 +202,8 @@ export type SignResult =
  *    and cannot be updated with it afterwards.
  * 4. Write the signature, then lock the proposal.
  *
- * Amounts are never read from the request. `dueNowCents` comes from the stored
- * columns, which is what the checkout route then charges.
+ * No money changes hands here. A signature is agreement to the scope and the
+ * price; the invoice raised after the work is what collects.
  */
 export async function acceptAndSign(input: SignInput): Promise<SignResult> {
   const db = supabaseAdmin();
@@ -302,13 +300,10 @@ export async function acceptAndSign(input: SignInput): Promise<SignResult> {
     return { ok: false, error: `Could not record the signature: ${sigError?.message ?? "unknown"}` };
   }
 
-  const dueNowCents = amountDueAtSignature(p);
-  const nextStatus: ProposalStatus = dueNowCents > 0 ? "payment_pending" : "signed";
-
   const { data: updated, error: updateError } = await db
     .from("proposals")
     .update({
-      status: nextStatus,
+      status: "signed",
       accepted_at: p.accepted_at ?? signature.signed_at,
       signed_at: signature.signed_at,
       locked_at: signature.signed_at,
@@ -349,7 +344,6 @@ export async function acceptAndSign(input: SignInput): Promise<SignResult> {
       clientName: p.client_business_name,
       owner: p.owner,
       actor: "system",
-      paymentDue: dueNowCents > 0,
     });
   } catch {
     // Visible by its absence on the task board, not by failing the signature.
@@ -370,7 +364,6 @@ export async function acceptAndSign(input: SignInput): Promise<SignResult> {
     ok: true,
     proposal: updated as Proposal,
     signature: inserted as ProposalSignature,
-    dueNowCents,
   };
 }
 
