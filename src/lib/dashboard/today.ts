@@ -241,7 +241,7 @@ export async function loadToday(sb: SupabaseClient): Promise<TodayBoard> {
       at: inv.expires_at ?? inv.sent_at,
       overdue: expired,
       priority: expired ? "critical" : "medium",
-      href: inv.lead_id ? `/admin/leads/${inv.lead_id}` : "/admin/finance/invoices",
+      href: inv.lead_id ? `/admin/leads/${inv.lead_id}` : "/admin/invoices",
     });
   }
 

@@ -426,3 +426,97 @@ export async function createProposalCheckoutSession(opts: {
     `proposal:${opts.invoiceId}`
   );
 }
+
+/**
+ * Paying an invoice.
+ *
+ * Same shape as the proposal session and for the same reasons — inline
+ * price_data because every invoice is priced for its own job, and a
+ * subscription only when there is genuinely a recurring line on the document.
+ *
+ * Two differences from the proposal flow, both deliberate:
+ *
+ *  - The one-time amount is the OUTSTANDING balance, not the invoice total.
+ *    Part of it may already have arrived as a cheque, and asking for the full
+ *    figure again would be wrong in a way the client would notice.
+ *  - `recurringStartDays` is passed in rather than fixed at the campaign's 30
+ *    days, because hosting on an invoice starts when the invoice says it
+ *    starts — usually a month after launch, sometimes today.
+ */
+export async function createInvoiceCheckoutSession(opts: {
+  invoiceId: string;
+  invoiceNumber: string;
+  title: string;
+  email: string;
+  businessName?: string | null;
+  /** The outstanding balance, in cents. May be zero when only hosting is due. */
+  dueNowCents: number;
+  recurringCents: number;
+  recurringInterval: "month" | "year";
+  /** Free days before the first recurring charge. Zero bills immediately. */
+  recurringStartDays: number;
+  token: string;
+}): Promise<CheckoutSession> {
+  const origin = siteOrigin();
+  const withRecurring = opts.recurringCents > 0;
+
+  const metadata = {
+    kind: "invoice",
+    invoice_id: opts.invoiceId,
+    invoice_number: opts.invoiceNumber,
+    business_name: opts.businessName ?? "",
+  };
+
+  const lineItems: Record<string, unknown>[] = [];
+
+  if (opts.dueNowCents > 0) {
+    lineItems.push({
+      price_data: {
+        currency: "usd",
+        unit_amount: opts.dueNowCents,
+        product_data: {
+          name: opts.title.slice(0, 250),
+          description: `Invoice ${opts.invoiceNumber}`.slice(0, 500),
+        },
+      },
+      quantity: 1,
+    });
+  }
+
+  if (withRecurring) {
+    lineItems.push({
+      price_data: {
+        currency: "usd",
+        unit_amount: opts.recurringCents,
+        recurring: { interval: opts.recurringInterval },
+        product_data: { name: "Hosting & management" },
+      },
+      quantity: 1,
+    });
+  }
+
+  return stripeRequest<CheckoutSession>(
+    "POST",
+    "/checkout/sessions",
+    {
+      mode: withRecurring ? "subscription" : "payment",
+      customer_email: opts.email,
+      line_items: lineItems,
+      metadata,
+      ...(withRecurring
+        ? {
+            subscription_data: {
+              ...(opts.recurringStartDays > 0
+                ? { trial_period_days: opts.recurringStartDays }
+                : {}),
+              metadata,
+            },
+          }
+        : { payment_intent_data: { metadata } }),
+      success_url: `${origin}/invoice/${opts.token}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/invoice/${opts.token}?payment=cancelled`,
+    },
+    // One live link per invoice row. Pressing pay twice reuses it.
+    `invoice:${opts.invoiceId}`
+  );
+}

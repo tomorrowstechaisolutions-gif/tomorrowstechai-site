@@ -204,7 +204,7 @@ export async function loadFinance(sb: SupabaseClient): Promise<FinanceSnapshot> 
         sentAt: i.sent_at,
         daysOut,
         expired: i.expires_at !== null && new Date(i.expires_at).getTime() < now,
-        href: i.lead_id ? `/admin/leads/${i.lead_id}` : "/admin/finance/invoices",
+        href: i.lead_id ? `/admin/leads/${i.lead_id}` : "/admin/invoices",
       };
     })
     .filter((i) => i.expired || i.daysOut >= 3)

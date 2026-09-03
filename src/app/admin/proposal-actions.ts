@@ -1046,3 +1046,57 @@ export async function archiveAgreementVersionAction(formData: FormData) {
 
   revalidatePath("/admin/settings/agreements");
 }
+
+/**
+ * Mark a proposal sent without emailing it.
+ *
+ * `sendProposalAction` always goes through Resend, which is wrong for half
+ * the clients this business actually has: the real channel is often Facebook
+ * Messenger or a text, and `email_consent` is false on some leads outright.
+ * Without this, the only options were to email somebody who had not agreed to
+ * be emailed, or to leave a proposal that had genuinely gone out sitting in
+ * the admin marked Draft — and a status that lies is worse than no status.
+ *
+ * The link is copied from the button beside this one. All this records is the
+ * truth: it went out, by hand, on this date.
+ */
+export async function markProposalSentAction(formData: FormData) {
+  const { supabase, actor } = await requireAdmin();
+  const id = str(formData, "proposal_id", 40);
+  if (!id) return;
+
+  const { data } = await supabase.from("proposals").select("*").eq("id", id).maybeSingle();
+  if (!data) return;
+  const proposal = data as Proposal;
+
+  if (!proposal.agreement_version_id) {
+    throw new Error("This proposal has no agreement attached. Reopen it and save again.");
+  }
+  if (!canTransition(proposal.status, "sent")) {
+    throw new Error(`A ${proposal.status} proposal cannot be sent.`);
+  }
+
+  const how = str(formData, "how", 200) || "by hand";
+  const url = proposalUrl(proposal.public_token);
+
+  await supabase
+    .from("proposals")
+    .update({
+      status: "sent",
+      sent_at: proposal.sent_at ?? new Date().toISOString(),
+      declined_at: null,
+      decline_reason: null,
+      expired_at: null,
+    })
+    .eq("id", id);
+
+  await logProposalEvent(supabase, {
+    proposalId: id,
+    type: proposal.sent_at ? "resent" : "sent",
+    body: `Sent ${how} — no email was sent from here. The client has the link.`,
+    actor,
+    metadata: { url, how, delivered: false, manual: true },
+  });
+
+  touch(id);
+}

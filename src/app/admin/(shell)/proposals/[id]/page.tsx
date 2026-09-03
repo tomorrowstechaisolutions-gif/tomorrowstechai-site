@@ -16,9 +16,15 @@ import {
 } from "@/lib/proposals/config";
 import { formatMoney } from "@/lib/proposals/pricing";
 import {
-  convertProposalToProjectAction, duplicateProposalAction,
+  convertProposalToProjectAction, duplicateProposalAction, markProposalSentAction,
   sendProposalAction, setProposalStatusAction,
 } from "@/app/admin/proposal-actions";
+import { createInvoiceFromProposalAction } from "@/app/admin/invoice-actions";
+import { invoicesForProposal } from "@/lib/invoices/queries";
+import {
+  STATUS_LABELS as INVOICE_STATUS_LABELS,
+  STATUS_TONE as INVOICE_STATUS_TONE,
+} from "@/lib/invoices/config";
 import CopyLink from "@/components/admin/cc/CopyLink";
 import { DASH, ago } from "@/components/admin/cc/format";
 import {
@@ -58,6 +64,7 @@ export default async function ProposalDetailPage({
   if (!full) notFound();
 
   const timeline = await loadProposalTimeline(supabase, id);
+  const invoices = await invoicesForProposal(supabase, id);
   const { proposal: p, items, agreement, signature } = full;
   const { data: linkedJob } = p.job_id
     ? await supabase.from("jobs").select("engagement_status").eq("id", p.job_id).maybeSingle()
@@ -159,6 +166,20 @@ export default async function ProposalDetailPage({
               />
               <button type="submit" className="cc-btn primary">
                 <IconSend size={13} /> {p.sent_at ? "Send again" : "Send to client"}
+              </button>
+            </form>
+
+            {/* The other way a document goes out. Messenger, a text, in
+                person — all real channels for this business, and all of them
+                have to leave the proposal saying Sent rather than Draft. */}
+            <form action={markProposalSentAction} className="pr-sendform">
+              <input type="hidden" name="proposal_id" value={p.id} />
+              <input
+                className="cc-input" name="how" maxLength={200}
+                placeholder="How you sent it — Messenger, text, in person"
+              />
+              <button type="submit" className="cc-btn">
+                Mark as sent — I&rsquo;ll send the link myself
               </button>
             </form>
 
@@ -366,6 +387,83 @@ export default async function ProposalDetailPage({
                 Not signed yet. The client signs on their own link; nobody can
                 sign on their behalf from here.
               </p>
+            )}
+          </div>
+        </section>
+
+        {/* ── Invoicing ───────────────────────────────────────────── */}
+        <section className="cc-panel cc-s12">
+          <div className="cc-panel-head">
+            <IconDollar size={15} />
+            <h2>Invoicing</h2>
+            <span className="cc-sub">
+              {invoices.length === 0
+                ? "Nothing raised for this proposal yet"
+                : `${invoices.length} invoice${invoices.length === 1 ? "" : "s"}`}
+            </span>
+          </div>
+          <div className="cc-panel-body">
+            <p className="cc-note" style={{ marginTop: 0 }}>
+              The proposal is what both parties agreed. The invoice is the bill
+              for having done it, and it comes last — usually after the work,
+              sometimes up front, occasionally both. Raising it here copies the
+              client, the price and the hosting line across, and records
+              anything already collected at signature so nobody is asked for
+              the same money twice.
+            </p>
+
+            {invoices.length === 0 ? (
+              <form action={createInvoiceFromProposalAction} className="pr-actions">
+                <input type="hidden" name="proposal_id" value={p.id} />
+                <button type="submit" className="cc-btn primary">
+                  <IconDollar size={13} /> Raise the invoice for this proposal
+                </button>
+              </form>
+            ) : (
+              <div className="cc-scroll">
+                <table className="cc-table dense">
+                  <thead>
+                    <tr>
+                      <th>Invoice</th>
+                      <th className="num">Total</th>
+                      <th className="num">Paid</th>
+                      <th className="num">Outstanding</th>
+                      <th>Status</th>
+                      <th>Due</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoices.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <Link href={`/admin/invoices/${row.id}`} className="cc-strong">
+                            {row.number}
+                          </Link>
+                        </td>
+                        <td className="num">{formatMoney(row.totalCents, row.currency)}</td>
+                        <td className="num">{formatMoney(row.paidCents, row.currency)}</td>
+                        <td className="num">{formatMoney(row.outstandingCents, row.currency)}</td>
+                        <td>
+                          <span className={`cc-chip ${INVOICE_STATUS_TONE[row.status]}`}>
+                            {INVOICE_STATUS_LABELS[row.status]}
+                          </span>
+                          {row.overdue ? (
+                            <>
+                              {" "}
+                              <span className="cc-chip t-risk">{row.daysLate}d late</span>
+                            </>
+                          ) : null}
+                        </td>
+                        <td>{row.dueDate ? stamp(`${row.dueDate}T12:00:00Z`) : DASH}</td>
+                        <td>
+                          <Link href={`/admin/invoices/${row.id}`} className="cc-btn">Open</Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </section>

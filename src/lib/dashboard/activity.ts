@@ -176,7 +176,7 @@ export async function loadActivity(
       title: paid ? `Invoice paid — ${money(cents)}` : `Checkout link sent — ${money(cents)}`,
       subtitle: i.description,
       at: paid ? i.paid_at! : i.sent_at,
-      href: i.lead_id ? `/admin/leads/${i.lead_id}` : "/admin/finance/invoices",
+      href: i.lead_id ? `/admin/leads/${i.lead_id}` : "/admin/invoices",
     });
   }
 

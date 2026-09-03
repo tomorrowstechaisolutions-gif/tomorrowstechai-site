@@ -75,6 +75,11 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChart },
       { href: "/admin/proposals", label: "Proposals", icon: IconFile },
       { href: "/admin/clients", label: "Clients", icon: IconUsers },
+      // Last, because it is last in the work: proposal → both parties agree →
+      // the work happens → the invoice. It sits under Sales rather than
+      // Finance because raising one is part of closing the sale, and because
+      // a screen you use weekly should not be three groups down the sidebar.
+      { href: "/admin/invoices", label: "Invoices", icon: IconDollar },
     ],
   },
   {
@@ -130,7 +135,6 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Finance",
     links: [
       { href: "/admin/finance", label: "Overview", icon: IconDollar, soon: true },
-      { href: "/admin/finance/invoices", label: "Invoices", icon: IconFile, soon: true },
       { href: "/admin/finance/subscriptions", label: "Subscriptions", icon: IconRepeat, soon: true },
       { href: "/admin/finance/expenses", label: "Expenses", icon: IconCart, soon: true },
     ],
@@ -238,14 +242,8 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
   "/admin/finance": {
     title: "Finance overview",
     blurb:
-      "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard.",
-    nearest: { href: "/admin", label: "See this month" },
-  },
-  "/admin/finance/invoices": {
-    title: "Invoices",
-    blurb:
-      "Every checkout link and its state. Links are created from a lead's own page, which is where the amount is typed.",
-    nearest: { href: "/admin/leads", label: "Open the CRM" },
+      "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard, and every invoice is under Sales.",
+    nearest: { href: "/admin/invoices", label: "Open invoices" },
   },
   "/admin/finance/subscriptions": {
     title: "Subscriptions",

@@ -11208,4 +11208,24 @@ body {
 
   .cc-req-legend li + li { margin-top: 6px; }
   .cc-req-legend b { color: var(--cc-text); font-weight: 500; }
+
+  /* ── Invoices ─────────────────────────────────────────────────────
+     The invoice screens reuse the proposal's `.pr-*` rules almost
+     entirely — same builder shell, same document, same timeline — so a
+     client who has just signed a proposal recognises the invoice as
+     coming from the same business. Only the pieces the proposal never
+     needed live here. */
+
+  /* A checkbox with its label beside it, inside a form panel. */
+  .cc-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+  .cc-toggle-row span { cursor: pointer; }
+
+  /* The overdue banner never gets a colour of its own — `.cc-error`
+     already means "this needs you", and a second red would dilute it. */
 }

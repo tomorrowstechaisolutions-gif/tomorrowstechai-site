@@ -117,6 +117,14 @@ async function handleCheckoutCompleted(event: StripeEvent) {
     return;
   }
 
+  // An invoice being paid from its own client page. Like the proposal branch
+  // it has its own bookkeeping and deliberately does NOT open a job — by the
+  // time an invoice is raised the work has usually already been done.
+  if (m.kind === "invoice") {
+    await handleInvoiceDocumentPaid(event);
+    return;
+  }
+
   // This Stripe account is shared with the other storefronts, and Stripe
   // delivers every checkout.session.completed to every endpoint subscribed to
   // it. Without this guard a t-shirt order from another site would create a
@@ -666,6 +674,110 @@ async function handleProposalPaid(event: StripeEvent) {
       body: `Proposal ${proposalRow.proposal_number} paid — ${(amountTotal / 100).toFixed(2)} USD.`,
       actor: "stripe",
       meta: { proposal_id: proposalId, session_id: sessionId },
+    });
+  }
+}
+
+// ── Invoice payment ─────────────────────────────────────────────────────────
+
+/**
+ * Money against an invoice document.
+ *
+ * The payment is written as a row in invoice_payments rather than by stamping
+ * the invoice `paid`, because a database trigger owns that decision: it sums
+ * the payments and moves the invoice to partial or paid from the total. That
+ * is the same path a cheque recorded by hand takes, so an invoice half paid
+ * by cheque and half by card lands correctly without a second code path.
+ *
+ * Idempotent on two keys, because Stripe redelivers: invoice_payments has a
+ * unique index on the payment intent, and revenue_events dedupes on
+ * external_id. What is booked is what Stripe says was collected, never the
+ * invoice's asking price.
+ */
+async function handleInvoiceDocumentPaid(event: StripeEvent) {
+  const db = supabaseAdmin();
+  const session = event.data.object;
+
+  const sessionId = str(session, "id");
+  const m = meta(session);
+  const invoiceId = m.invoice_id || null;
+  if (!invoiceId || !sessionId) return;
+
+  const amountTotal = num(session, "amount_total");
+  if (amountTotal <= 0) return;
+
+  const now = new Date().toISOString();
+  const paymentIntent = str(session, "payment_intent");
+
+  const { data: invoiceRow } = await db
+    .from("invoices")
+    .select("id, invoice_number, title, status, total_cents, amount_paid_cents, currency, lead_id, customer_id, client_business_name")
+    .eq("id", invoiceId)
+    .maybeSingle();
+  if (!invoiceRow) return;
+
+  // A replay Stripe has already delivered.
+  const { data: already } = await db
+    .from("invoice_payments")
+    .select("id")
+    .eq("invoice_id", invoiceId)
+    .eq("stripe_payment_intent", paymentIntent ?? sessionId)
+    .maybeSingle();
+  if (already) return;
+
+  await db.from("invoice_payments").insert({
+    invoice_id: invoiceId,
+    amount_cents: amountTotal,
+    currency: (invoiceRow.currency as string) ?? "USD",
+    method: "stripe",
+    reference: sessionId,
+    paid_on: now.slice(0, 10),
+    note: "Paid by card on the invoice page.",
+    recorded_by: "stripe",
+    stripe_payment_intent: paymentIntent ?? sessionId,
+  });
+
+  await db
+    .from("invoices")
+    .update({
+      stripe_session_id: sessionId,
+      stripe_invoice_id: str(session, "invoice"),
+      stripe_payment_intent: paymentIntent,
+    })
+    .eq("id", invoiceId);
+
+  const settled =
+    Number(invoiceRow.amount_paid_cents ?? 0) + amountTotal >= Number(invoiceRow.total_cents ?? 0);
+
+  await db.from("invoice_events").insert({
+    invoice_id: invoiceId,
+    event_type: "paid",
+    body: `Stripe collected ${(amountTotal / 100).toFixed(2)} USD.${settled ? " The invoice is now settled in full." : " A balance remains."}`,
+    actor: "stripe",
+    metadata: { session_id: sessionId, amount_cents: amountTotal, settled },
+  });
+
+  await db.from("revenue_events").upsert(
+    {
+      customer_id: invoiceRow.customer_id ?? null,
+      lead_id: invoiceRow.lead_id ?? null,
+      kind: "initial",
+      category: "launch_package",
+      description: `Invoice ${invoiceRow.invoice_number} — ${invoiceRow.title}`,
+      amount_cents: amountTotal,
+      occurred_at: now,
+      external_id: `${sessionId}:invoice`,
+    },
+    { onConflict: "external_id", ignoreDuplicates: true }
+  );
+
+  if (invoiceRow.lead_id) {
+    await db.from("lead_events").insert({
+      lead_id: invoiceRow.lead_id,
+      type: "revenue",
+      body: `Invoice ${invoiceRow.invoice_number} paid — ${(amountTotal / 100).toFixed(2)} USD.`,
+      actor: "stripe",
+      meta: { invoice_id: invoiceId, session_id: sessionId },
     });
   }
 }

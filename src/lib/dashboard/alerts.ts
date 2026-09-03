@@ -224,7 +224,7 @@ export async function loadAlerts(sb: SupabaseClient, limit = 8): Promise<Alert[]
       priority: "critical",
       title: `${plural(expired.length, "checkout link")} expired`,
       detail: "The customer can no longer pay through that link.",
-      href: "/admin/finance/invoices",
+      href: "/admin/invoices",
     });
   }
 
@@ -238,7 +238,7 @@ export async function loadAlerts(sb: SupabaseClient, limit = 8): Promise<Alert[]
       priority: "high",
       title: `${plural(stale.length, "invoice")} unpaid for over a week`,
       detail: null,
-      href: "/admin/finance/invoices",
+      href: "/admin/invoices",
     });
   }
 
