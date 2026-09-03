@@ -51,7 +51,7 @@ export type NavLink = {
   /** Which dashboard counter, if any, badges this link. */
   badge?:
     | "leadsNeedingAttention" | "projectsAtRisk"
-    | "aiProposals" | "tasksNeedingAttention" | "eventsToday";
+    | "aiProposals" | "tasksNeedingAttention" | "eventsToday" | "meetingsToday";
   /** External to the admin (opens the public site). */
   external?: boolean;
 };
@@ -84,6 +84,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/intakes", label: "Client intake", icon: IconBriefcase },
       { href: "/admin/tasks", label: "Tasks", icon: IconCheckSquare, badge: "tasksNeedingAttention" },
       { href: "/admin/calendar", label: "Calendar", icon: IconCalendar, badge: "eventsToday" },
+      { href: "/admin/meetings", label: "Meetings", icon: IconUsers, badge: "meetingsToday" },
     ],
   },
   {

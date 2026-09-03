@@ -31,7 +31,7 @@ async function loadBadges() {
   const endOfToday = new Date(`${chicagoToday}T23:59:59-05:00`).toISOString();
   const openFilter = `(${CLOSED_STATUSES.join(",")})`;
 
-  const [followupsDue, uncontacted, atRisk, proposals, tasksDue, eventsToday] =
+  const [followupsDue, uncontacted, atRisk, proposals, tasksDue, eventsToday, meetingsToday] =
     await Promise.all([
     supabase
       .from("leads")
@@ -79,6 +79,15 @@ async function loadBadges() {
       .gte("start_at", startOfToday)
       .lt("start_at", endOfToday)
       .then((r) => r.count ?? 0),
+    // Meetings today. Cheap for the same reason as the line above: one table,
+    // one count, one index — not the aggregated calendar.
+    supabase
+      .from("meetings")
+      .select("id", { count: "exact", head: true })
+      .not("status", "in", "(completed,cancelled,no_show,rescheduled)")
+      .gte("start_at", startOfToday)
+      .lt("start_at", endOfToday)
+      .then((r) => r.count ?? 0),
   ]);
 
   return {
@@ -87,6 +96,7 @@ async function loadBadges() {
     aiProposals: proposals,
     tasksNeedingAttention: tasksDue,
     eventsToday,
+    meetingsToday,
   };
 }
 
@@ -163,6 +173,7 @@ export default async function AdminShellLayout({
     aiProposals: 0,
     tasksNeedingAttention: 0,
     eventsToday: 0,
+    meetingsToday: 0,
   }));
 
   const alertCount =

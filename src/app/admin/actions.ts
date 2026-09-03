@@ -694,6 +694,15 @@ export async function updateJobFields(formData: FormData) {
   const siteUrl = str(formData, "site_url", 500);
   const notes = str(formData, "notes", 8000);
   const due = str(formData, "due_at", 30);
+  const engagement = str(formData, "engagement_status", 30);
+  const pricingModel = str(formData, "pricing_model", 30);
+  const engagementValues = ["pre_contract", "contracted", "awaiting_payment", "paid", "cancelled"];
+  const pricingValues = ["standard", "custom", "founding_client", "portfolio", "discounted", "pro_bono"];
+  const numericOrNull = (value: string): number | null => {
+    if (!value.trim()) return null;
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  };
 
   await supabase
     .from("jobs")
@@ -701,10 +710,23 @@ export async function updateJobFields(formData: FormData) {
       site_url: siteUrl || null,
       notes: notes || null,
       due_at: due ? new Date(due).toISOString() : null,
+      value_cents: toCents(str(formData, "agreed_build", 30)),
+      recurring_value_cents: toCents(str(formData, "recurring_value", 30)),
+      estimated_market_value_cents: toCents(str(formData, "estimated_market_value", 30)) || null,
+      estimated_hours: numericOrNull(str(formData, "estimated_hours", 30)),
+      actual_hours: numericOrNull(str(formData, "actual_hours", 30)),
+      engagement_status: engagementValues.includes(engagement) ? engagement : "contracted",
+      pricing_model: pricingValues.includes(pricingModel) ? pricingModel : "standard",
+      payment_timing: str(formData, "payment_timing", 2000) || null,
+      pricing_note: str(formData, "pricing_note", 4000) || null,
+      scope_baseline: str(formData, "scope_baseline", 4000) || null,
+      scope_expansion: str(formData, "scope_expansion", 8000) || null,
+      next_milestone: str(formData, "next_milestone", 2000) || null,
     })
     .eq("id", jobId);
 
   revalidatePath(`/admin/jobs/${jobId}`);
+  revalidatePath("/admin/jobs");
 }
 
 // ── Catalog ─────────────────────────────────────────────────────────────────

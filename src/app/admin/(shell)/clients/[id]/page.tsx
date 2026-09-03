@@ -2,6 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { providerStatuses } from "@/lib/meetings/providers";
+import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
+import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
+import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
+import RequestsPanel from "@/components/admin/cc/requests/RequestsPanel";
+import { loadClientRequests } from "@/lib/requests/queries";
+import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
+import { chicagoDate } from "@/lib/time/chicago";
+
 import { loadClient } from "@/lib/clients/detail";
 import { recordSatisfaction, updateClientBilling, updateClientFields } from "@/app/admin/client-actions";
 import { Panel, EmptyState } from "@/components/admin/cc/Panel";
@@ -73,6 +83,26 @@ export default async function ClientPage({
     (p) => p.completedAt === null && p.stage !== "Complete"
   );
 
+  const [meetings, meetingContact, providers, requests] = await Promise.all([
+    meetingsForRecord(supabase, "customer_id", client.id),
+    resolveContact(supabase, { customerId: client.id }),
+    providerStatuses(),
+    loadClientRequests(supabase, client.id),
+  ]);
+
+  const scheduleButton = meetingContact ? (
+    <ScheduleMeetingButton
+      contact={meetingContact}
+      providers={providers}
+      action={scheduleMeetingAction}
+      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+      defaultType="strategy"
+      returnTo={`/admin/clients/${client.id}`}
+      timezone={BUSINESS_TIMEZONE}
+      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+    />
+  ) : null;
+
   return (
     <>
       <div className="cc-greet">
@@ -99,6 +129,7 @@ export default async function ClientPage({
         </div>
 
         <div className="cc-greet-actions">
+          {scheduleButton}
           <Link href="/admin/clients" className="cc-btn">All clients</Link>
           <Link href={`/admin/clients/${client.id}/edit`} className="cc-btn primary">
             <IconPen size={13} /> Edit client
@@ -593,6 +624,23 @@ export default async function ClientPage({
             </p>
           )}
         </Panel>
+
+        {/* ── Waiting on them ──────────────────────────────────────── */}
+        <RequestsPanel
+          customerId={client.id}
+          email={client.email}
+          name={client.contactName}
+          board={requests}
+        />
+
+        {/* ── Meetings ─────────────────────────────────────────────── */}
+        <div className="cc-s12">
+          <MeetingsPanel
+            data={meetings}
+            scheduleButton={scheduleButton}
+            emptyText="No meetings with this client yet. Schedule one and it appears here, on the calendar and in their timeline."
+          />
+        </div>
 
         {/* ── Timeline ─────────────────────────────────────────────── */}
         <Panel

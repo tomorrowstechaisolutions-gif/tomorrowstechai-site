@@ -16,6 +16,7 @@ const BARE_PREFIXES = [
   "/ecommerce-website",
   "/admin",
   "/intake",
+  "/action",
   "/proposal",
 ];
 

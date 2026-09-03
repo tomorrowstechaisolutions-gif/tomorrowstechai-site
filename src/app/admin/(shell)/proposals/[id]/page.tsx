@@ -1,4 +1,11 @@
 import type { Metadata } from "next";
+import { providerStatuses } from "@/lib/meetings/providers";
+import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
+import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
+import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
+import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
+import { chicagoDate } from "@/lib/time/chicago";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
@@ -52,15 +59,44 @@ export default async function ProposalDetailPage({
 
   const timeline = await loadProposalTimeline(supabase, id);
   const { proposal: p, items, agreement, signature } = full;
+  const { data: linkedJob } = p.job_id
+    ? await supabase.from("jobs").select("engagement_status").eq("id", p.job_id).maybeSingle()
+    : { data: null };
 
   const money = (cents: number) => formatMoney(cents, p.currency);
   const dueNow = amountDueAtSignature(p);
   const outstanding = Math.max(0, dueNow - p.amount_paid_cents);
   const publicLink = proposalUrl(p.public_token);
+
+  // Schedule Proposal Review — the type, the title and the linked proposal
+  // are all decided here, so the form opens already filled in.
+  const [meetings, meetingContact, providers] = await Promise.all([
+    meetingsForRecord(supabase, "proposal_id", p.id),
+    resolveContact(supabase, { proposalId: p.id }),
+    providerStatuses(),
+  ]);
+
+  const scheduleButton = meetingContact ? (
+    <ScheduleMeetingButton
+      contact={meetingContact}
+      providers={providers}
+      action={scheduleMeetingAction}
+      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+      defaultType="proposal_review"
+      defaultTitle={`Proposal Review — ${p.client_business_name || p.client_contact_name || p.proposal_number}`}
+      proposalId={p.id}
+      returnTo={`/admin/proposals/${p.id}`}
+      label="Schedule Proposal Review"
+      timezone={BUSINESS_TIMEZONE}
+      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+    />
+  ) : null;
   const of = (type: string) => items.filter((item) => item.item_type === type);
 
   const readyToConvert =
-    Boolean(p.signed_at) && !p.job_id && (dueNow === 0 || p.amount_paid_cents >= dueNow);
+    Boolean(p.signed_at) &&
+    (!p.job_id || linkedJob?.engagement_status === "pre_contract") &&
+    (dueNow === 0 || p.amount_paid_cents >= dueNow);
 
   const facts: { label: string; value: string }[] = [
     { label: "Client", value: p.client_business_name || DASH },
@@ -112,6 +148,7 @@ export default async function ProposalDetailPage({
               <Link href={`/admin/proposals/${p.id}/edit`} className="cc-btn">Edit</Link>
             )}
             <CopyLink url={publicLink} label="Copy client link" />
+            {scheduleButton}
             <a href={publicLink} target="_blank" rel="noreferrer" className="cc-btn">Open client view</a>
 
             <form action={sendProposalAction} className="pr-sendform">
@@ -154,7 +191,9 @@ export default async function ProposalDetailPage({
             {readyToConvert ? (
               <form action={convertProposalToProjectAction}>
                 <input type="hidden" name="proposal_id" value={p.id} />
-                <button type="submit" className="cc-btn primary">Create project</button>
+                <button type="submit" className="cc-btn primary">
+                  {p.job_id ? "Promote signed project" : "Create project"}
+                </button>
               </form>
             ) : null}
 
@@ -361,6 +400,15 @@ export default async function ProposalDetailPage({
             )}
           </div>
         </section>
+        <div className="cc-s12">
+          <MeetingsPanel
+            data={meetings}
+            heading="Meetings about this proposal"
+            scheduleButton={scheduleButton}
+            emptyText="No review booked. Scheduling one from here links the meeting to this proposal, so the notes end up in the right place."
+          />
+        </div>
+
       </div>
 
       {!agreement ? (

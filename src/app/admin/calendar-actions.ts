@@ -7,6 +7,8 @@ import {
   CALENDAR_CATEGORIES, EVENT_STATUSES,
   type CalendarCategory, type EventStatus,
 } from "@/lib/calendar/config";
+import { getMeetingRow } from "@/lib/meetings/queries";
+import { rescheduleMeeting } from "@/lib/meetings/service";
 import type { Priority } from "@/lib/supabase/types";
 
 /**
@@ -380,6 +382,27 @@ export async function rescheduleItemAction(formData: FormData) {
       break;
     }
 
+    case "meeting": {
+      // A meeting is not just a row with a date on it: there is a calendar
+      // event at Google with the client on it. Dragging it goes through the
+      // meetings service so the invitation moves too, rather than writing
+      // start_at here and leaving the client at the old time.
+      const meeting = await getMeetingRow(supabase, parsed.sourceId);
+      if (!meeting) throw new Error("That meeting no longer exists.");
+
+      const next = new Date(startAt);
+      const ends = new Date(next.getTime() + meeting.duration_minutes * 60_000);
+      const { providerError } = await rescheduleMeeting(
+        supabase, meeting,
+        { startAt: next.toISOString(), endAt: ends.toISOString(), notify: true,
+          reason: "Moved on the calendar." },
+        actor
+      );
+      if (providerError) throw new Error(providerError);
+      revalidatePath("/admin/meetings");
+      break;
+    }
+
     case "content": {
       const { error } = await supabase
         .from("social_posts")
@@ -439,6 +462,11 @@ export async function completeItemAction(formData: FormData) {
         .update({ status: reopen ? "scheduled" : "completed" })
         .eq("id", parsed.sourceId);
       break;
+
+    case "meeting":
+      throw new Error(
+        "Finishing a meeting asks what came out of it. Open the meeting and use Mark complete."
+      );
 
     case "job_launch":
     case "job_due":

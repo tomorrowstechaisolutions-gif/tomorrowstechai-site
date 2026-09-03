@@ -40,18 +40,28 @@ export default async function JobsPage() {
   const active = jobs.filter((j) => j.stage !== "Complete" && j.stage !== "Live");
   const overdue = active.filter((j) => isOverdue(j.due_at)).length;
 
-  // Two products, two processes, two boards. The $399 Classic runs Intake ->
+  // Each product keeps its own board. The $399 Classic runs Intake ->
   // Handoff; the $149 Starter runs Purchased -> Live and has stages the other
   // does not need, because intake is a gate there. Rendering both through one
   // column list would silently hide every Starter job.
   const boards = [
+    {
+      key: "founding_custom_platform",
+      label: "Founding custom platforms",
+      columns: [...ACTIVE_STAGES, "On Hold"] as string[],
+      blurb: STAGE_BLURB as Record<string, string>,
+      terminal: "Complete",
+      jobs: jobs.filter((j) => j.package === "founding_custom_platform"),
+    },
     {
       key: "launch_package",
       label: "$399 Classic",
       columns: [...ACTIVE_STAGES, "On Hold"] as string[],
       blurb: STAGE_BLURB as Record<string, string>,
       terminal: "Complete",
-      jobs: jobs.filter((j) => j.package !== STARTER_PACKAGE),
+      jobs: jobs.filter((j) =>
+        j.package !== STARTER_PACKAGE && j.package !== "founding_custom_platform"
+      ),
     },
     {
       key: STARTER_PACKAGE,
@@ -70,8 +80,9 @@ export default async function JobsPage() {
       <header className="ad-head">
         <h1>Jobs</h1>
         <p>
-          Every paid launch, and where it actually is. A job opens by itself the
-          moment Stripe confirms payment — nothing gets delivered from memory.
+          Every delivery project and where it actually is. Standard projects
+          open from signed proposals; approved pre-contract exceptions stay
+          visibly separate from clients, payments and revenue.
         </p>
       </header>
 
@@ -85,8 +96,8 @@ export default async function JobsPage() {
       {jobs.length === 0 ? (
         <section className="ad-panel">
           <p className="ad-empty">
-            No jobs yet. The first one opens automatically when a lead pays
-            their invoice — you don&rsquo;t create these by hand.
+            No projects yet. Standard work opens from an accepted proposal;
+            approved pre-contract exceptions can be tracked without booking revenue.
           </p>
         </section>
       ) : (
@@ -125,7 +136,12 @@ export default async function JobsPage() {
                             className="ad-board-card"
                           >
                             <strong>{job.title}</strong>
-                            <span className={`ad-tag s-${due.tone}`}>{due.label}</span>
+                            <span>
+                              {job.engagement_status === "pre_contract" ? (
+                                <span className="ad-tag s-soon">Pre-contract</span>
+                              ) : null}{" "}
+                              <span className={`ad-tag s-${due.tone}`}>{due.label}</span>
+                            </span>
                           </Link>
                         );
                       })

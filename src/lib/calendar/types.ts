@@ -57,7 +57,8 @@ export type CalendarSource =
   | "proposal"       // proposals.valid_until
   | "lead_followup"  // leads.next_followup_at
   | "followup_step"  // lead_followups.due_at — the automated sequence
-  | "appointment"    // appointments.scheduled_at
+  | "appointment"    // appointments.scheduled_at — the website booking log
+  | "meeting"        // meetings.start_at — a scheduled call with a provider
   | "content"        // social_posts.scheduled_at / published_at
   | "renewal";       // website_renewals.renews_at
 

@@ -590,7 +590,7 @@ async function handleProposalPaid(event: StripeEvent) {
 
   const { data: proposalRow } = await db
     .from("proposals")
-    .select("id, proposal_number, title, status, total_cents, amount_paid_cents, lead_id, customer_id, client_business_name")
+    .select("id, proposal_number, title, status, total_cents, amount_paid_cents, lead_id, customer_id, client_business_name, job_id")
     .eq("id", proposalId)
     .maybeSingle();
   if (!proposalRow) return;
@@ -629,6 +629,13 @@ async function handleProposalPaid(event: StripeEvent) {
       stripe_session_id: sessionId,
     })
     .eq("id", proposalId);
+
+  if (proposalRow.job_id) {
+    await db
+      .from("jobs")
+      .update({ engagement_status: "paid", invoice_id: invoiceId })
+      .eq("id", proposalRow.job_id);
+  }
 
   await db.from("proposal_events").insert({
     proposal_id: proposalId,

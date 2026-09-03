@@ -1,3 +1,7 @@
+import Link from "next/link";
+import { googleConnection } from "@/lib/google/oauth";
+import { disconnectGoogleAction } from "@/app/admin/meeting-actions";
+
 export const dynamic = "force-dynamic";
 
 /**
@@ -41,6 +45,15 @@ const GROUPS: { title: string; note: string; vars: { key: string; why: string }[
     ],
   },
   {
+    title: "Google Calendar & Meet",
+    note: "Scheduling a Google Meet needs an OAuth client. Once these are set, connect the account below — the refresh token is stored server-side and is never readable by an admin session.",
+    vars: [
+      { key: "GOOGLE_CLIENT_ID", why: "OAuth client id from Google Cloud" },
+      { key: "GOOGLE_CLIENT_SECRET", why: "Server-only. Never reaches the browser." },
+      { key: "GOOGLE_REDIRECT_URI", why: "Optional — defaults to /api/google/oauth/callback" },
+    ],
+  },
+  {
     title: "Meta Instant Forms",
     note: "The webhook stays dormant until all three are set.",
     vars: [
@@ -51,7 +64,19 @@ const GROUPS: { title: string; note: string; vars: { key: string; why: string }[
   },
 ];
 
-export default function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const one = (key: string) => {
+    const value = params[key];
+    return typeof value === "string" ? value : undefined;
+  };
+  const google = await googleConnection();
+  const result = one("google");
+
   return (
     <>
       <header className="ad-head">
@@ -85,6 +110,52 @@ export default function SettingsPage() {
           </ul>
         </section>
       ))}
+
+      {/* ── The one thing on this page that is a switch, not a report ── */}
+      <section className="ad-panel">
+        <div className="ad-panel-head">
+          <h2>Google account</h2>
+        </div>
+
+        {result === "connected" ? (
+          <p className="ad-note ad-ok">Connected. New Google Meet meetings will be created on this calendar.</p>
+        ) : result === "denied" ? (
+          <p className="ad-note ad-missing">Google was not given permission, so nothing was connected.</p>
+        ) : result === "badstate" ? (
+          <p className="ad-note ad-missing">That sign-in did not start here, so it was refused. Try again from this page.</p>
+        ) : result === "unconfigured" ? (
+          <p className="ad-note ad-missing">Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET first.</p>
+        ) : result === "failed" || result === "nocode" ? (
+          <p className="ad-note ad-missing">{one("detail") || "Google would not complete the connection."}</p>
+        ) : null}
+
+        {!google.configured ? (
+          <p className="ad-note">
+            Not configured yet. Create an OAuth client in Google Cloud, add the two
+            variables above, then come back and connect the account.
+          </p>
+        ) : google.connected ? (
+          <>
+            <p className="ad-note">
+              Connected as <code>{google.account ?? "unknown account"}</code>, writing to
+              calendar <code>{google.calendarId}</code>.
+              {google.lastError ? ` Last error: ${google.lastError}` : ""}
+            </p>
+            <form action={disconnectGoogleAction}>
+              <button type="submit" className="ad-btn">Disconnect Google</button>
+            </form>
+          </>
+        ) : (
+          <>
+            <p className="ad-note">
+              The credentials are set but no account is connected, so Google Meet cannot
+              be chosen when scheduling. Connecting asks only for permission to manage
+              calendar events.
+            </p>
+            <Link href="/api/google/oauth/start" className="ad-btn">Connect Google Calendar</Link>
+          </>
+        )}
+      </section>
 
       <section className="ad-panel">
         <div className="ad-panel-head">

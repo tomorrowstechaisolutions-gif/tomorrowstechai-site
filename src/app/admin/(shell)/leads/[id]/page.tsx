@@ -11,6 +11,14 @@ import {
   type Appointment,
 } from "@/lib/supabase/types";
 import { scoreBand } from "@/lib/campaign/scoring";
+import { providerStatuses } from "@/lib/meetings/providers";
+import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
+import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
+import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
+import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
+import { chicagoDate } from "@/lib/time/chicago";
+
 import { PaymentLinkButton } from "@/components/admin/PaymentLinkButton";
 import { SellUpsellButton } from "@/components/admin/SellUpsellButton";
 import { fmtMoney } from "@/lib/campaign/metrics";
@@ -109,6 +117,27 @@ export default async function LeadDetailPage({
 
   const band = scoreBand(lead.lead_score);
 
+  // Meetings. Resolved after the lead so the contact card is filled in before
+  // the scheduling form ever opens.
+  const [meetings, meetingContact, providers] = await Promise.all([
+    meetingsForRecord(supabase, "lead_id", lead.id),
+    resolveContact(supabase, { leadId: lead.id }),
+    providerStatuses(),
+  ]);
+
+  const scheduleButton = meetingContact ? (
+    <ScheduleMeetingButton
+      contact={meetingContact}
+      providers={providers}
+      action={scheduleMeetingAction}
+      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+      defaultType="discovery"
+      returnTo={`/admin/leads/${lead.id}`}
+      timezone={BUSINESS_TIMEZONE}
+      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+    />
+  ) : null;
+
   return (
     <>
       <header className="ad-head">
@@ -122,6 +151,7 @@ export default async function LeadDetailPage({
           {lead.business_name ?? "No business name"} ·{" "}
           {lead.business_type ?? "Type not given"} · from {lead.source}
         </p>
+        {scheduleButton ? <div className="ad-headactions">{scheduleButton}</div> : null}
       </header>
 
       <div className="ad-two">
@@ -371,9 +401,16 @@ export default async function LeadDetailPage({
             </ul>
           </section>
 
+          <MeetingsPanel
+            data={meetings}
+            variant="ad"
+            scheduleButton={scheduleButton}
+            emptyText="No meetings with this lead yet. Schedule one and the Google Meet link, the invitation and the calendar entry all follow from it."
+          />
+
           <section className="ad-panel">
             <div className="ad-panel-head">
-              <h2>Appointments</h2>
+              <h2>Website bookings</h2>
             </div>
             <form action={addAppointment} className="ad-form">
               <input type="hidden" name="lead_id" value={lead.id} />

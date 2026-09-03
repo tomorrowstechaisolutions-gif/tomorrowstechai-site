@@ -24,6 +24,15 @@ import type {
 
 const HOUR = 3600_000;
 
+/** Provider names as a calendar card prints them. Kept local on purpose:
+ *  the calendar shows a meeting, it does not manage one. */
+const MEETING_PROVIDER_SHORT: Record<string, string> = {
+  google_meet: "Google Meet",
+  zoom: "Zoom",
+  phone: "Phone",
+  in_person: "In person",
+};
+
 type Raw = Omit<CalendarItem, "clientName" | "projectName" | "proposalNumber">;
 
 function item(input: {
@@ -448,6 +457,71 @@ async function loadAppointments(sb: SupabaseClient, win: CalendarWindow): Promis
 
 // ── 8 · social_posts — the content calendar ─────────────────────────
 
+// ── 10 · meetings — a scheduled conversation, with its provider ─────
+
+/**
+ * Meetings.
+ *
+ * The tenth source, added exactly the way the header of this file said a
+ * tenth source would be added: one loader, one line in the array below.
+ *
+ * `meetingUrl` is what makes a calendar card startable — the week view can
+ * offer "Start" on a Google Meet without knowing what Google is, because the
+ * normalised item already carries the link.
+ */
+async function loadMeetings(sb: SupabaseClient, win: CalendarWindow): Promise<Raw[]> {
+  const { data } = await sb
+    .from("meetings")
+    .select("id, title, meeting_type, provider, status, start_at, end_at, location, meeting_url, internal_notes, agenda, owner, lead_id, customer_id, job_id, proposal_id, attendee_name, attendee_email")
+    .gte("start_at", win.fromIso)
+    .lt("start_at", win.toIso)
+    .limit(300);
+
+  type Row = {
+    id: string; title: string; meeting_type: string; provider: string; status: string;
+    start_at: string; end_at: string; location: string | null; meeting_url: string | null;
+    internal_notes: string | null; agenda: string | null; owner: string | null;
+    lead_id: string | null; customer_id: string | null; job_id: string | null;
+    proposal_id: string | null; attendee_name: string | null; attendee_email: string | null;
+  };
+
+  // The meeting's own seven statuses collapse onto the calendar's five. The
+  // calendar does not need to know the difference between "no show" and
+  // "cancelled" — both mean it is not happening.
+  const statusOf = (value: string): EventStatus =>
+    value === "completed" ? "completed"
+      : value === "cancelled" || value === "no_show" || value === "rescheduled" ? "canceled"
+      : value === "in_progress" ? "in_progress"
+      : "scheduled";
+
+  return ((data ?? []) as Row[]).map((row) =>
+    item({
+      source: "meeting",
+      sourceId: row.id,
+      title: row.title,
+      subtitle: [row.attendee_name, MEETING_PROVIDER_SHORT[row.provider] ?? null]
+        .filter(Boolean).join(" · ") || null,
+      start: row.start_at,
+      end: row.end_at,
+      category: "meeting",
+      status: statusOf(row.status),
+      clientId: row.customer_id,
+      projectId: row.job_id,
+      proposalId: row.proposal_id,
+      leadId: row.lead_id,
+      assignedTo: row.owner,
+      location: row.location,
+      meetingUrl: row.meeting_url,
+      notes: row.agenda ?? row.internal_notes,
+      href: `/admin/meetings?meeting=${row.id}`,
+      // Moving a meeting has to move the provider's event too, so the
+      // calendar's drag-and-drop routes through the meetings service rather
+      // than writing start_at directly.
+      reschedulable: row.status !== "cancelled" && row.status !== "completed",
+    })
+  );
+}
+
 async function loadContent(sb: SupabaseClient, win: CalendarWindow): Promise<Raw[]> {
   const { data } = await sb
     .from("social_posts")
@@ -583,7 +657,7 @@ export type CalendarQuery = {
 /**
  * Everything happening in a window, from every source, in one array.
  *
- * The nine loaders run in parallel and none of them can break the others: a
+ * The ten loaders run in parallel and none of them can break the others: a
  * source that throws contributes nothing rather than emptying the calendar.
  * A table that does not exist yet in some environment behaves the same way.
  */
@@ -600,6 +674,7 @@ export async function getCalendarItems(
     ["leads", loadLeadFollowups(sb, win)],
     ["followups", loadFollowupSteps(sb, win)],
     ["appointments", loadAppointments(sb, win)],
+    ["meetings", loadMeetings(sb, win)],
     ["content", loadContent(sb, win)],
     ["renewals", loadRenewals(sb, win)],
   ];

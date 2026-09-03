@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { providerStatuses } from "@/lib/meetings/providers";
+import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
+import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
+import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
+import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
+import { chicagoDate } from "@/lib/time/chicago";
+
 import { JOB_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
 import {
   STARTER_PACKAGE,
@@ -104,6 +112,31 @@ export default async function JobDetailPage({
   const done = tasks.filter((t) => t.done).length;
   const stageTasks = tasks.filter((t) => t.stage === job.stage);
   const overdue = isOverdue(job.due_at);
+  const priceGap = job.estimated_market_value_cents === null
+    ? null
+    : Math.max(0, job.estimated_market_value_cents - job.value_cents);
+
+  // Kickoffs, progress reviews, training and final reviews all hang off the
+  // project rather than the client, so they show here and on its timeline.
+  const [meetings, meetingContact, providers] = await Promise.all([
+    meetingsForRecord(supabase, "job_id", job.id),
+    resolveContact(supabase, { jobId: job.id }),
+    providerStatuses(),
+  ]);
+
+  const scheduleButton = meetingContact ? (
+    <ScheduleMeetingButton
+      contact={meetingContact}
+      providers={providers}
+      action={scheduleMeetingAction}
+      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+      defaultType={job.completed_at ? "final_review" : "kickoff"}
+      jobId={job.id}
+      returnTo={`/admin/jobs/${job.id}`}
+      timezone={BUSINESS_TIMEZONE}
+      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+    />
+  ) : null;
 
   return (
     <>
@@ -125,10 +158,61 @@ export default async function JobDetailPage({
             </>
           )}
         </p>
+        {scheduleButton ? <div className="ad-headactions">{scheduleButton}</div> : null}
       </header>
+
+      <MeetingsPanel
+        data={meetings}
+        variant="ad"
+        heading="Project meetings"
+        scheduleButton={scheduleButton}
+        emptyText="No kickoff or review booked yet. Scheduling one from here links it to this project and puts it on the calendar."
+      />
 
       <div className="ad-grid-2">
         <div>
+          <section className="ad-panel">
+            <h2 className="ad-panel-title">Commercial reality</h2>
+            <dl className="ad-dl">
+              <dt>Engagement</dt>
+              <dd>
+                <span className={`ad-tag s-${job.engagement_status === "paid" ? "live" : job.engagement_status === "pre_contract" ? "soon" : "muted"}`}>
+                  {job.engagement_status.replaceAll("_", " ")}
+                </span>
+              </dd>
+              <dt>Pricing model</dt>
+              <dd>{job.pricing_model.replaceAll("_", " ")}</dd>
+              <dt>Agreed build</dt>
+              <dd>{fmtMoney(job.value_cents / 100)}</dd>
+              <dt>Recurring</dt>
+              <dd>{fmtMoney(job.recurring_value_cents / 100)}/mo</dd>
+              <dt>Estimated market value</dt>
+              <dd>{job.estimated_market_value_cents === null ? "—" : fmtMoney(job.estimated_market_value_cents / 100)}</dd>
+              <dt>Pricing gap / investment</dt>
+              <dd>{priceGap === null ? "—" : fmtMoney(priceGap / 100)}</dd>
+              <dt>Hours</dt>
+              <dd>{job.actual_hours ?? "—"} actual · {job.estimated_hours ?? "—"} estimated</dd>
+            </dl>
+            {job.pricing_note ? <p className="ad-hint">{job.pricing_note}</p> : null}
+            <p className="ad-hint">
+              Project economics only—not booked revenue. Revenue stays at zero until payment is recorded.
+            </p>
+          </section>
+
+          <section className="ad-panel">
+            <h2 className="ad-panel-title">Scope control</h2>
+            <dl className="ad-dl">
+              <dt>Original agreement</dt>
+              <dd>{job.scope_baseline || "—"}</dd>
+              <dt>Delivered / expanded</dt>
+              <dd>{job.scope_expansion || "—"}</dd>
+              <dt>Payment timing</dt>
+              <dd>{job.payment_timing || "—"}</dd>
+              <dt>Next milestone</dt>
+              <dd>{job.next_milestone || "—"}</dd>
+            </dl>
+          </section>
+
           {isStarter ? (
             <section className="ad-panel">
               <h2 className="ad-panel-title">Client intake</h2>
@@ -329,6 +413,67 @@ export default async function JobDetailPage({
                   defaultValue={dateInput(job.due_at)}
                   className="ad-input"
                 />
+              </label>
+              <label className="ad-field">
+                <span>Engagement status</span>
+                <select name="engagement_status" defaultValue={job.engagement_status} className="ad-input">
+                  <option value="pre_contract">Pre-contract</option>
+                  <option value="contracted">Contracted</option>
+                  <option value="awaiting_payment">Awaiting payment</option>
+                  <option value="paid">Paid</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+              <label className="ad-field">
+                <span>Pricing model</span>
+                <select name="pricing_model" defaultValue={job.pricing_model} className="ad-input">
+                  <option value="standard">Standard</option>
+                  <option value="custom">Custom</option>
+                  <option value="founding_client">Founding client</option>
+                  <option value="portfolio">Portfolio</option>
+                  <option value="discounted">Discounted</option>
+                  <option value="pro_bono">Pro bono</option>
+                </select>
+              </label>
+              <label className="ad-field">
+                <span>Agreed build price</span>
+                <input name="agreed_build" type="number" min="0" step="0.01" defaultValue={job.value_cents / 100} className="ad-input" />
+              </label>
+              <label className="ad-field">
+                <span>Recurring monthly value</span>
+                <input name="recurring_value" type="number" min="0" step="0.01" defaultValue={job.recurring_value_cents / 100} className="ad-input" />
+              </label>
+              <label className="ad-field">
+                <span>Estimated market value</span>
+                <input name="estimated_market_value" type="number" min="0" step="0.01" defaultValue={job.estimated_market_value_cents === null ? "" : job.estimated_market_value_cents / 100} className="ad-input" />
+              </label>
+              <label className="ad-field">
+                <span>Estimated hours</span>
+                <input name="estimated_hours" type="number" min="0" step="0.25" defaultValue={job.estimated_hours ?? ""} className="ad-input" />
+              </label>
+              <label className="ad-field">
+                <span>Actual hours</span>
+                <input name="actual_hours" type="number" min="0" step="0.25" defaultValue={job.actual_hours ?? ""} className="ad-input" />
+              </label>
+              <label className="ad-field">
+                <span>Payment timing</span>
+                <textarea name="payment_timing" defaultValue={job.payment_timing ?? ""} className="ad-input" rows={3} />
+              </label>
+              <label className="ad-field">
+                <span>Pricing note</span>
+                <textarea name="pricing_note" defaultValue={job.pricing_note ?? ""} className="ad-input" rows={3} />
+              </label>
+              <label className="ad-field">
+                <span>Original scope</span>
+                <textarea name="scope_baseline" defaultValue={job.scope_baseline ?? ""} className="ad-input" rows={3} />
+              </label>
+              <label className="ad-field">
+                <span>Expanded / delivered scope</span>
+                <textarea name="scope_expansion" defaultValue={job.scope_expansion ?? ""} className="ad-input" rows={4} />
+              </label>
+              <label className="ad-field">
+                <span>Next milestone</span>
+                <textarea name="next_milestone" defaultValue={job.next_milestone ?? ""} className="ad-input" rows={2} />
               </label>
               <label className="ad-field">
                 <span>Notes</span>

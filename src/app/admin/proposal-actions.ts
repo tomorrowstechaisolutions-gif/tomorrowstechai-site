@@ -615,7 +615,7 @@ export async function setProposalStatusAction(formData: FormData) {
 
   const { data } = await supabase
     .from("proposals")
-    .select("id, status, proposal_number, total_cents, amount_paid_cents")
+    .select("id, status, proposal_number, total_cents, amount_paid_cents, job_id")
     .eq("id", id)
     .maybeSingle();
   if (!data) return;
@@ -656,6 +656,10 @@ export async function setProposalStatusAction(formData: FormData) {
 
   const { error } = await supabase.from("proposals").update(patch).eq("id", id);
   if (error) throw new Error(`Could not update status: ${error.message}`);
+
+  if (next === "paid" && data.job_id) {
+    await supabase.from("jobs").update({ engagement_status: "paid" }).eq("id", data.job_id);
+  }
 
   await logProposalEvent(supabase, {
     proposalId: id,
@@ -705,8 +709,6 @@ export async function convertProposalToProjectAction(formData: FormData) {
       "The payment agreed at signature has not been received yet, so the project cannot be created."
     );
   }
-  if (p.job_id) throw new Error("A project already exists for this proposal.");
-
   // ── The client record. Found before created.
   let customerId = p.customer_id;
   if (!customerId && p.lead_id) {
@@ -744,39 +746,77 @@ export async function convertProposalToProjectAction(formData: FormData) {
 
   // ── The project.
   const isStarter = p.package_key === "starter_149";
+  const deliveryPackage = isStarter
+    ? "starter_149"
+    : p.package_key === "classic_399"
+      ? "launch_package"
+      : p.package_key ?? "launch_package";
   const started = new Date();
-  const { data: job, error: jobError } = await supabase
-    .from("jobs")
-    .insert({
-      customer_id: customerId,
-      lead_id: p.lead_id,
-      invoice_id: p.invoice_id,
-      title: p.title,
-      business_name: p.client_business_name,
-      stage: isStarter ? "Purchased" : "Intake",
-      package: isStarter ? "starter_149" : "launch_package",
-      promised_days: PROMISED_DAYS,
-      started_at: started.toISOString(),
-      due_at: dueDateFrom(started),
-      notes: [
-        `From proposal ${p.proposal_number}.`,
-        p.turnaround_note ? `Turnaround quoted: ${p.turnaround_note}` : null,
-        p.revision_limit !== null ? `Revision rounds included: ${p.revision_limit}` : null,
-        p.recurring_price_cents > 0
-          ? `Hosting: ${(p.recurring_price_cents / 100).toFixed(2)}/${p.recurring_interval}`
-          : null,
-      ].filter(Boolean).join("\n"),
-    })
-    .select("id")
-    .single();
+  let jobId = p.job_id;
+  let reusedPreContractProject = false;
 
-  if (jobError || !job) {
-    throw new Error(`Could not open the project: ${jobError?.message ?? "unknown"}`);
+  if (jobId) {
+    const { data: existing, error: existingError } = await supabase
+      .from("jobs")
+      .select("id, engagement_status")
+      .eq("id", jobId)
+      .maybeSingle();
+    if (existingError || !existing) throw new Error("The linked project could not be found.");
+    if (existing.engagement_status !== "pre_contract") {
+      throw new Error("A contracted project already exists for this proposal.");
+    }
+
+    const { error: promoteError } = await supabase
+      .from("jobs")
+      .update({
+        customer_id: customerId,
+        invoice_id: p.invoice_id,
+        engagement_status: dueAtSignature > p.amount_paid_cents ? "awaiting_payment" : "contracted",
+      })
+      .eq("id", jobId);
+    if (promoteError) {
+      throw new Error(`Could not promote the pre-contract project: ${promoteError.message}`);
+    }
+    await supabase.from("tasks").update({ customer_id: customerId }).eq("job_id", jobId);
+    reusedPreContractProject = true;
+  } else {
+    const { data: job, error: jobError } = await supabase
+      .from("jobs")
+      .insert({
+        customer_id: customerId,
+        lead_id: p.lead_id,
+        invoice_id: p.invoice_id,
+        title: p.title,
+        business_name: p.client_business_name,
+        stage: isStarter ? "Purchased" : "Intake",
+        package: deliveryPackage,
+        engagement_status: dueAtSignature > p.amount_paid_cents ? "awaiting_payment" : "contracted",
+        recurring_value_cents: p.recurring_price_cents,
+        promised_days: PROMISED_DAYS,
+        started_at: started.toISOString(),
+        due_at: dueDateFrom(started),
+        notes: [
+          `From proposal ${p.proposal_number}.`,
+          p.turnaround_note ? `Turnaround quoted: ${p.turnaround_note}` : null,
+          p.revision_limit !== null ? `Revision rounds included: ${p.revision_limit}` : null,
+          p.recurring_price_cents > 0
+            ? `Hosting: ${(p.recurring_price_cents / 100).toFixed(2)}/${p.recurring_interval}`
+            : null,
+        ].filter(Boolean).join("\n"),
+      })
+      .select("id")
+      .single();
+
+    if (jobError || !job) {
+      throw new Error(`Could not open the project: ${jobError?.message ?? "unknown"}`);
+    }
+    jobId = job.id as string;
   }
-  const jobId = job.id as string;
+
+  if (!jobId) throw new Error("The project could not be identified.");
 
   // The proven per-stage checklist, for the packages whose jobs run it.
-  if (!isStarter) {
+  if (!isStarter && !reusedPreContractProject) {
     await supabase.from("job_tasks").insert(
       DEFAULT_JOB_TASKS.map((task, index) => ({
         job_id: jobId,
@@ -817,7 +857,9 @@ export async function convertProposalToProjectAction(formData: FormData) {
   await supabase.from("job_events").insert({
     job_id: jobId,
     kind: "note",
-    body: `Project opened from signed proposal ${p.proposal_number}.`,
+    body: reusedPreContractProject
+      ? `Pre-contract project promoted after signed proposal ${p.proposal_number}.`
+      : `Project opened from signed proposal ${p.proposal_number}.`,
     to_stage: isStarter ? "Purchased" : "Intake",
     actor,
   });
@@ -826,22 +868,24 @@ export async function convertProposalToProjectAction(formData: FormData) {
   // every other package it is issued without touching the job's stage, whose
   // vocabulary is the 0004 one.
   let intakeUrl: string | null = null;
-  try {
-    const { url } = await createIntake({
-      jobId,
-      customerId,
-      leadId: p.lead_id,
-      businessName: p.client_business_name,
-      contactName: p.client_contact_name,
-      email: p.client_email,
-      phone: p.client_phone,
-      packageKey: p.package_key,
-      advanceJobStage: isStarter,
-    });
-    intakeUrl = url;
-  } catch {
-    // An intake that could not be opened is a follow-up, not a failed
-    // conversion — the project and the client record are already real.
+  if (!reusedPreContractProject) {
+    try {
+      const { url } = await createIntake({
+        jobId,
+        customerId,
+        leadId: p.lead_id,
+        businessName: p.client_business_name,
+        contactName: p.client_contact_name,
+        email: p.client_email,
+        phone: p.client_phone,
+        packageKey: p.package_key,
+        advanceJobStage: isStarter,
+      });
+      intakeUrl = url;
+    } catch {
+      // An intake that could not be opened is a follow-up, not a failed
+      // conversion — the project and the client record are already real.
+    }
   }
 
   // ── Close the loop on the records this came from.
