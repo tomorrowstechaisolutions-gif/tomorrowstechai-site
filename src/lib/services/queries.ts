@@ -11,16 +11,28 @@ export async function loadServiceList(db: SupabaseClient, params: Record<string,
   const [year, month] = chicagoDate(now).split('-').map(Number);
   const firstMonth = period === 'year' ? 1 : period === 'quarter' ? Math.floor((month-1)/3)*3+1 : month;
   const from = period === 'all' ? new Date('2000-01-01') : zonedMidnightUtc(`${year}-${String(firstMonth).padStart(2,'0')}-01`);
-  const sorts: Record<string, string> = { name: 'name', revenue: 'revenue_cents', clients: 'active_clients', price: 'from_cents', margin: 'margin', updated: 'updated_at' };
-  const sort = sorts[value('sort')] ?? 'name';
+  const sorts: Record<string, { column: string; ascending: boolean }> = {
+    name: { column: 'name', ascending: true }, revenue: { column: 'revenue_cents', ascending: false },
+    highest_revenue: { column: 'revenue_cents', ascending: false }, highest_mrr: { column: 'mrr_cents', ascending: false },
+    clients: { column: 'active_clients', ascending: false }, most_clients: { column: 'active_clients', ascending: false },
+    price: { column: 'from_cents', ascending: false }, margin: { column: 'margin', ascending: false },
+    highest_margin: { column: 'margin', ascending: false }, lowest_margin: { column: 'margin', ascending: true },
+    updated: { column: 'updated_at', ascending: false }, newest: { column: 'created_at', ascending: false },
+  };
+  const sort = sorts[value('sort')] ?? sorts.name;
   let query = db.from('service_directory').select('*', { count: 'exact' });
   for (const [param, column] of [['status', 'status'], ['type', 'service_type'], ['category', 'category'], ['billing', 'billing_type']]) {
     if (value(param)) query = query.eq(column, value(param));
   }
+  if (value('health')) query = query.eq('health', value('health'));
+  if (value('profitability') === 'strong') query = query.gte('margin', 60);
+  if (value('profitability') === 'positive') query = query.gte('margin', 0).lt('margin', 60);
+  if (value('profitability') === 'low') query = query.lt('margin', 0);
+  if (value('profitability') === 'unknown') query = query.is('margin', null);
   const search = value('q').trim().slice(0, 120).replace(/[\\%_]/g, '\\$&');
   if (search) query = query.ilike('name', `%${search}%`);
   const [rows, summary] = await Promise.all([
-    query.order(sort, { ascending: sort === 'name', nullsFirst: false }).order('id').range((page - 1) * 25, page * 25 - 1),
+    query.order(sort.column, { ascending: sort.ascending, nullsFirst: false }).order('id').range((page - 1) * 25, page * 25 - 1),
     db.rpc('service_summary', { p_from: from.toISOString(), p_to: now.toISOString() }),
   ]);
   if (rows.error || summary.error) throw new Error('Services could not be loaded. Please retry.');

@@ -10,6 +10,10 @@ Internal costs live exclusively in `service_costs`. Owners/admins can read and e
 
 Services provides a paginated/searchable/filterable table, real aggregate KPIs, creation/editing, draft duplication, status confirmation, detail tabs, package relationships, client assignments, price history and activity. Each service can also hold one current ad creative in a private image bucket, with authenticated preview/download and owner/admin upload, replacement and removal controls. Catalog links to these same records to manage pricing and availability. Recurring operational pricing supports monthly, quarterly, yearly and custom intervals expressed in months.
 
+The command-center extension adds structured `service_inclusions` and `service_deliverables` records without changing service IDs. Inclusions hold the customer promise, quantity, frequency, client-facing description and separate internal notes. Deliverables are operational templates with an optional future automation key. Pricing terms now support discount rules, custom pricing, minimum contract length, trial period, renewal notes and a configurable low-margin threshold. Client assignments track their assigned manager and billing state.
+
+Detailed cost components remain in the protected `service_costs` table: software, AI/API, hosting, contractor, labor hours and rate, ad platform and other costs. The database derives an effective internal cost, gross profit, margin and health state. Missing cost inputs remain null and display as **Cost not set**; they are never converted into a fake 100% margin. Recurring service profit uses actual assignment MRR and normalized monthly cost when clients exist, while the standard price-versus-cost margin remains available before the first assignment.
+
 ## Revenue and billing
 
 - Financial metrics are collected USD, attributed from invoice payments to service-linked one-time lines in proportion to the invoice subtotal. This allocates discounts and partial receipts without counting list prices as revenue. Legacy catalog-linked invoices are used only when no itemized lines exist; their paid fallback is excluded when the payment ledger has receipts.
@@ -35,7 +39,7 @@ No external email is sent and no provider billing/provisioning call runs from th
 - `node scripts/verify-service-pricing.mjs` (Node 24)
 - `node scripts/verify-services.mjs <absolute-path-to-@electric-sql/pglite/dist/index.js>`
 
-The database test applies the entire repository migration chain to an isolated PostgreSQL WASM runtime, then tests RLS, cost confidentiality, amount validation, atomic saves, conflict detection, package cycles, project/task replay, partial-payment/discount attribution, sold quantities, signed-proposal activation and historical prices. The harness supplies Supabase auth functions and a test-only pgcrypto substitute; it is not a production database test.
+The database test applies the entire repository migration chain to an isolated PostgreSQL WASM runtime, then tests RLS, cost confidentiality, amount validation, atomic saves, structured inclusions, deliverable templates, detailed cost calculations, service health, summary metrics, conflict detection, package cycles, project/task replay, partial-payment/discount attribution, sold quantities, signed-proposal activation and historical prices. The harness supplies Supabase auth functions and a test-only pgcrypto substitute; it is not a production database test.
 
 Repository-wide lint currently reports 13 pre-existing errors in older meeting, intake, client and removed-shop files. Scoped lint passes. Local browser verification reaches the proper sign-in gate; authenticated UI, responsive layout and browser-console checks remain to be completed with working project access.
 

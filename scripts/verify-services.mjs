@@ -58,6 +58,15 @@ await assert.rejects(()=>db.query("insert into service_package_relationships(ser
 await assert.rejects(()=>db.query('delete from catalog_items where id=$1',[id]),/permission denied/);
 console.log('PASS: self-package and deletion prohibited');
 const fixed=(await db.query(`select save_service(null,'{"name":"One-time verification","status":"active","from_cents":10000}','{}') id`)).rows[0].id;
+assert.equal((await db.query('select health from service_directory where id=$1',[fixed])).rows[0].health,'missing_cost');
+await db.query(`update service_costs set software_cost_cents=1000,labor_hours=2,labor_hourly_rate_cents=750 where service_id=$1`,[fixed]);
+const profitable=(await db.query('select effective_cost_cents,gross_profit_cents,margin,health from service_directory where id=$1',[fixed])).rows[0];
+assert.equal(Number(profitable.effective_cost_cents),2500); assert.equal(Number(profitable.gross_profit_cents),7500); assert.equal(Number(profitable.margin),75); assert.equal(profitable.health,'no_clients');
+await db.query(`insert into service_inclusions(service_id,name,quantity,frequency,client_facing_description) values($1,'Setup',1,'one_time','Configured for the client')`,[fixed]);
+await db.query(`insert into service_deliverables(service_id,name,quantity,frequency,automation_key) values($1,'Launch checklist',1,'one_time','launch-checklist')`,[fixed]);
+assert.equal(Number((await db.query('select count(*) n from service_inclusions where service_id=$1',[fixed])).rows[0].n),1);
+assert.equal(Number((await db.query('select count(*) n from service_deliverables where service_id=$1',[fixed])).rows[0].n),1);
+console.log('PASS: structured inclusions, deliverables, detailed costs and health');
 const invoice=(await db.query(`insert into invoices(customer_id,title,status,subtotal_cents,total_cents,discount_cents) values($1,'Verification invoice','draft',20000,18000,2000) returning id`,[customer])).rows[0].id;
 await db.query(`insert into invoice_items(invoice_id,service_id,item_kind,title,quantity,unit_price_cents,total_price_cents,service_snapshot) values($1,$2,'one_time','One-time verification',1,10000,10000,'{"billing_type":"one_time","interval_months":1}'),($1,null,'one_time','Unlinked work',1,10000,10000,null)`,[invoice,fixed]);
 await db.query(`insert into invoice_payments(invoice_id,amount_cents,currency,method,paid_on) values($1,9000,'USD','cash','2026-09-09')`,[invoice]);
@@ -70,6 +79,8 @@ assert.equal(Number((await db.query('select count(*) n from client_services wher
 await db.query('update catalog_items set from_cents=99000 where id=$1',[fixed]);
 assert.equal((await db.query('select unit_price_cents from invoice_items where invoice_id=$1 and service_id=$2',[invoice,fixed])).rows[0].unit_price_cents,10000);
 assert.equal(Number((await db.query('select revenue_cents from service_directory where id=$1',[fixed])).rows[0].revenue_cents),9000);
+const summary=(await db.query(`select service_summary('2026-09-01','2026-10-01') summary`)).rows[0].summary;
+assert.equal(Number(summary.revenue_cents),9000); assert.equal(Number(summary.one_time_cents),9000); assert.ok(Array.isArray(summary.top_services));
 console.log('PASS: partial/full payment allocation after discounts, automatic sale attribution, replay and historical prices');
 const activation=(await db.query('select activation_key from client_services where id=$1',[assignment.id])).rows[0].activation_key;
 await db.query(`insert into client_services(service_id,customer_id,sale_price_cents,billing_type,interval_months,activation_key) values($1,$2,12000,'recurring',12,$3) on conflict(activation_key) do nothing`,[id,customer,activation]);
