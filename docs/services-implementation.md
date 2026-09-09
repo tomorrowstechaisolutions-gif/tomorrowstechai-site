@@ -1,6 +1,6 @@
 # Services management
 
-Local implementation dated 2026-09-09. **Not deployed; production migration not applied.**
+Implemented and deployed to production on 2026-09-09. The production schema migration is recorded as `20260909152556 service_operations`, and application commit `4ed34d0` is live on Vercel.
 
 ## Data model
 
@@ -39,10 +39,8 @@ The database test applies the entire repository migration chain to an isolated P
 
 Repository-wide lint currently reports 13 pre-existing errors in older meeting, intake, client and removed-shop files. Scoped lint passes. Local browser verification reaches the proper sign-in gate; authenticated UI, responsive layout and browser-console checks remain to be completed with working project access.
 
-## Rollout blockers and next steps
+## Operational follow-ups
 
-1. Connect access to Supabase project `nttvnklbevixtqrbtfru`. The connected MCP account lists a different project and explicitly denies this project's access. The local CLI is also signed into an account without this project. `.env.local` has no usable service-role key.
-2. Review and apply `supabase/migrations/20260909141638_service_operations.sql` on the correct project, then run live RLS and aggregate checks. Deploy migration before application code because Catalog, activity and sales integrations use the new fields.
-3. Complete authenticated browser tests: create/edit, all filters/sorts, modal keyboard behavior, mobile table scrolling, package changes, client activation, sales document conversion, console errors and provider billing boundaries.
-4. Deploy the verified application and smoke-test `/admin/services` and the existing sales flows.
-5. Mount `Y:` and update `Y:\CommandCenter\status\ttai-website.md` using the existing stable checklist IDs. That drive is unavailable in this session, so Argus status has not been updated.
+1. Complete destructive-flow browser tests in a non-production dataset: create/edit, status changes, package changes, client activation and sales document conversion.
+2. Verify mobile table scrolling and modal keyboard behavior across supported browsers.
+3. Mount `Y:` and update `Y:\CommandCenter\status\ttai-website.md` using the existing stable checklist IDs. That drive is unavailable in this session, so Argus status has not been updated.
