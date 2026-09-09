@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { snapshotServiceLines } from '@/lib/services/sales';
 import { redirect } from "next/navigation";
 import { randomBytes } from "node:crypto";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
@@ -81,6 +82,8 @@ function newInvoiceToken(): string {
 }
 
 type ParsedLine = {
+  service_id?: string | null;
+  service_snapshot?: Record<string, unknown> | null;
   item_kind: InvoiceItemKind;
   title: string;
   description: string | null;
@@ -131,6 +134,7 @@ function parseLines(raw: string): ParsedLine[] {
           : 0;
 
     out.push({
+      service_id: typeof row.service_id === 'string' ? row.service_id : null,
       item_kind: kind,
       title,
       description:
@@ -183,7 +187,7 @@ async function replaceLines(
 export async function createInvoiceAction(formData: FormData) {
   const { supabase, actor } = await requireAdmin();
 
-  const lines = parseLines(str(formData, "lines_json", 200_000));
+  const lines = await snapshotServiceLines(supabase, parseLines(str(formData, "lines_json", 200_000)), 'manual_invoice_enabled');
   const term = termFrom(formData);
   const issueDate = isoDateOrNull(str(formData, "issue_date", 20)) ?? today();
   const leadId = str(formData, "lead_id", 40) || null;
@@ -299,6 +303,8 @@ export async function createInvoiceFromProposalAction(formData: FormData) {
   );
 
   const lines: ParsedLine[] = billable.map((item, index) => ({
+    service_id: item.service_id,
+    service_snapshot: item.service_snapshot,
     item_kind: "one_time" as const,
     title: item.title,
     description: item.description,
@@ -310,14 +316,15 @@ export async function createInvoiceFromProposalAction(formData: FormData) {
 
   // A proposal priced as a single figure rather than itemised — which is
   // most of them — becomes one line saying what was built.
-  if (lines.length === 0 && p.one_time_price_cents > 0) {
+  const unitemizedBase = Math.max(0, p.subtotal_cents - billable.reduce((sum,item)=>sum+item.total_price_cents,0));
+  if (unitemizedBase > 0) {
     lines.push({
       item_kind: "one_time",
       title: p.title,
       description: p.package_name ? `${p.package_name} — as agreed in ${p.proposal_number}.` : null,
       quantity: 1,
-      unit_price_cents: p.one_time_price_cents,
-      total_price_cents: p.one_time_price_cents,
+      unit_price_cents: unitemizedBase,
+      total_price_cents: unitemizedBase,
       sort_order: 0,
     });
   }
@@ -334,14 +341,18 @@ export async function createInvoiceFromProposalAction(formData: FormData) {
     });
   }
 
-  if (p.recurring_price_cents > 0) {
+  const recurringServices = ((itemRows ?? []) as ProposalItem[]).filter(item => item.service_id && item.item_type === 'recurring' && item.is_billable && !item.is_optional);
+  const attributedRecurring = recurringServices.reduce((sum,item)=>sum+item.total_price_cents,0);
+  if (attributedRecurring > p.recurring_price_cents) throw new Error('Recurring service lines exceed the agreed recurring total. Review the proposal before invoicing.');
+  for (const item of recurringServices) lines.push({service_id:item.service_id,service_snapshot:item.service_snapshot,item_kind:'recurring',title:item.title,description:item.description,quantity:item.quantity,unit_price_cents:item.unit_price_cents,total_price_cents:item.total_price_cents,sort_order:lines.length});
+  if (p.recurring_price_cents > attributedRecurring) {
     lines.push({
       item_kind: "recurring",
       title: "Hosting & management",
       description: p.hosting_note,
       quantity: 1,
-      unit_price_cents: p.recurring_price_cents,
-      total_price_cents: p.recurring_price_cents,
+      unit_price_cents: p.recurring_price_cents - attributedRecurring,
+      total_price_cents: p.recurring_price_cents - attributedRecurring,
       sort_order: lines.length,
     });
   }
@@ -449,7 +460,7 @@ export async function updateInvoiceAction(formData: FormData) {
     );
   }
 
-  const lines = parseLines(str(formData, "lines_json", 200_000));
+  const lines = await snapshotServiceLines(supabase, parseLines(str(formData, "lines_json", 200_000)), 'manual_invoice_enabled');
   const term = termFrom(formData);
   const issueDate = isoDateOrNull(str(formData, "issue_date", 20)) ?? inv.issue_date ?? today();
 

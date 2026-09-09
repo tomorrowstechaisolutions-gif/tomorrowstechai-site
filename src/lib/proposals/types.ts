@@ -38,6 +38,8 @@ export type ProposalItemType =
   | "client_responsibility" | "provider_responsibility";
 
 export type ProposalItem = {
+  service_id?: string | null;
+  service_snapshot?: Record<string, unknown> | null;
   id: string;
   proposal_id: string;
   item_type: ProposalItemType;

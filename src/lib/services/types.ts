@@ -1,0 +1,20 @@
+export const SERVICE_STATUSES = ['active', 'draft', 'paused', 'retired'] as const;
+export const SERVICE_TYPES = ['Website', 'Hosting', 'AI Solution', 'Software', 'Marketing', 'SEO', 'Social Media', 'Logo / Branding', 'Consulting', 'Custom'] as const;
+export const BILLING_TYPES = ['one_time', 'recurring', 'usage_based', 'custom_quote'] as const;
+export const BILLING_LABELS: Record<string, string> = { one_time: 'One-Time', recurring: 'Recurring', usage_based: 'Usage-Based', custom_quote: 'Custom Quote' };
+export const AVAILABILITY = { catalog_enabled: 'Available in Catalog', proposal_enabled: 'Available in Proposals', intake_enabled: 'Available in Client Intake', internal_sales_enabled: 'Available for Internal Sales', public_enabled: 'Available for Public Website', manual_invoice_enabled: 'Allow Manual Invoice Addition', featured: 'Featured Service', requires_quote: 'Requires Custom Quote', requires_approval: 'Requires Approval Before Sale', discount_eligible: 'Discount Eligibility' } as const;
+export type ServiceStatus = typeof SERVICE_STATUSES[number];
+export type Service = {
+  id: string; name: string; sku: string | null; description: string | null; category: string; service_type: string;
+  status: ServiceStatus; billing_type: typeof BILLING_TYPES[number]; billing_interval: string; interval_months: number;
+  from_cents: number; setup_fee_cents: number; internal_cost_cents: number | null; recurring_cost_cents: number | null;
+  taxable: boolean; position: number; created_at: string; updated_at: string;
+  active_clients: number; subscriptions: number; mrr_cents: number; revenue_cents: number; sales_count: number; margin: number | null;
+} & Record<keyof typeof AVAILABILITY, boolean>;
+export type ServiceOption = Pick<Service, 'id' | 'name' | 'description' | 'from_cents' | 'billing_type' | 'billing_interval' | 'interval_months' | 'setup_fee_cents' | 'taxable' | 'requires_quote' | 'requires_approval'>;
+export type Assignment = { id: string; service_id: string; customer_id: string; client_name: string; status: string; sale_price_cents: number; billing_type: string; interval_months: number; start_date: string; end_date: string | null; next_billing_date: string | null; subscription_id: string | null; job_id: string | null; revenue_cents: number };
+export type Sale = { service_id: string; invoice_id: string; invoice_number: string; customer_id: string | null; client_name: string | null; proposal_id: string | null; amount_cents: number; occurred_at: string; owner: string | null; billing_type: string; status: string };
+export type PackageRelationship = { id: string; service_id: string; package_id: string; relationship_type: 'included' | 'addon'; quantity: number; notes: string | null; package_name: string };
+export type Automation = { service_id: string; create_project: boolean; task_template_id: string | null; default_assignee: string | null; due_date_offset_days: number; notify_admin: boolean };
+export type ServiceSummary = { active_services: number; mrr_cents: number; one_time_cents: number; subscriptions: number; average_margin: number | null };
+export type ActionResult = { error?: string; success?: string; id?: string };

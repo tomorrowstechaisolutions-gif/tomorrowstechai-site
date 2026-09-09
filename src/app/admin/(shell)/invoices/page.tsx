@@ -25,6 +25,7 @@ export default async function InvoicesPage({
   };
 
   const filters: InvoiceFilters = {
+    customerId: one('customer'),
     status: one("status"),
     owner: one("owner"),
     source: one("source"),

@@ -1,0 +1,1 @@
+export default function Loading() { return <div aria-label="Loading services" aria-busy="true"><div className="sv-kpis">{[1,2,3,4,5].map(n => <div key={n} className="sv-kpi sv-skeleton" />)}</div><div className="cc-panel sv-skeleton-table" /></div>; }

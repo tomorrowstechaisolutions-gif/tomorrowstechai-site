@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ServicePicker from './services/ServicePicker';
 import Link from "next/link";
 import {
   ITEM_KINDS, ITEM_KIND_LABELS, PAYMENT_TERMS, TERM_LABELS, dueDateFor,
@@ -24,6 +25,7 @@ import { IconPlus, IconX, IconUsers, IconDollar, IconFile, IconLayers } from "./
  */
 
 export type BuilderLine = {
+  service_id?: string | null;
   key: string;
   item_kind: InvoiceItemKind;
   title: string;
@@ -357,6 +359,14 @@ export default function InvoiceBuilder({
         </div>
         <div className="cc-panel-body">
           <div className="pr-addrow">
+            <ServicePicker channel="invoice" onSelect={s => {
+              if (s.billing_type === 'recurring' && lines.some(l => l.item_kind === 'recurring') && form.recurringInterval !== (s.interval_months === 12 ? 'year' : 'month')) {
+                window.alert('Use a separate invoice for services with a different recurring interval.'); return;
+              }
+              if ((s.requires_quote || s.requires_approval || s.billing_type === 'custom_quote' || s.billing_type === 'usage_based') && !window.confirm('This service needs a reviewed quote or approval. Add it and confirm the selling price before sending?')) return;
+              setLines(prev => [...prev, { key:nextKey(), service_id:s.id, item_kind:s.billing_type === 'recurring' ? 'recurring' : 'one_time', title:s.name, description:s.description ?? '', quantity:1, unit_price:(s.from_cents / 100).toFixed(2) }, ...(s.setup_fee_cents > 0 ? [{key:nextKey(),service_id:s.id,item_kind:'one_time' as const,title:`${s.name} — setup`,description:'',quantity:1,unit_price:(s.setup_fee_cents / 100).toFixed(2)}] : [])]);
+              if (s.billing_type === 'recurring') field('recurringInterval',s.interval_months === 12 ? 'year' : 'month');
+            }} />
             {ITEM_KINDS.map((kind) => (
               <button key={kind} type="button" className="cc-btn" onClick={() => addLine(kind)}>
                 <IconPlus size={12} /> {ITEM_KIND_LABELS[kind]}

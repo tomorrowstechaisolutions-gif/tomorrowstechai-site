@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ServicePicker from './services/ServicePicker';
 import Link from "next/link";
 import {
   PACKAGE_TEMPLATES,
@@ -49,6 +50,7 @@ const SECTION_TYPES: { type: ProposalSectionType; label: string }[] = [
 ];
 
 export type BuilderItem = {
+  service_id?: string | null;
   key: string;
   item_type: ProposalItemType;
   title: string;
@@ -183,6 +185,7 @@ export default function ProposalBuilder({
 
   const pricing = useMemo(() => {
     const parsed = items.map((item) => ({
+      service_id: item.service_id,
       item_type: item.item_type,
       quantity: item.quantity,
       unit_price_cents: Math.round(Number.parseFloat(item.unit_price || "0") * 100) || 0,
@@ -192,6 +195,7 @@ export default function ProposalBuilder({
     const discount = Math.round(Number.parseFloat(form.discountAmount || "0") * 100) || 0;
     if (discount > 0) {
       parsed.push({
+        service_id: undefined,
         item_type: "discount",
         quantity: 1,
         unit_price_cents: discount,
@@ -609,6 +613,14 @@ export default function ProposalBuilder({
         </div>
         <div className="cc-panel-body">
           <div className="pr-addrow">
+            <ServicePicker channel="proposal" onSelect={s => {
+              if (s.billing_type === 'recurring' && Number(form.recurringPrice) > 0 && form.recurringInterval !== (s.interval_months === 12 ? 'year' : 'month')) {
+                window.alert('Use a separate proposal for services with a different recurring interval.'); return;
+              }
+              if ((s.requires_quote || s.requires_approval || s.billing_type === 'custom_quote' || s.billing_type === 'usage_based') && !window.confirm('This service needs a reviewed quote or approval. Add it and confirm the selling price before sending?')) return;
+              setItems(prev => [...prev, { key: nextKey(), service_id: s.id, item_type: s.billing_type === 'recurring' ? 'recurring' : 'addon', title: s.name, description: s.description ?? '', quantity: 1, unit_price: (s.from_cents / 100).toFixed(2), is_billable: true, is_optional: false }, ...(s.setup_fee_cents > 0 ? [{ key: nextKey(), service_id:s.id, item_type: 'addon' as const, title: `${s.name} — setup`, description: '', quantity: 1, unit_price: (s.setup_fee_cents / 100).toFixed(2), is_billable: true, is_optional: false }] : [])]);
+              if (s.billing_type === 'recurring') field('recurringInterval', s.interval_months === 12 ? 'year' : 'month');
+            }} />
             {ITEM_GROUPS.map((group) => (
               <button key={group.type} type="button" className="cc-btn"
                 onClick={() => addItem(group.type)} title={group.hint}>

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { grossMargin, parseMoney, priceLabel } from '../src/lib/services/pricing.ts';
+import { computePricing } from '../src/lib/proposals/pricing.ts';
+assert.equal(grossMargin(0, 0), null);
+assert.equal(grossMargin(100, null), null);
+assert.equal(grossMargin(100, 0), 100);
+assert.equal(grossMargin(100, 125), -25);
+assert.equal(parseMoney('', true), null);
+assert.equal(parseMoney('19.99'), 1999);
+for (const invalid of ['-1', 'NaN', 'Infinity', '1.999', '1e6', '21474836.48']) assert.throws(()=>parseMoney(invalid));
+assert.equal(priceLabel({billing_type:'recurring',from_cents:12000,interval_months:12}), '$120.00/yr');
+assert.equal(priceLabel({billing_type:'custom_quote',from_cents:0,interval_months:1}), 'Custom');
+const base={basePriceCents:39900,recurringCents:2900,items:[{item_type:'recurring',quantity:2,unit_price_cents:1000,is_billable:true,is_optional:false,service_id:'service'}]};
+assert.equal(computePricing(base).recurringCents,4900);
+assert.equal(computePricing(base).totalCents,39900);
+assert.equal(computePricing({...base,items:[]}).recurringCents,2900);
+assert.equal(computePricing({...base,items:[{...base.items[0],is_optional:true}]}).recurringCents,2900);
+console.log('PASS: zero/missing/negative margin, money validation, billing labels and linked recurring quantity/removal');

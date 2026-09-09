@@ -45,6 +45,7 @@ export type InvoiceListRow = {
 };
 
 export type InvoiceFilters = {
+  customerId?: string;
   status?: string;
   owner?: string;
   source?: string;
@@ -198,6 +199,7 @@ export async function loadInvoiceWorkspace(
         if (CLOSED_INVOICE_STATUSES.includes(row.status)) return false;
       } else if (row.status !== filters.status) return false;
     }
+    if (filters.customerId && byId.get(row.id)?.customer_id !== filters.customerId) return false;
     if (filters.owner && filters.owner !== "all" && row.owner !== filters.owner) return false;
     if (filters.source && filters.source !== "all" && row.source !== filters.source) return false;
     if (filters.since) {

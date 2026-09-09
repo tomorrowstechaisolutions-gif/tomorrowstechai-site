@@ -51,7 +51,7 @@ export async function loadActivity(
   // chatty table can't crowd the others out of the feed.
   const per = Math.max(6, limit);
 
-  const [leadEvents, jobEvents, revenue, invoices, posts, tasks] = await Promise.all([
+  const [leadEvents, jobEvents, revenue, invoices, posts, tasks, serviceEvents] = await Promise.all([
     sb
       .from("lead_events")
       .select("id, lead_id, created_at, type, body, actor")
@@ -91,10 +91,14 @@ export async function loadActivity(
       .order("done_at", { ascending: false })
       .limit(per)
       .then((r) => unwrap(r, "completed tasks")),
+    sb.from('service_events').select('id,service_id,body,actor,created_at').order('created_at',{ascending:false}).limit(per).then(r => unwrap(r,'service events')),
   ]);
 
   const money = (c: number) => `$${(c / 100).toLocaleString("en-US")}`;
   const items: ActivityItem[] = [];
+  for (const e of serviceEvents as {id:string;service_id:string;body:string;actor:string|null;created_at:string}[]) {
+    items.push({id:`svc:${e.id}`,module:'project',title:e.body,subtitle:e.actor,at:e.created_at,href:`/admin/services/${e.service_id}`});
+  }
 
   for (const e of leadEvents as {
     id: string;

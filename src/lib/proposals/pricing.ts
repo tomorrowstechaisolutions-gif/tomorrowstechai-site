@@ -38,19 +38,20 @@ export function lineTotal(item: {
  * subtracted here, so the database never holds a negative price.
  */
 export function computePricing(input: {
-  items: Pick<ProposalItem, "item_type" | "quantity" | "unit_price_cents" | "is_billable" | "is_optional">[];
+  items: (Pick<ProposalItem, "item_type" | "quantity" | "unit_price_cents" | "is_billable" | "is_optional"> & { service_id?: string | null })[];
   /** Set when the admin typed a build price directly instead of itemising. */
   basePriceCents?: number;
   recurringCents: number;
 }): PriceBreakdown {
   let itemised = 0;
   let discount = 0;
+  let serviceRecurring = 0;
 
   for (const item of input.items) {
     if (item.is_optional || !item.is_billable) continue;
     const amount = lineTotal(item);
     if (item.item_type === "discount") discount += amount;
-    else if (item.item_type === "recurring") continue;
+    else if (item.item_type === "recurring") { if (item.service_id) serviceRecurring += amount; }
     else itemised += amount;
   }
 
@@ -63,7 +64,7 @@ export function computePricing(input: {
     discountCents,
     oneTimeCents,
     totalCents: oneTimeCents,
-    recurringCents: Math.max(0, input.recurringCents),
+    recurringCents: Math.max(0, input.recurringCents + serviceRecurring),
   };
 }
 

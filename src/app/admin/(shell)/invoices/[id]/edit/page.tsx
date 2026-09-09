@@ -60,6 +60,7 @@ export default async function EditInvoicePage({
     proposalId: inv.proposal_id ?? "",
     jobId: inv.job_id ?? "",
     lines: items.map((item, index) => ({
+      service_id: item.service_id,
       key: `e${index}`,
       item_kind: item.item_kind,
       title: item.title,

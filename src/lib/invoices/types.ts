@@ -8,6 +8,8 @@
 import type { InvoiceItemKind, InvoiceSource, InvoiceStatus, PaymentMethod } from "./config";
 
 export type InvoiceItem = {
+  service_id?: string | null;
+  service_snapshot?: Record<string, unknown> | null;
   id: string;
   invoice_id: string;
   item_kind: InvoiceItemKind;

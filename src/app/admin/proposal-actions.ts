@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { snapshotServiceLines } from '@/lib/services/sales';
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { currentAgreement } from "@/lib/proposals/agreement";
@@ -104,6 +105,8 @@ const SECTION_TYPES: ProposalSectionType[] = [
 ];
 
 type ParsedItem = {
+  service_id?: string | null;
+  service_snapshot?: Record<string, unknown> | null;
   item_type: ProposalItemType;
   title: string;
   description: string | null;
@@ -154,6 +157,7 @@ function parseItems(raw: string): ParsedItem[] {
         : 0;
 
     out.push({
+      service_id: typeof row.service_id === 'string' ? row.service_id : null,
       item_type: type,
       title,
       description:
@@ -313,7 +317,7 @@ export async function createProposalAction(formData: FormData) {
 
   const packageKey = str(formData, "package_key", 60) || "custom";
   const template = templateByKey(packageKey);
-  const items = parseItems(str(formData, "items_json", 200_000));
+  const items = await snapshotServiceLines(supabase, parseItems(str(formData, "items_json", 200_000)), 'proposal_enabled');
   const sections = parseSections(str(formData, "sections_json", 200_000));
   const commercials = commercialsFrom(formData, items);
 
@@ -395,7 +399,7 @@ export async function updateProposalAction(formData: FormData) {
     );
   }
 
-  const items = parseItems(str(formData, "items_json", 200_000));
+  const items = await snapshotServiceLines(supabase, parseItems(str(formData, "items_json", 200_000)), 'proposal_enabled');
   const sections = parseSections(str(formData, "sections_json", 200_000));
   const commercials = commercialsFrom(formData, items);
   const packageKey = str(formData, "package_key", 60) || "custom";
@@ -743,11 +747,11 @@ export async function convertProposalToProjectAction(formData: FormData) {
   if (jobId) {
     const { data: existing, error: existingError } = await supabase
       .from("jobs")
-      .select("id, engagement_status")
+      .select("id, engagement_status, client_service_id")
       .eq("id", jobId)
       .maybeSingle();
     if (existingError || !existing) throw new Error("The linked project could not be found.");
-    if (existing.engagement_status !== "pre_contract") {
+    if (existing.engagement_status !== "pre_contract" && !existing.client_service_id) {
       throw new Error("A contracted project already exists for this proposal.");
     }
 

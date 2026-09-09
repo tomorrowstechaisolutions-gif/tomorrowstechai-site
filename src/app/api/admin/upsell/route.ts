@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   if (!session) {
     return NextResponse.json({ ok: false, error: "Not authorised." }, { status: 401 });
   }
+  if (!['owner','admin'].includes(session.admin.role)) return NextResponse.json({ok:false,error:'Only owners and admins can sell services.'},{status:403});
   if (!stripeConfigured()) {
     return NextResponse.json(
       { ok: false, error: "Stripe isn't configured yet." },
@@ -53,12 +54,15 @@ export async function POST(req: Request) {
 
   const { data: item } = await supabase
     .from("catalog_items")
-    .select("id, name, description, billing, category, active")
+    .select("id, name, description, billing, category, active, status, internal_sales_enabled, billing_type, interval_months, setup_fee_cents, taxable")
     .eq("id", catalogItemId)
     .maybeSingle();
 
-  if (!item || !item.active) {
+  if (!item || item.status !== 'active' || !item.internal_sales_enabled) {
     return NextResponse.json({ ok: false, error: "That item isn't available." }, { status: 404 });
+  }
+  if ((item.billing_type === 'recurring' && item.interval_months !== 1) || item.billing_type === 'usage_based' || item.setup_fee_cents > 0 || item.taxable) {
+    return NextResponse.json({ok:false,error:'This service needs an itemized invoice or a custom billing arrangement. Open Invoices to review its setup fee, tax, and interval.'},{status:400});
   }
 
   // Who are we billing, and do they already exist in Stripe?

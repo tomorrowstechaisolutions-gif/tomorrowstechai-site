@@ -102,7 +102,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
       { href: "/admin/hosting", label: "Hosting", icon: IconServer },
       { href: "/admin/software", label: "Software", icon: IconCode, soon: true },
-      { href: "/admin/services", label: "Services", icon: IconZap, soon: true },
+      { href: "/admin/services", label: "Services", icon: IconZap },
     ],
   },
   {

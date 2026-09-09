@@ -1,0 +1,9 @@
+'use client';
+import { useEffect, useState } from 'react';
+import type { ServiceOption } from '@/lib/services/types';
+import { priceLabel } from '@/lib/services/pricing';
+export default function ServicePicker({ channel, onSelect }: {channel:'proposal'|'invoice';onSelect:(service:ServiceOption)=>void}) {
+  const [options,setOptions]=useState<ServiceOption[]>([]); const [error,setError]=useState(''); const [loading,setLoading]=useState(true); const [retry,setRetry]=useState(0);
+  useEffect(()=>{const abort=new AbortController(); fetch(`/api/admin/services/choices?channel=${channel}`,{signal:abort.signal}).then(async r=>{if(!r.ok)throw new Error('Service choices could not be loaded.');return r.json();}).then(r=>{setOptions(r.services);setError('');setLoading(false);}).catch(e=>{if(e.name!=='AbortError'){setError('Service choices could not be loaded.');setLoading(false);}});return()=>abort.abort();},[channel,retry]);
+  return <div style={{margin:'16px 0'}}><label className="ad-field"><span>Add from Services</span><select className="cc-select" value="" disabled={loading} onChange={e=>{const s=options.find(s=>s.id===e.target.value);if(s)onSelect(s);}}><option value="">{loading?'Loading services…':'Select a service'}</option>{options.map(s=><option key={s.id} value={s.id} disabled={s.billing_type==='recurring' && ![1,12].includes(s.interval_months)}>{s.name} · {priceLabel(s)}{s.billing_type==='recurring' && ![1,12].includes(s.interval_months)?' — custom billing arrangement required':''}</option>)}</select></label>{error && <p role="alert" className="ad-muted">{error} <button type="button" className="cc-btn" onClick={()=>setRetry(n=>n+1)}>Retry</button></p>}<p className="ad-muted" style={{fontSize:12}}>Current pricing is copied into the document. Review custom quotes and taxable services before sending. These builders support monthly or yearly recurring billing.</p></div>;
+}

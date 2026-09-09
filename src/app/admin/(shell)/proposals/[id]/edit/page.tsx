@@ -55,12 +55,12 @@ export default async function EditProposalPage({
         0,
         p.subtotal_cents -
           full.items
-            .filter((item) => item.is_billable && !item.is_optional && item.item_type !== "discount")
+            .filter((item) => item.is_billable && !item.is_optional && item.item_type !== "discount" && item.item_type !== "recurring")
             .reduce((sum, item) => sum + item.total_price_cents, 0)
       )
     ),
     discountAmount: dollars(p.discount_amount_cents),
-    recurringPrice: dollars(p.recurring_price_cents),
+    recurringPrice: dollars(Math.max(0,p.recurring_price_cents - full.items.filter(item=>item.service_id && item.item_type==='recurring' && item.is_billable && !item.is_optional).reduce((sum,item)=>sum+item.total_price_cents,0))),
     recurringInterval: p.recurring_interval,
     turnaroundNote: p.turnaround_note ?? "",
     revisionLimit: p.revision_limit === null ? "" : String(p.revision_limit),
@@ -71,6 +71,7 @@ export default async function EditProposalPage({
     customerId: p.customer_id ?? "",
     dealId: p.deal_id ?? "",
     items: full.items.map((item, index) => ({
+      service_id: item.service_id,
       key: `i${index}`,
       item_type: item.item_type,
       title: item.title,
