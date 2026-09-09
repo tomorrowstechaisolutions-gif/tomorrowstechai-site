@@ -8,7 +8,7 @@ Implemented and deployed to production on 2026-09-09. The production schema migr
 
 Internal costs live exclusively in `service_costs`. Owners/admins can read and edit them; the existing viewer role cannot read costs or margins. All mutations recheck authorization, and the new tables enforce RLS. Public sales-choice responses use an explicit safe projection. Signed proposal and paid invoice protections remain in place.
 
-Services provides a paginated/searchable/filterable table, real aggregate KPIs, creation/editing, draft duplication, status confirmation, detail tabs, package relationships, client assignments, price history and activity. Catalog links to these same records to manage pricing and availability. Recurring operational pricing supports monthly, quarterly, yearly and custom intervals expressed in months.
+Services provides a paginated/searchable/filterable table, real aggregate KPIs, creation/editing, draft duplication, status confirmation, detail tabs, package relationships, client assignments, price history and activity. Each service can also hold one current ad creative in a private image bucket, with authenticated preview/download and owner/admin upload, replacement and removal controls. Catalog links to these same records to manage pricing and availability. Recurring operational pricing supports monthly, quarterly, yearly and custom intervals expressed in months.
 
 ## Revenue and billing
 

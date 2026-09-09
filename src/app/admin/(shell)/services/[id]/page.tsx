@@ -7,16 +7,20 @@ import { isUuid, money, marginLabel, priceLabel } from '@/lib/services/pricing';
 import { BILLING_LABELS, type Automation, type Service, type Sale } from '@/lib/services/types';
 import { ActionForm, ServiceEditor, ServiceModal, StatusAction } from '@/components/admin/cc/services/ServiceForms';
 import ClientAssignments from '@/components/admin/cc/services/ClientAssignments';
+import ServiceAdCreative from '@/components/admin/cc/services/ServiceAdCreative';
 import { assignClient, savePackage, removePackage, saveAutomation } from '@/app/admin/service-actions';
 
 export const dynamic = 'force-dynamic';
-const TABS = ['Overview','Pricing','Packages','Clients','Sales','Automations','Settings'];
+const TABS = ['Overview','Creative','Pricing','Packages','Clients','Sales','Automations','Settings'];
 export default async function ServiceDetail({ params, searchParams }: { params: Promise<{id:string}>; searchParams: Promise<Record<string,string|undefined>> }) {
   const session = await getAdminUser(); if (!session) redirect('/admin/login');
   const { id } = await params; if (!isUuid(id)) notFound();
   const canManage = ['owner','admin'].includes(session.admin.role); const db = await createSupabaseServerClient();
-  const { data, error } = await db.from('service_directory').select('*').eq('id',id).maybeSingle();
-  if (error) throw new Error('Unable to load service.'); if (!data) notFound(); const s = data as Service;
+  const [{ data, error }, { data: creative, error: creativeError }] = await Promise.all([
+    db.from('service_directory').select('*').eq('id',id).maybeSingle(),
+    db.from('catalog_items').select('ad_image_path').eq('id',id).maybeSingle(),
+  ]);
+  if (error || creativeError) throw new Error('Unable to load service.'); if (!data || !creative) notFound(); const s = data as Service;
   const query = await searchParams; const tab = TABS.find(t => t.toLowerCase() === query.tab) ?? 'Overview';
   const page = Math.max(1,Math.min(100000,parseInt(query.page ?? '1') || 1));
   let content: React.ReactNode;
@@ -25,6 +29,8 @@ export default async function ServiceDetail({ params, searchParams }: { params: 
     if (events.error) throw new Error('Unable to load activity.');
     const facts = { 'Billing Type': BILLING_LABELS[s.billing_type], 'Current Price': priceLabel(s), ...(canManage ? { 'Internal Cost': s.internal_cost_cents === null ? 'Not set' : money(s.internal_cost_cents), 'Margin':marginLabel(s.margin) } : {}), 'MRR':money(s.mrr_cents), 'Total Revenue':money(s.revenue_cents), 'Active Clients':s.active_clients, 'Total Sales':s.sales_count, 'Created':new Date(s.created_at).toLocaleDateString('en-US'), 'Last Updated':new Date(s.updated_at).toLocaleDateString('en-US') };
     content = <><section className="cc-panel sv-section"><h2>Service overview</h2><p className="sv-muted">{s.description || 'No description yet.'}</p><dl className="sv-definition">{Object.entries(facts).map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section><section className="cc-panel sv-section"><h2>Recent activity</h2>{events.data?.length ? events.data.map(e => <p className="sv-muted" key={e.id}>{e.body}<br />{e.actor} · {new Date(e.created_at).toLocaleString('en-US')}</p>) : <p className="sv-muted">No activity recorded yet.</p>}</section></>;
+  } else if (tab === 'Creative') {
+    content = <section className="cc-panel sv-section"><h2>Ad creative</h2><p className="sv-muted">Keep one current, ready-to-use promotional image with this service. Replacing it leaves pricing, proposals, invoices, and client history unchanged.</p><ServiceAdCreative serviceId={id} serviceName={s.name} imagePath={creative.ad_image_path} version={s.updated_at} canManage={canManage} /></section>;
   } else if (tab === 'Pricing' || tab === 'Settings') {
     const history = tab === 'Pricing' ? await db.from('service_price_history').select('*').eq('service_id',id).order('created_at',{ascending:false}).limit(25) : null;
     if (history?.error) throw new Error('Unable to load price history.');
