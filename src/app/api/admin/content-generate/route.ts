@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { brandSystemPrompt, getBrand } from "@/lib/content/brand";
 import { FORMAT_BY_KEY, FORMATS } from "@/lib/content/formats";
+import { recordAiUsageAsync } from "@/lib/ai/record";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -113,11 +114,40 @@ Return ONLY valid JSON, no prose, no markdown fence:
 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await client.messages.create({
+    // Recorded against ai_solutions.slug = "content-generator" so this call shows up
+    // on the AI Solutions screen with its real tokens, latency and cost.
+    const aiStartedAt = Date.now();
+    let response;
+    try {
+      response = await client.messages.create({
       model: MODEL,
       max_tokens: 4000,
       system,
       messages: [{ role: "user", content: user }],
+      });
+    } catch (aiError) {
+      recordAiUsageAsync({
+        slug: "content-generator",
+        model: MODEL,
+        status: "error",
+        eventType: "run",
+        latencyMs: Date.now() - aiStartedAt,
+        error: aiError instanceof Error ? aiError.message : "Provider call failed.",
+        metadata: { surface: "content" },
+      });
+      throw aiError;
+    }
+
+    recordAiUsageAsync({
+      slug: "content-generator",
+      model: response.model ?? MODEL,
+      inputTokens: response.usage?.input_tokens ?? null,
+      outputTokens: response.usage?.output_tokens ?? null,
+      latencyMs: Date.now() - aiStartedAt,
+      status: "success",
+      eventType: "run",
+      requestRef: response.id ?? null,
+      metadata: { surface: "content", stop_reason: response.stop_reason ?? null },
     });
 
     const text = response.content

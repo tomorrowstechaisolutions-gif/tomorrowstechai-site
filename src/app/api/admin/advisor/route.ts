@@ -4,6 +4,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { buildAdvisorContext } from "@/lib/dashboard/advisor-context";
 import { rateLimit } from "@/lib/rate-limit";
 import { AI_ACTION_KINDS, type AiActionKind } from "@/lib/supabase/types";
+import { recordAiUsageAsync } from "@/lib/ai/record";
 
 export const runtime = "nodejs";
 
@@ -108,7 +109,12 @@ export async function POST(req: Request) {
     const context = await buildAdvisorContext(supabase);
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await client.messages.create({
+    // Recorded against ai_solutions.slug = "business-advisor" so this call shows up
+    // on the AI Solutions screen with its real tokens, latency and cost.
+    const aiStartedAt = Date.now();
+    let response;
+    try {
+      response = await client.messages.create({
       model: MODEL,
       max_tokens: 1600,
       system: SYSTEM,
@@ -118,6 +124,30 @@ export async function POST(req: Request) {
           content: `<business_snapshot>\n${context.snapshot}\n</business_snapshot>\n\nQuestion: ${question}\n\nAnswer from the snapshot only. Return the JSON object and nothing else.`,
         },
       ],
+      });
+    } catch (aiError) {
+      recordAiUsageAsync({
+        slug: "business-advisor",
+        model: MODEL,
+        status: "error",
+        eventType: "run",
+        latencyMs: Date.now() - aiStartedAt,
+        error: aiError instanceof Error ? aiError.message : "Provider call failed.",
+        metadata: { surface: "advisor" },
+      });
+      throw aiError;
+    }
+
+    recordAiUsageAsync({
+      slug: "business-advisor",
+      model: response.model ?? MODEL,
+      inputTokens: response.usage?.input_tokens ?? null,
+      outputTokens: response.usage?.output_tokens ?? null,
+      latencyMs: Date.now() - aiStartedAt,
+      status: "success",
+      eventType: "run",
+      requestRef: response.id ?? null,
+      metadata: { surface: "advisor", stop_reason: response.stop_reason ?? null },
     });
 
     const text = response.content

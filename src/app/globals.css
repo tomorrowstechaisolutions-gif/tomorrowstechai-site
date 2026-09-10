@@ -5880,6 +5880,20 @@ body {
 
   .cc-s3  { grid-column: span 3; }
   .cc-s9  { grid-column: span 9; }
+
+  /* A column of panels inside one grid cell.
+
+     The AI Solutions page is a 75/25 split with several panels stacked in
+     each side. Placing them as individual grid children would let
+     auto-placement drop a short right-hand panel onto the left, so each
+     side is one grid item that stacks its own children. At the flex
+     breakpoint above this collapses naturally. */
+  .cc-col {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
   .cc-s4  { grid-column: span 4; }
   .cc-s5  { grid-column: span 5; }
   .cc-s6  { grid-column: span 6; }
@@ -7757,6 +7771,24 @@ body {
     height: 46px;
     border-radius: 13px;
     font-size: 0.95rem;
+  }
+
+  /*
+   * Monospace TEXT — a model id, a file path, an env var name.
+   *
+   * Not to be confused with .cc-mono above, which is a fixed 30px avatar
+   * badge for two-letter initials. Putting a file path in that badge
+   * squeezes it into a five-character column, which is exactly what
+   * happened before this existed. Long identifiers break anywhere rather
+   * than pushing the page sideways.
+   */
+  .cc-code {
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78em;
+    letter-spacing: -0.01em;
+    color: #BAE6FD;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .cc-taglist {

@@ -98,7 +98,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/catalog", label: "Catalog", icon: IconLayers },
       { href: "/admin/websites", label: "Websites", icon: IconGlobe },
       { href: "/admin/apps", label: "Apps", icon: IconLayers },
-      { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot, soon: true },
+      { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot },
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
       { href: "/admin/hosting", label: "Hosting", icon: IconServer },
       { href: "/admin/software", label: "Software", icon: IconCode, soon: true },
@@ -116,7 +116,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/marketing/ads", label: "Ad Studio", icon: IconPen },
       { href: "/admin/marketing/spend", label: "Ad spend", icon: IconDollar },
       { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage },
-      { href: "/admin/marketing/social", label: "Social Center", icon: IconShare },
+      { href: "/admin/marketing/social", label: "Social Center", icon: IconShare, soon: true },
       { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail, soon: true },
       { href: "/admin/marketing/seo", label: "SEO", icon: IconGlobe },
       { href: "/admin/marketing/brand", label: "Brand Assets", icon: IconImage, soon: true },
@@ -182,12 +182,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Everything that has happened across the company, filterable by module and date. The last twelve events are on the dashboard.",
     nearest: { href: "/admin", label: "See recent activity" },
-  },
-  "/admin/ai-solutions": {
-    title: "AI Solutions",
-    blurb:
-      "Chatbots, agents and automations built for clients — what each one does, what it runs on, and what it costs to keep running.",
-    nearest: { href: "/admin/catalog", label: "Open the catalog" },
   },
   "/admin/software": {
     title: "Software",

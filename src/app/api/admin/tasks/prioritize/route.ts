@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordAiUsageAsync } from "@/lib/ai/record";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
@@ -70,11 +71,40 @@ export async function POST() {
   let reply: ModelReply;
   try {
     const client = new Anthropic({ apiKey: key });
-    const response = await client.messages.create({
+    // Recorded against ai_solutions.slug = "task-prioritiser" so this call shows up
+    // on the AI Solutions screen with its real tokens, latency and cost.
+    const aiStartedAt = Date.now();
+    let response;
+    try {
+      response = await client.messages.create({
       model: MODEL,
       max_tokens: 900,
       system: PRIORITIZE_SYSTEM,
       messages: [{ role: "user", content: snapshotToPrompt(snapshot) }],
+      });
+    } catch (aiError) {
+      recordAiUsageAsync({
+        slug: "task-prioritiser",
+        model: MODEL,
+        status: "error",
+        eventType: "run",
+        latencyMs: Date.now() - aiStartedAt,
+        error: aiError instanceof Error ? aiError.message : "Provider call failed.",
+        metadata: { surface: "tasks" },
+      });
+      throw aiError;
+    }
+
+    recordAiUsageAsync({
+      slug: "task-prioritiser",
+      model: response.model ?? MODEL,
+      inputTokens: response.usage?.input_tokens ?? null,
+      outputTokens: response.usage?.output_tokens ?? null,
+      latencyMs: Date.now() - aiStartedAt,
+      status: "success",
+      eventType: "run",
+      requestRef: response.id ?? null,
+      metadata: { surface: "tasks", stop_reason: response.stop_reason ?? null },
     });
 
     const text = response.content

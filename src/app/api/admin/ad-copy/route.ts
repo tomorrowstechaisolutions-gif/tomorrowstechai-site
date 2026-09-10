@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordAiUsageAsync } from "@/lib/ai/record";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAdminUser } from "@/lib/supabase/server";
 import { AD_LIMITS, CTA_LABELS } from "@/lib/campaign/ads";
@@ -80,7 +81,12 @@ export async function POST(req: Request) {
 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await client.messages.create({
+    // Recorded against ai_solutions.slug = "ad-copy-writer" so this call shows up
+    // on the AI Solutions screen with its real tokens, latency and cost.
+    const aiStartedAt = Date.now();
+    let response;
+    try {
+      response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2400,
       system: SYSTEM,
@@ -95,6 +101,30 @@ Brief: ${brief}
 Write ${count} distinct variants. Each one should lead with a genuinely different angle — not the same ad reworded. Return the JSON object and nothing else.`,
         },
       ],
+      });
+    } catch (aiError) {
+      recordAiUsageAsync({
+        slug: "ad-copy-writer",
+        model: "claude-haiku-4-5-20251001",
+        status: "error",
+        eventType: "run",
+        latencyMs: Date.now() - aiStartedAt,
+        error: aiError instanceof Error ? aiError.message : "Provider call failed.",
+        metadata: { surface: "ads" },
+      });
+      throw aiError;
+    }
+
+    recordAiUsageAsync({
+      slug: "ad-copy-writer",
+      model: response.model ?? "claude-haiku-4-5-20251001",
+      inputTokens: response.usage?.input_tokens ?? null,
+      outputTokens: response.usage?.output_tokens ?? null,
+      latencyMs: Date.now() - aiStartedAt,
+      status: "success",
+      eventType: "run",
+      requestRef: response.id ?? null,
+      metadata: { surface: "ads", stop_reason: response.stop_reason ?? null },
     });
 
     const text = response.content

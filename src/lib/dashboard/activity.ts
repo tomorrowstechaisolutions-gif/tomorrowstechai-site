@@ -52,7 +52,7 @@ export async function loadActivity(
   // chatty table can't crowd the others out of the feed.
   const per = Math.max(6, limit);
 
-  const [leadEvents, jobEvents, revenue, invoices, posts, tasks, serviceEvents, appEvents] = await Promise.all([
+  const [leadEvents, jobEvents, revenue, invoices, posts, tasks, serviceEvents, appEvents, aiEvents] = await Promise.all([
     sb
       .from("lead_events")
       .select("id, lead_id, created_at, type, body, actor")
@@ -101,6 +101,14 @@ export async function loadActivity(
       .order("created_at", { ascending: false })
       .limit(per)
       .then((r) => unwrap(r, "app events")),
+    // AI solutions keep the same timeline shape: prompt versions, permission
+    // grants and threshold breaches all land here.
+    sb
+      .from("ai_events")
+      .select("id, solution_id, kind, body, actor, created_at")
+      .order("created_at", { ascending: false })
+      .limit(per)
+      .then((r) => unwrap(r, "ai events")),
   ]);
 
   const money = (c: number) => `$${(c / 100).toLocaleString("en-US")}`;
@@ -120,6 +128,24 @@ export async function loadActivity(
       subtitle: e.actor,
       at: e.created_at,
       href: `/admin/apps/${e.app_id}`,
+    });
+  }
+
+  for (const e of aiEvents as {
+    id: string;
+    solution_id: string | null;
+    kind: string;
+    body: string;
+    actor: string | null;
+    created_at: string;
+  }[]) {
+    items.push({
+      id: `ai:${e.id}`,
+      module: "ai",
+      title: e.body,
+      subtitle: e.actor,
+      at: e.created_at,
+      href: e.solution_id ? `/admin/ai-solutions/${e.solution_id}` : "/admin/ai-solutions",
     });
   }
 
