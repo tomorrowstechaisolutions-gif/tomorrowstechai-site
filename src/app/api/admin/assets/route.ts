@@ -34,6 +34,11 @@ const TYPE_FOR_MIME = (mime: string): string => {
   return "photo";
 };
 
+const ASSET_TYPES = new Set([
+  "logo", "brand_graphic", "photo", "video", "ad", "screenshot",
+  "product_image", "document", "template", "audio", "other",
+]);
+
 /** POST — upload one file. */
 export async function POST(req: Request) {
   const session = await getAdminUser();
@@ -67,9 +72,8 @@ export async function POST(req: Request) {
     (typeof form.get("title") === "string" ? String(form.get("title")).trim() : "") ||
     file.name.replace(/\.[^.]+$/, "");
   const brandId = typeof form.get("brand_profile_id") === "string" ? String(form.get("brand_profile_id")) : "";
-  const assetType =
-    (typeof form.get("asset_type") === "string" ? String(form.get("asset_type")) : "") ||
-    TYPE_FOR_MIME(file.type);
+  const requestedType = typeof form.get("asset_type") === "string" ? String(form.get("asset_type")) : "";
+  const assetType = ASSET_TYPES.has(requestedType) ? requestedType : TYPE_FOR_MIME(file.type);
 
   // A name that cannot collide and cannot escape its folder. The original
   // file name is kept only in `title`, never in the object key — user-chosen
@@ -98,6 +102,9 @@ export async function POST(req: Request) {
       brand_profile_id: brandId || null,
       title: title.slice(0, 200),
       asset_type: assetType,
+      category: (typeof form.get("category") === "string" ? String(form.get("category")).trim() : "") || null,
+      role: (typeof form.get("role") === "string" ? String(form.get("role")).trim() : "") || null,
+      approval_status: "waiting_review",
       storage_path: key,
       mime_type: file.type,
       file_size: file.size,

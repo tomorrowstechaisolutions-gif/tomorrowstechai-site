@@ -25,6 +25,11 @@ export type BrandProfile = {
   colors: string[];
   isDefault: boolean;
   customerId: string | null;
+  tagline: string | null;
+  services: string[];
+  differentiators: string[];
+  primaryCta: string | null;
+  claimsRequiringApproval: string[];
 };
 
 type BrandRaw = {
@@ -41,10 +46,15 @@ type BrandRaw = {
   colors: string[] | null;
   is_default: boolean;
   customer_id: string | null;
+  tagline: string | null;
+  core_services: string[] | null;
+  differentiators: string[] | null;
+  primary_cta: string | null;
+  claims_requiring_approval: string[] | null;
 };
 
 const SELECT =
-  "id, name, slug, description, tone, audience, writing_guidance, cta_style, preferred_phrases, prohibited_phrases, colors, is_default, customer_id";
+  "id, name, slug, description, tone, audience, writing_guidance, cta_style, preferred_phrases, prohibited_phrases, colors, is_default, customer_id, tagline, core_services, differentiators, primary_cta, claims_requiring_approval";
 
 function shape(r: BrandRaw): BrandProfile {
   return {
@@ -61,6 +71,11 @@ function shape(r: BrandRaw): BrandProfile {
     colors: r.colors ?? [],
     isDefault: r.is_default,
     customerId: r.customer_id,
+    tagline: r.tagline,
+    services: r.core_services ?? [],
+    differentiators: r.differentiators ?? [],
+    primaryCta: r.primary_cta,
+    claimsRequiringApproval: r.claims_requiring_approval ?? [],
   };
 }
 
@@ -100,10 +115,14 @@ export function brandSystemPrompt(brand: BrandProfile): string {
   ];
 
   if (brand.description) lines.push(`\nWHAT THIS BUSINESS IS:\n${brand.description}`);
+  if (brand.tagline) lines.push(`\nAPPROVED TAGLINE:\n${brand.tagline}`);
   if (brand.audience) lines.push(`\nWHO YOU ARE TALKING TO:\n${brand.audience}`);
   if (brand.tone) lines.push(`\nTONE:\n${brand.tone}`);
   if (brand.writingGuidance) lines.push(`\nWRITING GUIDANCE:\n${brand.writingGuidance}`);
   if (brand.ctaStyle) lines.push(`\nHOW YOU ASK FOR THE NEXT STEP:\n${brand.ctaStyle}`);
+  if (brand.primaryCta) lines.push(`\nAPPROVED PRIMARY CTA:\n${brand.primaryCta}`);
+  if (brand.services.length) lines.push(`\nCORE SERVICES:\n${brand.services.join("; ")}`);
+  if (brand.differentiators.length) lines.push(`\nAPPROVED DIFFERENTIATORS:\n${brand.differentiators.join("; ")}`);
 
   if (brand.preferredPhrases.length > 0) {
     lines.push(`\nPHRASES THIS BRAND USES: ${brand.preferredPhrases.join("; ")}.`);
@@ -112,6 +131,9 @@ export function brandSystemPrompt(brand: BrandProfile): string {
     lines.push(
       `\nNEVER USE THESE WORDS OR PHRASES — they are banned for this brand: ${brand.prohibitedPhrases.join("; ")}.`
     );
+  }
+  if (brand.claimsRequiringApproval.length > 0) {
+    lines.push(`\nCLAIMS THAT REQUIRE HUMAN APPROVAL: ${brand.claimsRequiringApproval.join("; ")}.`);
   }
 
   lines.push(`

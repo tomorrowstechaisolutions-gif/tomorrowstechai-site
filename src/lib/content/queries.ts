@@ -185,6 +185,7 @@ export async function loadContentBoard(
       .from("content_assets")
       .select("id, title, asset_type, storage_path, mime_type, file_size, tags, campaign, created_at")
       .eq("is_archived", false)
+      .eq("approval_status", "approved")
       .order("created_at", { ascending: false })
       .limit(24)
       .then((r) => unwrap(r, "assets")),

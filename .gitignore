@@ -53,5 +53,8 @@ scripts/_libs/
 # local render previews used for layout checks
 .preview/
 
+# Supabase CLI local version/cache marker
+supabase/.temp/
+
 # local scratch that can be deleted by hand
 _to_delete/

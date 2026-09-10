@@ -25,7 +25,7 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
     sb.from("customers").select("id, business_name, name").order("business_name"),
     sb.from("client_services").select("id, customer_id, service_id, status, assigned_manager, customers(business_name,name), catalog_items(name)").eq("status", "active"),
     sb.from("service_inclusions").select("service_id, name, quantity, is_included").eq("is_included", true),
-    sb.from("content_assets").select("id, title, asset_type, storage_path, customer_id, created_at").eq("is_archived", false).order("created_at", { ascending: false }).limit(40),
+    sb.from("content_assets").select("id, title, asset_type, storage_path, customer_id, created_at").eq("is_archived", false).eq("approval_status", "approved").order("created_at", { ascending: false }).limit(40),
     sb.from("social_engagement_items").select("id, customer_id, platform, item_type, author_name, body, occurred_at, needs_reply, unread, assigned_to, customers(business_name,name)").is("resolved_at", null).order("occurred_at", { ascending: false }).limit(50),
     sb.from("social_automation_settings").select("id, customer_id, automation_key, enabled").order("automation_key"),
     sb.from("social_activity_events").select("id, event_type, detail, actor, created_at, customers(business_name,name)").order("created_at", { ascending: false }).limit(20),
