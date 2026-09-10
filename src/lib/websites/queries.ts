@@ -8,9 +8,9 @@ import { needsAttention, scoreWebsite, type HealthState, type WebsiteHealth } fr
 /**
  * Everything the Websites screen shows.
  *
- * The shape of this file is decided by one fact: this project has Supabase,
- * Stripe, Meta and Resend credentials and NOTHING ELSE. There is no Vercel
- * token, no analytics property, no uptime monitor and no PageSpeed key. So
+ * The shape of this file keeps measured data separate from assumptions.
+ * Vercel can now populate integrations and deployments through the Websites
+ * connection flow. There is still no analytics property, uptime monitor or PageSpeed key, so
  * traffic, uptime and performance are typed `number | null` and are null
  * everywhere until a `website_integrations` row proves otherwise — and the
  * screen prints "Not connected" rather than a zero.

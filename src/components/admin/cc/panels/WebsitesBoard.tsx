@@ -14,6 +14,8 @@ import { EmptyState, Panel, PanelSkeleton } from "../Panel";
 import { Donut, Legend } from "../Viz";
 import WebsiteFiltersBar from "../WebsiteFilters";
 import AddWebsite from "../AddWebsite";
+import VercelSync from "../VercelSync";
+import { getVercelConnection } from "@/lib/vercel/website-sync";
 import { ago, compact, count, DASH, money, moneyCompact, shortDate } from "../format";
 import {
   IconAlert,
@@ -533,8 +535,8 @@ function QuickActions({ board }: { board: Board }) {
       icon: <IconUsers size={16} />,
     },
     {
-      label: "Connect Vercel",
-      hint: "No deployment token yet",
+      label: board.connected.vercel ? "Vercel connected" : "Connect Vercel",
+      hint: board.connected.vercel ? "Use Sync Vercel above" : "Use Connect Vercel above",
       icon: <IconServer size={16} />,
     },
     {
@@ -576,7 +578,10 @@ function QuickActions({ board }: { board: Board }) {
 
 export default async function WebsitesBoard({ filters }: { filters: WebsiteFilters }) {
   const supabase = await createSupabaseServerClient();
-  const board = await loadWebsiteBoard(supabase, filters);
+  const [board, vercelConnection] = await Promise.all([
+    loadWebsiteBoard(supabase, filters),
+    getVercelConnection(),
+  ]);
 
   const types = (Object.keys(TYPE_LABELS) as WebsiteType[]).map((k) => ({
     key: k,
@@ -595,6 +600,7 @@ export default async function WebsitesBoard({ filters }: { filters: WebsiteFilte
           <p>Manage and monitor all websites across your portfolio.</p>
         </div>
         <div className="cc-greet-actions">
+          <VercelSync connection={vercelConnection} />
           <AddWebsite clients={board.clients} />
         </div>
       </div>

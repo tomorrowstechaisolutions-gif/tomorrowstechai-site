@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
+import { connectVercel, syncVercelWebsites } from "@/lib/vercel/website-sync";
 import { normalizeDomain } from "@/lib/websites/queries";
 
 /**
@@ -37,6 +38,12 @@ function toCents(raw: string): number | null {
 }
 
 const WEBSITES = "/admin/websites";
+
+export type VercelSyncActionState = {
+  success?: string;
+  error?: string;
+  completedAt?: string;
+};
 
 const STATUSES = [
   "live", "development", "waiting_on_client", "review",
@@ -133,4 +140,47 @@ export async function addRenewalAction(formData: FormData) {
   });
 
   revalidatePath(WEBSITES);
+}
+
+export async function connectAndSyncVercelAction(
+  _previous: VercelSyncActionState,
+  formData: FormData
+): Promise<VercelSyncActionState> {
+  try {
+    const session = await getAdminUser();
+    if (!session) return { error: "Sign in again before connecting Vercel." };
+    await connectVercel(
+      str(formData, "token", 500),
+      str(formData, "team_id", 120),
+      session.admin.email
+    );
+    const result = await syncVercelWebsites();
+    revalidatePath(WEBSITES);
+    return {
+      success: `Connected and synced ${result.projects} Vercel projects: ${result.added} added, ${result.matched} matched.`,
+      completedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Vercel connection failed." };
+  }
+}
+
+export async function syncVercelAction(
+  previous: VercelSyncActionState,
+  formData: FormData
+): Promise<VercelSyncActionState> {
+  void previous;
+  void formData;
+  try {
+    const session = await getAdminUser();
+    if (!session) return { error: "Sign in again before syncing Vercel." };
+    const result = await syncVercelWebsites();
+    revalidatePath(WEBSITES);
+    return {
+      success: `Synced ${result.projects} Vercel projects: ${result.added} added, ${result.matched} updated, ${result.deployments} deployments checked.`,
+      completedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Vercel sync failed." };
+  }
 }
