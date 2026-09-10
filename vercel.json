@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/app-health",
       "schedule": "40 6 * * *"
+    },
+    {
+      "path": "/api/cron/social-publish",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
