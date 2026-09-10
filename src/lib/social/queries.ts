@@ -22,7 +22,7 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
     sb.from("social_posts").select("id, customer_id, account_id, platform, title, body, media_url, scheduled_at, published_at, status, external_url, campaign, error, approval_status, approval_type, timezone, assigned_to, media_asset_id, media_type, created_at, customers(business_name,name), social_post_platforms(platform), social_analytics_snapshots(reach,engagements,clicks,captured_for)").is("deleted_at", null).order("scheduled_at", { ascending: true, nullsFirst: false }).limit(500),
     sb.from("social_post_platforms").select("post_id, platform"),
     sb.from("social_analytics_snapshots").select("post_id, reach, engagements, clicks, followers_gained, captured_for").gte("captured_for", monthStart.slice(0, 10)),
-    sb.from("customers").select("id, business_name, name").neq("status", "churned").order("business_name"),
+    sb.from("customers").select("id, business_name, name").order("business_name"),
     sb.from("client_services").select("id, customer_id, service_id, status, assigned_manager, customers(business_name,name), catalog_items(name)").eq("status", "active"),
     sb.from("service_inclusions").select("service_id, name, quantity, is_included").eq("is_included", true),
     sb.from("content_assets").select("id, title, asset_type, storage_path, customer_id, created_at").eq("is_archived", false).order("created_at", { ascending: false }).limit(40),
