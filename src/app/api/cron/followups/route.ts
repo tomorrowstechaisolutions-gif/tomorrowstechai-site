@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { sendFollowupEmail } from "@/lib/campaign/emails";
+import { offerByName } from "@/lib/campaign/offers";
 import { CLOSED_STATUSES } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
     const { data: lead } = await db
       .from("leads")
       .select(
-        "id, first_name, email, business_name, lead_status, do_not_contact, unsubscribed_at, email_consent"
+        "id, first_name, email, business_name, campaign, lead_status, do_not_contact, unsubscribed_at, email_consent"
       )
       .eq("id", row.lead_id)
       .maybeSingle();
@@ -99,7 +100,7 @@ export async function GET(req: Request) {
       firstName: lead!.first_name,
       email: lead!.email,
       businessName: lead!.business_name,
-    });
+    }, offerByName(lead!.campaign));
 
     await db
       .from("lead_followups")

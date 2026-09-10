@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/vercel-websites",
       "schedule": "25 6 * * *"
+    },
+    {
+      "path": "/api/cron/app-health",
+      "schedule": "40 6 * * *"
     }
   ]
 }

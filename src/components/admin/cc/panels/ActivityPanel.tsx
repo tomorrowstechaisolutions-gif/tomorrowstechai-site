@@ -9,6 +9,7 @@ import {
   IconCheckSquare,
   IconDollar,
   IconFunnel,
+  IconLayers,
   IconPulse,
   IconShare,
   IconSpark,
@@ -22,6 +23,7 @@ const MODULE_ICON = {
   finance: IconDollar,
   social: IconShare,
   task: IconCheckSquare,
+  app: IconLayers,
   ai: IconSpark,
 } as const;
 

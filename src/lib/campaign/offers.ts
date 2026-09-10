@@ -6,10 +6,39 @@
  * lead to Meta as a $399 conversion.
  */
 
-import { CAMPAIGN_ID, CAMPAIGN_NAME, OFFER_PRICE } from "./config";
-import { STARTER_CAMPAIGN_ID, STARTER_CAMPAIGN_NAME, STARTER_PRICE } from "./starter";
-import { PRO_CAMPAIGN_ID, PRO_CAMPAIGN_NAME, PRO_PRICE } from "./professional";
-import { ECOM_CAMPAIGN_ID, ECOM_CAMPAIGN_NAME, ECOM_PRICE } from "./ecommerce";
+import { slugifyCampaign } from "./ads";
+import {
+  CAMPAIGN_ID,
+  CAMPAIGN_NAME,
+  HOSTING_DISCLOSURE,
+  HOSTING_FROM,
+  OFFER_PRICE,
+  TURNAROUND_DAYS,
+} from "./config";
+import {
+  STARTER_CAMPAIGN_ID,
+  STARTER_CAMPAIGN_NAME,
+  STARTER_HOSTING,
+  STARTER_HOSTING_DISCLOSURE,
+  STARTER_PRICE,
+  STARTER_TURNAROUND_DAYS,
+} from "./starter";
+import {
+  PRO_CAMPAIGN_ID,
+  PRO_CAMPAIGN_NAME,
+  PRO_HOSTING,
+  PRO_HOSTING_DISCLOSURE,
+  PRO_PRICE,
+  PRO_TURNAROUND,
+} from "./professional";
+import {
+  ECOM_CAMPAIGN_ID,
+  ECOM_CAMPAIGN_NAME,
+  ECOM_HOSTING,
+  ECOM_HOSTING_DISCLOSURE,
+  ECOM_PRICE,
+  ECOM_TURNAROUND,
+} from "./ecommerce";
 
 export type Offer = {
   id: string;
@@ -22,6 +51,12 @@ export type Offer = {
   gaViewEvent: string;
   gaLeadEvent: string;
   gaContactEvent: string;
+  /** The monthly after launch. Same $29 today, but read it from the package. */
+  hosting: number;
+  /** What that $29 actually buys -- NOT the same sentence on every tier. */
+  hostingDisclosure: string;
+  /** Human turnaround phrase, or null where it is deliberately unstated. */
+  turnaround: string | null;
 };
 
 export const BUSINESS_LAUNCH_OFFER: Offer = {
@@ -33,6 +68,9 @@ export const BUSINESS_LAUNCH_OFFER: Offer = {
   gaViewEvent: "business_launch_view",
   gaLeadEvent: "business_launch_lead",
   gaContactEvent: "business_launch_contact",
+  hosting: HOSTING_FROM,
+  hostingDisclosure: HOSTING_DISCLOSURE,
+  turnaround: `${TURNAROUND_DAYS} days`,
 };
 
 export const STARTER_OFFER: Offer = {
@@ -44,6 +82,9 @@ export const STARTER_OFFER: Offer = {
   gaViewEvent: "starter_website_view",
   gaLeadEvent: "starter_website_lead",
   gaContactEvent: "starter_website_contact",
+  hosting: STARTER_HOSTING,
+  hostingDisclosure: STARTER_HOSTING_DISCLOSURE,
+  turnaround: `${STARTER_TURNAROUND_DAYS} business days`,
 };
 
 export const PROFESSIONAL_OFFER: Offer = {
@@ -55,6 +96,9 @@ export const PROFESSIONAL_OFFER: Offer = {
   gaViewEvent: "professional_website_view",
   gaLeadEvent: "professional_website_lead",
   gaContactEvent: "professional_website_contact",
+  hosting: PRO_HOSTING,
+  hostingDisclosure: PRO_HOSTING_DISCLOSURE,
+  turnaround: PRO_TURNAROUND,
 };
 
 export const ECOMMERCE_OFFER: Offer = {
@@ -66,6 +110,9 @@ export const ECOMMERCE_OFFER: Offer = {
   gaViewEvent: "ecommerce_website_view",
   gaLeadEvent: "ecommerce_website_lead",
   gaContactEvent: "ecommerce_website_contact",
+  hosting: ECOM_HOSTING,
+  hostingDisclosure: ECOM_HOSTING_DISCLOSURE,
+  turnaround: ECOM_TURNAROUND,
 };
 
 export const OFFERS: Offer[] = [
@@ -82,4 +129,31 @@ export const OFFERS: Offer[] = [
  */
 export function offerByName(name: string | null | undefined): Offer {
   return OFFERS.find((o) => o.name === name) ?? BUSINESS_LAUNCH_OFFER;
+}
+
+/**
+ * Resolves the offer from the free text Meta hands back with a lead -- the
+ * campaign, ad set and ad names.
+ *
+ * A Meta Instant Form lead never touches a landing page, so there is no
+ * `offer_name` in a request body to read. The ad's own name is the only signal
+ * that exists, which is why the campaign must be named after the offer:
+ * `slugifyCampaign("$149 Starter Website")` -> "starter-website-149".
+ *
+ * Checked most specific first -- the full slug, then the campaign id, then a
+ * bare price -- so an ad called "starter-website-149" can never be read as the
+ * $399 offer just because it also mentions a number.
+ */
+export function offerFromAdNames(
+  ...names: (string | null | undefined)[]
+): Offer {
+  const hay = names.filter(Boolean).join(" ").toLowerCase();
+  if (!hay) return BUSINESS_LAUNCH_OFFER;
+
+  return (
+    OFFERS.find((o) => hay.includes(slugifyCampaign(o.name))) ??
+    OFFERS.find((o) => hay.includes(o.id)) ??
+    OFFERS.find((o) => hay.includes(String(o.price))) ??
+    BUSINESS_LAUNCH_OFFER
+  );
 }

@@ -17,6 +17,9 @@ export const HOSTING_FROM_CENTS = 2900;
  *  ad stays literally true — the build takes 7-14 days. */
 export const HOSTING_TRIAL_DAYS = 30;
 
+/** Typical turnaround, counted from the day we have the client's content. */
+export const TURNAROUND_DAYS = "7–14";
+
 export const HOSTING_DISCLOSURE =
   "Hosting from $29/month. Free for the first 30 days, so billing starts well after your site is live. It covers hosting, SSL, backups and security updates — it is not a management retainer. Cancel any time.";
 

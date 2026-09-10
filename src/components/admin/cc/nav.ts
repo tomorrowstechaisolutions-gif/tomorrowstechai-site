@@ -97,7 +97,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/catalog", label: "Catalog", icon: IconLayers },
       { href: "/admin/websites", label: "Websites", icon: IconGlobe },
-      { href: "/admin/apps", label: "Apps", icon: IconLayers, soon: true },
+      { href: "/admin/apps", label: "Apps", icon: IconLayers },
       { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot, soon: true },
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
       { href: "/admin/hosting", label: "Hosting", icon: IconServer },
@@ -182,11 +182,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Everything that has happened across the company, filterable by module and date. The last twelve events are on the dashboard.",
     nearest: { href: "/admin", label: "See recent activity" },
-  },
-  "/admin/apps": {
-    title: "Apps",
-    blurb: "Web and mobile applications delivered, with their platform, release state and owner.",
-    nearest: { href: "/admin/jobs", label: "Open Projects" },
   },
   "/admin/ai-solutions": {
     title: "AI Solutions",

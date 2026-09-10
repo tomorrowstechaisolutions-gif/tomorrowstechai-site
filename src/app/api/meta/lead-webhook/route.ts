@@ -2,12 +2,8 @@ import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { intakeLead } from "@/lib/campaign/intake";
 import { sendAdminNotification, sendLeadConfirmation } from "@/lib/campaign/emails";
-import {
-  BUSINESS_TYPES,
-  CAMPAIGN_NAME,
-  SERVICE_OPTIONS,
-  TIMELINES,
-} from "@/lib/campaign/config";
+import { BUSINESS_TYPES, SERVICE_OPTIONS, TIMELINES } from "@/lib/campaign/config";
+import { offerFromAdNames } from "@/lib/campaign/offers";
 
 export const runtime = "nodejs";
 
@@ -147,6 +143,16 @@ export async function POST(req: Request) {
 
         const fields = detail.field_data ?? [];
 
+        // An Instant Form lead never touches a landing page, so nothing in the
+        // payload says which package they answered. The ad's own name is the
+        // only signal there is -- see offerFromAdNames. Get this wrong and the
+        // lead is filed, emailed and quoted as the $399 offer.
+        const offer = offerFromAdNames(
+          detail.campaign_name,
+          detail.adset_name,
+          detail.ad_name
+        );
+
         const fullName = fieldValue(fields, "fullname", "name");
         const first =
           fieldValue(fields, "firstname") || fullName.split(" ")[0] || "Unknown";
@@ -184,13 +190,13 @@ export async function POST(req: Request) {
           services_interested: Array.from(new Set(services)),
           timeline: matchOption(TIMELINES, fieldValue(fields, "timeline", "started", "when")),
           source: "facebook",
-          campaign: detail.campaign_name ?? CAMPAIGN_NAME,
+          campaign: detail.campaign_name ?? offer.name,
           adset: detail.adset_name ?? null,
           ad: detail.ad_name ?? null,
           placement: detail.platform ?? null,
           utm_source: "facebook",
           utm_medium: "paid_social",
-          utm_campaign: detail.campaign_name ?? CAMPAIGN_NAME,
+          utm_campaign: detail.campaign_name ?? offer.name,
           landing_page: "meta_instant_form",
           meta_leadgen_id: leadgenId,
           meta_form_id: detail.form_id ?? (typeof v.form_id === "string" ? v.form_id : null),
@@ -199,12 +205,12 @@ export async function POST(req: Request) {
           // Meta Instant Forms don't collect SMS consent unless the form
           // author adds a consent question. Never assume it.
           sms_consent: false,
-          consent_text: "Submitted a Meta Instant Form for the $399 Business Launch offer.",
+          consent_text: `Submitted a Meta Instant Form for the ${offer.name} offer.`,
         });
 
         if (!result.duplicate) {
           await Promise.all([
-            sendLeadConfirmation({ firstName: first, email }),
+            sendLeadConfirmation({ firstName: first, email }, offer),
             sendAdminNotification({
               leadId: result.leadId,
               firstName: first,
@@ -221,11 +227,11 @@ export async function POST(req: Request) {
               duplicate: result.duplicate,
               stored: result.stored,
               source: "facebook",
-              campaign: detail.campaign_name ?? CAMPAIGN_NAME,
+              campaign: detail.campaign_name ?? offer.name,
               ad: detail.ad_name ?? null,
               placement: detail.platform ?? null,
               landingPage: "Meta Instant Form",
-            }),
+            }, offer),
           ]);
         }
       } catch (err) {

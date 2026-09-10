@@ -1,6 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
-import { HOSTING_FROM, OFFER_PRICE } from "./config";
+import { BUSINESS_LAUNCH_OFFER, type Offer } from "./offers";
 import { unsubscribeUrl } from "./unsubscribe";
 import type { ScoreReason } from "@/lib/supabase/types";
 
@@ -24,12 +24,39 @@ function adminEmail() {
   return process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
 }
 
+/**
+ * Every email here is about ONE package, and the packages disagree on the
+ * things a lead actually asks about: the price, how long the build takes, and
+ * what the $29 covers. Starter's $29 buys hosting only; from $399 up it
+ * includes management. Saying the wrong one in writing to a paying customer is
+ * the mistake this parameter exists to prevent, so it defaults to Business
+ * Launch -- where every historical lead came from -- and is passed explicitly
+ * everywhere else.
+ */
+function wrap(text: string, width = 74): string {
+  const out: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    if (line && (line + " " + word).length > width) {
+      out.push(line);
+      line = word;
+    } else {
+      line = line ? line + " " + word : word;
+    }
+  }
+  if (line) out.push(line);
+  return out.join("\n");
+}
+
 /** Transactional confirmation. Goes out regardless of marketing consent —
  *  it's the receipt for something they just asked for. */
-export async function sendLeadConfirmation(lead: {
-  firstName: string;
-  email: string;
-}): Promise<boolean> {
+export async function sendLeadConfirmation(
+  lead: {
+    firstName: string;
+    email: string;
+  },
+  offer: Offer = BUSINESS_LAUNCH_OFFER
+): Promise<boolean> {
   const client = resend();
   if (!client) return false;
 
@@ -39,7 +66,7 @@ export async function sendLeadConfirmation(lead: {
     const res = await client.emails.send({
       from: fromEmail(),
       to: lead.email,
-      subject: `Your $${OFFER_PRICE} Business Launch request · Tomorrow's Tech AI`,
+      subject: `Your ${offer.name} request · Tomorrow's Tech AI`,
       text: `${greeting}
 
 Your request is in. We'll review your business and contact you shortly —
@@ -50,13 +77,17 @@ Here's what happens next:
 1. We read through what you sent — your trade, what you need, how fast you
    want to move.
 2. We reach out by email or phone, whichever suits you.
-3. We confirm the plan, then we build it. Most sites go live 7-14 days after
-   we have your content.
+3. We confirm the plan, then we build it.${
+        offer.turnaround
+          ? ` Most sites go live ${offer.turnaround}\n   after we have your content.`
+          : ""
+      }
 
-The price, plainly: $${OFFER_PRICE} one-time for the build. After you're live,
-hosting is $${HOSTING_FROM}/month and covers hosting, SSL, backups and
-security updates. It is not a management retainer, so content changes after
-launch are quoted separately. Nothing is charged before you approve the plan.
+The price, plainly: $${offer.price} one-time for the build. After you're live:
+
+${wrap(offer.hostingDisclosure)}
+
+Nothing is charged before you approve the plan.
 
 Want to skip the wait? Book a 30-minute call and we'll plan it on the spot:
 ${BOOKING}
@@ -96,7 +127,7 @@ export async function sendAdminNotification(lead: {
   ad?: string | null;
   placement?: string | null;
   landingPage?: string | null;
-}): Promise<boolean> {
+}, offer: Offer = BUSINESS_LAUNCH_OFFER): Promise<boolean> {
   const client = resend();
   if (!client) return false;
 
@@ -111,9 +142,9 @@ export async function sendAdminNotification(lead: {
       from: fromEmail(),
       to: adminEmail(),
       replyTo: lead.email,
-      subject: `${band} lead · ${lead.businessName || `${lead.firstName} ${lead.lastName}`} · $${OFFER_PRICE} Business Launch${flag}`,
+      subject: `${band} lead · ${lead.businessName || `${lead.firstName} ${lead.lastName}`} · ${offer.name}${flag}`,
       text: `${storageWarning}
-New $${OFFER_PRICE} Business Launch lead — score ${lead.score}/100 (${band})
+New ${offer.name} lead — score ${lead.score}/100 (${band})
 
 ${lead.firstName} ${lead.lastName}
 ${lead.businessName ?? "(no business name)"}
@@ -157,7 +188,8 @@ export async function sendFollowupEmail(
     firstName: string;
     email: string;
     businessName?: string | null;
-  }
+  },
+  offer: Offer = BUSINESS_LAUNCH_OFFER
 ): Promise<boolean> {
   const client = resend();
   if (!client) return false;
@@ -168,7 +200,7 @@ export async function sendFollowupEmail(
   const content =
     step === "followup_24h"
       ? {
-          subject: `Quick follow-up on your $${OFFER_PRICE} Business Launch`,
+          subject: `Quick follow-up on your ${offer.name}`,
           body: `${greeting}
 
 I wanted to make sure your request came through${business} — it did, and it's on my list.
@@ -178,9 +210,17 @@ ${BOOKING}
 
 Two things people usually ask at this point:
 
-  · $${OFFER_PRICE} is the whole build. After launch it's $${HOSTING_FROM}/month for
-    hosting, SSL, backups, security updates and small content changes.
-  · Most sites go live 7-14 days after we have your content.
+  · $${offer.price} is the whole build. After launch:
+
+${wrap(offer.hostingDisclosure, 68)
+  .split("\n")
+  .map((l) => `    ${l}`)
+  .join("\n")}
+${
+  offer.turnaround
+    ? `  · Most sites go live ${offer.turnaround} after we have your content.`
+    : "  · I'll confirm the timeline with you before anything starts."
+}
 
 Reply to this email with any question and I'll answer it directly.
 
@@ -201,7 +241,7 @@ If it is right, the fastest path is a 30-minute call:
 ${BOOKING}
 
 Or just reply with your business name and what you need, and I'll send you a
-plan for the $${OFFER_PRICE} build.
+plan for the $${offer.price} build.
 
 — John
 Tomorrow's Tech AI

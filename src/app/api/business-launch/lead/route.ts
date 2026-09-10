@@ -139,7 +139,7 @@ export async function POST(req: Request) {
 
     // ── Notifications. Never let an email failure fail the submission. ────
     const [, adminOk] = await Promise.all([
-      sendLeadConfirmation({ firstName: first_name, email }),
+      sendLeadConfirmation({ firstName: first_name, email }, offer),
       sendAdminNotification({
         leadId: result.leadId,
         firstName: first_name,
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
         ad: optional(a.ad, 200),
         placement: optional(a.placement, 100),
         landingPage: optional(a.landing_page, 500),
-      }),
+      }, offer),
     ]);
 
     if (result.leadId && supabaseConfigured()) {
