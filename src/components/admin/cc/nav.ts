@@ -116,10 +116,10 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/marketing/ads", label: "Ad Studio", icon: IconPen },
       { href: "/admin/marketing/spend", label: "Ad spend", icon: IconDollar },
       { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage },
-      { href: "/admin/marketing/social", label: "Social Center", icon: IconShare, soon: true },
-      { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail, soon: true },
+      { href: "/admin/marketing/social", label: "Social Center", icon: IconShare },
+      { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail },
       { href: "/admin/marketing/seo", label: "SEO", icon: IconGlobe },
-      { href: "/admin/marketing/brand", label: "Brand Assets", icon: IconImage, soon: true },
+      { href: "/admin/marketing/brand", label: "Brand Assets", icon: IconImage },
     ],
   },
   {
@@ -206,12 +206,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Compose, schedule and publish across channels. Accounts must be connected first — nothing here will show numbers for a platform that has not been linked.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/marketing/email": {
-    title: "Email",
-    blurb:
-      "Broadcast and sequence email. The transactional and follow-up emails already run through Resend.",
-    nearest: { href: "/admin/settings", label: "Check email configuration" },
   },
   "/admin/automations": {
     title: "Automations",
