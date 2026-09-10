@@ -89,12 +89,22 @@ function safeError(value: unknown): string {
 }
 
 async function vercelFetch<T>(path: string, token: string, teamId: string): Promise<T> {
-  const url = new URL(path, API);
-  if (teamId) url.searchParams.set("teamId", teamId);
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
+  const request = async (includeTeam: boolean) => {
+    const url = new URL(path, API);
+    if (includeTeam && teamId) url.searchParams.set("teamId", teamId);
+    return fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+  };
+
+  let response = await request(true);
+  // Current project/team-scoped PATs already carry their Vercel scope. Some of
+  // those tokens reject a duplicate teamId even though the same request is
+  // authorized when Vercel resolves the team from the token itself.
+  if ((response.status === 401 || response.status === 403) && teamId) {
+    response = await request(false);
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { error?: { message?: string } };
     throw new Error(body.error?.message || `Vercel returned ${response.status}.`);
