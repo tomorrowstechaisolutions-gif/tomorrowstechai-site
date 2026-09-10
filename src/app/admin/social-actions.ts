@@ -72,11 +72,11 @@ export async function createSocialPostAction(fd: FormData) {
   if (customerId) {
     const { data: assignments } = await supabase
       .from("client_services")
-      .select("id, services(name)")
+      .select("id, catalog_items(name)")
       .eq("customer_id", customerId)
       .eq("status", "active");
     serviceAssignmentId = (assignments ?? []).find((row) => {
-      const service = Array.isArray(row.services) ? row.services[0] : row.services;
+      const service = Array.isArray(row.catalog_items) ? row.catalog_items[0] : row.catalog_items;
       return /social management/i.test(service?.name ?? "");
     })?.id ?? null;
   }

@@ -23,7 +23,7 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
     sb.from("social_post_platforms").select("post_id, platform"),
     sb.from("social_analytics_snapshots").select("post_id, reach, engagements, clicks, followers_gained, captured_for").gte("captured_for", monthStart.slice(0, 10)),
     sb.from("customers").select("id, business_name, name").neq("status", "churned").order("business_name"),
-    sb.from("client_services").select("id, customer_id, service_id, status, assigned_manager, customers(business_name,name), services(name)").eq("status", "active"),
+    sb.from("client_services").select("id, customer_id, service_id, status, assigned_manager, customers(business_name,name), catalog_items(name)").eq("status", "active"),
     sb.from("service_inclusions").select("service_id, name, quantity, is_included").eq("is_included", true),
     sb.from("content_assets").select("id, title, asset_type, storage_path, customer_id, created_at").eq("is_archived", false).order("created_at", { ascending: false }).limit(40),
     sb.from("social_engagement_items").select("id, customer_id, platform, item_type, author_name, body, occurred_at, needs_reply, unread, assigned_to, customers(business_name,name)").is("resolved_at", null).order("occurred_at", { ascending: false }).limit(50),
@@ -148,7 +148,7 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
     list.push({ name: inclusion.name, quantity: inclusion.quantity === null ? null : Number(inclusion.quantity) });
     inclusionByService.set(inclusion.service_id, list);
   }
-  const serviceUsage = (assignmentsResult.data ?? []).filter((row) => /social management/i.test(serviceName(row.services))).map((row) => {
+  const serviceUsage = (assignmentsResult.data ?? []).filter((row) => /social management/i.test(serviceName(row.catalog_items))).map((row) => {
     const inclusions = inclusionByService.get(row.service_id) ?? [];
     const quantityFor = (pattern: RegExp) => inclusions.find((item) => pattern.test(item.name))?.quantity ?? null;
     const clientPosts = allPosts.filter((post) => post.customerId === row.customer_id && (post.scheduledAt || post.publishedAt || post.createdAt) >= monthStart);
