@@ -127,6 +127,11 @@ function ActionForm({
 
   return (
     <form
+      // Same reason as the email sheets: a sheet renders inline beside its
+      // trigger button, so a container rule such as
+      // ".cc-rowacts form { display: inline-flex }" would otherwise collapse
+      // the whole form into one row.
+      style={{ display: "block" }}
       action={(fd) =>
         startTransition(async () => {
           setError(null);

@@ -146,6 +146,13 @@ function ActionForm({
 
   return (
     <form
+      // A sheet renders inline, as a sibling of the button that opened it, so
+      // any descendant rule on the surrounding container reaches inside it.
+      // ".cc-rowacts form { display: inline-flex }" is one of those, and it
+      // turns a stacked form into a single unreadable row. Declaring the
+      // display here outranks every stylesheet rule and keeps a sheet looking
+      // the same wherever its trigger button happens to sit.
+      style={{ display: "block" }}
       action={(fd) =>
         startTransition(async () => {
           setError(null);
