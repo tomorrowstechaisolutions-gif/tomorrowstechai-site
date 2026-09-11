@@ -99,6 +99,7 @@ export default async function LeadsPage({
                 <tr>
                   <th>Name</th>
                   <th>Business</th>
+                  <th>Package</th>
                   <th>Phone</th>
                   <th>Email</th>
                   <th>Type</th>
@@ -120,6 +121,7 @@ export default async function LeadsPage({
                       </Link>
                     </td>
                     <td>{l.business_name ?? "—"}</td>
+                    <td>{l.services_interested.find((service) => service.startsWith("AI Business Operator — "))?.replace("AI Business Operator — ", "") ?? "—"}</td>
                     <td>
                       {l.phone ? (
                         <a href={`tel:${l.phone}`} className="ad-link">

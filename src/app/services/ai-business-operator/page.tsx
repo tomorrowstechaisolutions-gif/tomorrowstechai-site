@@ -71,6 +71,7 @@ const benefits = [
 
 const plans = [
   {
+    id: "starter",
     name: "AI Starter",
     price: "$199",
     setup: "$299 setup",
@@ -78,6 +79,7 @@ const plans = [
     cta: "Get Started",
   },
   {
+    id: "growth",
     name: "AI Growth",
     price: "$399",
     setup: "$749 setup",
@@ -86,6 +88,7 @@ const plans = [
     cta: "Get Started",
   },
   {
+    id: "operator",
     name: "AI Operator",
     price: "$699",
     setup: "$1,499 setup",
@@ -93,6 +96,7 @@ const plans = [
     cta: "Get Started",
   },
   {
+    id: "custom",
     name: "Custom",
     price: "$999",
     prefix: "Starting at",
@@ -210,7 +214,7 @@ export default function AiBusinessOperatorPage() {
         </div>
       </section>
 
-      <section className={`${styles.lightSection} ${styles.pricingSection}`}>
+      <section id="pricing" className={`${styles.lightSection} ${styles.pricingSection}`}>
         <SectionHeading eyebrow="Simple, Transparent Pricing" title="Choose the Right Plan for Your Business" />
         <div className={styles.pricingGrid}>
           {plans.map((plan) => (
@@ -225,7 +229,7 @@ export default function AiBusinessOperatorPage() {
               <ul>
                 {plan.includes.map((item) => <li key={item}><IconBadgeCheck size={16} />{item}</li>)}
               </ul>
-              <Link href="/contact" className={plan.featured ? "btn-primary" : styles.priceButton}>{plan.cta}</Link>
+              <Link href={`/get-started?plan=${plan.id}`} className={plan.featured ? "btn-primary" : styles.priceButton}>{plan.cta}</Link>
             </article>
           ))}
         </div>
