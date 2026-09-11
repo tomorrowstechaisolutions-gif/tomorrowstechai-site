@@ -126,7 +126,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Automation",
     links: [
       { href: "/admin/automations", label: "Automations", icon: IconRepeat },
-      { href: "/admin/automations/workflows", label: "Workflows", icon: IconLayers, soon: true },
+      { href: "/admin/automations/workflows", label: "Workflows", icon: IconLayers },
       { href: "/admin/ai/agents", label: "AI Agents", icon: IconBot, soon: true },
       { href: "/admin/automations/triggers", label: "Triggers", icon: IconZap, soon: true },
     ],
@@ -188,12 +188,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Logos, palettes, type and templates — yours and each client's. Logo Studio already generates the marks; this is where they would live afterwards.",
     nearest: { href: "/logo-studio", label: "Open Logo Studio" },
-  },
-  "/admin/automations/workflows": {
-    title: "Workflows",
-    blurb:
-      "Multi-step sequences across modules — a lead converts, a job opens, a welcome email goes out, a check-in is scheduled. Each step proposes before it acts.",
-    nearest: { href: "/admin", label: "Back to the dashboard" },
   },
   "/admin/services": {
     title: "Service lines",
