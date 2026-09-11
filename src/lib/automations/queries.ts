@@ -40,6 +40,7 @@ function calculateHealth(row: ObjectRow, failures24h: number, completed24h: numb
   if (!row.trigger_definition_id || !hasAction || status === "warning") return "warning";
   if (status === "error" || failures24h >= 3 || (completed24h >= 5 && failures24h / completed24h > 0.1)) return "critical";
   if (status !== "active" || !row.last_run_at) return "unknown";
+  if (new Date(String(row.last_run_at)).getTime() < Date.now() - 7 * 86400_000) return "unknown";
   return failures24h === 0 ? "healthy" : "warning";
 }
 
