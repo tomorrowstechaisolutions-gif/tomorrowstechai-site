@@ -125,7 +125,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     head: "Automation",
     links: [
-      { href: "/admin/automations", label: "Automations", icon: IconRepeat, soon: true },
+      { href: "/admin/automations", label: "Automations", icon: IconRepeat },
       { href: "/admin/automations/workflows", label: "Workflows", icon: IconLayers, soon: true },
       { href: "/admin/ai/agents", label: "AI Agents", icon: IconBot, soon: true },
       { href: "/admin/automations/triggers", label: "Triggers", icon: IconZap, soon: true },
