@@ -70,13 +70,13 @@ const SOLUTIONS: MegaItem[] = [
     Icon: IconBrush,
   },
   {
-    href: "/services",
+    href: "/services/run-your-business",
     label: "Run your business",
     blurb: "Admin center, dashboard, CRM, scheduling, orders, documents.",
     Icon: IconDashboard,
   },
   {
-    href: "/services",
+    href: "/services/grow-your-audience",
     label: "Grow your audience",
     blurb: "Social center, content, campaigns, lead gen, reputation.",
     Icon: IconMegaphone,

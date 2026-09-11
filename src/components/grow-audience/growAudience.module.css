@@ -1,0 +1,223 @@
+/**
+ * Grow Your Audience — managed marketing + audience growth service page.
+ *
+ * Same visual language as runBusiness.module.css (near-black ground, technical
+ * grid, electric blue) so the two service pages read as one system. Everything
+ * is scoped to .page; nothing here leaks to the shared header/footer.
+ */
+
+.page{--ga-blue:#3b82f6;--ga-bright:#2f97ff;--ga-cyan:#56c6ff;--ga-line:#153a5e;--ga-panel:linear-gradient(145deg,#0b2036,#071728);background:#010812;color:#f7fbff;overflow:hidden;background-image:linear-gradient(rgba(33,94,144,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(33,94,144,.055) 1px,transparent 1px);background-size:54px 54px}
+.page *{box-sizing:border-box}
+.eyebrow{color:#54baff;text-transform:uppercase;font-weight:800;letter-spacing:.28em;font-size:.74rem}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.primary,.secondary{min-height:48px;border-radius:8px;padding:0 24px;display:inline-flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;font-weight:750;font-size:.94rem;transition:.2s}
+.primary{color:#fff;background:linear-gradient(135deg,#2f97ff,#1f63e0);box-shadow:0 12px 34px rgba(0,113,255,.28)}
+.secondary{color:#eff7ff;border:1px solid #3d8fd5;background:rgba(4,17,31,.65)}
+.primary:hover,.secondary:hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(0,122,255,.3)}
+.primary:focus-visible,.secondary:focus-visible,.priceCta:focus-visible{outline:2px solid #7dd1ff;outline-offset:3px}
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.hero{position:relative;display:grid;grid-template-columns:.92fr 1.32fr;gap:38px;align-items:center;padding:56px max(34px,calc((100vw - 1240px)/2)) 58px;border-bottom:1px solid #123457;background:radial-gradient(ellipse 52% 24% at 72% 70%,rgba(0,119,255,.4),transparent 70%),linear-gradient(105deg,rgba(1,10,21,.98),rgba(2,15,29,.88))}
+.heroCopy{position:relative;z-index:2;animation:riseIn .7s ease both}
+.hero h1{font-size:clamp(2.6rem,3.7vw,3.4rem);line-height:1.04;letter-spacing:-.045em;margin:16px 0 18px}
+.hero h1 em{font-style:normal;color:var(--ga-bright)}
+.heroLead{max-width:520px;color:#bccadd;font-size:1.03rem;line-height:1.55;margin:0}
+.heroActions{display:flex;gap:14px;margin:28px 0 0;flex-wrap:wrap}
+.heroTrust{display:flex;gap:22px;flex-wrap:wrap;margin-top:24px}
+.heroTrust span{display:flex;align-items:center;gap:7px;color:#c7d6e7;font-size:.81rem}
+.heroTrust svg{color:#3eaaff;flex:none}
+
+/* ── Dashboard scene ─────────────────────────────────────────────────── */
+.scene{position:relative;z-index:2;min-width:0;animation:riseIn .85s ease both}
+.sceneGlow{position:absolute;inset:16% 5% 6%;background:#0078ff;filter:blur(78px);opacity:.2;pointer-events:none}
+.deck{position:relative;transform:perspective(1300px) rotateY(-3deg) rotateX(1deg);animation:float 7s ease-in-out infinite}
+.appShell{position:relative;display:grid;grid-template-columns:104px 1fr;aspect-ratio:1.52/1;background:#071526;border:9px solid #0d1c2f;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px #2475b8,0 26px 74px rgba(0,0,0,.7)}
+.appShell aside{padding:11px 7px;background:#061120;border-right:1px solid #17324d;display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden}
+.miniLogo{display:flex;align-items:center;gap:5px;color:#3bb0ff;font-size:.5rem;font-weight:800;letter-spacing:.02em;margin:0 6px 9px;white-space:nowrap;overflow:hidden}
+.miniLogo svg{flex:none}
+.appShell aside span{height:20px;padding:0 7px;border-radius:4px;display:flex;align-items:center;gap:6px;color:#718aa4;font-size:.5rem;white-space:nowrap;overflow:hidden}
+.appShell aside span i{width:6px;height:6px;border:1px solid #47718e;border-radius:2px;flex:none}
+.appShell aside .navActive{color:#69c3ff;background:#0b3155}
+.appShell aside .navActive i{border-color:#69c3ff;background:#69c3ff}
+
+.dashMain{padding:13px 14px;min-width:0;background:radial-gradient(circle at 82% 0,rgba(18,87,148,.17),transparent 45%);display:flex;flex-direction:column;gap:7px}
+.dashHead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.dashHead h2{font-size:.84rem;margin:0 0 2px;letter-spacing:-.01em}
+.dashHead p{font-size:.46rem;color:#7990a8;margin:0}
+.datePill{display:flex;align-items:center;gap:5px;flex:none;border:1px solid #1c466d;background:#0a1d31;border-radius:5px;padding:4px 7px;color:#9fb5cb;font-size:.44rem}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.kpis article{padding:8px;border:1px solid #1c466d;background:var(--ga-panel);border-radius:7px;min-width:0}
+.kpiLabel{display:flex;align-items:center;gap:4px;color:#8fa5bc;font-size:.43rem;white-space:nowrap;overflow:hidden}
+.kpiLabel svg{color:#3f9fe8;flex:none}
+.kpis strong{display:block;font-size:.92rem;margin:4px 0 2px;letter-spacing:-.02em}
+.kpiUp{font-style:normal;color:#21e28d;font-size:.5rem;display:flex;align-items:center;gap:3px}
+
+.board{display:grid;grid-template-columns:1.42fr .92fr;grid-template-rows:auto auto;gap:6px;min-height:0}
+.board article{padding:9px;border:1px solid #1c466d;background:var(--ga-panel);border-radius:7px;min-width:0;overflow:hidden}
+.panelHead{display:flex;justify-content:space-between;align-items:center;font-size:.53rem;font-weight:700;margin-bottom:6px}
+.panelHead small{font-weight:400;color:#7590aa;font-size:.42rem}
+
+.chartPanel{position:relative}
+.chartPanel svg{width:100%;height:60px;overflow:visible;display:block}
+.chartBadge{position:absolute;top:22px;right:30%;background:#1f6fe0;color:#fff;font-size:.42rem;font-weight:700;padding:2px 5px;border-radius:4px;box-shadow:0 4px 12px rgba(0,80,200,.5)}
+.chartAxis{display:flex;justify-content:space-between;color:#5d768e;font-size:.38rem;margin-top:3px}
+
+.platforms p{display:flex;align-items:center;gap:5px;font-size:.44rem;color:#b2c3d4;margin:5px 0}
+.platforms p b{margin-left:auto;font-weight:700;color:#e6f0fa}
+.platforms p svg{flex:none}
+.fb{color:#4c8bf5}.ig{color:#e0559b}.tt{color:#41dfd0}.li{color:#3f9be0}.yt{color:#ef5350}
+
+.activity p{display:flex;align-items:center;gap:5px;font-size:.43rem;color:#a9bbcd;margin:6px 0;white-space:nowrap}
+.activity p small{margin-left:auto;color:#617b94;font-size:.38rem}
+.activity p svg{flex:none}
+
+.assistant p{color:#8ca1b5;font-size:.46rem;margin:0 0 6px}
+.promptBox{display:flex;align-items:flex-end;gap:6px;border:1px solid #21486b;background:#081727;border-radius:8px;padding:7px}
+.promptBox span{color:#9db2c6;font-size:.44rem;line-height:1.35}
+.sendBtn{flex:none;width:15px;height:15px;display:grid;place-items:center;border-radius:4px;background:linear-gradient(135deg,#2f97ff,#1f63e0);color:#fff}
+
+/* Phone overlapping the deck */
+.phone{position:absolute;width:120px;left:3%;bottom:-66px;background:#071526;border:6px solid #101d2e;border-radius:20px;padding:17px 8px 9px;box-shadow:0 16px 46px rgba(0,0,0,.78),0 0 0 1px #377fba;transform:rotate(-2deg)}
+.phoneTop{position:absolute;top:6px;left:36%;width:28px;height:4px;background:#263a4d;border-radius:6px}
+.phoneBrand{display:flex;justify-content:space-between;align-items:center;font-size:.5rem;font-weight:700}
+.phoneBrand i{font-style:normal;color:#5d7791;font-size:.7rem;line-height:.6}
+.phoneStat{margin-top:7px;background:#0b2340;border:1px solid #1c456a;border-radius:6px;padding:6px}
+.phoneStat small{display:block;color:#56b9ff;font-size:.36rem}
+.phoneStat strong{font-size:.72rem}
+.phoneStat em{font-style:normal;color:#21e28d;font-size:.36rem}
+.phoneBars{display:flex;align-items:flex-end;gap:2px;height:22px;margin-top:5px}
+.phoneBars i{flex:1;background:linear-gradient(#56b9ff,#1f63e0);border-radius:1px}
+.phoneNav{display:flex;justify-content:space-around;color:#4b8ec5;margin-top:8px;padding-top:6px;border-top:1px solid #16324c}
+
+.script{position:absolute;right:0;bottom:-30px;color:#b8cee4;font-style:italic;font-size:.95rem;line-height:1.3;text-align:right;transform:rotate(-5deg);pointer-events:none}
+.script em{font-style:italic;color:#5dc6ff}
+
+/* ── Shared section shell ────────────────────────────────────────────── */
+.section{max-width:1240px;margin:auto;padding:62px 28px}
+.sectionHead{text-align:center;max-width:940px;margin:0 auto 32px}
+.sectionHead h2{font-size:clamp(2rem,3.4vw,2.9rem);line-height:1.08;letter-spacing:-.04em;margin:10px 0}
+.sectionHead p{color:#9eafc2;line-height:1.55;margin:0}
+
+/* ── Features ────────────────────────────────────────────────────────── */
+.featureGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:11px}
+.feature{display:flex;flex-direction:column;gap:8px;padding:15px 13px;border:1px solid #1b4265;background:linear-gradient(160deg,#0a1e33,#050f1c);border-radius:11px;transition:.22s;min-width:0}
+.feature:hover{transform:translateY(-4px);border-color:#2f97ff;box-shadow:0 14px 32px rgba(0,104,202,.2)}
+.iconBox{display:grid;place-items:center;flex:none;width:36px;height:36px;border:1px solid #2279ba;border-radius:9px;color:#49b5ff;background:#0a2945;box-shadow:0 0 16px rgba(35,140,255,.22) inset}
+.feature h3{font-size:.83rem;margin:2px 0 0;letter-spacing:-.01em}
+.feature p{color:#8ea3b8;font-size:.72rem;line-height:1.35;margin:0}
+
+/* ── Process ─────────────────────────────────────────────────────────── */
+.processSection{border-top:1px solid #102e49;border-bottom:1px solid #102e49;max-width:none;padding-left:max(28px,calc((100vw - 1240px)/2));padding-right:max(28px,calc((100vw - 1240px)/2))}
+.processTrack{display:flex;align-items:stretch;justify-content:center;gap:0;list-style:none;margin:0;padding:0}
+.processCell{display:flex;align-items:center;flex:1;min-width:0}
+.processStep{position:relative;flex:1;min-width:0;padding:20px 10px 16px;display:grid;justify-items:center;gap:7px;text-align:center;border:1px solid #1c4365;background:#071827;border-radius:11px;transition:.22s;animation:riseIn .5s ease both}
+.processStep:hover{transform:translateY(-3px);border-color:#2f97ff}
+.processStep svg{color:#44b4ff}
+.stepNum{position:absolute;top:8px;left:8px;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#2f97ff,#1f63e0);color:#fff;font-size:.58rem;font-weight:800}
+.processStep b{font-size:.83rem}
+.processStep small{color:#8ea3b8;font-size:.68rem;line-height:1.3}
+.flowArrow{color:#2ea6ff;flex:none;margin:0 7px;filter:drop-shadow(0 0 6px rgba(47,151,255,.7))}
+
+/* ── Pricing ─────────────────────────────────────────────────────────── */
+.priceGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.priceCard{position:relative;display:flex;flex-direction:column;padding:24px 20px;border:1px solid #1c4365;background:linear-gradient(165deg,#0a1e33,#050f1c);border-radius:14px;transition:.22s;min-width:0}
+.priceCard:hover{transform:translateY(-4px);border-color:#3079c4}
+.featuredCard{border-color:#2f97ff;background:linear-gradient(165deg,#0d2c4f,#061527);box-shadow:0 0 0 1px rgba(47,151,255,.45),0 18px 48px rgba(0,104,220,.28)}
+.featuredCard:hover{border-color:#5cb2ff}
+.popularBadge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#2f97ff,#1f63e0);color:#fff;font-size:.6rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;padding:4px 13px;border-radius:20px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,90,220,.45)}
+.priceHead{text-align:center;padding-bottom:14px;border-bottom:1px solid #16334f}
+.priceHead h3{font-size:1.12rem;margin:0 0 3px;letter-spacing:-.02em}
+.priceHead p{color:#6fb4ee;font-size:.78rem;margin:0}
+.priceAmount{text-align:center;padding:16px 0 4px}
+.priceAmount small{display:block;color:#8ea3b8;font-size:.7rem;margin-bottom:2px}
+.priceAmount strong{font-size:2.2rem;letter-spacing:-.045em}
+.priceAmount span{color:#8ea3b8;font-size:.92rem;font-weight:600}
+.featureList{list-style:none;margin:14px 0 20px;padding:0;display:grid;gap:9px;flex:1}
+.featureList li{display:flex;gap:8px;align-items:flex-start;color:#c2d1df;font-size:.78rem;line-height:1.35}
+.featureList svg{color:#2f97ff;flex:none;margin-top:2px}
+.priceCta{min-height:44px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:750;font-size:.84rem;color:#dceaf8;border:1px solid #3d8fd5;background:rgba(4,17,31,.6);transition:.2s}
+.priceCta:hover{transform:translateY(-2px);border-color:#5cb2ff;color:#fff}
+.priceCtaFeatured{color:#fff;border-color:transparent;background:linear-gradient(135deg,#2f97ff,#1f63e0);box-shadow:0 10px 28px rgba(0,113,255,.32)}
+.priceNote{text-align:center;color:#7c8fa3;font-size:.78rem;margin:22px auto 0;max-width:640px;line-height:1.5}
+
+/* ── Final CTA ───────────────────────────────────────────────────────── */
+.finalCta{position:relative;display:grid;grid-template-columns:.5fr 1.85fr .62fr;gap:34px;align-items:center;border-top:1px solid #163856;padding:56px max(28px,calc((100vw - 1240px)/2));background:radial-gradient(ellipse 45% 30% at 50% 100%,rgba(0,105,220,.3),transparent 70%),linear-gradient(#020b15,rgba(2,17,31,.96))}
+.finalMedia{position:relative;aspect-ratio:3/4;border:1px solid #1f4a72;border-radius:14px;overflow:hidden;background:#08182a}
+.finalMedia img{object-fit:cover;object-position:60% 30%}
+.finalMedia div{position:absolute;inset:0;background:linear-gradient(transparent 25%,rgba(1,8,16,.92))}
+.finalMedia b{position:absolute;inset:auto 16px 18px;font-size:.78rem;line-height:1.2;letter-spacing:-.01em;text-transform:uppercase;font-style:italic}
+.finalCopy{text-align:center}
+.finalCopy h2{font-size:clamp(1.75rem,2.5vw,2.3rem);line-height:1.14;letter-spacing:-.04em;margin:11px 0}
+.finalCopy h2 em{font-style:normal;color:var(--ga-bright)}
+.finalCopy>p{color:#a8bacb;line-height:1.55;max-width:560px;margin:0 auto}
+.finalCopy .heroActions{justify-content:center}
+.finalBenefits{display:grid;gap:16px}
+.finalBenefits span{display:flex;align-items:center;gap:11px;color:#c7d6e7;font-size:.9rem;font-weight:600}
+.finalBenefits .iconBox{width:32px;height:32px;border-radius:8px}
+
+/* ── Motion ──────────────────────────────────────────────────────────── */
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes float{0%,100%{transform:perspective(1300px) rotateY(-3deg) rotateX(1deg) translateY(0)}50%{transform:perspective(1300px) rotateY(-3deg) rotateX(1deg) translateY(-6px)}}
+
+/* ── Tablet ──────────────────────────────────────────────────────────── */
+@media(max-width:1100px){
+  .hero{grid-template-columns:1fr;padding-top:64px}
+  .heroCopy{max-width:720px}
+  .scene{width:min(840px,100%);margin:22px auto 34px}
+  .script{display:none}
+  .featureGrid{grid-template-columns:repeat(4,1fr)}
+  .processTrack{flex-wrap:wrap;gap:12px}
+  .processCell{flex:0 0 calc(25% - 12px)}
+  .flowArrow{display:none}
+  .priceGrid{grid-template-columns:repeat(2,1fr)}
+  .finalCta{grid-template-columns:1fr;gap:28px}
+  .finalMedia{aspect-ratio:16/7;max-width:560px;margin:0 auto}
+  .finalBenefits{grid-template-columns:repeat(2,1fr);max-width:560px;margin:0 auto}
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────── */
+@media(max-width:720px){
+  .hero{padding:50px 20px 40px;gap:22px}
+  .hero h1{font-size:2.35rem}
+  .heroLead{font-size:.98rem}
+  .heroActions{flex-direction:column}
+  .heroActions .primary,.heroActions .secondary{width:100%}
+  .heroTrust{display:grid;gap:10px}
+  .scene{width:100%}
+  .deck{transform:none;animation:none}
+  .appShell{grid-template-columns:46px 1fr;border-width:5px;aspect-ratio:1.3/1}
+  .appShell aside{padding:7px 4px}
+  .appShell aside span{font-size:0;height:14px;gap:0;justify-content:center;padding:0}
+  .miniLogo{font-size:0;margin:0 0 6px;justify-content:center}
+  .dashMain{padding:8px;gap:5px}
+  .dashHead p,.datePill{display:none}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpis article{padding:6px}
+  .kpis strong{font-size:.78rem}
+  .board{grid-template-columns:1fr}
+  .activity,.assistant{display:none}
+  .phone{display:none}
+  .section{padding:48px 20px}
+  .sectionHead{text-align:left}
+  .featureGrid{grid-template-columns:1fr 1fr}
+  .feature{padding:13px 11px}
+  .processSection{padding-left:20px;padding-right:20px}
+  .processTrack{display:grid;grid-template-columns:1fr;gap:10px}
+  .processCell{flex:auto}
+  .processStep{justify-items:start;text-align:left;padding:14px 14px 14px 38px}
+  .stepNum{top:50%;left:12px;transform:translateY(-50%)}
+  .priceGrid{grid-template-columns:1fr;gap:22px}
+  .priceCta{width:100%}
+  .finalCta{padding:50px 20px}
+  .finalBenefits{grid-template-columns:1fr}
+  .finalMedia{aspect-ratio:16/9}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .scene,.deck,.heroCopy,.processStep{animation:none}
+  .feature,.priceCard,.primary,.secondary,.priceCta,.processStep{transition:none}
+}
+
+:global(body:has(.grow-audience-page) footer){margin-top:0}

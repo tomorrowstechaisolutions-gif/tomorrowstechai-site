@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { IconAiChip, IconArrowRight, IconBadgeCheck, IconBot, IconBrain, IconCart, IconChart, IconCpu, IconDashboard, IconMonitor, IconNetwork, IconPhoneCall, IconPlay, IconRocket, IconShield, IconSparkle, IconUsers } from "@/components/Icons";
+import { IconAiChip, IconArrowRight, IconBadgeCheck, IconBot, IconBrain, IconCart, IconChart, IconCpu, IconDashboard, IconMegaphone, IconMonitor, IconNetwork, IconPhoneCall, IconPlay, IconRocket, IconShield, IconSparkle, IconUsers } from "@/components/Icons";
 import styles from "./services.module.css";
 
 export const metadata: Metadata = {
@@ -13,8 +13,9 @@ export const metadata: Metadata = {
 
 const coreServices = [
   { id: "ai-business-operator", Icon: IconBot, title: "AI Business Operator", description: "Hire an AI team that works 24/7 to capture leads, follow up, book appointments, and grow your business.", features: ["AI chat & voice", "Lead capture & follow-up", "CRM & pipeline management", "Appointment booking", "Reviews, reminders & more"], href: "/services/ai-business-operator", image: "/industries/contractors-home-services.webp" },
-  { id: "business-platforms", Icon: IconDashboard, title: "Business Operating Platforms", description: "All-in-one platforms to run your entire business from one place.", features: ["CRM & client management", "Scheduling & dispatch", "Invoicing & payments", "Inventory & job management", "Team & employee tools"], href: "#platform-preview", image: "/work/poolbusinessai.webp" },
+  { id: "business-platforms", Icon: IconDashboard, title: "Business Operating Platforms", description: "All-in-one platforms to run your entire business from one place.", features: ["CRM & client management", "Scheduling & dispatch", "Invoicing & payments", "Inventory & job management", "Team & employee tools"], href: "/services/run-your-business", image: "/work/poolbusinessai.webp" },
   { id: "command-centers", Icon: IconMonitor, title: "Command Centers", description: "Real-time visibility and control across your entire business.", features: ["Live dashboards", "Reports & analytics", "Multi-location support", "Team activity tracking", "Custom integrations"], href: "#platform-preview", image: "/hero-building.webp" },
+  { id: "grow-your-audience", Icon: IconMegaphone, title: "Grow Your Audience", description: "Managed social media, content, campaigns and lead generation — run from one marketing platform.", features: ["Social media management", "Professional content & graphics", "Targeted campaigns", "Lead generation & reputation", "Analytics and AI content tools"], href: "/services/grow-your-audience", image: "/industries/retail-ecommerce.webp" },
   { id: "workflow-automation", Icon: IconNetwork, title: "Workflow Automation", description: "Eliminate manual work and let your business run on autopilot.", features: ["Custom automations", "Email & SMS workflows", "AI integrations", "Third-party connections", "Save time and reduce errors"], href: "/contact", image: "/work/aegisfleet.webp" },
 ];
 
