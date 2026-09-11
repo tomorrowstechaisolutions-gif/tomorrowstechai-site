@@ -36,7 +36,11 @@ export async function loadServiceList(db: SupabaseClient, params: Record<string,
     db.rpc('service_summary', { p_from: from.toISOString(), p_to: now.toISOString() }),
   ]);
   if (rows.error || summary.error) throw new Error('Services could not be loaded. Please retry.');
-  return { services: rows.data as Service[], total: rows.count ?? 0, summary: summary.data as ServiceSummary, page, period };
+  const ids=(rows.data??[]).map(row=>row.id);
+  const relationships=ids.length ? await db.from('service_package_relationships').select('service_id').in('service_id',ids) : {data:[],error:null};
+  if(relationships.error) throw new Error('Package relationships could not be loaded.');
+  const counts=new Map<string,number>(); for(const row of relationships.data??[])counts.set(row.service_id,(counts.get(row.service_id)??0)+1);
+  return { services: (rows.data??[]).map(row=>({...row,package_count:counts.get(row.id)??0})) as Service[], total: rows.count ?? 0, summary: summary.data as ServiceSummary, page, period };
 }
 
 /** Reusable on both the service and existing client detail screens. */

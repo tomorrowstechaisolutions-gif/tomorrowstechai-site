@@ -1,5 +1,7 @@
 import { ContactForm } from "@/components/ContactForm";
 import { CalEmbed } from "@/components/CalEmbed";
+import { getPublicPackage } from "@/lib/catalog/public";
+import { catalogPrice } from "@/lib/catalog/types";
 
 export const metadata = {
   title: "Contact",
@@ -15,7 +17,9 @@ export const metadata = {
   },
 };
 
-export default function ContactPage() {
+export default async function ContactPage({searchParams}:{searchParams:Promise<{service?:string;plan?:string}>}) {
+  const query=await searchParams; const pkg=await getPublicPackage(query.plan);
+  const offer=pkg?{id:pkg.id,slug:pkg.slug,name:pkg.name,category:pkg.category,price:catalogPrice(pkg),sourcePage:pkg.publicRoute||"/contact"}:query.service?{id:null,slug:query.service,name:query.service.replaceAll("-"," "),category:query.service,price:"Custom quote",sourcePage:"/contact"}:null;
   return (
     <>
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-12">
@@ -52,7 +56,7 @@ export default function ContactPage() {
           Tell us a bit about what you&apos;re building. We respond within one
           business day.
         </p>
-        <ContactForm />
+        <ContactForm offer={offer} />
       </section>
 
       <section className="max-w-3xl mx-auto px-6 pb-20">

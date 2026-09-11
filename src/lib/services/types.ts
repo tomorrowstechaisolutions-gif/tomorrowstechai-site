@@ -9,6 +9,7 @@ export const AVAILABILITY = { catalog_enabled: 'Available in Catalog', proposal_
 export type ServiceStatus = typeof SERVICE_STATUSES[number];
 export type Service = {
   id: string; name: string; sku: string | null; description: string | null; category: string; service_type: string;
+  slug: string | null; catalog_category: string | null; short_description: string | null; image_url: string | null; image_path: string | null; image_alt: string | null; icon_key: string | null; public_route: string | null; meta_title: string | null; meta_description: string | null; frontend_locations: string[]; package_count?: number;
   status: ServiceStatus; billing_type: typeof BILLING_TYPES[number]; billing_interval: string; interval_months: number;
   from_cents: number; setup_fee_cents: number; internal_cost_cents: number | null; recurring_cost_cents: number | null;
   effective_cost_cents: number | null; calculated_internal_cost_cents: number | null; component_cost_cents: number | null;

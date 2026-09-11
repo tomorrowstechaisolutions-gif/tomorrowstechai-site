@@ -39,7 +39,8 @@ function prefillFromQuery(): string {
     : `I'd like to talk about the ${service} service.\n\n`;
 }
 
-export function ContactForm() {
+type ContactOffer={id:string|null;slug:string;name:string;category:string;price:string;sourcePage:string};
+export function ContactForm({offer}:{offer?:ContactOffer|null}) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
@@ -50,8 +51,8 @@ export function ContactForm() {
     const el = messageRef.current;
     // Never clobber something the visitor has already typed.
     if (!el || el.value) return;
-    el.value = prefillFromQuery();
-  }, []);
+    el.value = offer ? `I'd like to talk about ${offer.name} — ${offer.price}.\n\nService category: ${offer.category}\nPackage: ${offer.slug}\nSource page: ${offer.sourcePage}\n\n` : prefillFromQuery();
+  }, [offer]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -64,6 +65,7 @@ export function ContactForm() {
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
       company: (form.elements.namedItem("company") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
+      offer: offer??null,
     };
 
     try {

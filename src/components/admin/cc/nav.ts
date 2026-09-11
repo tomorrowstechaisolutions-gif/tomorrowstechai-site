@@ -96,6 +96,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Products & Services",
     links: [
       { href: "/admin/catalog", label: "Catalog", icon: IconLayers },
+      { href: "/admin/packages", label: "Packages", icon: IconCart },
       { href: "/admin/websites", label: "Websites", icon: IconGlobe },
       { href: "/admin/apps", label: "Apps", icon: IconLayers },
       { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot },

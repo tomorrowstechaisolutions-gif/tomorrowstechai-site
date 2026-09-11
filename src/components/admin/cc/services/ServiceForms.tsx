@@ -6,6 +6,7 @@ import { saveService, changeServiceStatus } from '@/app/admin/service-actions';
 import { AVAILABILITY, BILLING_LABELS, BILLING_TYPES, SERVICE_STATUSES, SERVICE_TYPES, type ActionResult, type Service } from '@/lib/services/types';
 import { grossMargin, marginLabel, money } from '@/lib/services/pricing';
 import { REVENUE_CATEGORIES } from '@/lib/supabase/types';
+import { CATALOG_CATEGORIES } from '@/lib/catalog/types';
 
 export function ActionForm({ action, children, label = 'Save', confirm, className = '' }: { action: (state: ActionResult, fd: FormData) => Promise<ActionResult>; children: React.ReactNode; label?: string; confirm?: string; className?: string }) {
   const [state, submit, pending] = useActionState(action, {});
@@ -41,12 +42,16 @@ export function ServiceEditor({ service, duplicate = false, onClose }: { service
     <div className="sv-fields">
       <label>Service Name<input name="name" className="cc-input" required maxLength={120} defaultValue={service ? service.name + (duplicate ? ' (copy)' : '') : ''} /></label>
       <label>Internal Name / SKU<input name="sku" className="cc-input" maxLength={80} defaultValue={duplicate ? '' : service?.sku ?? ''} /></label>
+      <label>Slug<input name="slug" className="cc-input" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={duplicate ? '' : service?.slug ?? ''} /></label>
+      <label>Catalog Category<select name="catalog_category" className="cc-select" defaultValue={service?.catalog_category ?? 'other'}>{CATALOG_CATEGORIES.map(v=><option key={v}>{v}</option>)}</select></label>
       <label>Category<select name="category" className="cc-select" defaultValue={service?.category ?? 'other'}>{REVENUE_CATEGORIES.map(v => <option key={v} value={v}>{v.replaceAll('_', ' ')}</option>)}</select></label>
       <label>Service Type<select name="service_type" className="cc-select" defaultValue={service?.service_type ?? 'Custom'}>{SERVICE_TYPES.map(v => <option key={v}>{v}</option>)}</select></label>
       <label>Status<select name="status" className="cc-select" defaultValue={duplicate ? 'draft' : service?.status ?? 'draft'}>{SERVICE_STATUSES.map(v => <option key={v}>{v}</option>)}</select></label>
       <label>Display Order<input name="position" className="cc-input" type="number" min={0} max={100000} defaultValue={service?.position ?? 0} required /></label>
     </div>
     <label>Description<textarea name="description" className="cc-textarea" rows={3} maxLength={4000} defaultValue={service?.description ?? ''} /></label>
+    <label>Short description<textarea name="short_description" className="cc-textarea" rows={2} maxLength={500} defaultValue={service?.short_description ?? ''} /></label>
+    <h3>Visuals and frontend</h3><div className="sv-fields"><label>Image URL<input name="image_url" className="cc-input" defaultValue={service?.image_url ?? ''}/></label><label>Image alt text<input name="image_alt" className="cc-input" defaultValue={service?.image_alt ?? ''}/></label><label>Icon key<input name="icon_key" className="cc-input" defaultValue={service?.icon_key ?? ''}/></label><label>Public route<input name="public_route" className="cc-input" defaultValue={service?.public_route ?? ''}/></label><label>Meta title<input name="meta_title" className="cc-input" defaultValue={service?.meta_title ?? ''}/></label><label>Meta description<textarea name="meta_description" className="cc-textarea" rows={2} defaultValue={service?.meta_description ?? ''}/></label><label>Frontend usage routes<textarea name="frontend_locations" className="cc-textarea" rows={3} defaultValue={service?.frontend_locations?.join('\n') ?? ''}/></label></div>
     <h3>Billing & profitability</h3>
     <div className="sv-fields">
       <label>Billing Type<select name="billing_type" className="cc-select" value={billing} onChange={e => setBilling(e.target.value as typeof billing)}>{BILLING_TYPES.map(v => <option key={v} value={v}>{BILLING_LABELS[v]}</option>)}</select></label>

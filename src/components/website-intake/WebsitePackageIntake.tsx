@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { IconArrowRight, IconBadgeCheck, IconCalendar, IconLock, IconMapPin, IconPhoneCall, IconRocket, IconShield, IconUsers } from "@/components/Icons";
-import { WEBSITE_PACKAGES, type WebsitePackageId } from "@/lib/website-packages";
+import { type WebsitePackage, type WebsitePackageId } from "@/lib/website-packages";
 import styles from "./WebsitePackageIntake.module.css";
 
 type FormState = {
@@ -24,7 +24,7 @@ type Errors = Partial<Record<keyof FormState | "form", string>>;
 
 const emptyForm = (packageId: WebsitePackageId | ""): FormState => ({ packageId, fullName: "", email: "", phone: "", company: "", website: "", project: "", referral: "", consent: false, hp_company_url: "" });
 
-export function WebsitePackageIntake({ initialPackageId }: { initialPackageId: WebsitePackageId | "" }) {
+export function WebsitePackageIntake({ initialPackageId,packages }: { initialPackageId: WebsitePackageId | "";packages:WebsitePackage[] }) {
   const [form, setForm] = useState<FormState>(() => emptyForm(initialPackageId));
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +32,7 @@ export function WebsitePackageIntake({ initialPackageId }: { initialPackageId: W
   const startedAt = useRef(0);
 
   useEffect(() => { startedAt.current = Date.now(); }, []);
-  const selected = WEBSITE_PACKAGES.find((item) => item.id === form.packageId) ?? null;
+  const selected = packages.find((item) => item.id === form.packageId) ?? null;
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -90,14 +90,14 @@ export function WebsitePackageIntake({ initialPackageId }: { initialPackageId: W
 
     <main className={styles.main}>
       <section className={styles.packages}><span className={styles.eyebrow}>Our Website Packages</span><h2>Choose the Right Package</h2><p>Professional websites designed to help your business look better, get more leads, and grow online.</p>
-        <div className={styles.packageGrid}>{WEBSITE_PACKAGES.map((item)=><button type="button" onClick={()=>choosePackage(item.id)} className={`${styles.packageCard} ${form.packageId===item.id?styles.selected:""}`} aria-pressed={form.packageId===item.id} key={item.id}>{item.featured&&<span className={styles.popular}>Most Popular</span>}<h3>{item.name}</h3><p>{item.description}</p><div className={styles.price}>{item.price}<small>one time</small></div><div className={styles.hosting}>+ $29/month hosting · first 30 days free</div><ul>{item.features.map(feature=><li key={feature}><IconBadgeCheck size={17}/>{feature}</li>)}</ul></button>)}</div>
+        <div className={styles.packageGrid}>{packages.map((item)=><button type="button" onClick={()=>choosePackage(item.id)} className={`${styles.packageCard} ${form.packageId===item.id?styles.selected:""}`} aria-pressed={form.packageId===item.id} key={item.id}>{item.featured&&<span className={styles.popular}>Most Popular</span>}<h3>{item.name}</h3><p>{item.description}</p><div className={styles.price}>{item.price}<small>{item.price.includes("/")?"":"one time"}</small></div><div className={styles.hosting}>Hosting is selected separately where needed.</div><ul>{item.features.map(feature=><li key={feature}><IconBadgeCheck size={17}/>{feature}</li>)}</ul></button>)}</div>
         {errors.packageId&&<p className={styles.cardError}>{errors.packageId}</p>}
       </section>
 
       <div className={styles.formCard}>
         <div className={styles.formHeading}><span><IconMapPin size={30}/></span><div><h2>Request Information</h2><p>Fill out the form below and we’ll be in touch soon.</p></div></div>
         <form onSubmit={submit} noValidate>
-          <div className={styles.full}><Field label="Website Package Interested In" error={errors.packageId} required><select value={form.packageId} onChange={(e)=>choosePackage(e.target.value as WebsitePackageId)} aria-invalid={!!errors.packageId}><option value="">Select a website package</option>{WEBSITE_PACKAGES.map(item=><option value={item.id} key={item.id}>{item.name} — {item.price}</option>)}</select></Field></div>
+          <div className={styles.full}><Field label="Website Package Interested In" error={errors.packageId} required><select value={form.packageId} onChange={(e)=>choosePackage(e.target.value as WebsitePackageId)} aria-invalid={!!errors.packageId}><option value="">Select a website package</option>{packages.map(item=><option value={item.id} key={item.id}>{item.name} — {item.price}</option>)}</select></Field></div>
           <Field label="Full Name" error={errors.fullName} required><input value={form.fullName} onChange={(e)=>update("fullName",e.target.value)} placeholder="John Smith" autoComplete="name"/></Field>
           <Field label="Email Address" error={errors.email} required><input type="email" value={form.email} onChange={(e)=>update("email",e.target.value)} placeholder="john@yourcompany.com" autoComplete="email"/></Field>
           <Field label="Phone Number" error={errors.phone} required><input type="tel" value={form.phone} onChange={(e)=>update("phone",e.target.value)} placeholder="(254) 563-2130" autoComplete="tel"/></Field>

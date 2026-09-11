@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconArrowRight, IconBadgeCheck } from "@/components/Icons";
 import styles from "./growAudience.module.css";
+import { loadPublicPackages } from "@/lib/catalog/public";
 
 /**
  * Plans route into the existing contact inquiry workflow, carrying the service
@@ -8,78 +9,9 @@ import styles from "./growAudience.module.css";
  * so the enquiry arrives already saying which package was chosen. There is no
  * self-serve checkout for managed marketing, so none is invented here.
  */
-const PLANS = [
-  {
-    id: "starter",
-    name: "Starter",
-    tagline: "Stay Active",
-    price: "$199",
-    cta: "Get Started",
-    features: [
-      "2 social platforms",
-      "8 posts per month",
-      "Custom graphics",
-      "Captions & hashtags",
-      "Content scheduling",
-      "Monthly analytics",
-      "Basic dashboard",
-    ],
-  },
-  {
-    id: "growth",
-    name: "Growth",
-    tagline: "Build Your Audience",
-    price: "$399",
-    cta: "Grow My Business",
-    featured: true,
-    features: [
-      "3 social platforms",
-      "16 posts per month",
-      "Campaign creation",
-      "Lead generation",
-      "Reputation monitoring",
-      "Analytics dashboard",
-      "Monthly strategy",
-    ],
-  },
-  {
-    id: "full-service",
-    name: "Full Service",
-    tagline: "We Run Your Marketing",
-    price: "$699",
-    cta: "Run My Marketing",
-    features: [
-      "Up to 5 platforms",
-      "24 posts per month",
-      "Campaign management",
-      "Lead generation",
-      "Review & reputation management",
-      "Comment/message monitoring",
-      "Advanced automation",
-      "Ongoing strategy & support",
-    ],
-  },
-  {
-    id: "custom",
-    name: "Custom Growth System",
-    tagline: "For Serious Growth",
-    price: "$999",
-    from: true,
-    cta: "Build My Custom Plan",
-    features: [
-      "Paid advertising (FB/IG/Google)",
-      "Landing pages",
-      "CRM integration",
-      "Email & SMS campaigns",
-      "Advanced AI automation",
-      "Multiple locations",
-      "Higher content volume",
-      "Custom strategy & support",
-    ],
-  },
-] as const;
-
-export function MarketingPricing() {
+export async function MarketingPricing() {
+  const canonical=await loadPublicPackages("marketing");
+  const displayPlans=canonical.map(pkg=>({id:pkg.slug,name:pkg.name.replace(/^Grow Your Audience /,""),tagline:pkg.subtitle,price:`$${(pkg.priceCents/100).toLocaleString("en-US")}`,cta:pkg.ctaLabel,featured:pkg.mostPopular||pkg.featured,from:pkg.pricingMode==="starting_at",features:pkg.features.filter(x=>x.included).map(x=>x.label),href:pkg.ctaRoute}));
   return (
     <section
       id="pricing"
@@ -92,7 +24,7 @@ export function MarketingPricing() {
       </div>
 
       <div className={styles.priceGrid}>
-        {PLANS.map((plan) => {
+        {displayPlans.map((plan) => {
           const featured = "featured" in plan && plan.featured;
           return (
             <article
@@ -124,7 +56,7 @@ export function MarketingPricing() {
               </ul>
 
               <Link
-                href={`/contact?service=grow-your-audience&plan=${plan.id}`}
+                href={plan.href}
                 className={`${styles.priceCta} ${featured ? styles.priceCtaFeatured : ""}`}
               >
                 {plan.cta} <IconArrowRight size={15} />

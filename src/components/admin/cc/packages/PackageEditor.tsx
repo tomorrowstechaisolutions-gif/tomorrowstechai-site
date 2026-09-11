@@ -1,0 +1,51 @@
+"use client";
+/* eslint-disable @next/next/no-img-element -- admin preview supports arbitrary validated package URLs */
+
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { archiveCatalogPackage, removeCatalogImage, saveCatalogPackage } from "@/app/admin/package-actions";
+import { BILLING_LABELS, BILLING_TYPES, SERVICE_STATUSES, type ActionResult } from "@/lib/services/types";
+import { CATALOG_CATEGORIES, PRICING_MODES } from "@/lib/catalog/types";
+import { REVENUE_CATEGORIES } from "@/lib/supabase/types";
+
+export type PackageRow = Record<string, unknown> & { id:string; name:string; slug:string; updated_at:string; image_path:string|null; image_url:string|null; image_alt:string|null; public_route:string|null; frontend_locations:string[]; most_popular:boolean; featured:boolean };
+export type ServiceChoice = { id:string; name:string; slug:string|null; catalog_category:string|null; short_description:string|null };
+export type PackageLink = { id:string; service_id:string; included:boolean; feature_label:string|null; feature_description:string|null; sort_order:number };
+
+function Result({state}:{state:ActionResult}) { return <>{state.error&&<p className="cc-error" role="alert">{state.error}</p>}{state.success&&<p className="sv-success" role="status">{state.success}</p>}</>; }
+
+export default function PackageEditor({pkg,services,links}:{pkg:PackageRow|null;services:ServiceChoice[];links:PackageLink[]}){
+  const [state,action,pending]=useActionState(saveCatalogPackage,{}); const router=useRouter();
+  useEffect(()=>{ if(state.id){ router.replace(`/admin/packages/${state.id}`); router.refresh(); } },[state.id,router]);
+  const byService=new Map(links.map(link=>[link.service_id,link]));
+  const value=(key:string,fallback="")=>String(pkg?.[key]??fallback);
+  return <form action={action} className="sv-form pkg-editor" encType="multipart/form-data">
+    {pkg&&<><input type="hidden" name="id" value={pkg.id}/><input type="hidden" name="updated_at" value={pkg.updated_at}/></>}
+    <section className="cc-panel sv-section"><div className="sv-section-heading"><div><span className="sv-eyebrow">Overview</span><h2>Basic information</h2></div><span className={`sv-badge sv-${value("status","draft")}`}>{value("status","draft")}</span></div><div className="sv-fields">
+      <label>Package name<input className="cc-input" name="name" required maxLength={120} defaultValue={value("name")}/></label>
+      <label>Slug<input className="cc-input" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={value("slug")}/></label>
+      <label>Catalog category<select className="cc-select" name="catalog_category" defaultValue={value("catalog_category","other")}>{CATALOG_CATEGORIES.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Revenue category<select className="cc-select" name="category" defaultValue={value("category","other")}>{REVENUE_CATEGORIES.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Status<select className="cc-select" name="status" defaultValue={value("status","draft")}>{SERVICE_STATUSES.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Display order<input className="cc-input" name="position" type="number" min={0} max={100000} defaultValue={value("position","0")}/></label>
+    </div><label>Subtitle<input className="cc-input" name="subtitle" maxLength={200} defaultValue={value("subtitle")}/></label><label>Short description<textarea className="cc-textarea" name="short_description" rows={2} maxLength={500} defaultValue={value("short_description")}/></label><label>Full description<textarea className="cc-textarea" name="description" rows={4} maxLength={4000} defaultValue={value("description")}/></label></section>
+
+    <section className="cc-panel sv-section"><span className="sv-eyebrow">Pricing</span><h2>Price and billing</h2><div className="sv-fields">
+      <label>Pricing mode<select className="cc-select" name="pricing_mode" defaultValue={value("pricing_mode","fixed")}>{PRICING_MODES.map(x=><option key={x} value={x}>{x.replaceAll("_"," ")}</option>)}</select></label>
+      <label>Price ($)<input className="cc-input" name="price" type="number" min={0} step="0.01" defaultValue={Number(pkg?.from_cents??0)/100}/></label>
+      <label>Setup fee ($)<input className="cc-input" name="setup_fee" type="number" min={0} step="0.01" defaultValue={Number(pkg?.setup_fee_cents??0)/100}/></label>
+      <label>Billing type<select className="cc-select" name="billing_type" defaultValue={value("billing_type","one_time")}>{BILLING_TYPES.map(x=><option key={x} value={x}>{BILLING_LABELS[x]}</option>)}</select></label>
+      <label>Billing interval<select className="cc-select" name="billing_interval" defaultValue={value("billing_interval","monthly")}>{["monthly","quarterly","yearly","custom"].map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Badge<input className="cc-input" name="badge" maxLength={80} placeholder="Most Popular, Best Value…" defaultValue={value("badge")}/></label>
+    </div><div className="sv-fields"><label className="sv-check"><input name="most_popular" type="checkbox" defaultChecked={pkg?.most_popular===true}/>Most popular</label><label className="sv-check"><input name="featured" type="checkbox" defaultChecked={pkg?.featured===true}/>Featured package</label></div></section>
+
+    <section className="cc-panel sv-section"><span className="sv-eyebrow">Media</span><h2>Package image and icon</h2>{pkg&&(pkg.image_path||pkg.image_url)&&<div className="pkg-image-preview"><img src={pkg.image_path?`/api/catalog-media/${pkg.id}`:String(pkg.image_url)} alt={value("image_alt",value("name"))}/></div>}<div className="sv-fields"><label>Upload/replace image<input className="cc-input" name="image_file" type="file" accept="image/*"/></label><label>Or image URL<input className="cc-input" name="image_url" type="text" placeholder="https://… or /images/…" defaultValue={value("image_url")}/></label><label>Image alt text<input className="cc-input" name="image_alt" maxLength={240} defaultValue={value("image_alt")}/></label><label>Icon key<input className="cc-input" name="icon_key" maxLength={80} defaultValue={value("icon_key")}/></label></div></section>
+
+    <section className="cc-panel sv-section"><div className="sv-section-heading"><div><span className="sv-eyebrow">Services included</span><h2>{links.length} individual services selected</h2></div><small>Check a service, then customize its public label and order.</small></div><div className="pkg-service-list">{services.map((service,index)=>{const link=byService.get(service.id);return <article key={service.id} className="pkg-service-row"><label className="sv-check"><input name="service_ids" value={service.id} type="checkbox" defaultChecked={!!link}/><span><strong>{service.name}</strong><small>{service.catalog_category||"other"} · {service.short_description||"No short description"}</small></span></label><input className="cc-input" name={`feature_label_${service.id}`} aria-label={`${service.name} public feature label`} placeholder="Package-specific feature label" defaultValue={link?.feature_label??service.name}/><input className="cc-input" name={`feature_description_${service.id}`} aria-label={`${service.name} feature description`} placeholder="Optional short description" defaultValue={link?.feature_description??""}/><input className="cc-input pkg-order" name={`sort_order_${service.id}`} aria-label={`${service.name} order`} type="number" defaultValue={link?.sort_order??(index+1)*10}/></article>})}</div></section>
+
+    <section className="cc-panel sv-section"><span className="sv-eyebrow">Frontend & SEO</span><h2>Publishing destinations</h2><div className="sv-fields"><label>CTA label<input className="cc-input" name="cta_label" defaultValue={value("cta_label","Get Started")}/></label><label>CTA route<input className="cc-input" name="cta_route" placeholder="/contact?…" defaultValue={value("cta_route","/contact")}/></label><label>Public page<input className="cc-input" name="public_route" placeholder="/services/…" defaultValue={value("public_route")}/></label><label>Frontend usage routes<textarea className="cc-textarea" name="frontend_locations" rows={3} placeholder="One route per line" defaultValue={Array.isArray(pkg?.frontend_locations)?pkg.frontend_locations.join("\n"):""}/></label><label>Meta title<input className="cc-input" name="meta_title" maxLength={180} defaultValue={value("meta_title")}/></label><label>Meta description<textarea className="cc-textarea" name="meta_description" rows={2} maxLength={320} defaultValue={value("meta_description")}/></label></div><div className="sv-fields">{[["catalog_enabled","Catalog"],["proposal_enabled","Proposals"],["intake_enabled","Intake forms"],["internal_sales_enabled","Internal sales"],["public_enabled","Public website"],["manual_invoice_enabled","Manual invoices"]].map(([key,label])=><label className="sv-check" key={key}><input name={key} type="checkbox" defaultChecked={pkg?pkg[key]===true:true}/>{label}</label>)}</div></section>
+    <Result state={state}/><div className="sv-actions pkg-sticky"><button className="cc-btn primary" disabled={pending}>{pending?"Saving…":"Publish / Save Package"}</button></div>
+  </form>;
+}
+
+export function PackageDangerActions({pkg}:{pkg:PackageRow}){ const [archiveState,archive,pending]=useActionState(archiveCatalogPackage,{}); const [imageState,removeImage,imagePending]=useActionState(removeCatalogImage,{}); return <section className="cc-panel sv-section"><h2>Archive & media controls</h2><p className="sv-muted">Archiving hides the package from new sales and the public website while preserving leads, invoices, and history.</p><div className="sv-actions"><form action={archive} onSubmit={e=>{if(!window.confirm(`Archive ${pkg.name}?`))e.preventDefault();}}><input type="hidden" name="id" value={pkg.id}/><button className="cc-btn" disabled={pending}>Archive Package</button></form>{(pkg.image_path||pkg.image_url)&&<form action={removeImage} onSubmit={e=>{if(!window.confirm("Remove this package image?"))e.preventDefault();}}><input type="hidden" name="id" value={pkg.id}/><button className="cc-btn" disabled={imagePending}>Remove Image</button></form>}</div><Result state={archiveState}/><Result state={imageState}/></section>;}

@@ -5,7 +5,7 @@ export const AI_OPERATOR_PLANS = {
     price: "$199",
     setup: "$299 one-time setup",
     description: "A focused foundation for capturing and following up with new leads.",
-    features: ["AI chat & missed-call text back", "Lead capture", "Basic follow-up", "Professional website included"],
+    features: ["AI chat", "Missed-call text back", "Lead capture", "Basic follow-up", "Professional website included when applicable"],
   },
   growth: {
     id: "growth",
@@ -13,7 +13,7 @@ export const AI_OPERATOR_PLANS = {
     price: "$399",
     setup: "$749 one-time setup",
     description: "Everything you need to automate leads, follow up, and grow your business.",
-    features: ["AI chat & missed-call text back", "Lead capture & follow-up", "CRM & pipeline management", "Appointment booking", "Review requests", "Social media posting", "Professional website included"],
+    features: ["Everything in Starter", "CRM & pipeline management", "Appointment booking", "Review requests", "Enhanced follow-up automation", "Basic social media posting"],
   },
   operator: {
     id: "operator",
@@ -29,7 +29,7 @@ export const AI_OPERATOR_PLANS = {
     price: "$999+",
     setup: "$2,500+ setup",
     description: "A custom operating system designed around your workflows and integrations.",
-    features: ["Custom workflow design", "Custom integrations", "API connections", "Advanced reporting", "Dedicated support", "Scalable architecture"],
+    features: ["Custom workflow design", "Custom integrations", "API connections", "Advanced reporting", "Dedicated support", "Scalable automation architecture"],
   },
 } as const;
 

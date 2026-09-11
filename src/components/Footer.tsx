@@ -24,7 +24,7 @@ const COLUMNS: { head: string; links: { label: string; href: string; external?: 
     head: "Solutions",
     links: [
       { label: "Build your brand", href: "/services" },
-      { label: "Run your business", href: "/services" },
+      { label: "Run your business", href: "/services/run-your-business" },
       { label: "Grow your audience", href: "/services" },
       { label: "AI & automation", href: "/services" },
     ],

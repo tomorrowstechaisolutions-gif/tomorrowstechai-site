@@ -5,6 +5,7 @@ import { createSupabaseServerClient, getAdminUser } from '@/lib/supabase/server'
 import { AVAILABILITY, BILLING_TYPES, SERVICE_FREQUENCIES, SERVICE_STATUSES, SERVICE_TYPES, type ActionResult } from '@/lib/services/types';
 import { isUuid, parseMoney } from '@/lib/services/pricing';
 import { REVENUE_CATEGORIES } from '@/lib/supabase/types';
+import { CATALOG_CATEGORIES } from '@/lib/catalog/types';
 
 async function access() {
   const session = await getAdminUser();
@@ -15,7 +16,7 @@ const str = (fd: FormData, key: string, max = 2000) => String(fd.get(key) ?? '')
 function uuid(fd: FormData, key: string) { const v = str(fd, key, 40); if (!isUuid(v)) throw new Error('Invalid record. Reload the page and try again.'); return v; }
 function integer(fd: FormData, key: string, min: number, max: number) { const n = Number(str(fd, key)); if (!Number.isInteger(n) || n < min || n > max) throw new Error(`Enter a valid ${key.replaceAll('_', ' ')}.`); return n; }
 function decimal(fd: FormData, key: string, min: number, max: number, nullable = false) { const raw = str(fd, key); if (!raw && nullable) return null; const n = Number(raw); if (!Number.isFinite(n) || n < min || n > max) throw new Error(`Enter a valid ${key.replaceAll('_', ' ')}.`); return n; }
-function touch(id?: string) { for (const path of ['/admin/services', '/admin/catalog', '/admin', '/admin/tasks', '/admin/jobs']) revalidatePath(path); if (id) revalidatePath(`/admin/services/${id}`); }
+function touch(id?: string) { for (const path of ['/admin/services', '/admin/packages', '/admin/catalog', '/admin', '/admin/tasks', '/admin/jobs', '/services', '/services/ai-business-operator', '/services/grow-your-audience', '/website-intake', '/get-started']) revalidatePath(path); if (id) revalidatePath(`/admin/services/${id}`); }
 function failure(e: unknown): ActionResult { return { error: e instanceof Error ? e.message : 'Save failed. Please retry.' }; }
 function check(error: { code?: string } | null) { if (error) throw new Error(error.code === '23505' ? 'That name, SKU, or relationship already exists.' : error.code === '40001' ? 'This service changed since you opened it. Reload before saving.' : 'The change could not be saved. Please reload and try again.'); }
 
@@ -24,6 +25,8 @@ export async function saveService(_previous: ActionResult, fd: FormData): Promis
     const { db } = await access();
     const id = str(fd, 'id') ? uuid(fd, 'id') : null;
     const name = str(fd, 'name', 120); if (!name) throw new Error('Service name is required.');
+    const slug = str(fd,'slug',120); if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('Use a lowercase URL slug with letters, numbers, and hyphens.');
+    const catalogCategory=str(fd,'catalog_category',60); if(!(CATALOG_CATEGORIES as readonly string[]).includes(catalogCategory)) throw new Error('Choose a valid catalog category.');
     const status = str(fd, 'status'); const billing = str(fd, 'billing_type'); const type = str(fd, 'service_type'); const category = str(fd, 'category');
     if (!(SERVICE_STATUSES as readonly string[]).includes(status) || !(BILLING_TYPES as readonly string[]).includes(billing) || !(SERVICE_TYPES as readonly string[]).includes(type) || !(REVENUE_CATEGORIES as readonly string[]).includes(category)) throw new Error('Select valid service settings.');
     const interval = str(fd, 'billing_interval'); if (!['monthly', 'quarterly', 'yearly', 'custom'].includes(interval)) throw new Error('Select a billing interval.');
@@ -33,7 +36,9 @@ export async function saveService(_previous: ActionResult, fd: FormData): Promis
       ...Object.fromEntries(Object.keys(AVAILABILITY).map(key => [key, fd.get(key) === 'on'])),
     };
     const { data: saved, error } = await db.rpc('save_service', { p_id: id, p_data: data, p_cost: { internal_cost_cents: parseMoney(str(fd, 'internal_cost'), true), recurring_cost_cents: parseMoney(str(fd, 'recurring_cost'), true) }, p_expected: str(fd, 'updated_at') || null });
-    check(error); touch(saved); return { success: 'Service saved.', id: saved };
+    check(error);
+    const {error:displayError}=await db.from('catalog_items').update({slug,catalog_category:catalogCategory,short_description:str(fd,'short_description',500)||null,image_url:str(fd,'image_url',1000)||null,image_alt:str(fd,'image_alt',240)||null,icon_key:str(fd,'icon_key',80)||null,public_route:str(fd,'public_route',500)||null,meta_title:str(fd,'meta_title',180)||null,meta_description:str(fd,'meta_description',320)||null,frontend_locations:str(fd,'frontend_locations',2000).split(/[\n,]/).map(x=>x.trim()).filter(Boolean).slice(0,30),offer_kind:'service'}).eq('id',saved); check(displayError);
+    touch(saved); return { success: 'Service saved.', id: saved };
   } catch (e) { return failure(e); }
 }
 

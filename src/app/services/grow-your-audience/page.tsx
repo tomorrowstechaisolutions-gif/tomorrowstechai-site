@@ -22,6 +22,7 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+export const dynamic = "force-dynamic";
 
 export default function GrowYourAudiencePage() {
   return (

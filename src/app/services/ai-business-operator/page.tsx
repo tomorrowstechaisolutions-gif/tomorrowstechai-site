@@ -21,6 +21,7 @@ import {
   IconUsers,
 } from "@/components/Icons";
 import styles from "./operator.module.css";
+import { loadPublicPackages } from "@/lib/catalog/public";
 
 export const metadata: Metadata = {
   title: "AI Business Operator | Business Automation",
@@ -46,6 +47,7 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+export const dynamic = "force-dynamic";
 
 const features = [
   { Icon: IconBot, title: "AI Chat & Voice", body: "Answers chats, texts and website questions 24/7" },
@@ -67,43 +69,6 @@ const benefits = [
   { Icon: IconCalendar, title: "Book More Appointments", body: "Respond while customers are still interested" },
   { Icon: IconMail, title: "Improve Follow-Up", body: "Stay in touch automatically" },
   { Icon: IconStar, title: "Build More Reviews", body: "Create consistent review-request workflows" },
-];
-
-const plans = [
-  {
-    id: "starter",
-    name: "AI Starter",
-    price: "$199",
-    setup: "$299 setup",
-    includes: ["AI chat", "Missed-call text back", "Lead capture", "Basic follow-up", "Professional website included when applicable"],
-    cta: "Get Started",
-  },
-  {
-    id: "growth",
-    name: "AI Growth",
-    price: "$399",
-    setup: "$749 setup",
-    featured: true,
-    includes: ["Everything in Starter", "CRM & pipeline management", "Appointment booking", "Review requests", "Enhanced follow-up automation", "Basic social media posting"],
-    cta: "Get Started",
-  },
-  {
-    id: "operator",
-    name: "AI Operator",
-    price: "$699",
-    setup: "$1,499 setup",
-    includes: ["Everything in Growth", "Advanced automation", "Estimate follow-up", "Customer reminders", "AI email responses", "Expanded reporting", "Priority support"],
-    cta: "Get Started",
-  },
-  {
-    id: "custom",
-    name: "Custom",
-    price: "$999",
-    prefix: "Starting at",
-    setup: "$2,500+ setup",
-    includes: ["Custom workflow design", "Custom integrations", "API connections", "Advanced reporting", "Dedicated support", "Scalable automation architecture"],
-    cta: "Let’s Talk",
-  },
 ];
 
 const industries = [
@@ -133,7 +98,9 @@ const trust = [
   { Icon: IconRocket, title: "Human Support Included", body: "Real help is part of the service—not an extra add-on." },
 ];
 
-export default function AiBusinessOperatorPage() {
+export default async function AiBusinessOperatorPage() {
+  const canonicalPlans=await loadPublicPackages("ai");
+  const displayPlans=canonicalPlans.map(pkg=>({id:pkg.slug,name:pkg.name,price:`$${(pkg.priceCents/100).toLocaleString("en-US")}`,prefix:pkg.pricingMode==="starting_at"?"Starting at":undefined,setup:pkg.setupFeeCents?`$${(pkg.setupFeeCents/100).toLocaleString("en-US")} setup`:"No setup fee",featured:pkg.mostPopular||pkg.featured,includes:pkg.features.filter(x=>x.included).map(x=>x.label),cta:pkg.ctaLabel,href:pkg.ctaRoute}));
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
@@ -217,7 +184,7 @@ export default function AiBusinessOperatorPage() {
       <section id="pricing" className={`${styles.lightSection} ${styles.pricingSection}`}>
         <SectionHeading eyebrow="Simple, Transparent Pricing" title="Choose the Right Plan for Your Business" />
         <div className={styles.pricingGrid}>
-          {plans.map((plan) => (
+          {displayPlans.map((plan) => (
             <article key={plan.name} className={`${styles.priceCard} ${plan.featured ? styles.featuredPlan : ""}`}>
               {plan.featured && <div className={styles.popular}>Most Popular</div>}
               <h3>{plan.name}</h3>
@@ -229,7 +196,7 @@ export default function AiBusinessOperatorPage() {
               <ul>
                 {plan.includes.map((item) => <li key={item}><IconBadgeCheck size={16} />{item}</li>)}
               </ul>
-              <Link href={`/get-started?plan=${plan.id}`} className={plan.featured ? "btn-primary" : styles.priceButton}>{plan.cta}</Link>
+              <Link href={plan.href} className={plan.featured ? "btn-primary" : styles.priceButton}>{plan.cta}</Link>
             </article>
           ))}
         </div>

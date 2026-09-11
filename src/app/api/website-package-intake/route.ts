@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { intakeLead } from "@/lib/campaign/intake";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
-import { getWebsitePackage } from "@/lib/website-packages";
+import { getPublicPackage } from "@/lib/catalog/public";
+import { catalogPrice } from "@/lib/catalog/types";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid request." }, { status: 400 });
     if (clean(body.hp_company_url, 500) || (typeof body.elapsed_ms === "number" && body.elapsed_ms < 1800)) return NextResponse.json({ ok: true });
 
-    const selectedPackage = getWebsitePackage(clean(body.packageId, 30));
+    const selectedPackage = await getPublicPackage(clean(body.packageId, 120),"websites");
     const fullName = clean(body.fullName, 200);
     const nameParts = fullName.split(/\s+/).filter(Boolean);
     const firstName = nameParts.shift() ?? "";
@@ -43,7 +44,9 @@ export async function POST(req: Request) {
     const website = websiteRaw && !/^https?:\/\//i.test(websiteRaw) ? `https://${websiteRaw}` : websiteRaw;
     const details = [
       "Website package inquiry",
-      `Selected package: ${selectedPackage.name} (${selectedPackage.price} one time; $29/month hosting, first 30 days free)`,
+      `Service category: ${selectedPackage.category}`,
+      `Selected package: ${selectedPackage.name} (${catalogPrice(selectedPackage)})`,
+      `Source page: /website-intake`,
       `Project description: ${project}`,
       `How they heard about us: ${referral || "Not provided"}`,
     ].join("\n");
@@ -59,8 +62,8 @@ export async function POST(req: Request) {
       website_url: website || null,
       services_interested: [`Website Package — ${selectedPackage.name}`],
       source: "website-package-intake",
-      campaign: selectedPackage.campaign,
-      landing_page: `/website-intake?package=${selectedPackage.id}`,
+      campaign: `${selectedPackage.name} · ${catalogPrice(selectedPackage)}`,
+      landing_page: `/website-intake?package=${selectedPackage.slug}`,
       email_consent: true,
       sms_consent: false,
       consent_text: CONSENT_TEXT,
@@ -80,7 +83,7 @@ export async function POST(req: Request) {
         type: "website_package_intake",
         body: `${selectedPackage.name} website inquiry submitted.`,
         actor: "system",
-        meta: { package: selectedPackage.id, package_name: selectedPackage.name, project, referral: referral || null },
+        meta: { package_id:selectedPackage.id,package: selectedPackage.slug, package_name: selectedPackage.name, category:selectedPackage.category,price:catalogPrice(selectedPackage),source_page:"/website-intake", project, referral: referral || null },
       });
     }
 

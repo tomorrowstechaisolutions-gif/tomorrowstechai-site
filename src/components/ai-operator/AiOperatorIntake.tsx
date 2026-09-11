@@ -2,11 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import type { getAiOperatorPlan } from "@/lib/ai-operator/plans";
 import { IconArrowRight, IconBadgeCheck, IconCalendar, IconChart, IconLock, IconRocket, IconShield, IconUsers } from "@/components/Icons";
 import styles from "./AiOperatorIntake.module.css";
 
-type Plan = ReturnType<typeof getAiOperatorPlan>;
+type Plan = {id:string;name:string;price:string;setup:string;description:string;features:readonly string[]};
 type Form = {
   fullName: string; email: string; phone: string; company: string; website: string;
   industry: string; employees: string; monthlyLeads: string; challenges: string[];
