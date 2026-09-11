@@ -24,6 +24,7 @@ import {
   IconMegaphone,
   IconPhoneCall,
   IconRocket,
+  IconSparkle,
   IconUsers,
 } from "./Icons";
 
@@ -57,6 +58,12 @@ type NavEntry = {
  * content — no dead links.
  */
 const SOLUTIONS: MegaItem[] = [
+  {
+    href: "/services/ai-ad-creative-studio",
+    label: "AI Ad Creative Studio",
+    blurb: "Create on-brand image ads from your real services, packages, and offers.",
+    Icon: IconSparkle,
+  },
   {
     href: "/services/ai-business-operator",
     label: "AI Business Operator",

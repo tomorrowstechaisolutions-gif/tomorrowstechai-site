@@ -23,6 +23,7 @@ const COLUMNS: { head: string; links: { label: string; href: string; external?: 
   {
     head: "Solutions",
     links: [
+      { label: "AI Ad Creative Studio", href: "/services/ai-ad-creative-studio" },
       { label: "Build your brand", href: "/services" },
       { label: "Run your business", href: "/services/run-your-business" },
       { label: "Grow your audience", href: "/services" },

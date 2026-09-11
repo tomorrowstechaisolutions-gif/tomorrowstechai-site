@@ -308,6 +308,7 @@ export function slugify(raw: string): string {
 
 export function safeUrl(raw: string | null | undefined): string | null {
   if (!raw) return null;
+  if (/^\/(?!\/)/.test(raw)) return raw;
   const candidate = raw.includes("://") ? raw : `https://${raw}`;
   try {
     const url = new URL(candidate);

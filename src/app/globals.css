@@ -6700,6 +6700,44 @@ body {
 
   .cc-appcard-top .cc-menu-wrap { margin-left: auto; }
 
+  .cc-solution-cell {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .cc-solution-thumb,
+  .cc-solution-detail-cover {
+    flex: 0 0 auto;
+    object-fit: cover;
+    border: 1px solid rgba(44, 178, 255, 0.35);
+    background: #03101d;
+  }
+
+  .cc-solution-thumb {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+  }
+
+  .cc-solution-cover {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    margin-bottom: 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(44, 178, 255, 0.3);
+    background: #03101d;
+  }
+
+  .cc-solution-detail-cover {
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+  }
+
   .cc-dot {
     width: 7px;
     height: 7px;

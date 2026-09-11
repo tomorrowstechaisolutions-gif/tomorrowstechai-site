@@ -45,6 +45,7 @@ export type SolutionRow = {
   internalName: string | null;
   description: string | null;
   purpose: string | null;
+  coverImageUrl: string | null;
   tags: string[];
 
   type: SolutionType;
@@ -183,6 +184,7 @@ type CustomerLite = { id: string; name: string | null; business_name: string | n
 type SolutionRaw = {
   id: string; name: string; slug: string; internal_name: string | null;
   description: string | null; purpose: string | null; tags: string[] | null;
+  cover_image_url: string | null;
   solution_type: SolutionType; status: SolutionStatus;
   customer_id: string | null; service_id: string | null; client_service_id: string | null;
   app_id: string | null; website_id: string | null;
@@ -217,7 +219,7 @@ export async function loadAiBoard(sb: SupabaseClient, filters: AiFilters): Promi
       .from("ai_solutions")
       .select(
         `id, name, slug, internal_name, description, purpose, tags, solution_type, status,
-         customer_id, service_id, client_service_id, app_id, website_id,
+         customer_id, service_id, client_service_id, app_id, website_id, cover_image_url,
          provider_key, model, deployment_target, deployment_url, source_path,
          monthly_price_cents, billing_type, error_rate_warning_pct,
          monthly_cost_warning_micro_usd, is_archived, created_at, updated_at,
@@ -378,6 +380,7 @@ export async function loadAiBoard(sb: SupabaseClient, filters: AiFilters): Promi
       internalName: s.internal_name,
       description: s.description,
       purpose: s.purpose,
+      coverImageUrl: safeUrl(s.cover_image_url),
       tags: s.tags ?? [],
       type: s.solution_type,
       typeLabel: TYPE_LABELS[s.solution_type] ?? s.solution_type,

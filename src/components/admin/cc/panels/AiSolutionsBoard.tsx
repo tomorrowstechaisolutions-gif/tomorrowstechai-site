@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { loadAiBoard, loadTemplates, type AiBoard as Board, type AiFilters, type SolutionRow } from "@/lib/ai/queries";
 import { loadAiChoices } from "@/lib/ai/detail";
@@ -251,8 +252,15 @@ function SolutionsTable({ board, canManage }: { board: Board; canManage: boolean
           {board.rows.map((row) => (
             <tr key={row.id}>
               <td>
-                <Link className="cc-link cc-strong" href={`/admin/ai-solutions/${row.id}`}>{row.name}</Link>
-                <span className="cc-client-sub">{row.internalName || row.slug}</span>
+                <div className="cc-solution-cell">
+                  {row.coverImageUrl ? (
+                    <Image className="cc-solution-thumb" src={row.coverImageUrl} alt="" width={46} height={46} />
+                  ) : null}
+                  <span>
+                    <Link className="cc-link cc-strong" href={`/admin/ai-solutions/${row.id}`}>{row.name}</Link>
+                    <span className="cc-client-sub">{row.internalName || row.slug}</span>
+                  </span>
+                </div>
               </td>
               <td>
                 {row.client ? (
@@ -323,6 +331,11 @@ function SolutionsCards({ board, canManage }: { board: Board; canManage: boolean
     <div className="cc-appcards">
       {board.rows.map((row) => (
         <article className="cc-appcard" key={row.id}>
+          {row.coverImageUrl ? (
+            <Link href={`/admin/ai-solutions/${row.id}`} aria-label={`Open ${row.name}`}>
+              <Image className="cc-solution-cover" src={row.coverImageUrl} alt={`${row.name} cover`} width={1254} height={1254} />
+            </Link>
+          ) : null}
           <div className="cc-appcard-top">
             <span className="cc-mono">{row.name.slice(0, 2).toUpperCase()}</span>
             <span className="cc-appcard-name">

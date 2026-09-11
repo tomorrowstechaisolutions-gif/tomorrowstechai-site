@@ -117,6 +117,7 @@ export type SolutionDetail = {
   internalName: string | null;
   description: string | null;
   purpose: string | null;
+  coverImageUrl: string | null;
   tags: string[];
 
   type: SolutionType;
@@ -381,6 +382,7 @@ export async function loadSolution(sb: SupabaseClient, id: string): Promise<Solu
     internalName: (s.internal_name as string | null) ?? null,
     description: (s.description as string | null) ?? null,
     purpose: (s.purpose as string | null) ?? null,
+    coverImageUrl: safeUrl(s.cover_image_url as string | null),
     tags: (s.tags as string[] | null) ?? [],
     type: s.solution_type as SolutionType,
     typeLabel: TYPE_LABELS[s.solution_type as SolutionType] ?? String(s.solution_type),

@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## AI Ad Creative Studio
+
+The protected Admin Center route `/admin/marketing/ads` uses the live Supabase catalog and the private `brand-assets` bucket. Real image generation requires these server-only environment variables:
+
+```bash
+OPENAI_API_KEY=
+OPENAI_IMAGE_MODEL=gpt-image-2.5-sunburst
+# Optional approved accounting estimate, in millionths of a US dollar per image:
+AD_IMAGE_ESTIMATED_COST_MICRO_USD=
+```
+
+Never expose the API key with a `NEXT_PUBLIC_` prefix. If no approved cost estimate is configured, the studio deliberately reports generation cost as unavailable rather than inventing a number.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

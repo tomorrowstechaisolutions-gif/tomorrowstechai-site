@@ -1,103 +1,25 @@
-import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { STATUS_TONE, buildDestinationUrl } from "@/lib/campaign/ads";
-import type { AdCreative } from "@/lib/supabase/types";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
+import { imageProviderStatus } from "@/lib/ad-studio/provider";
+import AdCreativeStudio from "@/components/admin/cc/ad-studio/AdCreativeStudio";
+import "./studio.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
-    .from("ad_creatives")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  const ads = (data ?? []) as AdCreative[];
-  const live = ads.filter((a) => a.status === "live").length;
-
-  return (
-    <>
-      <header className="ad-head">
-        <h1>Ad Studio</h1>
-        <p>
-          Every ad you run, kept so the next one starts from the last one that
-          worked. Write copy from a brief, check it against Meta&rsquo;s limits, and
-          copy the tracked URL straight into Ads Manager.
-        </p>
-      </header>
-
-      <div className="ad-filters">
-        <Link href="/admin/marketing/ads/new" className="ad-btn primary">
-          New ad
-        </Link>
-        <span className="ad-muted" style={{ alignSelf: "center" }}>
-          {ads.length} saved · {live} live
-        </span>
-      </div>
-
-      <section className="ad-panel">
-        {ads.length === 0 ? (
-          <p className="ad-empty">
-            Nothing saved yet. Start with <strong>New ad</strong> — describe who
-            it&rsquo;s for and it&rsquo;ll write three versions to choose from.
-          </p>
-        ) : (
-          <div className="ad-table-scroll">
-            <table className="ad-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th>Headline</th>
-                  <th>Button</th>
-                  <th>Campaign</th>
-                  <th>Ad set</th>
-                  <th>Written by</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ads.map((a) => (
-                  <tr key={a.id}>
-                    <td>
-                      <Link href={`/admin/marketing/ads/${a.id}`} className="ad-link">
-                        {a.name}
-                      </Link>
-                    </td>
-                    <td>
-                      <span className={`ad-tag s-${STATUS_TONE[a.status]}`}>{a.status}</span>
-                    </td>
-                    <td>{a.headline || "—"}</td>
-                    <td>{a.cta_label}</td>
-                    <td>{a.campaign}</td>
-                    <td>{a.adset || "—"}</td>
-                    <td>{a.generated_by === "ai" ? "Claude" : "You"}</td>
-                    <td>{new Date(a.created_at).toLocaleDateString("en-US")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="ad-panel">
-        <div className="ad-panel-head">
-          <h2>How the tracking fits together</h2>
-        </div>
-        <p className="ad-note">
-          Each ad&rsquo;s URL carries <code>utm_term={"{{ad.name}}"}</code>. Meta
-          swaps in the ad&rsquo;s real name at delivery, the lead form stores it, and
-          the ad-spend page uses the same name in its <em>Ad</em> column. Match those
-          two and the campaign dashboard can show cost per lead for each ad
-          separately. Mismatch them and everything collapses into one number.
-        </p>
-        <p className="ad-note">
-          Default URL for this campaign:{" "}
-          <code className="ad-break">{buildDestinationUrl({})}</code>
-        </p>
-      </section>
-    </>
-  );
+export default async function AdsPage({ searchParams }: { searchParams: Promise<{ catalog?: string }> }) {
+  const session = await getAdminUser(); if (!session) redirect("/admin/login");
+  const db = await createSupabaseServerClient();
+  const [catalog, assets, campaigns, jobs, templates, brand, legacy] = await Promise.all([
+    db.from("catalog_items").select("id,name,offer_kind,slug,short_description,description,pricing_mode,from_cents,billing_type,cta_label,updated_at,status,image_path,image_url").neq("status", "retired").order("offer_kind").order("position").limit(300),
+    db.from("content_assets").select("id,title,storage_path,width,height,format,approval_status,source_snapshot,source_fingerprint,template_key,generation_provider,generation_model,generation_cost_micro_usd,generated_at,created_at,is_archived").eq("asset_type", "ad").eq("is_archived", false).order("created_at", { ascending: false }).limit(100),
+    db.from("ad_campaign_sets").select("*").order("created_at", { ascending: false }).limit(30),
+    db.from("ad_generation_jobs").select("id,campaign_set_id,catalog_item_id,status,format,error_message,created_at,completed_at").order("created_at", { ascending: false }).limit(100),
+    db.from("brand_templates").select("id,name,template_key,prompt_guidance,status,is_system,usage_count").eq("template_type", "ad_creative").neq("status", "archived").order("name"),
+    db.from("brand_profiles").select("id,name,tagline,tone,audience,primary_cta,colors,primary_font").eq("is_default", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+    db.from("ad_creatives").select("id", { count: "exact", head: true }),
+  ]);
+  const failure = [catalog, assets, campaigns, jobs, templates, brand].find((result) => result.error);
+  if (failure?.error) throw new Error(`Ad Studio could not load: ${failure.error.message}`);
+  const params = await searchParams;
+  return <AdCreativeStudio initialCatalogId={params.catalog} catalog={catalog.data ?? []} assets={assets.data ?? []} campaigns={campaigns.data ?? []} jobs={jobs.data ?? []} templates={templates.data ?? []} brand={brand.data} provider={imageProviderStatus()} legacyCount={legacy.count ?? 0} canManage={["owner", "admin"].includes(session.admin.role)} />;
 }

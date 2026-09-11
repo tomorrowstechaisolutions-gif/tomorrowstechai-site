@@ -1,4 +1,5 @@
 import Link from 'next/link';
+/* eslint-disable @next/next/no-img-element -- authenticated primary media uses a protected route */
 import { notFound, redirect } from 'next/navigation';
 import { randomUUID } from 'node:crypto';
 import { createSupabaseServerClient, getAdminUser } from '@/lib/supabase/server';
@@ -41,7 +42,7 @@ export default async function ServiceDetail({ params, searchParams }: { params: 
   const canManage = ['owner','admin'].includes(session.admin.role); const db = await createSupabaseServerClient();
   const [{ data, error }, { data: creative, error: creativeError }] = await Promise.all([
     db.from('service_directory').select('*').eq('id',id).maybeSingle(),
-    db.from('catalog_items').select('ad_image_path').eq('id',id).maybeSingle(),
+    db.from('catalog_items').select('ad_image_path,image_path,image_url,image_alt').eq('id',id).maybeSingle(),
   ]);
   if (error || creativeError) throw new Error('Unable to load service.'); if (!data || !creative) notFound(); const service = data as Service;
   const query = await searchParams; const requestedTab = typeof query.tab === 'string' ? query.tab : 'overview';
@@ -60,7 +61,7 @@ export default async function ServiceDetail({ params, searchParams }: { params: 
     const { data:items,error:itemsError } = await db.from('service_inclusions').select('*').eq('service_id',id).order('sort_order').order('created_at'); if (itemsError) throw new Error('Unable to load inclusions.');
     content = <StructuredItemsPanel serviceId={id} items={(items ?? []) as ServiceInclusion[]} canManage={canManage} />;
   } else if (tab === 'Creative') {
-    content = <section className="cc-panel sv-section"><h2>Ad creative</h2><p className="sv-muted">Keep one current, ready-to-use promotional image with this service. Replacing it leaves pricing, proposals, invoices, and client history unchanged.</p><ServiceAdCreative serviceId={id} serviceName={service.name} imagePath={creative.ad_image_path} version={service.updated_at} canManage={canManage} /></section>;
+    content = <section className="cc-panel sv-section"><div className="sv-section-heading"><div><h2>Media / Ads</h2><p className="sv-muted">Generate full campaign-ready creative sets or keep one manually uploaded service image.</p></div>{canManage&&<Link className="cc-btn primary" href={`/admin/marketing/ads?catalog=${id}`}>Generate New Ad</Link>}</div>{(creative.image_path||creative.image_url)&&<div className="sv-primary-creative"><span className="sv-eyebrow">Primary image</span><img src={creative.image_path?`/api/admin/catalog-media/${id}`:creative.image_url!} alt={creative.image_alt||`${service.name} primary image`}/></div>}<ServiceAdCreative serviceId={id} serviceName={service.name} imagePath={creative.ad_image_path} version={service.updated_at} canManage={canManage} /></section>;
   } else if (tab === 'Clients') {
     const [assignments, clients, owners] = await Promise.all([loadClientServices(db,{serviceId:id},page), canManage ? db.from('customers').select('id,name,business_name').order('business_name').limit(1000) : Promise.resolve({data:[],error:null}), canManage ? db.from('admin_users').select('email,full_name').order('full_name') : Promise.resolve({data:[],error:null})]);
     if (clients.error || owners.error) throw new Error('Unable to load clients.');

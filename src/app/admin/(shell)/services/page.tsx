@@ -13,7 +13,8 @@ export const metadata = { title: 'Services' };
 export default async function ServicesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await getAdminUser(); if (!session) redirect('/admin/login');
   const canManage = ['owner', 'admin'].includes(session.admin.role);
-  const params = await searchParams; const { services, total, summary: k, page, period } = await loadServiceList(await createSupabaseServerClient(), params);
+  const params = await searchParams; const db = await createSupabaseServerClient(); const [{ services, total, summary: k, page, period }, media] = await Promise.all([loadServiceList(db, params), db.from('catalog_items').select('id,image_path,image_url').eq('offer_kind','service').limit(1000)]);
+  const serviceMedia = Object.fromEntries((media.data??[]).map(row=>[row.id,{imagePath:row.image_path,imageUrl:row.image_url}]));
   const pick = (key: string) => typeof params[key] === 'string' ? params[key] as string : '';
   const revenueTotal = Number(k.recurring_revenue_cents) + Number(k.one_time_cents);
   const recurringShare = revenueTotal > 0 ? Number(k.recurring_revenue_cents) / revenueTotal * 100 : 0;
@@ -32,7 +33,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
       <label>Sort<select name="sort" className="cc-select" defaultValue={pick('sort') || 'name'}>{Object.entries({ name:'Name', highest_revenue:'Highest Revenue', highest_mrr:'Highest MRR', ...(canManage ? { highest_margin:'Highest Margin', lowest_margin:'Lowest Margin' } : {}), most_clients:'Most Clients', newest:'Newest' }).map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
       <label>Reporting period<select name="period" className="cc-select" defaultValue={period}>{['month','quarter','year','all'].map(v => <option key={v} value={v}>{v === 'all' ? 'All time' : `This ${v}`}</option>)}</select></label><button className="cc-btn primary">Apply</button><Link className="cc-btn" href="/admin/services">Reset</Link>
     </form>
-    <section className="cc-panel">{services.length ? <ServicesTable services={services} canManage={canManage} /> : <div className="sv-empty"><h2>{Object.keys(params).length ? 'No matching services' : 'No services yet'}</h2><p className="sv-muted">{Object.keys(params).length ? 'Try a different search or clear your filters.' : 'Create your first service to start managing pricing, clients, revenue, and operational workflows.'}</p>{canManage && <ServiceModal />}</div>}</section>
+    <section className="cc-panel">{services.length ? <ServicesTable services={services} canManage={canManage} media={serviceMedia} /> : <div className="sv-empty"><h2>{Object.keys(params).length ? 'No matching services' : 'No services yet'}</h2><p className="sv-muted">{Object.keys(params).length ? 'Try a different search or clear your filters.' : 'Create your first service to start managing pricing, clients, revenue, and operational workflows.'}</p>{canManage && <ServiceModal />}</div>}</section>
     <div className="sv-pager"><span>{total} services · Page {page} of {Math.max(1,Math.ceil(total/25))}</span><div className="sv-actions">{page>1 && <Link className="cc-btn" href={pageLink(page-1)}>Previous</Link>}{page*25<total && <Link className="cc-btn" href={pageLink(page+1)}>Next</Link>}</div></div>
     <p className="sv-muted">Revenue is collected USD attributed to service invoice lines, after discounts. Unlinked historical sales are excluded. MRR uses agreed client-service prices normalized to a month. Changing service availability does not cancel client billing.</p>
   </>;

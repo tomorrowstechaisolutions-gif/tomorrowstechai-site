@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
@@ -231,7 +232,11 @@ export default async function SolutionDetailPage({
     <>
       <div className="cc-greet">
         <div className="cc-idhead">
-          <span className="cc-mono lg">{(solution.internalName || solution.name).slice(0, 2).toUpperCase()}</span>
+          {solution.coverImageUrl ? (
+            <Image className="cc-solution-detail-cover" src={solution.coverImageUrl} alt={`${solution.name} cover`} width={1254} height={1254} priority />
+          ) : (
+            <span className="cc-mono lg">{(solution.internalName || solution.name).slice(0, 2).toUpperCase()}</span>
+          )}
           <div>
             <Link className="cc-link" href="/admin/ai-solutions">← AI Solutions</Link>
             <h1>{solution.name}</h1>
