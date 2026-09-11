@@ -58,6 +58,12 @@ type NavEntry = {
  */
 const SOLUTIONS: MegaItem[] = [
   {
+    href: "/services/ai-business-operator",
+    label: "AI Business Operator",
+    blurb: "Managed lead capture, follow-up, booking, CRM, reviews, and reporting.",
+    Icon: IconAiChip,
+  },
+  {
     href: "/services",
     label: "Build your business",
     blurb: "Brand, logo, website, hosting, SEO, ecommerce, 3D experiences.",
