@@ -83,3 +83,12 @@
 .focus_ai,.focus_ops{grid-column:span 2}
 @media(max-width:1050px){.supportGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.supportGrid{grid-template-columns:1fr}.focus_ai,.focus_ops{grid-column:auto}}
+
+/* Final CTA: Central Texas skyline at dusk. A centred vignette keeps the
+   heading and buttons readable while the lit skyline stays visible. */
+.finalCta{position:relative;padding:130px 20px 120px;background:radial-gradient(ellipse 44% 60% at 50% 48%,rgba(3,9,19,.66) 0%,rgba(3,9,19,.32) 60%,rgba(3,9,19,0) 100%),linear-gradient(180deg,rgba(3,9,19,.45) 0%,rgba(3,9,19,0) 30%,rgba(3,9,19,0) 72%,#030913 100%),url("/central-texas-ai/final-cta-skyline.jpg") center 55%/cover no-repeat,#030913}
+.finalCta>svg{display:block;margin:0 auto}
+.finalCta>p{color:#d3deea!important;text-shadow:0 1px 12px rgba(0,0,0,.6)}
+.finalCta h2{text-shadow:0 2px 24px rgba(0,0,0,.55)}
+.finalCta>a{text-shadow:0 1px 10px rgba(0,0,0,.7)}
+@media(max-width:760px){.finalCta{padding:96px 20px 88px;background:linear-gradient(180deg,rgba(3,9,19,.82) 0%,rgba(3,9,19,.62) 50%,rgba(3,9,19,.9) 100%),url("/central-texas-ai/final-cta-skyline.jpg") 72% center/cover no-repeat,#030913}.finalCta>div a{width:100%}}
