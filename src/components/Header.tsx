@@ -167,6 +167,7 @@ const RESOURCES: MegaItem[] = [
 
 const NAV: NavEntry[] = [
   { label: "Solutions", href: "/services", items: SOLUTIONS, cols: 1 },
+  { label: "Central Texas AI", href: "/central-texas-ai" },
   { label: "Logo Studio", href: "/logo-studio" },
   { label: "Our Work", href: "/work" },
   { label: "Products", href: "/services", items: PRODUCTS, cols: 1 },
@@ -223,14 +224,14 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-5 md:px-6 h-[68px] flex items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-3 group shrink-0">
             <BrandMark size={34} className="transition-transform duration-300 group-hover:scale-[1.05]" />
-            <span className="tt-wordmark text-[13px] md:text-[15.5px] whitespace-nowrap">
+            <span className="tt-wordmark hidden 2xl:inline-flex text-[13px] md:text-[15.5px] whitespace-nowrap">
               <span className="tt-wordmark-metal">TOMORROW’S TECH</span>{" "}
               <span className="tt-wordmark-ai">AI</span>
             </span>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-8 xl:gap-10" aria-label="Main">
+          <nav className="hidden xl:flex items-center gap-5 2xl:gap-7" aria-label="Main">
             {NAV.map((entry) => {
               const active = pathname === entry.href;
               if (!entry.items) {
@@ -290,7 +291,7 @@ export function Header() {
           <div className="flex items-center gap-3">
             <SoundToggle className="tt-sound-toggle hidden sm:inline-flex" />
 
-            <Link href="/contact" className="tt-cta-outline hidden sm:inline-flex" data-magnetic data-sfx="cta">
+            <Link href="/contact" className="tt-cta-outline hidden min-[1800px]:inline-flex" data-magnetic data-sfx="cta">
               <IconRocket size={16} className="text-[color:var(--color-blue-bright)]" />
               Build my business
               <IconArrowRight size={15} />
@@ -303,7 +304,7 @@ export function Header() {
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
               aria-controls="mobile-nav"
-              className="lg:hidden w-10 h-10 -mr-2 flex items-center justify-center text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-blue)] rounded"
+              className="xl:hidden w-10 h-10 -mr-2 flex items-center justify-center text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-blue)] rounded"
             >
               <svg
                 width="22"
@@ -335,7 +336,7 @@ export function Header() {
         {/* Mobile drawer */}
         <div
           id="mobile-nav"
-          className={`lg:hidden fixed inset-x-0 top-[68px] z-40 bg-[color:var(--color-bg)] border-b border-[color:var(--color-border)] overflow-y-auto transition-[max-height] duration-300 ease-out ${
+          className={`xl:hidden fixed inset-x-0 top-[68px] z-40 bg-[color:var(--color-bg)] border-b border-[color:var(--color-border)] overflow-y-auto transition-[max-height] duration-300 ease-out ${
             open ? "max-h-[calc(100vh-68px)]" : "max-h-0"
           }`}
         >
