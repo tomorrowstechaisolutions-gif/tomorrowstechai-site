@@ -11,6 +11,7 @@ import {
   type Appointment,
 } from "@/lib/supabase/types";
 import { scoreBand } from "@/lib/campaign/scoring";
+import { DETAIL_LABELS, type InitiativeKind } from "@/lib/central-texas-ai/config";
 import { providerStatuses } from "@/lib/meetings/providers";
 import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
 import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
@@ -116,6 +117,17 @@ export default async function LeadDetailPage({
   const lifetime = initial + recurring + upsell;
 
   const band = scoreBand(lead.lead_score);
+
+  // Central Texas AI Initiative: every field the visitor typed is kept on the
+  // form_submit event. Show the most recent one as a readable panel.
+  const initiativeEvent = events.find((e) => {
+    const kind = (e.meta as Record<string, unknown> | null)?.initiative_form;
+    return e.type === "form_submit" && (kind === "business" || kind === "partner");
+  });
+  const initiativeMeta = (initiativeEvent?.meta ?? null) as Record<string, unknown> | null;
+  const initiativeKind = (initiativeMeta?.initiative_form ?? null) as InitiativeKind | null;
+  const showValue = (value: unknown) =>
+    Array.isArray(value) ? (value.length ? value.join(", ") : "—") : value === null || value === undefined || value === "" ? "—" : String(value);
 
   // Meetings. Resolved after the lead so the contact card is filled in before
   // the scheduling form ever opens.
@@ -224,6 +236,34 @@ export default async function LeadDetailPage({
               </div>
             </form>
           </section>
+
+          {initiativeKind && initiativeMeta ? (
+            <section className="ad-panel">
+              <div className="ad-panel-head">
+                <h2>
+                  Central Texas AI — {initiativeKind === "partner" ? "Partner inquiry" : "Business interest"}
+                </h2>
+                <span className="ad-muted">
+                  {new Date(initiativeEvent!.created_at).toLocaleDateString("en-US")}
+                </span>
+              </div>
+              {(lead.tags ?? []).length ? (
+                <p style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "0 0 12px" }}>
+                  {(lead.tags ?? []).map((t) => (
+                    <span key={t} className="ad-tag">{t}</span>
+                  ))}
+                </p>
+              ) : null}
+              <dl style={{ display: "grid", gridTemplateColumns: "minmax(140px, auto) 1fr", gap: "8px 16px", margin: 0 }}>
+                {DETAIL_LABELS[initiativeKind].map(([key, label]) => (
+                  <div key={key} style={{ display: "contents" }}>
+                    <dt className="ad-muted">{label}</dt>
+                    <dd style={{ margin: 0, whiteSpace: "pre-wrap" }}>{showValue(initiativeMeta[key])}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ) : null}
 
           <section className="ad-panel">
             <div className="ad-panel-head">

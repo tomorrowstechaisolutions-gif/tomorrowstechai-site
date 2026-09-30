@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { cwd } from "node:process";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -5,6 +8,7 @@ import {
   IconAiChip,
   IconArrowRight,
   IconBadgeCheck,
+  IconBot,
   IconBrain,
   IconCart,
   IconChart,
@@ -12,12 +16,14 @@ import {
   IconCode,
   IconCpu,
   IconDashboard,
+  IconDownload,
   IconMapPin,
   IconNetwork,
   IconRocket,
   IconSparkle,
   IconUsers,
 } from "@/components/Icons";
+import { CONCEPT_SHEET_PATH } from "@/lib/central-texas-ai/config";
 import { InitiativeForms } from "./InitiativeForms";
 import styles from "./initiative.module.css";
 
@@ -43,14 +49,32 @@ const benefits = [
   ["Support Central Texas", "Build a stronger, more resilient local economy.", IconMapPin],
 ] as const;
 
-const support = [
-  ["AI Readiness Assessments", IconAiChip],
-  ["Business Modernization Plans", IconChecklist],
-  ["AI & Automation Implementation", IconCpu],
-  ["CRM & Workflow Improvement", IconDashboard],
-  ["Workforce Training", IconUsers],
-  ["90-Day Impact Tracking", IconChart],
-] as const;
+type SupportItem = {
+  title: string;
+  Icon: typeof IconAiChip;
+  copy: string;
+  /** Only the two cards that are easy to confuse carry a focus list. */
+  focus?: { label: string; items: string[]; tone: "ai" | "ops" };
+};
+
+const support: SupportItem[] = [
+  { title: "AI Readiness Assessments", Icon: IconAiChip, copy: "A structured review of current operations, tools, and where AI could realistically help." },
+  { title: "Business Modernization Plans", Icon: IconChecklist, copy: "A prioritized, practical roadmap sized to each business." },
+  {
+    title: "AI & Automation Implementation",
+    Icon: IconBot,
+    copy: "Putting practical AI to work — answering, assisting, and taking repetitive tasks off the team.",
+    focus: { label: "Customer-facing & task AI", tone: "ai", items: ["AI receptionists", "Customer service AI", "AI assistants", "Repetitive task automation", "Intelligent workflow actions", "Practical AI deployment"] },
+  },
+  {
+    title: "CRM & Workflow Improvement",
+    Icon: IconDashboard,
+    copy: "Organizing how leads, work, and information move through the business.",
+    focus: { label: "Internal operations", tone: "ops", items: ["Lead tracking", "Customer pipelines", "Internal processes", "Scheduling", "Task routing", "Operational visibility", "Business process organization"] },
+  },
+  { title: "Workforce Training", Icon: IconUsers, copy: "Hands-on training so owners and employees can use new tools with confidence." },
+  { title: "90-Day Impact Tracking", Icon: IconChart, copy: "Measuring time saved, process gains, and outcomes after implementation." },
+];
 
 const industries = [
   ["Trades & Contractors", IconCode],
@@ -95,8 +119,12 @@ const faqs = [
     "No. The initiative is currently being developed as a proposed regional pilot while Tomorrow’s Tech AI explores partnerships and appropriate economic-development funding opportunities.",
   ],
   [
-    "Does expressing interest guarantee participation?",
-    "No. Expressions of interest help demonstrate local demand and identify businesses that may be appropriate for a future pilot.",
+    "Does expressing interest guarantee participation or free services?",
+    "No. Expressions of interest help demonstrate local demand and identify businesses that may be appropriate for a future pilot. Participation, services, and any cost to businesses are subject to program development and funding.",
+  ],
+  [
+    "Are any economic-development organizations or agencies already partners?",
+    "Not at this time. Tomorrow’s Tech AI is seeking potential partners and exploring funding opportunities, which may include USDA Rural Development and EDA programs. No organization or agency has approved, endorsed, or funded the initiative.",
   ],
   [
     "Will businesses have to pay?",
@@ -108,7 +136,7 @@ const faqs = [
   ],
   [
     "Who operates the program?",
-    "Tomorrow’s Tech AI is the proposed program operator and AI implementation partner.",
+    "Tomorrow’s Tech AI is the proposed program operator and AI implementation partner, subject to program development and funding.",
   ],
 ] as const;
 
@@ -120,6 +148,13 @@ function SectionHeading({ eyebrow, children, center = false }: { eyebrow?: strin
     </div>
   );
 }
+
+/**
+ * The concept sheet is a file John drops into /public. Checked at build time
+ * so the button never points at a 404: until the PDF exists, it asks for the
+ * sheet through the partner form instead.
+ */
+const conceptSheetAvailable = existsSync(path.join(cwd(), "public", CONCEPT_SHEET_PATH));
 
 export default function CentralTexasAiPage() {
   return (
@@ -135,24 +170,31 @@ export default function CentralTexasAiPage() {
         />
         <div className={styles.heroShade} />
         <div className={styles.heroInner}>
+          <p className={styles.operatorLine}><span aria-hidden="true" />Proposed regional pilot operated by Tomorrow’s Tech AI</p>
           <p className={styles.heroEyebrow}>Central Texas</p>
           <h1 id="initiative-title">AI Business<br />Modernization<br /><span>Initiative</span></h1>
           <p className={styles.heroLead}>Helping Central Texas small businesses modernize with practical AI, automation, digital technology, and workforce training.</p>
           <p className={styles.heroCopy}>A proposed 12-month regional pilot designed to help 25 Central Texas businesses adopt practical AI technology, train their workforce, improve operational efficiency, and prepare for the future of business.</p>
           <div className={styles.heroActions}>
-            <Link href="#business-interest" className={styles.primaryButton}>Business: Express Interest <IconArrowRight /></Link>
-            <Link href="#partner-interest" className={styles.secondaryButton}>Organizations: Partner With Us <IconArrowRight /></Link>
+            <Link href="#business-interest" className={`${styles.primaryButton} ${styles.ctaStack}`}>
+              <span className={styles.ctaKicker}>For businesses</span>
+              <span className={styles.ctaLabel}>Express Interest <IconArrowRight /></span>
+            </Link>
+            <Link href="#partner-interest" className={`${styles.secondaryButton} ${styles.ctaStack}`}>
+              <span className={styles.ctaKicker}>For organizations</span>
+              <span className={styles.ctaLabel}>Partner With Us <IconArrowRight /></span>
+            </Link>
           </div>
         </div>
       </section>
 
       <section className={styles.kpiStrip} aria-label="Pilot highlights">
         {[
-          ["25", "Local Businesses", "Pilot Program"],
+          ["25", "Local Businesses", "Proposed pilot size"],
           ["12 Months", "Program Duration", "Proposed pilot"],
-          ["Real Results", "Measurable Impact", "Practical outcomes"],
-          ["Local Workforce", "Training & Growth", "Skills that stay local"],
-          ["Stronger Economy", "A More Resilient Central Texas", "Regional capacity"],
+          ["Real Results", "Measurable Impact", "Program goal"],
+          ["Local Workforce", "Training & Growth", "Program goal"],
+          ["Stronger Economy", "A More Resilient Central Texas", "Program goal"],
         ].map(([value, label, detail]) => (
           <div key={value}><strong>{value}</strong><span>{label}</span><small>{detail}</small></div>
         ))}
@@ -162,7 +204,7 @@ export default function CentralTexasAiPage() {
         <div className={`${styles.split} ${styles.aboutGrid}`}>
           <div>
             <SectionHeading eyebrow="About the initiative">Practical AI. Real Support.<br />A Stronger Central Texas.</SectionHeading>
-            <p>The Central Texas AI Business Modernization Initiative is a proposed regional program led by Tomorrow’s Tech AI to support small and rural businesses with AI readiness assessments, modernization planning, implementation support, and workforce training.</p>
+            <p>The Central Texas AI Business Modernization Initiative is a proposed regional program operated by Tomorrow’s Tech AI to support small and rural businesses with AI readiness assessments, modernization planning, implementation support, and workforce training.</p>
             <p>Our goal is to help local businesses operate more efficiently, serve their customers better, and stay competitive in a rapidly changing economy.</p>
             <Link href="#pilot" className={styles.textLink}>Learn more about the proposed pilot <IconArrowRight /></Link>
           </div>
@@ -173,10 +215,18 @@ export default function CentralTexasAiPage() {
       </section>
 
       <section className={`${styles.section} ${styles.tintSection}`}>
-        <SectionHeading eyebrow="Program support" center>What Participating Businesses Receive</SectionHeading>
+        <SectionHeading eyebrow="Program support" center>What Participating Businesses Would Receive</SectionHeading>
         <div className={styles.supportGrid}>
-          {support.map(([title, Icon]) => <article key={title} className={styles.supportCard}><Icon size={28} /><h3>{title}</h3></article>)}
+          {support.map(({ title, Icon, copy, focus }) => (
+            <article key={title} className={`${styles.supportCard} ${focus ? styles[`focus_${focus.tone}`] : ""}`}>
+              <div className={styles.supportHead}><span className={styles.supportIcon}><Icon size={24} /></span><h3>{title}</h3></div>
+              {focus ? <p className={styles.focusLabel}>{focus.label}</p> : null}
+              <p className={styles.supportCopy}>{copy}</p>
+              {focus ? <ul className={styles.focusList} aria-label={`${title} focus areas`}>{focus.items.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+            </article>
+          ))}
         </div>
+        <p className={styles.supportNote}>Proposed program support, subject to program development and funding.</p>
       </section>
 
       <section className={styles.section}>
@@ -197,19 +247,19 @@ export default function CentralTexasAiPage() {
         <Image src="/central-texas-ai/industries-process-sunset.png" alt="A Central Texas sunset behind the initiative process" fill sizes="100vw" className={styles.processImage} />
         <div className={styles.processOverlay} />
         <div className={styles.processInner}>
-          <SectionHeading eyebrow="The process">How It Works</SectionHeading>
+          <SectionHeading eyebrow="The proposed process">How It Would Work</SectionHeading>
           <div className={styles.processGrid}>
             {process.map(([title, copy], index) => <article key={title}><span>{index + 1}</span><h3>{title}</h3><p>{copy}</p></article>)}
           </div>
           <div className={styles.quoteRow}>
-            <blockquote>“This initiative can help our local businesses not just survive, but thrive in the next decade.”<small>A stronger Central Texas starts with stronger businesses.</small></blockquote>
-            <div><Link href="#business-interest" className={styles.primaryButton}>Express Interest Now <IconArrowRight /></Link><small>Be Part of the Pilot Program</small></div>
+            <blockquote>Our aim: help local businesses not just survive, but thrive in the next decade.<small>A stronger Central Texas starts with stronger businesses.</small></blockquote>
+            <div><Link href="#business-interest" className={styles.primaryButton}>Express Interest <IconArrowRight /></Link><small>Help shape the proposed pilot</small></div>
           </div>
         </div>
       </section>
 
       <section className={styles.section} id="pilot">
-        <SectionHeading eyebrow="Program snapshot">Initial 12-Month Pilot</SectionHeading>
+        <SectionHeading eyebrow="Program snapshot">Proposed 12-Month Pilot</SectionHeading>
         <div className={styles.snapshotGrid}>
           <div className={styles.snapshotStats}>
             {[
@@ -217,27 +267,57 @@ export default function CentralTexasAiPage() {
               ["Program Duration", "12 Months"],
               ["Initial Funding Target", "$250,000"],
               ["Geographic Focus", "Bell County and adjacent eligible rural Central Texas communities"],
-              ["Program Operator", "Tomorrow’s Tech AI"],
+              ["Proposed Program Operator", "Tomorrow’s Tech AI"],
             ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
           </div>
-          <div className={styles.goalsCard}><h3>Primary Goals</h3><ul>{["Business modernization", "Practical AI adoption", "Workforce training", "Operational improvement", "Jobs created or retained where applicable", "Measurable economic impact"].map((goal) => <li key={goal}><IconBadgeCheck />{goal}</li>)}</ul><p>This is a proposed pilot. Funding has not been approved or awarded.</p></div>
+          <div className={styles.goalsCard}><h3>Primary Goals</h3><ul>{["Business modernization", "Practical AI adoption", "Workforce training", "Operational improvement", "Jobs created or retained where applicable", "Measurable economic impact"].map((goal) => <li key={goal}><IconBadgeCheck />{goal}</li>)}</ul><p>This is a proposed pilot. Funding has not been approved or awarded, and no agency or organization has approved or endorsed the program. Figures are initial targets, subject to program development and funding.</p></div>
         </div>
       </section>
 
       <section className={`${styles.section} ${styles.tintSection}`}>
-        <SectionHeading eyebrow="Performance targets" center>Measuring Real Impact</SectionHeading>
+        <SectionHeading eyebrow="Proposed performance targets" center>Measuring Real Impact</SectionHeading>
         <div className={styles.metricGrid}>{metrics.map(([value, label]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</div>
-        <p className={styles.metricNote}>The program will also track time savings, process improvements, productivity gains, revenue opportunities, workforce outcomes, and jobs created or retained where applicable.</p>
+        <p className={styles.metricNote}>All figures are proposed pilot targets, not results. The program would also track time savings, process improvements, productivity gains, revenue opportunities, workforce outcomes, and jobs created or retained where applicable.</p>
       </section>
 
       <section className={`${styles.section} ${styles.partnerSection}`}>
         <div className={styles.split}>
           <div>
             <SectionHeading eyebrow="Partner with us">Building the Future of Central Texas Business Together</SectionHeading>
-            <p>Tomorrow’s Tech AI is seeking partnerships with economic-development organizations, cities, counties, workforce organizations, colleges, nonprofits, and other organizations interested in helping Central Texas businesses modernize and compete.</p>
-            <div className={styles.partnerActions}><Link href="#partner-interest" className={styles.primaryButton}>Become a Program Partner <IconArrowRight /></Link><Link href="/contact" className={styles.secondaryButton}>Contact Tomorrow’s Tech AI</Link></div>
+            <p className={styles.partnerAudience}>Seeking EDC, workforce, education, nonprofit, and public-sector partners.</p>
+            <p>Tomorrow’s Tech AI is seeking potential partners — economic-development corporations, cities, counties, chambers, workforce organizations, colleges, nonprofits, and public-sector organizations — to collaborate on economic development, business recruitment, workforce training, education, grant and funding alignment, community outreach, regional expansion, and business modernization.</p>
+            <p className={styles.partnerDisclaimer}>No organization is currently a formal partner. Any partnership would be subject to discussion and agreement.</p>
+            <div className={styles.partnerActions}><Link href="#partner-interest" className={styles.primaryButton}>Partner With Us <IconArrowRight /></Link><Link href="#executive-overview" className={styles.secondaryButton}>Executive Concept Sheet</Link></div>
           </div>
-          <div className={styles.partnerAreas}><h3>Potential partnership areas</h3><ul>{["Program development", "Business recruitment", "Workforce training", "Economic-development planning", "Federal and state funding alignment", "USDA Rural Development opportunities", "EDA opportunities", "Community outreach", "Impact measurement", "Regional expansion"].map((item) => <li key={item}><IconNetwork />{item}</li>)}</ul></div>
+          <div className={styles.partnerAreas}><h3>Potential collaboration areas</h3><ul>{["Economic development", "Business recruitment", "Workforce training", "Education & training programs", "Grant / funding alignment", "Exploring USDA Rural Development programs", "Exploring EDA programs", "Community outreach", "Regional expansion", "Business modernization", "Impact measurement", "Program development"].map((item) => <li key={item}><IconNetwork />{item}</li>)}</ul></div>
+        </div>
+      </section>
+
+      <section className={styles.section} id="executive-overview" aria-labelledby="executive-overview-title">
+        <div className={styles.downloadCard}>
+          <div className={styles.downloadDoc} aria-hidden="true">
+            <IconDownload size={34} />
+            <span>PDF</span>
+          </div>
+          <div className={styles.downloadBody}>
+            <p className={styles.eyebrow}>For partners</p>
+            <h2 id="executive-overview-title">For Economic Development &amp; Community Partners</h2>
+            <p>Download the executive overview of the proposed Central Texas AI Business Modernization Initiative.</p>
+            <ul className={styles.downloadMeta}>
+              <li>Program structure &amp; operator</li>
+              <li>Initial funding target</li>
+              <li>Proposed performance targets</li>
+            </ul>
+          </div>
+          <div className={styles.downloadActions}>
+            {conceptSheetAvailable ? (
+              <a href={CONCEPT_SHEET_PATH} className={styles.primaryButton} download>Download Executive Concept Sheet <IconDownload size={18} /></a>
+            ) : (
+              <Link href="#partner-interest" className={styles.primaryButton}>Request Executive Concept Sheet <IconArrowRight /></Link>
+            )}
+            <Link href="#partner-interest" className={styles.secondaryButton}>Partner With Us <IconArrowRight /></Link>
+            <small>Proposed pilot · subject to program development and funding</small>
+          </div>
         </div>
       </section>
 

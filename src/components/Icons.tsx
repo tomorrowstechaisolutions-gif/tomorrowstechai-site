@@ -338,3 +338,12 @@ export const IconPhoneCall = (p: IconProps) => (
     <path d="M14.5 3.5a6 6 0 0 1 6 6" />
   </Svg>
 );
+
+/** A document with a downward arrow — for a real file download, not a page link. */
+export const IconDownload = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+    <path d="M14 3v5h5" />
+    <path d="M12 11v6M9.5 14.5 12 17l2.5-2.5" />
+  </Svg>
+);

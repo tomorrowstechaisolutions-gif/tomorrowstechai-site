@@ -5,3 +5,81 @@
 @media(max-width:480px){.supportGrid,.benefitGrid{grid-template-columns:1fr}.processGrid{grid-template-columns:1fr}.metricGrid{grid-template-columns:1fr 1fr}.snapshotStats{grid-template-columns:1fr}.snapshotStats div,.snapshotStats div:nth-child(even){border-right:0}.snapshotStats div:last-child{grid-column:auto}.primaryButton,.secondaryButton{width:100%}.partnerActions{width:100%}}
 @media(prefers-reduced-motion:reduce){.primaryButton,.secondaryButton,.card,.faqs summary span{transition:none}}
 .industryGrid svg{color:var(--ct-blue-bright)}
+
+/* ── 2026-09-30 refinements ─────────────────────────────────────────── */
+
+/* Operator context: understated, executive, never competing with the h1. */
+.operatorLine{display:inline-flex;align-items:center;gap:10px;margin:0 0 20px!important;padding:7px 14px 7px 12px;border:1px solid rgba(75,177,255,.28);border-left:2px solid var(--ct-blue);border-radius:4px;background:rgba(3,14,27,.55);color:#c9d6e4!important;font-size:.7rem!important;line-height:1.35!important;font-weight:650;letter-spacing:.16em;text-transform:uppercase;max-width:100%}
+.operatorLine>span{width:6px;height:6px;border-radius:50%;background:var(--ct-blue-bright);box-shadow:0 0 10px rgba(75,177,255,.8);flex:none}
+
+/* Hero CTAs: the audience sits above the action, so the split is unmissable. */
+.ctaStack{flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-height:62px;padding:10px 24px;text-align:left}
+.ctaKicker{font-size:.64rem;letter-spacing:.16em;font-weight:650;opacity:.78}
+.ctaLabel{display:inline-flex;align-items:center;gap:12px;font-size:.9rem;letter-spacing:.05em}
+
+/* Program support cards: every card now says what it is for. */
+.supportGrid{align-items:stretch}
+.supportCard{flex-direction:column;align-items:stretch;gap:0;padding:24px 24px 26px}
+.supportHead{display:flex;align-items:center;gap:14px}
+.supportIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:11px;background:rgba(17,140,255,.12);border:1px solid rgba(75,177,255,.28);color:var(--ct-blue-bright);flex:none}
+.supportHead h3{margin:0;font-size:1.02rem;line-height:1.25}
+.supportCopy{font-size:.88rem;line-height:1.55!important;margin:14px 0 0}
+.focusLabel{margin:16px 0 0!important;font-size:.66rem!important;line-height:1.3!important;font-weight:750;letter-spacing:.16em;text-transform:uppercase}
+.focusList{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
+.focusList li{font-size:.74rem;line-height:1.2;padding:6px 10px;border-radius:999px;border:1px solid;color:#dbe7f3}
+.focus_ai{border-color:rgba(75,177,255,.55);box-shadow:inset 0 3px 0 var(--ct-blue)}
+.focus_ai .focusLabel{color:var(--ct-blue-bright)!important}
+.focus_ai .focusList li{border-color:rgba(75,177,255,.35);background:rgba(17,140,255,.1)}
+.focus_ops{border-color:rgba(45,212,191,.45);box-shadow:inset 0 3px 0 #2dd4bf}
+.focus_ops .supportIcon{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.35);color:#5eead4}
+.focus_ops .focusLabel{color:#5eead4!important}
+.focus_ops .focusList li{border-color:rgba(45,212,191,.3);background:rgba(45,212,191,.08)}
+.supportNote{text-align:center;font-size:.8rem;color:#7990a8!important;margin:22px 0 0}
+
+/* Partner section audience line. */
+.partnerAudience{margin:-18px 0 22px!important;padding:12px 0 12px 16px;border-left:3px solid var(--ct-blue);color:#fff!important;font-size:clamp(1.02rem,1.6vw,1.2rem)!important;line-height:1.45!important;font-weight:650;max-width:620px}
+.partnerDisclaimer{font-size:.8rem!important;color:#7990a8!important;margin-top:4px}
+
+/* Executive concept sheet download. */
+.downloadCard{display:grid;grid-template-columns:auto 1fr auto;gap:34px;align-items:center;padding:36px 38px;border:1px solid rgba(75,177,255,.38);border-radius:18px;background:radial-gradient(circle at 0% 0%,rgba(17,140,255,.16),transparent 45%),linear-gradient(145deg,rgba(12,30,50,.95),rgba(5,15,26,.95));box-shadow:0 25px 70px rgba(0,0,0,.35)}
+.downloadDoc{position:relative;display:grid;place-items:center;width:96px;height:120px;border-radius:10px;border:1px solid rgba(75,177,255,.45);background:linear-gradient(170deg,#0d2440,#06121f);color:var(--ct-blue-bright)}
+.downloadDoc span{position:absolute;bottom:12px;font-size:.66rem;font-weight:800;letter-spacing:.18em;color:#9fd2ff}
+.downloadBody h2{font-size:clamp(1.5rem,2.6vw,2.2rem);line-height:1.1;letter-spacing:-.035em;margin:0 0 10px;text-wrap:balance}
+.downloadBody>p:not(.eyebrow){margin:0;font-size:1rem}
+.downloadBody .eyebrow{margin-bottom:12px}
+.downloadMeta{list-style:none;padding:0;margin:16px 0 0;display:flex;flex-wrap:wrap;gap:8px 18px}
+.downloadMeta li{font-size:.78rem;color:#9fb2c7;display:flex;align-items:center;gap:8px}
+.downloadMeta li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ct-blue)}
+.downloadActions{display:grid;gap:12px;min-width:290px}
+.downloadActions small{display:block;text-align:center;font-size:.7rem;color:#61758d}
+
+/* Forms: comfortable tap targets and a real thank-you state. */
+.checkGrid{gap:6px}
+.checkGrid label,.consent{min-height:44px;align-items:center!important;padding:8px 10px;border-radius:8px;border:1px solid rgba(34,61,89,.7);background:rgba(5,14,25,.6);cursor:pointer}
+.checkGrid label:has(input:checked){border-color:rgba(75,177,255,.6);background:rgba(17,140,255,.1)}
+.checkGrid input,.consent input{width:20px;height:20px;min-width:20px;margin:0}
+.consent{align-items:flex-start!important;padding:12px}
+.consent input{margin-top:1px}
+.spaced{margin-top:18px}
+.formCard select{min-height:46px}
+.formCard input:not([type=checkbox]){min-height:46px;font-size:16px}
+.formCard textarea,.formCard select{font-size:16px}
+.successCard{text-align:center;padding:48px 34px;outline:none;border-color:rgba(34,197,94,.4);background:radial-gradient(circle at 50% 0%,rgba(34,197,94,.12),transparent 55%),linear-gradient(165deg,rgba(9,27,47,.98),rgba(4,13,24,.98))}
+.successIcon{display:inline-grid;place-items:center;width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:#86efac}
+.successCard h3{font-size:1.9rem;letter-spacing:-.03em;margin:18px 0 6px}
+.successCard .successLead{color:#fff!important;font-size:1.1rem;font-weight:650;margin:0 0 12px}
+.successCard>p{max-width:460px;margin-inline:auto}
+.successNote{font-size:.78rem!important;color:#7990a8!important;margin-top:18px!important;padding-top:16px;border-top:1px solid var(--ct-border)}
+.successReset{margin-top:18px;min-height:46px;padding:0 20px;border-radius:8px;border:1px solid rgba(45,158,255,.6);background:transparent;color:#cfe6ff;font-weight:700;cursor:pointer}
+.successReset:hover{background:rgba(11,87,155,.22)}
+.partnerForm .formHeader>svg{color:#5eead4}
+
+@media(max-width:1050px){.downloadCard{grid-template-columns:auto 1fr}.downloadActions{grid-column:1/-1;grid-template-columns:1fr 1fr;min-width:0}.downloadActions small{grid-column:1/-1}}
+@media(max-width:760px){.supportGrid{grid-template-columns:1fr}.heroActions .ctaStack{width:100%}.downloadCard{grid-template-columns:1fr;gap:22px;padding:28px 20px}.downloadDoc{width:64px;height:80px}.downloadDoc svg{width:26px;height:26px}.downloadDoc span{bottom:7px;font-size:.58rem}.downloadActions{grid-template-columns:1fr}.downloadActions a{width:100%}.partnerAudience{margin-top:-10px!important}.operatorLine{font-size:.62rem!important;letter-spacing:.12em;padding:6px 10px}.successCard{padding:38px 20px}}
+@media(prefers-reduced-motion:reduce){.successReset{transition:none}}
+/* The two focus cards take double width so their lists breathe and the pair
+   reads as distinct: AI top-right, operations bottom-left. */
+.supportGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.focus_ai,.focus_ops{grid-column:span 2}
+@media(max-width:1050px){.supportGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.supportGrid{grid-template-columns:1fr}.focus_ai,.focus_ops{grid-column:auto}}

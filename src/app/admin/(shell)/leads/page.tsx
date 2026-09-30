@@ -2,6 +2,9 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { LEAD_STATUSES, type Lead } from "@/lib/supabase/types";
 import { scoreBand } from "@/lib/campaign/scoring";
+import {
+  BUSINESS_TAG, INITIATIVE_SOURCES, INITIATIVE_TAG, PARTNER_TAG,
+} from "@/lib/central-texas-ai/config";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +12,12 @@ type Search = {
   status?: string;
   q?: string;
   source?: string;
+  tag?: string;
   sort?: string;
 };
+
+/** Tags the filter accepts. Anything else in ?tag= is ignored. */
+const TAG_FILTERS = [INITIATIVE_TAG, BUSINESS_TAG, PARTNER_TAG];
 
 export default async function LeadsPage({
   searchParams,
@@ -26,6 +33,7 @@ export default async function LeadsPage({
     query = query.eq("lead_status", sp.status);
   }
   if (sp.source) query = query.eq("source", sp.source);
+  if (sp.tag && TAG_FILTERS.includes(sp.tag)) query = query.contains("tags", [sp.tag]);
   if (sp.q) {
     // Escape the PostgREST or() delimiters before interpolating.
     const term = sp.q.replace(/[,()*]/g, " ").trim().slice(0, 80);
@@ -41,8 +49,20 @@ export default async function LeadsPage({
       ? query.order("lead_score", { ascending: false })
       : query.order("created_at", { ascending: false });
 
-  const { data, error } = await query;
+  // Central Texas AI Initiative counts. Tags rather than source, so a contact
+  // who already existed before submitting an initiative form is still counted.
+  const countTag = (tag: string) =>
+    supabase.from("leads").select("id", { count: "exact", head: true }).contains("tags", [tag]);
+  const [{ data, error }, businessCount, partnerCount] = await Promise.all([
+    query,
+    countTag(BUSINESS_TAG),
+    countTag(PARTNER_TAG),
+  ]);
   const leads = (data ?? []) as Lead[];
+  const initiativeCounts = [
+    { label: "Business Interest", tag: BUSINESS_TAG, count: businessCount.error ? null : businessCount.count },
+    { label: "Partner Inquiry", tag: PARTNER_TAG, count: partnerCount.error ? null : partnerCount.count },
+  ];
 
   return (
     <>
@@ -53,6 +73,25 @@ export default async function LeadsPage({
           here too.
         </p>
       </header>
+
+      <nav className="ad-filters" aria-label="Central Texas AI Initiative">
+        <span className="ad-muted">Central Texas AI Initiative:</span>
+        {initiativeCounts.map((c) => (
+          <Link
+            key={c.tag}
+            href={`/admin/leads?tag=${encodeURIComponent(c.tag)}`}
+            className={`ad-btn ${sp.tag === c.tag ? "primary" : "ghost"}`}
+          >
+            {c.label} · {c.count ?? "—"}
+          </Link>
+        ))}
+        <Link
+          href={`/admin/leads?tag=${encodeURIComponent(INITIATIVE_TAG)}`}
+          className={`ad-btn ${sp.tag === INITIATIVE_TAG ? "primary" : "ghost"}`}
+        >
+          All initiative
+        </Link>
+      </nav>
 
       <form className="ad-filters" method="get">
         <input
@@ -74,6 +113,16 @@ export default async function LeadsPage({
           <option value="website">Website</option>
           <option value="facebook">Facebook</option>
           <option value="instagram">Instagram</option>
+          <option value={INITIATIVE_SOURCES.business}>{INITIATIVE_SOURCES.business}</option>
+          <option value={INITIATIVE_SOURCES.partner}>{INITIATIVE_SOURCES.partner}</option>
+        </select>
+        <select name="tag" defaultValue={sp.tag ?? ""} className="ad-input">
+          <option value="">All tags</option>
+          {TAG_FILTERS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
         <select name="sort" defaultValue={sp.sort ?? "recent"} className="ad-input">
           <option value="recent">Newest first</option>
@@ -137,7 +186,14 @@ export default async function LeadsPage({
                       </a>
                     </td>
                     <td>{l.business_type ?? "—"}</td>
-                    <td>{l.source}</td>
+                    <td>
+                      {l.source}
+                      {l.tags?.includes(PARTNER_TAG) ? (
+                        <span className="ad-tag" style={{ marginLeft: 6 }}>Partner</span>
+                      ) : l.tags?.includes(BUSINESS_TAG) ? (
+                        <span className="ad-tag" style={{ marginLeft: 6 }}>Pilot</span>
+                      ) : null}
+                    </td>
                     <td>{l.campaign ?? l.utm_campaign ?? "—"}</td>
                     <td>
                       <span className={`ad-score t-${scoreBand(l.lead_score).tone}`}>

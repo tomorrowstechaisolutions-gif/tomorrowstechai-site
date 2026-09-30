@@ -203,6 +203,10 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const pathname = usePathname();
+  // The Central Texas AI initiative page speaks to businesses and partner
+  // organisations, not website buyers, so it gets its own CTA. Scoped here by
+  // path so every other page keeps "Build my business".
+  const initiativePage = pathname === "/central-texas-ai";
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {
@@ -291,11 +295,18 @@ export function Header() {
           <div className="flex items-center gap-3">
             <SoundToggle className="tt-sound-toggle hidden sm:inline-flex" />
 
-            <Link href="/contact" className="tt-cta-outline hidden min-[1800px]:inline-flex" data-magnetic data-sfx="cta">
-              <IconRocket size={16} className="text-[color:var(--color-blue-bright)]" />
-              Build my business
-              <IconArrowRight size={15} />
-            </Link>
+            {initiativePage ? (
+              <Link href="#business-interest" className="tt-cta-outline hidden min-[1800px]:inline-flex" data-magnetic data-sfx="cta">
+                Express interest
+                <IconArrowRight size={15} />
+              </Link>
+            ) : (
+              <Link href="/contact" className="tt-cta-outline hidden min-[1800px]:inline-flex" data-magnetic data-sfx="cta">
+                <IconRocket size={16} className="text-[color:var(--color-blue-bright)]" />
+                Build my business
+                <IconArrowRight size={15} />
+              </Link>
+            )}
 
             {/* Mobile menu button */}
             <button
@@ -408,14 +419,35 @@ export function Header() {
                 </div>
               );
             })}
-            <Link
-              href="/contact"
-              onClick={closeDrawer}
-              className="btn-primary mt-5 mb-3 justify-center text-base py-3"
-            >
-              Build my business
-              <IconArrowRight size={16} />
-            </Link>
+            {initiativePage ? (
+              <>
+                <Link
+                  href="#business-interest"
+                  onClick={closeDrawer}
+                  className="btn-primary mt-5 justify-center text-base py-3"
+                >
+                  Express interest
+                  <IconArrowRight size={16} />
+                </Link>
+                <Link
+                  href="#partner-interest"
+                  onClick={closeDrawer}
+                  className="tt-cta-outline mt-3 mb-3 justify-center text-base py-3"
+                >
+                  Partner with us
+                  <IconArrowRight size={16} />
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/contact"
+                onClick={closeDrawer}
+                className="btn-primary mt-5 mb-3 justify-center text-base py-3"
+              >
+                Build my business
+                <IconArrowRight size={16} />
+              </Link>
+            )}
           </nav>
         </div>
 

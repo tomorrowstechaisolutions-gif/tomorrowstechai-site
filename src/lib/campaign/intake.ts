@@ -44,6 +44,13 @@ export type IntakeInput = {
   consent_text?: string | null;
   ip_address?: string | null;
   user_agent?: string | null;
+  /**
+   * Queue the automated sales follow-up sequence (24h / 72h package nudges).
+   * Defaults to true. Non-sales intakes — the Central Texas AI Initiative
+   * interest and partner forms — pass false, because those nudges pitch a
+   * website package and would be wrong for an EDC or a pilot applicant.
+   */
+  schedule_followups?: boolean;
 };
 
 export type IntakeResult = {
@@ -225,7 +232,7 @@ export async function intakeLead(input: IntakeInput): Promise<IntakeResult> {
       },
     });
 
-    await scheduleFollowups(existing.id, true);
+    if (input.schedule_followups !== false) await scheduleFollowups(existing.id, true);
 
     return { stored: true, duplicate: true, leadId: existing.id, score, reasons };
   }
@@ -295,7 +302,7 @@ export async function intakeLead(input: IntakeInput): Promise<IntakeResult> {
     },
   });
 
-  await scheduleFollowups(inserted.id, false);
+  if (input.schedule_followups !== false) await scheduleFollowups(inserted.id, false);
 
   return { stored: true, duplicate: false, leadId: inserted.id, score, reasons };
 }

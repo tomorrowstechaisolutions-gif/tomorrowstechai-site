@@ -83,6 +83,8 @@ export type Lead = {
   ip_address: string | null;
   user_agent: string | null;
   submission_count: number;
+  /** Added 2026-09-30 (lead_tags migration). Optional so older reads stay valid. */
+  tags?: string[] | null;
 };
 
 export type LeadEvent = {
