@@ -92,3 +92,13 @@
 .finalCta h2{text-shadow:0 2px 24px rgba(0,0,0,.55)}
 .finalCta>a{text-shadow:0 1px 10px rgba(0,0,0,.7)}
 @media(max-width:760px){.finalCta{padding:96px 20px 88px;background:linear-gradient(180deg,rgba(3,9,19,.82) 0%,rgba(3,9,19,.62) 50%,rgba(3,9,19,.9) 100%),url("/central-texas-ai/final-cta-skyline.jpg") 72% center/cover no-repeat,#030913}.finalCta>div a{width:100%}}
+
+/* Partner section: Hill Country skyline with network lines. The image is
+   already dark on the left where the copy sits; the scrim only evens it out
+   and fades both edges into the neighbouring sections. */
+.partnerSection{background:linear-gradient(90deg,rgba(3,9,19,.55) 0%,rgba(3,9,19,.2) 45%,rgba(3,9,19,0) 70%),linear-gradient(180deg,#030913 0%,rgba(3,9,19,0) 14%,rgba(3,9,19,0) 82%,#030913 100%),url("/central-texas-ai/partner-skyline-network.jpg") right center/cover no-repeat,#06101d}
+.partnerAreas{background:linear-gradient(145deg,rgba(9,24,42,.82),rgba(4,12,22,.78));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+@media(max-width:760px){.partnerSection{background:linear-gradient(180deg,#030913 0%,rgba(3,9,19,.55) 20%,rgba(3,9,19,.72) 60%,#030913 100%),url("/central-texas-ai/partner-skyline-network.jpg") 78% center/cover no-repeat,#06101d}}
+/* Full-bleed sections set their own side gutter; the mobile `.section`
+   padding shorthand was zeroing it, so text touched the screen edge. */
+@media(max-width:760px){.tintSection,.partnerSection,.formsSection{padding-inline:16px}}
