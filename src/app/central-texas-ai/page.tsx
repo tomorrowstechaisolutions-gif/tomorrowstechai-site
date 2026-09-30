@@ -12,11 +12,12 @@ import {
   IconBrain,
   IconCart,
   IconChart,
-  IconChecklist,
   IconCode,
   IconCpu,
   IconDashboard,
+  IconDocument,
   IconDownload,
+  IconGear,
   IconMapPin,
   IconNetwork,
   IconRocket,
@@ -53,27 +54,16 @@ type SupportItem = {
   title: string;
   Icon: typeof IconAiChip;
   copy: string;
-  /** Only the two cards that are easy to confuse carry a focus list. */
-  focus?: { label: string; items: string[]; tone: "ai" | "ops" };
+  tags: string[];
 };
 
 const support: SupportItem[] = [
-  { title: "AI Readiness Assessments", Icon: IconAiChip, copy: "A structured review of current operations, tools, and where AI could realistically help." },
-  { title: "Business Modernization Plans", Icon: IconChecklist, copy: "A prioritized, practical roadmap sized to each business." },
-  {
-    title: "AI & Automation Implementation",
-    Icon: IconBot,
-    copy: "Putting practical AI to work — answering, assisting, and taking repetitive tasks off the team.",
-    focus: { label: "Customer-facing & task AI", tone: "ai", items: ["AI receptionists", "Customer service AI", "AI assistants", "Repetitive task automation", "Intelligent workflow actions", "Practical AI deployment"] },
-  },
-  {
-    title: "CRM & Workflow Improvement",
-    Icon: IconDashboard,
-    copy: "Organizing how leads, work, and information move through the business.",
-    focus: { label: "Internal operations", tone: "ops", items: ["Lead tracking", "Customer pipelines", "Internal processes", "Scheduling", "Task routing", "Operational visibility", "Business process organization"] },
-  },
-  { title: "Workforce Training", Icon: IconUsers, copy: "Hands-on training so owners and employees can use new tools with confidence." },
-  { title: "90-Day Impact Tracking", Icon: IconChart, copy: "Measuring time saved, process gains, and outcomes after implementation." },
+  { title: "AI Readiness Assessments", Icon: IconGear, copy: "Find where AI can realistically save time or improve operations.", tags: ["Operations Review", "AI Opportunities", "Priority Actions"] },
+  { title: "Business Modernization Plans", Icon: IconDocument, copy: "Turn the assessment into a practical, prioritized roadmap.", tags: ["Technology Plan", "Process Improvements", "Implementation Roadmap"] },
+  { title: "AI & Automation Implementation", Icon: IconBot, copy: "Put practical AI to work in customer-facing and repetitive tasks.", tags: ["AI Receptionist", "AI Assistants", "Customer Service AI", "Task Automation"] },
+  { title: "CRM & Workflow Improvement", Icon: IconDashboard, copy: "Organize how leads, work, and information move through the business.", tags: ["Lead Tracking", "Scheduling", "Task Routing", "Customer Pipelines"] },
+  { title: "Workforce Training", Icon: IconUsers, copy: "Train owners and employees to confidently use the new tools.", tags: ["Hands-On Training", "AI Basics", "Role-Based Training"] },
+  { title: "90-Day Impact Tracking", Icon: IconChart, copy: "Measure whether the modernization work is actually producing results.", tags: ["Time Saved", "Process Gains", "Adoption", "Business Outcomes"] },
 ];
 
 const industries = [
@@ -214,15 +204,14 @@ export default function CentralTexasAiPage() {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.tintSection}`}>
+      <section className={`${styles.section} ${styles.tintSection} ${styles.supportSection}`}>
         <SectionHeading eyebrow="Program support" center>What Participating Businesses Would Receive</SectionHeading>
         <div className={styles.supportGrid}>
-          {support.map(({ title, Icon, copy, focus }) => (
-            <article key={title} className={`${styles.supportCard} ${focus ? styles[`focus_${focus.tone}`] : ""}`}>
-              <div className={styles.supportHead}><span className={styles.supportIcon}><Icon size={24} /></span><h3>{title}</h3></div>
-              {focus ? <p className={styles.focusLabel}>{focus.label}</p> : null}
+          {support.map(({ title, Icon, copy, tags }) => (
+            <article key={title} className={styles.supportCard}>
+              <div className={styles.supportHead}><span className={styles.supportIcon}><Icon size={30} /></span><h3>{title}</h3></div>
               <p className={styles.supportCopy}>{copy}</p>
-              {focus ? <ul className={styles.focusList} aria-label={`${title} focus areas`}>{focus.items.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+              <ul className={styles.supportTags} aria-label={`${title} includes`}>{tags.map((tag) => <li key={tag}>{tag}</li>)}</ul>
             </article>
           ))}
         </div>
