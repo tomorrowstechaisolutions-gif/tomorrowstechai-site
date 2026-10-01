@@ -98,3 +98,4 @@
 @media(max-width:1050px){.supportGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.supportGrid{grid-template-columns:1fr;gap:16px}.supportCard{padding:24px 20px 26px}.supportIcon{width:60px;height:60px}.supportHead{gap:16px}.supportHead h3{font-size:1.18rem}.supportSection .eyebrow{gap:14px}.supportSection .eyebrow::before,.supportSection .eyebrow::after{width:28px}}
 @media(prefers-reduced-motion:reduce){.supportCard{transition:none}.supportCard:hover{transform:none}}
+.honeypot{overflow:hidden!important}

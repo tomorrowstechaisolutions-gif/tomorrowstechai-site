@@ -72,9 +72,17 @@ export async function POST(request: Request) {
     const kind = text(body.kind, 20) as InitiativeKind;
     if (!KINDS.includes(kind)) return NextResponse.json({ error: "Invalid inquiry type." }, { status: 400 });
 
-    // Bots: honeypot filled, or the form submitted faster than a person can.
+    // Bots: trap field filled, or the form submitted faster than a person can.
+    // The trap's name deliberately contains no word a browser autofills on
+    // (company, url, name, email…) — the old `hp_company_url` was being
+    // filled by Chrome's organisation autofill, silently dropping real people.
+    // Every drop is logged so it can never fail invisibly again.
     const elapsed = Number(body.elapsed_ms || 0);
-    if (text(body.hp_company_url, 300) || elapsed < 1500) return NextResponse.json({ ok: true });
+    const trap = text(body.ctai_trap_zq, 300);
+    if (trap || elapsed < 1500) {
+      console.warn("Central Texas AI submission dropped as bot:", JSON.stringify({ kind, trapFilled: Boolean(trap), elapsed, email: text(body.email, 200) }));
+      return NextResponse.json({ ok: true });
+    }
 
     const contactName = text(body.contact_name, 150);
     const email = text(body.email, 200).toLowerCase();

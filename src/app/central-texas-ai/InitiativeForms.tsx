@@ -126,7 +126,7 @@ export function InitiativeForms() {
           <form id="business-interest" className={styles.formCard} onSubmit={business.submit}>
             <div className={styles.formHeader}><IconArrowRight /><div><span>For local businesses</span><h3>Interested in Joining the Pilot?</h3></div></div>
             <p>Tell us about your business. This is an expression of interest only and does not guarantee program acceptance or funding.</p>
-            <input name="hp_company_url" className={styles.honeypot} tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <div className={styles.honeypot} aria-hidden="true"><label>Leave this empty<input name="ctai_trap_zq" type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" defaultValue="" /></label></div>
             <div className={styles.fields}>
               <label>Business Name<input name="business_name" required maxLength={200} autoComplete="organization" /></label>
               <label>Contact Name<input name="contact_name" required maxLength={150} autoComplete="name" /></label>
@@ -160,7 +160,7 @@ export function InitiativeForms() {
           <form id="partner-interest" className={`${styles.formCard} ${styles.partnerForm}`} onSubmit={partner.submit}>
             <div className={styles.formHeader}><IconUsers /><div><span>For organizations</span><h3>Start a Partnership Discussion</h3></div></div>
             <p>Tell us how your organization could support practical business modernization across Central Texas.</p>
-            <input name="hp_company_url" className={styles.honeypot} tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <div className={styles.honeypot} aria-hidden="true"><label>Leave this empty<input name="ctai_trap_zq" type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" defaultValue="" /></label></div>
             <div className={styles.fields}>
               <label>Organization Name<input name="organization_name" required maxLength={200} autoComplete="organization" /></label>
               <label>Contact Name<input name="contact_name" required maxLength={150} autoComplete="name" /></label>
