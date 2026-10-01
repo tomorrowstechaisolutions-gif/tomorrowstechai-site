@@ -11,6 +11,7 @@ import {
 import { getAttribution } from "@/lib/campaign/attribution";
 import { BUSINESS_LAUNCH_OFFER, type Offer } from "@/lib/campaign/offers";
 import { newEventId, trackConversion } from "@/lib/analytics";
+import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 
 const CONSENT_TEXT =
   "By submitting this form I agree to be contacted by Tomorrow's Tech AI about my request by email or phone.";
@@ -68,7 +69,7 @@ export function LeadForm({
       sms_consent: fd.get("sms_consent") === "on",
       consent_text: CONSENT_TEXT,
       // Spam traps: a field no human sees, and a form filled in under 2s.
-      hp_company_url: String(fd.get("hp_company_url") ?? ""),
+      [SPAM_TRAP_FIELD]: String(fd.get(SPAM_TRAP_FIELD) ?? ""),
       elapsed_ms: elapsed,
       attribution: getAttribution(),
       // Which page this was filled in on. The route trusts this over the
@@ -132,13 +133,15 @@ export function LeadForm({
     <form onSubmit={onSubmit} className="bl-form" noValidate>
       {/* Honeypot — hidden from people, irresistible to bots. */}
       <div className="bl-hp" aria-hidden="true">
-        <label htmlFor="hp_company_url">Company URL</label>
+        <label htmlFor={SPAM_TRAP_FIELD}>Leave this empty</label>
         <input
-          id="hp_company_url"
-          name="hp_company_url"
+          id={SPAM_TRAP_FIELD}
+          name={SPAM_TRAP_FIELD}
           type="text"
           tabIndex={-1}
           autoComplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
         />
       </div>
 

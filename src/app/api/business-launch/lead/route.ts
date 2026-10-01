@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBotSubmission } from "@/lib/spam-trap";
 import { intakeLead } from "@/lib/campaign/intake";
 import { sendAdminNotification, sendLeadConfirmation } from "@/lib/campaign/emails";
 import { sendCapiEvent } from "@/lib/meta/capi";
@@ -57,9 +58,7 @@ export async function POST(req: Request) {
 
     // ── Spam traps ────────────────────────────────────────────────────────
     // Return 200 so a bot can't tell it was caught, but store nothing.
-    const honeypot = text(body.hp_company_url, 500);
-    const elapsed = typeof body.elapsed_ms === "number" ? body.elapsed_ms : 99999;
-    if (honeypot || elapsed < 1800) {
+    if (isBotSubmission(body as Record<string, unknown>, "business-launch", 1800)) {
       return NextResponse.json({ ok: true });
     }
 

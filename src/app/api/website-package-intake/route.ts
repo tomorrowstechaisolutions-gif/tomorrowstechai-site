@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBotSubmission } from "@/lib/spam-trap";
 import { intakeLead } from "@/lib/campaign/intake";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-    if (clean(body.hp_company_url, 500) || (typeof body.elapsed_ms === "number" && body.elapsed_ms < 1800)) return NextResponse.json({ ok: true });
+    if (isBotSubmission(body as Record<string, unknown>, "website-package-intake", 1800)) return NextResponse.json({ ok: true });
 
     const selectedPackage = await getPublicPackage(clean(body.packageId, 120),"websites");
     const fullName = clean(body.fullName, 200);

@@ -42,7 +42,7 @@ export function AiOperatorIntake({ initialPlan }: { initialPlan: Plan }) {
   async function submit() {
     setSending(true); setError("");
     try {
-      const response = await fetch("/api/ai-operator-intake", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, plan: plan.id, elapsed_ms: startedAt.current ? Date.now() - startedAt.current : 99999, hp_company_url: "" }) });
+      const response = await fetch("/api/ai-operator-intake", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, plan: plan.id, elapsed_ms: startedAt.current ? Date.now() - startedAt.current : 99999 }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "We couldn’t submit your request.");
       setComplete(true); window.scrollTo({ top: 0, behavior: "smooth" });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBotSubmission } from "@/lib/spam-trap";
 import { intakeLead } from "@/lib/campaign/intake";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
@@ -72,17 +73,8 @@ export async function POST(request: Request) {
     const kind = text(body.kind, 20) as InitiativeKind;
     if (!KINDS.includes(kind)) return NextResponse.json({ error: "Invalid inquiry type." }, { status: 400 });
 
-    // Bots: trap field filled, or the form submitted faster than a person can.
-    // The trap's name deliberately contains no word a browser autofills on
-    // (company, url, name, email…) — the old `hp_company_url` was being
-    // filled by Chrome's organisation autofill, silently dropping real people.
-    // Every drop is logged so it can never fail invisibly again.
-    const elapsed = Number(body.elapsed_ms || 0);
-    const trap = text(body.ctai_trap_zq, 300);
-    if (trap || elapsed < 1500) {
-      console.warn("Central Texas AI submission dropped as bot:", JSON.stringify({ kind, trapFilled: Boolean(trap), elapsed, email: text(body.email, 200) }));
-      return NextResponse.json({ ok: true });
-    }
+    // Bots: trap field filled, or submitted faster than a person can (logged).
+    if (isBotSubmission(body, `central-texas-ai/${kind}`, 1500)) return NextResponse.json({ ok: true });
 
     const contactName = text(body.contact_name, 150);
     const email = text(body.email, 200).toLowerCase();

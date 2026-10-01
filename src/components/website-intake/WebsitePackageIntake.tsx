@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { IconArrowRight, IconBadgeCheck, IconCalendar, IconLock, IconMapPin, IconPhoneCall, IconRocket, IconShield, IconUsers } from "@/components/Icons";
 import { type WebsitePackage, type WebsitePackageId } from "@/lib/website-packages";
+import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 import styles from "./WebsitePackageIntake.module.css";
 
 type FormState = {
@@ -17,12 +18,12 @@ type FormState = {
   project: string;
   referral: string;
   consent: boolean;
-  hp_company_url: string;
+  spamTrap: string;
 };
 
 type Errors = Partial<Record<keyof FormState | "form", string>>;
 
-const emptyForm = (packageId: WebsitePackageId | ""): FormState => ({ packageId, fullName: "", email: "", phone: "", company: "", website: "", project: "", referral: "", consent: false, hp_company_url: "" });
+const emptyForm = (packageId: WebsitePackageId | ""): FormState => ({ packageId, fullName: "", email: "", phone: "", company: "", website: "", project: "", referral: "", consent: false, spamTrap: "" });
 
 export function WebsitePackageIntake({ initialPackageId,packages }: { initialPackageId: WebsitePackageId | "";packages:WebsitePackage[] }) {
   const [form, setForm] = useState<FormState>(() => emptyForm(initialPackageId));
@@ -65,7 +66,7 @@ export function WebsitePackageIntake({ initialPackageId,packages }: { initialPac
       const response = await fetch("/api/website-package-intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, elapsed_ms: Date.now() - startedAt.current }),
+        body: JSON.stringify({ ...form, spamTrap: undefined, [SPAM_TRAP_FIELD]: form.spamTrap, elapsed_ms: Date.now() - startedAt.current }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "We couldn’t submit your request.");
@@ -105,7 +106,7 @@ export function WebsitePackageIntake({ initialPackageId,packages }: { initialPac
           <div className={styles.full}><Field label="Website (if you have one)"><input type="url" value={form.website} onChange={(e)=>update("website",e.target.value)} placeholder="https://www.yourwebsite.com" autoComplete="url"/></Field></div>
           <div className={styles.full}><Field label="Tell us about your project" error={errors.project} required><textarea value={form.project} onChange={(e)=>update("project",e.target.value)} placeholder="What do you need? Any specific pages, features, or goals?" maxLength={2000}/><small className={styles.count}>{form.project.length}/2000</small></Field></div>
           <div className={styles.full}><Field label="How did you hear about us?"><select value={form.referral} onChange={(e)=>update("referral",e.target.value)}><option value="">Select an option</option>{["Google","Facebook","Instagram","LinkedIn","Referral","Existing Customer","Other"].map(item=><option key={item}>{item}</option>)}</select></Field></div>
-          <input className={styles.honeypot} tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.hp_company_url} onChange={(e)=>update("hp_company_url",e.target.value)}/>
+          <input className={styles.honeypot} name={SPAM_TRAP_FIELD} tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" aria-hidden="true" value={form.spamTrap} onChange={(e)=>update("spamTrap",e.target.value)}/>
           <div className={`${styles.full} ${styles.consent}`}><label><input type="checkbox" checked={form.consent} onChange={(e)=>update("consent",e.target.checked)}/><span>I agree to be contacted about my website project. <b>*</b></span></label>{errors.consent&&<small className={styles.error}>{errors.consent}</small>}</div>
           {errors.form&&<div className={`${styles.full} ${styles.formError}`} role="alert">{errors.form}</div>}
           <button className={`${styles.full} ${styles.submit}`} disabled={submitting}>{submitting?"Submitting…":"Submit My Request"}<IconArrowRight size={19}/></button>

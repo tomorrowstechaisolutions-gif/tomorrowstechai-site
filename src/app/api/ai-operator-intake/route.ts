@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBotSubmission } from "@/lib/spam-trap";
 import { intakeLead } from "@/lib/campaign/intake";
 import { getAiOperatorPlan } from "@/lib/ai-operator/plans";
 import { getPublicPackage } from "@/lib/catalog/public";
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     if (!limit.ok) return NextResponse.json({ error: "Too many submissions. Please try again later." }, { status: 429 });
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-    if (clean(body.hp_company_url, 500) || (typeof body.elapsed_ms === "number" && body.elapsed_ms < 1800)) return NextResponse.json({ ok: true });
+    if (isBotSubmission(body as Record<string, unknown>, "ai-operator-intake", 1800)) return NextResponse.json({ ok: true });
 
     const fullName = clean(body.fullName, 200);
     const nameParts = fullName.split(/\s+/).filter(Boolean);
