@@ -7,7 +7,7 @@ import { SoundEffects } from "@/components/fx/UiSound";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DeferredUI } from "@/components/DeferredUI";
-import { ChromeGate } from "@/components/ChromeGate";
+import { ChromeGate, MarketingWidgetGate } from "@/components/ChromeGate";
 import { MetaPixel } from "@/components/MetaPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -258,7 +258,7 @@ export default function RootLayout({
             Suppressed on /business-launch (its form collects SMS consent
             itself, and a second chat bubble competes with the single CTA) and
             in /admin. It still loads on every other page of the site. */}
-        <ChromeGate>
+        <MarketingWidgetGate>
           <Script
             src="https://widgets.leadconnectorhq.com/loader.js"
             data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
@@ -266,7 +266,7 @@ export default function RootLayout({
             data-source="WEB_USER"
             strategy="afterInteractive"
           />
-        </ChromeGate>
+        </MarketingWidgetGate>
         <SpeedInsights />
       </body>
       <GoogleAnalytics gaId="G-1N0MZPDTF5" />

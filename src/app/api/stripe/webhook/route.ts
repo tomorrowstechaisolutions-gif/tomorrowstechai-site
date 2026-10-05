@@ -100,6 +100,11 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   const leadId = m.lead_id || null;
   const invoiceId = m.invoice_id || null;
 
+  if (m.kind === "sticker_order") {
+    await handleStickerOrderPaid(event);
+    return;
+  }
+
   // An upsell to someone who already bought. Different money, different
   // bookkeeping, and no new job — the work attaches to the one already open.
   if (m.kind === "upsell") {
@@ -302,6 +307,44 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   }).catch(() => {
     // Meta being down must never fail the sale.
   });
+}
+
+async function handleStickerOrderPaid(event: StripeEvent) {
+  const db = supabaseAdmin();
+  const session = event.data.object;
+  const sessionId = str(session, "id");
+  const orderId = meta(session).order_id;
+  if (!sessionId || !orderId) return;
+
+  const { data: order } = await db
+    .from("sticker_orders")
+    .select("id, status, total")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order || order.status === "paid") return;
+
+  const amountTotal = num(session, "amount_total");
+  const expectedCents = Math.round(Number(order.total) * 100);
+  if (amountTotal < expectedCents) {
+    throw new Error(`Sticker order ${orderId} payment did not cover the trusted order total.`);
+  }
+
+  const details = session.customer_details as Record<string, unknown> | undefined;
+  const shipping = session.shipping_details as Record<string, unknown> | undefined;
+  const customerEmail = (details ? str(details, "email") : null) || str(session, "customer_email");
+  const { error } = await db
+    .from("sticker_orders")
+    .update({
+      status: "paid",
+      paid_at: new Date().toISOString(),
+      stripe_session_id: sessionId,
+      stripe_payment_intent: str(session, "payment_intent"),
+      stripe_customer_id: str(session, "customer"),
+      customer_email: customerEmail,
+      shipping_details: shipping ?? null,
+    })
+    .eq("id", orderId);
+  if (error) throw error;
 }
 
 

@@ -104,6 +104,12 @@ const SOLUTIONS: MegaItem[] = [
 
 const PRODUCTS: MegaItem[] = [
   {
+    href: "/custom-stickers",
+    label: "Custom Business Stickers",
+    blurb: "Upload, design, or create premium business stickers with AI.",
+    Icon: IconSparkle,
+  },
+  {
     href: "/business-launch",
     label: "$399 Business Launch",
     blurb: "Website, lead capture, CRM, booking and payments. Live in 7-14 days.",

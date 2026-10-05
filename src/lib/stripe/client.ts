@@ -171,6 +171,47 @@ export type CheckoutSession = {
   expires_at?: number;
 };
 
+export async function createStickerCheckoutSession(opts: {
+  orderId: string;
+  name: string;
+  description: string;
+  amountCents: number;
+}): Promise<CheckoutSession> {
+  const origin = siteOrigin();
+  const metadata = { kind: "sticker_order", order_id: opts.orderId };
+
+  return stripeRequest<CheckoutSession>(
+    "POST",
+    "/checkout/sessions",
+    {
+      mode: "payment",
+      customer_creation: "always",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: opts.amountCents,
+            product_data: {
+              name: opts.name.slice(0, 250),
+              description: opts.description.slice(0, 500),
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      metadata,
+      payment_intent_data: { metadata },
+      automatic_tax: { enabled: true },
+      billing_address_collection: "auto",
+      shipping_address_collection: { allowed_countries: ["US"] },
+      allow_promotion_codes: true,
+      success_url: `${origin}/custom-stickers?checkout=success&order_id=${opts.orderId}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/custom-stickers?checkout=cancelled&order_id=${opts.orderId}`,
+    },
+    `sticker-checkout:${opts.orderId}`
+  );
+}
+
 /**
  * One link: $399 today, then $29/month starting 30 days from now.
  *
