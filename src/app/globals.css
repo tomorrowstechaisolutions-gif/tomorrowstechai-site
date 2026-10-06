@@ -1384,6 +1384,17 @@ body {
   border-bottom: 1px solid var(--color-border);
 }
 
+.work-hero-feature--splicepoint {
+  border-color: rgba(0, 205, 255, 0.34);
+  box-shadow: 0 24px 80px rgba(0, 136, 255, 0.07);
+}
+
+.work-hero-feature-media--splicepoint {
+  min-height: 0;
+  aspect-ratio: 2268 / 1244;
+  background: #03070d;
+}
+
 .work-hero-feature-body {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
@@ -1393,6 +1404,15 @@ body {
 
 .work-stack-points-single {
   grid-template-columns: 1fr;
+}
+
+.work-product-note {
+  margin-top: 18px;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.035em;
+  line-height: 1.5;
 }
 
 /* The four leading builds. */
@@ -1622,6 +1642,10 @@ body {
 
   .work-hero-feature-media {
     min-height: 210px;
+  }
+
+  .work-hero-feature-media--splicepoint {
+    min-height: 0;
   }
 
   .work-top-media {

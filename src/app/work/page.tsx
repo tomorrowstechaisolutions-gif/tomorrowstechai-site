@@ -5,12 +5,12 @@ import { LazyYouTube } from "@/components/LazyYouTube";
 export const metadata = {
   title: "Work",
   description:
-    "Selected business operating platforms, command centers, storefronts, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
+    "Selected business operating platforms, fiber construction software, command centers, storefronts, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · Tomorrow’s Tech AI",
     description:
-      "Storefronts, business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
+      "SplicePoint, storefronts, business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
     url: "https://tomorrowstechai.com/work",
     type: "website",
   },
@@ -175,13 +175,71 @@ export default function WorkPage() {
         <div className="work-proof-strip">
           <ProofItem label="Flagship" value="Business operating platforms" />
           <ProofItem label="Core specialty" value="Command centers & dashboards" />
-          <ProofItem label="Featured product" value="Job Catcher for contractors" />
+          <ProofItem label="Featured product" value="SplicePoint for fiber & OSP teams" />
         </div>
       </section>
 
-      {/* ══ Highlighted build ═══════════════════════════════════════════ */}
+      {/* ══ Featured product ════════════════════════════════════════════ */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="eyebrow-muted mb-3">Highlighted build</div>
+        <div className="eyebrow-muted mb-3">New featured product</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-9">
+          Field-to-closeout clarity for fiber construction.
+        </h2>
+
+        <article className="work-hero-feature work-hero-feature--splicepoint">
+          <div className="work-hero-feature-media work-hero-feature-media--splicepoint">
+            <Image
+              src="/work/splicepoint.png"
+              alt="SplicePoint fiber construction platform shown on desktop and mobile"
+              fill
+              priority
+              sizes="(max-width: 1152px) 100vw, 1100px"
+              className="object-contain"
+            />
+          </div>
+          <div className="work-hero-feature-body">
+            <div>
+              <div className="eyebrow mb-4">● Product preview · Fiber &amp; OSP operations</div>
+              <h3 className="text-3xl md:text-4xl font-medium tracking-tight">
+                SplicePoint
+              </h3>
+              <p className="text-lg text-[color:var(--color-text-secondary)] leading-relaxed mt-5">
+                A connected operations platform built specifically for fiber
+                construction teams. SplicePoint brings project maps,
+                construction records, field activity and closeout progress into
+                one place—from the first print to the final as-built.
+              </p>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4">
+                Crews can capture proof in the field while office teams track
+                production, organize network records and prepare billing without
+                stitching the job together across disconnected tools.
+              </p>
+              <Link
+                href="/contact"
+                className="inline-block mt-7 text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+              >
+                Ask about SplicePoint →
+              </Link>
+              <p className="work-product-note">Product preview with simulated project data. SplicePoint is in development.</p>
+            </div>
+            <div>
+              <div className="eyebrow-muted mb-4">Built around the work</div>
+              <div className="work-stack-points work-stack-points-single">
+                <span>Project maps and route progress</span>
+                <span>Structures and splice records</span>
+                <span>Field proof and daily reporting</span>
+                <span>Construction print management</span>
+                <span>As-built documentation</span>
+                <span>Closeout and billing preparation</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      {/* ══ Highlighted studio brand ════════════════════════════════════ */}
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">Highlighted studio brand</div>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-9">
           When the story is the storefront.
         </h2>
@@ -192,7 +250,6 @@ export default function WorkPage() {
               src="/work/darktides.webp"
               alt="Dark Tides Supply Co Blackbeard legend page"
               fill
-              priority
               sizes="(max-width: 1152px) 100vw, 1100px"
               className="object-cover object-top"
             />
