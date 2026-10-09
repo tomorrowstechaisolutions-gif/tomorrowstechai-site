@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { getAdminUser } from "@/lib/supabase/server";
 import { newOAuthState, zoomAuthUrl, zoomMissingConfig } from "@/lib/zoom/oauth";
 
@@ -7,8 +8,9 @@ export const dynamic = "force-dynamic";
 
 const SETTINGS = "/admin/conference-center/settings";
 
-function site(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com";
+/** The host the admin is on, so every redirect and cookie stays on it. */
+function site(request: NextRequest): string {
+  return request.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com";
 }
 
 /**
@@ -19,19 +21,19 @@ function site(): string {
  * connects THEIR Zoom account) and the PKCE verifier (so an intercepted
  * authorization code is useless on its own).
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getAdminUser();
-  if (!session) return NextResponse.redirect(new URL("/admin/login", site()));
+  if (!session) return NextResponse.redirect(new URL("/admin/login", site(request)));
 
   const missing = zoomMissingConfig();
   if (missing.length > 0) {
     return NextResponse.redirect(
-      new URL(`${SETTINGS}?zoom=unconfigured&detail=${encodeURIComponent(missing.join(", "))}`, site())
+      new URL(`${SETTINGS}?zoom=unconfigured&detail=${encodeURIComponent(missing.join(", "))}`, site(request))
     );
   }
 
   const { state, verifier, challenge } = newOAuthState();
-  const response = NextResponse.redirect(zoomAuthUrl(state, challenge));
+  const response = NextResponse.redirect(zoomAuthUrl(state, challenge, site(request)));
   const cookie = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

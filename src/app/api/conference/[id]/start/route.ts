@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * header, sent to the admin who asked for it.
  */
 function back(request: NextRequest, id: string, error: string): NextResponse {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
+  const base = request.nextUrl.origin;
   return NextResponse.redirect(
     new URL(`/admin/conference-center?conference=${encodeURIComponent(id)}&error=${encodeURIComponent(error.slice(0, 240))}`, base)
   );
@@ -25,7 +25,7 @@ function back(request: NextRequest, id: string, error: string): NextResponse {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getAdminUser();
   if (!session) {
-    return NextResponse.redirect(new URL("/admin/login", process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin));
+    return NextResponse.redirect(new URL("/admin/login", request.nextUrl.origin));
   }
 
   const { id } = await params;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getAdminUser } from "@/lib/supabase/server";
 import {
   ZOOM_REQUIRED_SCOPES, zoomConnection, zoomRedirectUri, zoomWebhookUrl,
@@ -43,7 +44,9 @@ export default async function ZoomSettingsPage({
   const params = await searchParams;
   const one = (key: string) => (typeof params[key] === "string" ? (params[key] as string) : undefined);
 
-  const [zoom, settings] = await Promise.all([zoomConnection(), getConferenceSettings()]);
+  const [zoom, settings, h] = await Promise.all([zoomConnection(), getConferenceSettings(), headers()]);
+  const host = h.get("x-forwarded-host") || h.get("host");
+  const origin = host ? `${h.get("x-forwarded-proto") || "https"}://${host}` : null;
   const status = one("zoom");
   const banner = status ? MESSAGES[status] : null;
   const detail = one("detail");
@@ -119,7 +122,7 @@ export default async function ZoomSettingsPage({
             <li>At marketplace.zoom.us → Develop → Build App, create a <b>General App</b> (user-managed).</li>
             <li>
               OAuth Redirect URL and Allow List:
-              <div className="cf-linkrow"><code>{zoomRedirectUri()}</code><CopyButton text={zoomRedirectUri()} label="Copy" className="cc-btn is-sm" /></div>
+              <div className="cf-linkrow"><code>{zoomRedirectUri(origin)}</code><CopyButton text={zoomRedirectUri(origin)} label="Copy" className="cc-btn is-sm" /></div>
             </li>
             <li>
               Scopes:
@@ -128,7 +131,7 @@ export default async function ZoomSettingsPage({
             <li>
               Event subscriptions → endpoint URL, with <i>meeting.started</i>, <i>meeting.ended</i>, <i>meeting.deleted</i>
               and the app deauthorization event:
-              <div className="cf-linkrow"><code>{zoomWebhookUrl()}</code><CopyButton text={zoomWebhookUrl()} label="Copy" className="cc-btn is-sm" /></div>
+              <div className="cf-linkrow"><code>{zoomWebhookUrl(origin)}</code><CopyButton text={zoomWebhookUrl(origin)} label="Copy" className="cc-btn is-sm" /></div>
             </li>
             <li>
               In Vercel, set <code>ZOOM_CLIENT_ID</code>, <code>ZOOM_CLIENT_SECRET</code>,

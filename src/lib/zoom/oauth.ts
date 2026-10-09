@@ -52,13 +52,22 @@ function siteBase(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com").replace(/\/+$/, "");
 }
 
-/** Must match the Redirect URL registered on the Zoom app exactly. */
-export function zoomRedirectUri(): string {
-  return process.env.ZOOM_REDIRECT_URI || `${siteBase()}/api/zoom/oauth/callback`;
+/**
+ * Must match the Redirect URL registered on the Zoom app exactly.
+ *
+ * Order: ZOOM_REDIRECT_URI if set; otherwise the origin the admin is actually
+ * on (so www stays www — the state/PKCE cookies were set on that host and
+ * would be missing on any other); otherwise NEXT_PUBLIC_SITE_URL.
+ */
+export function zoomRedirectUri(origin?: string | null): string {
+  if (process.env.ZOOM_REDIRECT_URI) return process.env.ZOOM_REDIRECT_URI;
+  const base = origin && /^https?:\/\/[^/]+$/.test(origin) ? origin : siteBase();
+  return `${base.replace(/\/+$/, "")}/api/zoom/oauth/callback`;
 }
 
-export function zoomWebhookUrl(): string {
-  return `${siteBase()}/api/zoom/webhook`;
+export function zoomWebhookUrl(origin?: string | null): string {
+  const base = origin && /^https?:\/\/[^/]+$/.test(origin) ? origin : siteBase();
+  return `${base}/api/zoom/webhook`;
 }
 
 function basicAuth(): string {
@@ -75,11 +84,11 @@ export function newOAuthState(): { state: string; verifier: string; challenge: s
   return { state, verifier, challenge };
 }
 
-export function zoomAuthUrl(state: string, challenge: string): string {
+export function zoomAuthUrl(state: string, challenge: string, origin?: string | null): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: process.env.ZOOM_CLIENT_ID ?? "",
-    redirect_uri: zoomRedirectUri(),
+    redirect_uri: zoomRedirectUri(origin),
     state,
     code_challenge: challenge,
     code_challenge_method: "S256",
@@ -254,7 +263,8 @@ async function fetchMe(accessToken: string): Promise<ZoomMe | null> {
 export async function exchangeZoomCode(
   code: string,
   verifier: string,
-  actor: string | null
+  actor: string | null,
+  origin?: string | null
 ): Promise<{ email: string | null }> {
   if (!encryptionConfigured()) {
     throw new Error("INTEGRATION_ENCRYPTION_KEY is not set, so the Zoom token cannot be stored safely.");
@@ -263,7 +273,7 @@ export async function exchangeZoomCode(
   const token = await postToken({
     grant_type: "authorization_code",
     code,
-    redirect_uri: zoomRedirectUri(),
+    redirect_uri: zoomRedirectUri(origin),
     code_verifier: verifier,
   });
 

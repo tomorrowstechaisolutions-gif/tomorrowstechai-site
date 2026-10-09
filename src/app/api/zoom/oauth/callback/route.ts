@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
  * message and no credential.
  */
 function back(request: NextRequest, params: string): NextResponse {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
+  // Same host the flow started on, where the admin session lives.
+  const base = request.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com";
   const response = NextResponse.redirect(new URL(`/admin/conference-center/settings?${params}`, base));
   response.cookies.delete({ name: "zoom_oauth_state", path: "/api/zoom/oauth" });
   response.cookies.delete({ name: "zoom_oauth_verifier", path: "/api/zoom/oauth" });
@@ -32,7 +33,7 @@ function same(a: string, b: string): boolean {
 export async function GET(request: NextRequest) {
   const session = await getAdminUser();
   if (!session) {
-    return NextResponse.redirect(new URL("/admin/login", process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin));
+    return NextResponse.redirect(new URL("/admin/login", request.nextUrl.origin));
   }
 
   const url = request.nextUrl;
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { email } = await exchangeZoomCode(code, verifier, session.admin.email);
+    const { email } = await exchangeZoomCode(code, verifier, session.admin.email, request.nextUrl.origin);
     return back(request, `zoom=connected&account=${encodeURIComponent(email ?? "")}`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Zoom would not complete the connection.";
