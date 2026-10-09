@@ -6,6 +6,7 @@ import { providerStatuses } from "@/lib/meetings/providers";
 import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
 import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
 import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleConferenceLink";
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import RequestsPanel from "@/components/admin/cc/requests/RequestsPanel";
 import { loadClientRequests } from "@/lib/requests/queries";
@@ -91,16 +92,19 @@ export default async function ClientPage({
   ]);
 
   const scheduleButton = meetingContact ? (
-    <ScheduleMeetingButton
-      contact={meetingContact}
-      providers={providers}
-      action={scheduleMeetingAction}
-      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
-      defaultType="strategy"
-      returnTo={`/admin/clients/${client.id}`}
-      timezone={BUSINESS_TIMEZONE}
-      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
-    />
+    <>
+      <ScheduleMeetingButton
+        contact={meetingContact}
+        providers={providers}
+        action={scheduleMeetingAction}
+        defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+        defaultType="strategy"
+        returnTo={`/admin/clients/${client.id}`}
+        timezone={BUSINESS_TIMEZONE}
+        timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+      />
+      <ScheduleConferenceLink contact={meetingContact} category="client_project_review" />
+    </>
   ) : null;
 
   return (

@@ -26,6 +26,7 @@ import {
   IconShare,
   IconSpark,
   IconUsers,
+  IconVideo,
   IconZap,
 } from "./Icons";
 
@@ -65,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin", label: "Dashboard", icon: IconGrid },
       { href: "/admin/ai", label: "AI Command Center", icon: IconSpark, soon: true, badge: "aiProposals" },
       { href: "/admin/activity", label: "Activity Center", icon: IconPulse, soon: true },
+      { href: "/admin/conference-center", label: "Conference Center", icon: IconVideo, badge: "meetingsToday" },
     ],
   },
   {

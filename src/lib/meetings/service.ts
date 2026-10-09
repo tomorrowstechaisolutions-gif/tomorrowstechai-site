@@ -167,19 +167,27 @@ function providerInput(meeting: Meeting, notify: boolean): ProviderMeetingInput 
   };
 }
 
+/**
+ * Writes what the provider gave back. An update that returns no link or no
+ * metadata (Zoom's PATCH is a bare 204) keeps what the row already had, so a
+ * retry can never blank a working join link.
+ */
 async function applyResult(
   sb: SupabaseClient,
-  meetingId: string,
+  meeting: Meeting,
   result: ProviderResult
 ): Promise<void> {
-  await sb.from("meetings").update({
-    provider_event_id: result.eventId,
-    provider_calendar_id: result.calendarId,
-    meeting_url: result.joinUrl,
-    provider_metadata: result.metadata,
+  const { error } = await sb.from("meetings").update({
+    provider_event_id: result.eventId ?? meeting.provider_event_id,
+    provider_calendar_id: result.calendarId ?? meeting.provider_calendar_id,
+    meeting_url: result.joinUrl ?? meeting.meeting_url,
+    provider_metadata: { ...(meeting.provider_metadata ?? {}), ...result.metadata },
     provider_synced_at: new Date().toISOString(),
     provider_error: null,
-  }).eq("id", meetingId);
+  }).eq("id", meeting.id);
+  if (error) {
+    throw new Error(`The ${meeting.provider} meeting was created but could not be saved: ${error.message}`);
+  }
 }
 
 async function recordProviderError(
@@ -225,12 +233,24 @@ export type ScheduleInput = {
 
   owner?: string | null;
   notifyAttendees: boolean;
+
+  /** Zoom: start now. Other providers ignore it. */
+  instant?: boolean;
+  /** Where the meeting came from, for analytics. Defaults to 'admin'. */
+  source?: "admin" | "instant" | "booking" | "partner";
+  /**
+   * Idempotency key from the form. A second submit with the same key returns
+   * the meeting the first one created instead of creating another.
+   */
+  clientRequestId?: string | null;
 };
 
 export type ScheduleResult = {
   meeting: Meeting;
   /** Null when everything worked. A sentence to show when it did not. */
   providerError: string | null;
+  /** True when this was a repeat of an earlier identical request. */
+  duplicate?: boolean;
 };
 
 export async function scheduleMeeting(
@@ -241,10 +261,24 @@ export async function scheduleMeeting(
   if (new Date(input.endAt).getTime() <= new Date(input.startAt).getTime()) {
     throw new Error("A meeting has to end after it starts.");
   }
-  if (PROVIDER_IS_VIDEO[input.provider] && !input.attendeeEmail) {
+  // An instant conference can start before anyone is invited — the link is
+  // copied or emailed afterwards — so only scheduled video meetings need one.
+  if (PROVIDER_IS_VIDEO[input.provider] && !input.attendeeEmail && !input.instant) {
     throw new Error(
       "A video meeting needs an email address to send the invitation to. Add one to the contact, or pick Phone."
     );
+  }
+
+  // Same form submitted twice: hand back what the first submit made.
+  if (input.clientRequestId) {
+    const { data: existing } = await sb
+      .from("meetings").select("*")
+      .eq("client_request_id", input.clientRequestId)
+      .maybeSingle();
+    if (existing) {
+      const prior = existing as Meeting;
+      return { meeting: prior, providerError: prior.provider_error, duplicate: true };
+    }
   }
 
   const { data, error } = await sb
@@ -271,26 +305,69 @@ export async function scheduleMeeting(
       extra_attendees: input.extraAttendees ?? [],
       owner: input.owner ?? actor,
       created_by: actor,
+      // Only sent when set, so the existing Meetings flow keeps working
+      // against a database the Conference Center migration has not reached.
+      ...(input.source ? { source: input.source } : {}),
+      ...(input.clientRequestId ? { client_request_id: input.clientRequestId } : {}),
     })
     .select("*")
     .single();
 
+  if (error && error.code === "23505" && input.clientRequestId) {
+    // Lost a race with an identical submit. Theirs is the meeting.
+    const { data: winner } = await sb
+      .from("meetings").select("*").eq("client_request_id", input.clientRequestId).maybeSingle();
+    if (winner) {
+      const prior = winner as Meeting;
+      return { meeting: prior, providerError: prior.provider_error, duplicate: true };
+    }
+  }
   if (error || !data) {
     throw new Error(`Could not save the meeting: ${error?.message ?? "unknown"}`);
   }
   const meeting = data as Meeting;
 
   let providerError: string | null = null;
+  const provider = providerFor(input.provider);
+  let result: ProviderResult | null = null;
   try {
-    const result = await providerFor(input.provider).create(providerInput(meeting, input.notifyAttendees));
-    await applyResult(sb, meeting.id, result);
-    meeting.provider_event_id = result.eventId;
-    meeting.provider_calendar_id = result.calendarId;
-    meeting.meeting_url = result.joinUrl;
+    result = await provider.create({
+      ...providerInput(meeting, input.notifyAttendees),
+      instant: input.instant ?? false,
+    });
   } catch (error: unknown) {
     providerError = messageOf(error);
     await recordProviderError(sb, meeting.id, providerError);
     meeting.provider_error = providerError;
+  }
+
+  if (result) {
+    try {
+      await applyResult(sb, meeting, result);
+      meeting.provider_event_id = result.eventId;
+      meeting.provider_calendar_id = result.calendarId;
+      meeting.meeting_url = result.joinUrl;
+      meeting.provider_metadata = { ...(meeting.provider_metadata ?? {}), ...result.metadata };
+    } catch (error: unknown) {
+      // The provider created it but our row could not record it. Without the
+      // event id a Retry would create a SECOND external meeting, and an
+      // instant meeting's row is deleted on failure — so the external one is
+      // cancelled rather than left orphaned. Never silently.
+      let cancelled = false;
+      if (result.eventId) {
+        try {
+          await provider.cancel(result.eventId, result.calendarId, false);
+          cancelled = true;
+        } catch {
+          cancelled = false;
+        }
+      }
+      providerError = cancelled
+        ? `${messageOf(error)} The ${input.provider} meeting was cancelled so no orphan is left behind. Try again.`
+        : `${messageOf(error)} The ${input.provider} meeting ${result.eventId ?? ""} could NOT be cancelled — delete it in the provider by hand.`;
+      await recordProviderError(sb, meeting.id, providerError).catch(() => undefined);
+      meeting.provider_error = providerError;
+    }
   }
 
   await writeTimeline(
@@ -313,7 +390,7 @@ export async function syncMeeting(
     const result = meeting.provider_event_id
       ? await provider.update(meeting.provider_event_id, meeting.provider_calendar_id, providerInput(meeting, notify))
       : await provider.create(providerInput(meeting, notify));
-    await applyResult(sb, meeting.id, result);
+    await applyResult(sb, meeting, result);
     return null;
   } catch (error: unknown) {
     const message = messageOf(error);
@@ -418,7 +495,9 @@ export async function cancelMeeting(
         meeting.provider_event_id, meeting.provider_calendar_id, options.notify
       );
     } catch (error: unknown) {
-      providerError = `${messageOf(error)} Remove it from Google Calendar by hand.`;
+      providerError = meeting.provider === "zoom"
+        ? `${messageOf(error)} Delete it in Zoom by hand.`
+        : `${messageOf(error)} Remove it from Google Calendar by hand.`;
     }
   }
 

@@ -110,6 +110,7 @@ function durationFrom(fd: FormData, type: MeetingType): number {
 /** Every screen a meeting can appear on. */
 function touch(meeting: Pick<Meeting, "lead_id" | "customer_id" | "job_id" | "proposal_id">) {
   revalidatePath("/admin/meetings");
+  revalidatePath("/admin/conference-center");
   revalidatePath("/admin/calendar");
   revalidatePath("/admin");
   if (meeting.lead_id) revalidatePath(`/admin/leads/${meeting.lead_id}`);

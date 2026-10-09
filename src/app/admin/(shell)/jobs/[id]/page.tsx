@@ -5,6 +5,7 @@ import { providerStatuses } from "@/lib/meetings/providers";
 import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
 import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
 import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleConferenceLink";
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
 import { chicagoDate } from "@/lib/time/chicago";
@@ -125,17 +126,20 @@ export default async function JobDetailPage({
   ]);
 
   const scheduleButton = meetingContact ? (
-    <ScheduleMeetingButton
-      contact={meetingContact}
-      providers={providers}
-      action={scheduleMeetingAction}
-      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
-      defaultType={job.completed_at ? "final_review" : "kickoff"}
-      jobId={job.id}
-      returnTo={`/admin/jobs/${job.id}`}
-      timezone={BUSINESS_TIMEZONE}
-      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
-    />
+    <>
+      <ScheduleMeetingButton
+        contact={meetingContact}
+        providers={providers}
+        action={scheduleMeetingAction}
+        defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+        defaultType={job.completed_at ? "final_review" : "kickoff"}
+        jobId={job.id}
+        returnTo={`/admin/jobs/${job.id}`}
+        timezone={BUSINESS_TIMEZONE}
+        timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+      />
+      <ScheduleConferenceLink contact={meetingContact} category="client_project_review" jobId={job.id} label="Schedule Client Review" />
+    </>
   ) : null;
 
   return (

@@ -60,3 +60,17 @@ export function relative(iso: string): string {
       : `${Math.round(abs / (60 * 24))} day${Math.round(abs / (60 * 24)) === 1 ? "" : "s"}`;
   return minutes >= 0 ? `in ${unit}` : `${unit} ago`;
 }
+
+/**
+ * Where a host's "Start" goes. Zoom's host link is never stored — it carries
+ * the host token and expires — so a Zoom meeting starts through a server
+ * route that fetches a fresh one. Every other provider opens its own link.
+ */
+export function hostStartUrl(meeting: {
+  id: string; provider: string; provider_event_id: string | null; meeting_url: string | null;
+}): string | null {
+  if (meeting.provider === "zoom") {
+    return meeting.provider_event_id ? `/api/conference/${meeting.id}/start` : null;
+  }
+  return meeting.meeting_url;
+}

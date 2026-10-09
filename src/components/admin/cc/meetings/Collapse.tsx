@@ -14,12 +14,15 @@ export default function Collapse({
   label,
   children,
   tone = "ghost",
+  defaultOpen = false,
 }: {
   label: string;
   children: ReactNode;
   tone?: "ghost" | "danger";
+  /** Opened on arrival, when a link asked for this action directly. */
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className="mt-collapse">

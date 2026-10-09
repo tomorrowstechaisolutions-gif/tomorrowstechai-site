@@ -11548,3 +11548,144 @@ body {
   /* The overdue banner never gets a colour of its own — `.cc-error`
      already means "this needs you", and a second red would dilute it. */
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Conference Center — `.cf-*`, scoped under .cc-root.
+   Composes the existing .cc-* / .mt-* / .tk-* shapes; adds only the launch
+   bar, the instant-conference panel, analytics tiles and responsive tables.
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer components {
+  .cc-root .cf-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .cc-root .cf-head-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cc-root .cf-crumb { margin: 0 0 4px; font-size: .72rem; color: var(--cc-faint); }
+  .cc-root .cf-crumb a { color: var(--cc-dim); }
+
+  .cc-root .cf-zoom {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 11px;
+    border-radius: 999px; border: var(--cc-edge); background: var(--cc-surface);
+    font-size: .72rem; color: var(--cc-dim);
+  }
+  .cc-root .cf-zoom b { color: var(--cc-text); font-weight: 600; }
+  .cc-root .cf-zoom-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cc-faint); }
+  .cc-root .cf-zoom.is-on .cf-zoom-dot { background: var(--cc-ok); box-shadow: 0 0 0 3px rgba(52,211,153,.15); }
+  .cc-root .cf-zoom.is-off .cf-zoom-dot { background: var(--cc-warn); }
+
+  .cc-root .cf-alert { margin-top: 4px; }
+
+  /* ── Launch bar ─────────────────────────────────────────────────── */
+  .cc-root .cf-launch { margin: 4px 0 18px; }
+  .cc-root .cf-launch-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cc-root .cf-big {
+    padding: 13px 20px; font-size: .86rem; border-radius: 12px; gap: 9px;
+  }
+  .cc-root .cf-big.primary {
+    box-shadow: 0 0 0 1px rgba(56,189,248,.35), 0 8px 28px -10px rgba(56,189,248,.55);
+  }
+  .cc-root .cf-big:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+  .cc-root .cf-err { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; }
+
+  .cc-root .cf-instant {
+    margin-top: 14px; padding: 16px; border-radius: var(--cc-r);
+    border: 1px solid rgba(56,189,248,.35);
+    background: linear-gradient(180deg, rgba(56,189,248,.08), rgba(56,189,248,.02));
+  }
+  .cc-root .cf-instant-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .cc-root .cf-instant-head b { color: var(--cc-text); font-size: .86rem; }
+  .cc-root .cf-instant-head .cc-icon-btn { margin-left: auto; }
+  .cc-root .cf-live-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--cc-ok);
+    box-shadow: 0 0 0 4px rgba(52,211,153,.18);
+  }
+  .cc-root .cf-linkrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .cc-root .cf-linkrow .cc-input { flex: 1 1 260px; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .74rem; }
+  .cc-root .cf-linkrow code { overflow-wrap: anywhere; font-size: .72rem; color: var(--cc-text); }
+  .cc-root .cf-invite {
+    display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; margin-top: 12px;
+  }
+  .cc-root .cf-invite > label { margin-bottom: 0; }
+  .cc-root .cf-small { font-size: .72rem; margin: 6px 0 0; }
+  .cc-root .cf-ok {
+    display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(52,211,153,.35); background: rgba(52,211,153,.08); color: #a7f3d0; font-size: .76rem;
+  }
+  .cc-root .cf-banner { margin: 0 0 16px; }
+  .cc-root .cf-good { color: var(--cc-ok); }
+  .cc-root .cf-bad { color: #fca5a5; }
+
+  /* ── Schedule modal ─────────────────────────────────────────────── */
+  .cc-root .cf-modal { max-height: calc(100vh - 40px); overflow-y: auto; }
+  .cc-root .cf-modal .mt-row3 { margin-bottom: 12px; }
+  .cc-root .cf-row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .cc-root .cf-row2 > label { margin-bottom: 12px; }
+  .cc-root .cf-done { padding: 4px 0 12px; display: grid; gap: 10px; }
+  .cc-root .cf-sent { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: .76rem; }
+  .cc-root .cf-sent .is-ok { color: #a7f3d0; }
+  .cc-root .cf-sent .is-bad { color: #fca5a5; }
+
+  /* ── Board ─────────────────────────────────────────────────────── */
+  .cc-root .cf-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .cc-root .cf-panel { margin-bottom: 16px; }
+  .cc-root .cf-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; }
+  .cc-root .cf-rowactions { white-space: nowrap; }
+  .cc-root .cf-rowactions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+  .cc-root .cf-danger { color: #fca5a5; }
+  .cc-root .cf-toolbar { flex-wrap: wrap; gap: 10px; }
+  .cc-root .cf-search { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cc-root .cf-search .cc-input { width: auto; min-width: 140px; }
+  .cc-root .cf-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: .74rem; }
+
+  .cc-root .cf-requests { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+  .cc-root .cf-requests li {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--cc-line-soft);
+  }
+  .cc-root .cf-requests li > div { display: grid; gap: 3px; min-width: 0; }
+
+  .cc-root .cf-analytics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .cc-root .cf-stat {
+    display: grid; gap: 4px; padding: 12px; border-radius: var(--cc-r-sm);
+    border: var(--cc-edge); background: var(--cc-surface);
+  }
+  .cc-root .cf-stat-label { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--cc-faint); }
+  .cc-root .cf-stat-value { font-size: 1.35rem; font-weight: 700; color: var(--cc-text); font-variant-numeric: tabular-nums; }
+  .cc-root .cf-stat-note { font-size: .68rem; color: var(--cc-dim); line-height: 1.4; }
+  .cc-root .cf-analytics-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; margin: 4px 0 0; font-size: .7rem; color: var(--cc-faint); }
+
+  /* ── Settings ──────────────────────────────────────────────────── */
+  .cc-root .cf-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; }
+  .cc-root .cf-steps { margin: 0; padding-left: 18px; display: grid; gap: 10px; font-size: .78rem; color: var(--cc-dim); line-height: 1.55; }
+  .cc-root .cf-steps b, .cc-root .cf-steps code { color: var(--cc-text); }
+  .cc-root .cf-scopes { margin: 6px 0 0; padding-left: 16px; display: grid; gap: 2px; }
+  .cc-root .cf-settings { max-width: 760px; }
+  .cc-root .cf-settings .cf-row2 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cc-root .cf-h3 { margin: 16px 0 8px; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--cc-faint); }
+
+  @media (max-width: 1100px) {
+    .cc-root .cf-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cc-root .cf-grid { grid-template-columns: minmax(0, 1fr); }
+    .cc-root .cf-settings .cf-row2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 760px) {
+    .cc-root .cf-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cc-root .cf-big { flex: 1 1 100%; justify-content: center; }
+    .cc-root .cf-invite, .cc-root .cf-row2, .cc-root .cf-settings .cf-row2 { grid-template-columns: minmax(0, 1fr); }
+    .cc-root .cf-analytics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cc-root .cf-head-right { width: 100%; }
+
+    /* Tables become stacked cards: each cell labelled, actions full width. */
+    .cc-root .cf-table thead { display: none; }
+    .cc-root .cf-table, .cc-root .cf-table tbody, .cc-root .cf-table tr, .cc-root .cf-table td { display: block; width: 100%; box-sizing: border-box; min-width: 0; }
+    .cc-root .cf-table tr { padding: 12px 14px; border-bottom: 1px solid var(--cc-line); }
+    .cc-root .cf-table td { padding: 3px 0; border: 0; }
+    .cc-root .cf-table td[data-label]::before {
+      content: attr(data-label); display: inline-block; min-width: 76px;
+      font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--cc-faint);
+    }
+    .cc-root .cf-table td .cc-sub { display: inline; margin-left: 6px; }
+    .cc-root .cf-table td.cf-rowactions {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start;
+      white-space: normal; padding-top: 8px;
+    }
+  }
+}

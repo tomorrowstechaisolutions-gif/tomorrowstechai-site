@@ -2,6 +2,7 @@ import "server-only";
 import type { MeetingProviderKey } from "../config";
 import { PROVIDER_LABELS } from "../config";
 import { googleMeetProvider } from "./google";
+import { zoomProvider } from "./zoom";
 import { ProviderError } from "./types";
 import type {
   MeetingProvider, ProviderMeetingInput, ProviderResult, ProviderStatus,
@@ -14,9 +15,8 @@ export type { MeetingProvider, ProviderMeetingInput, ProviderResult, ProviderSta
  * The registry.
  *
  * `providerFor(key)` is the only way the rest of the application reaches a
- * provider, so adding Zoom is: write providers/zoom.ts against the interface,
- * add it to this map, delete the placeholder below. No screen changes, no
- * service changes, no migration.
+ * provider. Zoom arrived exactly as planned: providers/zoom.ts against the
+ * interface, one line in this map.
  */
 
 /**
@@ -42,40 +42,9 @@ function manualProvider(key: MeetingProviderKey): MeetingProvider {
   };
 }
 
-/**
- * Zoom, not yet built.
- *
- * Deliberately a real object that refuses rather than a missing key, so the
- * form can show the option, explain itself, and refuse at the one point where
- * refusing matters. When Zoom is built this whole constant is deleted.
- */
-const zoomComingSoon: MeetingProvider = {
-  key: "zoom",
-  label: "Zoom",
-  async status() {
-    return {
-      key: "zoom",
-      label: "Zoom",
-      ready: false,
-      comingSoon: true,
-      reason: "Zoom is not connected yet. Google Meet, phone and in-person all work today.",
-    };
-  },
-  async create() {
-    throw new ProviderError("zoom", "Zoom is not available yet. Pick Google Meet, phone or in person.");
-  },
-  async update() {
-    throw new ProviderError("zoom", "Zoom is not available yet.");
-  },
-  async cancel() {
-    // Nothing was ever created, so there is nothing to cancel and nothing to
-    // fail — cancelling a Zoom meeting must not block cancelling the row.
-  },
-};
-
 const REGISTRY: Record<MeetingProviderKey, MeetingProvider> = {
   google_meet: googleMeetProvider,
-  zoom: zoomComingSoon,
+  zoom: zoomProvider,
   phone: manualProvider("phone"),
   in_person: manualProvider("in_person"),
 };

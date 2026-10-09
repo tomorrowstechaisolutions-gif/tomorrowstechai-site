@@ -7,7 +7,7 @@ import type { MeetingTab } from "@/lib/meetings/config";
 import type { MeetingKpis, MeetingWithLinks } from "@/lib/meetings/types";
 import { setMeetingStatusAction } from "@/app/admin/meeting-actions";
 import StartMeetingButton from "../meetings/StartMeetingButton";
-import { dayOf, relative, timeOf } from "../meetings/format";
+import { dayOf, hostStartUrl, relative, timeOf } from "../meetings/format";
 import { EmptyState } from "../Panel";
 import { DASH } from "../format";
 import {
@@ -81,7 +81,7 @@ function Agenda({
               </span>
               {joinable && meeting.status !== "completed" && meeting.status !== "cancelled" ? (
                 <StartMeetingButton
-                  url={meeting.meeting_url as string}
+                  url={hostStartUrl(meeting) ?? (meeting.meeting_url as string)}
                   meetingId={meeting.id}
                   markInProgress={setMeetingStatusAction}
                   label="Start"
@@ -163,7 +163,7 @@ function Table({
                 <td className="mt-rowactions">
                   {joinable && (meeting.status === "scheduled" || meeting.status === "confirmed" || meeting.status === "in_progress") ? (
                     <StartMeetingButton
-                      url={meeting.meeting_url as string}
+                      url={hostStartUrl(meeting) ?? (meeting.meeting_url as string)}
                       meetingId={meeting.id}
                       markInProgress={setMeetingStatusAction}
                       label="Start"
