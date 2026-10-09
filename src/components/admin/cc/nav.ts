@@ -77,6 +77,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChart },
       { href: "/admin/proposals", label: "Proposals", icon: IconFile },
       { href: "/admin/clients", label: "Clients", icon: IconUsers },
+      // Businesses you sell THROUGH (white-label, revenue share) — not a client list.
+      { href: "/admin/partners", label: "Partners", icon: IconShare },
       // Last, because it is last in the work: proposal → both parties agree →
       // the work happens → the invoice. It sits under Sales rather than
       // Finance because raising one is part of closing the sale, and because

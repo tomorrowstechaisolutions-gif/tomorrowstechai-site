@@ -5,6 +5,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { loadLinkCandidates } from "@/lib/proposals/queries";
 import { getInvoiceById } from "@/lib/invoices/service";
 import { DEFAULT_FOOTER, DEFAULT_TERMS, type PaymentTerm } from "@/lib/invoices/config";
+import { sentAtOf } from "@/lib/invoices/config";
 import { updateInvoiceAction } from "@/app/admin/invoice-actions";
 import InvoiceBuilder, { type InvoiceInitial } from "@/components/admin/cc/InvoiceBuilder";
 
@@ -76,7 +77,7 @@ export default async function EditInvoicePage({
         <div>
           <h1>Edit {inv.invoice_number}</h1>
           <p>
-            {inv.sent_at
+            {sentAtOf(inv)
               ? "This invoice has already gone out. Saving changes what the client sees the next time they open the link."
               : "Not sent yet, so nobody has seen any of this."}
           </p>

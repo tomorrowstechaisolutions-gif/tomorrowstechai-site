@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CLOSED_INVOICE_STATUSES, type InvoiceSource, type InvoiceStatus } from "./config";
+import { sentAtOf } from "./config";
 import { daysOverdue, isOverdue, outstandingCents } from "./pricing";
 import type { Invoice, InvoiceEvent } from "./types";
 
@@ -101,7 +102,7 @@ function toRow(inv: Invoice, companyName: string | null): InvoiceListRow {
     publicToken: inv.public_token,
     issueDate: inv.issue_date,
     dueDate: inv.due_date,
-    sentAt: inv.sent_at,
+    sentAt: sentAtOf(inv),
     sentMethod: inv.sent_method,
     viewedAt: inv.first_viewed_at,
     paidAt: inv.paid_at,

@@ -8,6 +8,7 @@ import {
   ITEM_KIND_LABELS, METHOD_LABELS, PAYMENT_METHODS, SOURCE_LABELS,
   STATUS_LABELS, STATUS_TONE, TERM_LABELS, type PaymentTerm,
 } from "@/lib/invoices/config";
+import { sentAtOf } from "@/lib/invoices/config";
 import { daysOverdue, formatDate, formatMoney, isOverdue, outstandingCents } from "@/lib/invoices/pricing";
 import {
   addInvoiceNoteAction, deleteInvoiceAction, deleteInvoicePaymentAction,
@@ -74,8 +75,8 @@ export default async function InvoiceDetailPage({
     { label: "Owner", value: inv.owner || DASH },
     {
       label: "Sent",
-      value: inv.sent_at
-        ? `${stamp(inv.sent_at)}${inv.sent_method === "manual" ? " · by hand" : " · emailed"}`
+      value: sentAtOf(inv)
+        ? `${stamp(sentAtOf(inv))}${inv.sent_method === "manual" ? " · by hand" : " · emailed"}`
         : DASH,
     },
     { label: "First viewed", value: stamp(inv.first_viewed_at) },
@@ -122,7 +123,7 @@ export default async function InvoiceDetailPage({
                 placeholder="Optional note to include in the email"
               />
               <button type="submit" className="cc-btn primary">
-                <IconSend size={13} /> {inv.sent_at ? "Email again" : "Email to client"}
+                <IconSend size={13} /> {sentAtOf(inv) ? "Email again" : "Email to client"}
               </button>
             </form>
 
@@ -137,7 +138,7 @@ export default async function InvoiceDetailPage({
               </button>
             </form>
 
-            {outstanding > 0 && inv.sent_at ? (
+            {outstanding > 0 && sentAtOf(inv) ? (
               <form action={sendInvoiceReminderAction}>
                 <input type="hidden" name="invoice_id" value={inv.id} />
                 <button type="submit" className="cc-btn">Send a reminder</button>
@@ -149,7 +150,7 @@ export default async function InvoiceDetailPage({
               <button type="submit" className="cc-btn">Duplicate</button>
             </form>
 
-            {inv.status === "draft" && !inv.sent_at ? (
+            {inv.status === "draft" && !sentAtOf(inv) ? (
               <form action={deleteInvoiceAction}>
                 <input type="hidden" name="invoice_id" value={inv.id} />
                 <button type="submit" className="cc-btn">Delete draft</button>
