@@ -9,6 +9,6 @@ export default function Image() {
     eyebrow: "Work",
     title: "Work built to run the business.",
     subtitle:
-      "Business operating platforms, command centers, Job Catcher, and client systems built around real operations.",
+      "Storyborn, business operating platforms, command centers, Job Catcher, and client systems built around real operations.",
   });
 }

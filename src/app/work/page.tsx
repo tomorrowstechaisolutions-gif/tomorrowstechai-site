@@ -5,12 +5,12 @@ import { LazyYouTube } from "@/components/LazyYouTube";
 export const metadata = {
   title: "Work",
   description:
-    "Selected business operating platforms, fiber construction software, command centers, storefronts, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
+    "Storyborn, business operating platforms, fiber construction software, command centers, storefronts, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · Tomorrow’s Tech AI",
     description:
-      "SplicePoint, storefronts, business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
+      "Storyborn, SplicePoint, storefronts, business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
     url: "https://tomorrowstechai.com/work",
     type: "website",
   },
@@ -175,13 +175,73 @@ export default function WorkPage() {
         <div className="work-proof-strip">
           <ProofItem label="Flagship" value="Business operating platforms" />
           <ProofItem label="Core specialty" value="Command centers & dashboards" />
-          <ProofItem label="Featured product" value="SplicePoint for fiber & OSP teams" />
+          <ProofItem label="Newest product" value="Storyborn for authors & publishers" />
         </div>
       </section>
 
       {/* ══ Featured product ════════════════════════════════════════════ */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="eyebrow-muted mb-3">New featured product</div>
+        <div className="eyebrow-muted mb-3">Newest software product</div>
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-9">
+          An author-first studio for bringing a book to life.
+        </h2>
+
+        <article className="work-hero-feature work-hero-feature--storyborn">
+          <div className="work-hero-feature-media">
+            <Image
+              src="/work/storyborn.webp"
+              alt="Storyborn book creation studio, where a writer’s voice becomes an illustrated manuscript"
+              fill
+              priority
+              sizes="(max-width: 1152px) 100vw, 1100px"
+              className="object-cover"
+            />
+          </div>
+          <div className="work-hero-feature-body">
+            <div>
+              <div className="eyebrow mb-4">● Studio product · Authoring &amp; publishing</div>
+              <h3 className="text-3xl md:text-4xl font-medium tracking-tight">Storyborn</h3>
+              <p className="text-lg text-[color:var(--color-text-secondary)] leading-relaxed mt-5">
+                A personal book creation studio that helps authors explore an
+                idea, organize the people and events inside it, and build a
+                first draft—one guided conversation at a time.
+              </p>
+              <p className="text-[color:var(--color-text-secondary)] leading-relaxed mt-4">
+                Storyborn keeps the writer in control. Suggestions remain
+                traceable to the interview or passage they came from, approved
+                details become part of the Story Bible, and a finished
+                manuscript can move into a clear publisher review workflow.
+              </p>
+              <a
+                href="https://storyborn.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-7 text-sm font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+              >
+                Visit Storyborn →
+              </a>
+              <p className="work-product-note">
+                Built by Tomorrow’s Tech AI with ROMAR Press as the founding publishing partner.
+              </p>
+            </div>
+            <div>
+              <div className="eyebrow-muted mb-4">What it brings together</div>
+              <div className="work-stack-points work-stack-points-single">
+                <span>Guided idea discovery</span>
+                <span>Characters, memories and story structure</span>
+                <span>Author-approved Story Bible</span>
+                <span>Optional AI-assisted drafting</span>
+                <span>Discrepancy and continuity review</span>
+                <span>Publisher-ready manuscript handoff</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      {/* ══ Featured product ══ */}
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="eyebrow-muted mb-3">Product preview</div>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight max-w-3xl mb-9">
           Field-to-closeout clarity for fiber construction.
         </h2>

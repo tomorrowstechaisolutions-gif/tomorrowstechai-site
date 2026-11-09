@@ -219,7 +219,14 @@ export default function AboutPage() {
           products. That keeps the work grounded in real customers, real
           workflows, and real consequences.
         </p>
-        <div className="grid md:grid-cols-3 gap-5 mt-10">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-10">
+          <ProductCard
+            tag="Authoring software"
+            title="Storyborn"
+            body="An author-first book creation studio for discovering ideas, organizing a Story Bible, building a first draft, and preparing a manuscript for publisher review."
+            href="https://storyborn.app"
+            linkLabel="Visit Storyborn"
+          />
           <ProductCard
             tag="Contractor service"
             title="Job Catcher"

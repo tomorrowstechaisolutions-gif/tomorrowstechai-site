@@ -128,6 +128,13 @@ const PRODUCTS: MegaItem[] = [
     Icon: IconPhoneCall,
   },
   {
+    href: "https://storyborn.app",
+    label: "Storyborn",
+    blurb: "An author-first studio for creating and preparing books.",
+    Icon: IconArticle,
+    external: true,
+  },
+  {
     href: "https://myheldapp.com",
     label: "Held",
     blurb: "Family operations app.",
