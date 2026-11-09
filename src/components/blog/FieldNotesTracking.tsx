@@ -38,8 +38,11 @@ export function FieldNotesTracking({ slug, category }: { slug?: string; category
 
     const body = document.querySelector(".fn-prose");
     const onScroll = () => {
-      if (!body || !analyticsConsented()) return;
+      // While navigating away the body is detached and measures 0 tall;
+      // dividing by that would report a 100% read that never happened.
+      if (!body || !body.isConnected || !analyticsConsented()) return;
       const rect = body.getBoundingClientRect();
+      if (rect.height <= 0) return;
       const read = (window.innerHeight - rect.top) / rect.height;
       for (const mark of [50, 90]) {
         if (read * 100 >= mark && !sentProgress.has(mark)) {
