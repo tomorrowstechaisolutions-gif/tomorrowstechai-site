@@ -48,6 +48,9 @@ export const MEETING_TYPES = [
   "discovery", "demo", "proposal_review", "kickoff", "strategy",
   "support", "progress_review", "training", "final_review",
   "follow_up", "custom",
+  // Conference Center (migration 20261009120000)
+  "ai_consultation", "ai_receptionist_demo", "website_consultation",
+  "software_demo", "automation_review", "partnership", "partner_meeting",
 ] as const;
 
 export type MeetingType = (typeof MEETING_TYPES)[number];
@@ -64,6 +67,13 @@ export const TYPE_LABELS: Record<MeetingType, string> = {
   final_review: "Final Review",
   follow_up: "Follow-Up",
   custom: "Custom Meeting",
+  ai_consultation: "AI Business Consultation",
+  ai_receptionist_demo: "AI Receptionist Demo",
+  website_consultation: "Website Consultation",
+  software_demo: "Custom Software Demo",
+  automation_review: "Business Automation Review",
+  partnership: "Business Partnership Meeting",
+  partner_meeting: "Partner Organization Meeting",
 };
 
 /** Sensible default length per type, in minutes. Always editable. */
@@ -79,6 +89,13 @@ export const TYPE_DEFAULT_MINUTES: Record<MeetingType, number> = {
   final_review: 45,
   follow_up: 15,
   custom: 30,
+  ai_consultation: 30,
+  ai_receptionist_demo: 30,
+  website_consultation: 30,
+  software_demo: 45,
+  automation_review: 45,
+  partnership: 45,
+  partner_meeting: 45,
 };
 
 /**
@@ -94,7 +111,12 @@ export function suggestedTitle(type: MeetingType, company?: string | null): stri
 /** Which types belong to which stage of the relationship. Groups the picker. */
 export const TYPE_GROUPS: { head: string; types: MeetingType[] }[] = [
   { head: "Sales", types: ["discovery", "demo", "proposal_review", "follow_up"] },
+  {
+    head: "Consultations",
+    types: ["ai_consultation", "ai_receptionist_demo", "website_consultation", "software_demo", "automation_review"],
+  },
   { head: "Delivery", types: ["kickoff", "progress_review", "training", "final_review"] },
+  { head: "Partners", types: ["partnership", "partner_meeting"] },
   { head: "Other", types: ["strategy", "support", "custom"] },
 ];
 

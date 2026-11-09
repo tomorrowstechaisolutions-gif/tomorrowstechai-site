@@ -26,6 +26,7 @@ import {
   IconShare,
   IconSpark,
   IconUsers,
+  IconVideo,
   IconZap,
 } from "./Icons";
 
@@ -65,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin", label: "Dashboard", icon: IconGrid },
       { href: "/admin/ai", label: "AI Command Center", icon: IconSpark, soon: true, badge: "aiProposals" },
       { href: "/admin/activity", label: "Activity Center", icon: IconPulse, soon: true },
+      { href: "/admin/conference-center", label: "Conference Center", icon: IconVideo, badge: "meetingsToday" },
     ],
   },
   {
@@ -75,6 +77,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChart },
       { href: "/admin/proposals", label: "Proposals", icon: IconFile },
       { href: "/admin/clients", label: "Clients", icon: IconUsers },
+      // Businesses you sell THROUGH (white-label, revenue share) — not a client list.
+      { href: "/admin/partners", label: "Partners", icon: IconShare },
       // Last, because it is last in the work: proposal → both parties agree →
       // the work happens → the invoice. It sits under Sales rather than
       // Finance because raising one is part of closing the sale, and because

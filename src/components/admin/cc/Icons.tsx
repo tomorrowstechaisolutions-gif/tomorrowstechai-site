@@ -158,3 +158,6 @@ export const IconMapPin = (p: P) => (
 export const IconLink = (p: P) => (
   <Svg {...p}><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7" /><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7" /></Svg>
 );
+export const IconVideo = (p: P) => (
+  <Svg {...p}><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10.2 21 7v10l-5.5-3.2" /></Svg>
+);

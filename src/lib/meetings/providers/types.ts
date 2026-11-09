@@ -26,6 +26,11 @@ export type ProviderMeetingInput = {
   attendees: { email: string; name?: string | null }[];
   /** Whether the provider should email the guests. */
   notifyAttendees: boolean;
+  /**
+   * Start now rather than at `startAt`. Only Zoom distinguishes an instant
+   * meeting; every other provider treats this as an ordinary create.
+   */
+  instant?: boolean;
 };
 
 /** What comes back, and gets written onto the meeting row verbatim. */

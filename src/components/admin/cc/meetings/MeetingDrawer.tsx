@@ -3,6 +3,7 @@ import DrawerShell from "../tasks/DrawerShell";
 import Collapse from "./Collapse";
 import CompleteMeetingForm from "./CompleteMeetingForm";
 import StartMeetingButton from "./StartMeetingButton";
+import CopyLink from "../CopyLink";
 import { dateInputValue, longWhen, relative, timeInputValue } from "./format";
 import {
   DURATION_PRESETS, OPEN_MEETING_STATUSES, OUTCOME_LABELS, OUTCOME_TONE,
@@ -37,14 +38,27 @@ export default function MeetingDrawer({
   meeting,
   closeHref,
   followUpDefault,
+  focus = null,
 }: {
   meeting: MeetingWithLinks;
   closeHref: string;
   followUpDefault: string;
+  /** Opens one action section on arrival (from a row's Reschedule / Cancel). */
+  focus?: "reschedule" | "cancel" | "complete" | null;
 }) {
   const open = OPEN_MEETING_STATUSES.includes(meeting.status);
   const joinable = Boolean(meeting.meeting_url) && PROVIDER_IS_VIDEO[meeting.provider];
   const startsSoon = open && Math.abs(new Date(meeting.start_at).getTime() - Date.now()) < 6 * 3600_000;
+  // Zoom's host link carries the host's token and expires, so it is never
+  // stored: Start goes through a server route that fetches a fresh one.
+  const isZoom = meeting.provider === "zoom";
+  const startUrl = isZoom && meeting.provider_event_id
+    ? `/api/conference/${meeting.id}/start`
+    : meeting.meeting_url;
+  const meta = (meeting.provider_metadata ?? {}) as Record<string, unknown>;
+  const zoomId = isZoom && typeof meta.zoom_meeting_id === "string" ? meta.zoom_meeting_id : null;
+  const passcode = isZoom && typeof meta.passcode === "string" ? meta.passcode : null;
+  const planWarning = isZoom && typeof meta.plan_warning === "string" ? meta.plan_warning : null;
 
   return (
     <DrawerShell closeHref={closeHref}>
@@ -91,7 +105,18 @@ export default function MeetingDrawer({
             {meeting.attendee_name || meeting.contactName || "—"}
             {meeting.attendee_email ? <em className="mt-rel">{meeting.attendee_email}</em> : null}
           </Row>
+          {meeting.extra_attendees && meeting.extra_attendees.length > 0 ? (
+            <Row label="Also invited">
+              {meeting.extra_attendees.map((a) => a.email).join(", ")}
+            </Row>
+          ) : null}
           {meeting.companyName ? <Row label="Company">{meeting.companyName}</Row> : null}
+          {zoomId ? (
+            <Row label="Zoom meeting">
+              {zoomId.replace(/(\d{3})(\d{3,4})(\d{4})/, "$1 $2 $3")}
+              {passcode ? <em className="mt-rel">Passcode {passcode}</em> : null}
+            </Row>
+          ) : null}
           {meeting.owner ? <Row label="Owner">{meeting.owner}</Row> : null}
           {meeting.reschedule_count > 0 ? (
             <Row label="Rescheduled">
@@ -104,15 +129,32 @@ export default function MeetingDrawer({
         </section>
 
         {/* ── Start ──────────────────────────────────────────── */}
-        {open && joinable ? (
+        {open && joinable && startUrl ? (
           <div className="mt-start">
             <StartMeetingButton
-              url={meeting.meeting_url as string}
+              url={startUrl}
               meetingId={meeting.id}
               markInProgress={setMeetingStatusAction}
+              label={isZoom ? "Start as host" : "Start meeting"}
             />
-            <span className="mt-start-note">Opens {PROVIDER_LABELS[meeting.provider]} in a new tab.</span>
+            {isZoom && meeting.meeting_url ? (
+              <CopyLink url={meeting.meeting_url} label="Copy guest link" />
+            ) : null}
+            <span className="mt-start-note">
+              {isZoom
+                ? "Opens Zoom as the host. Guests only ever receive the participant link."
+                : `Opens ${PROVIDER_LABELS[meeting.provider]} in a new tab.`}
+            </span>
           </div>
+        ) : null}
+
+        {planWarning && open ? <p className="mt-warn">{planWarning}</p> : null}
+
+        {open && meeting.internal_notes ? (
+          <section className="mt-block">
+            <h3>Internal notes <i className="cc-faint">private — never sent to guests</i></h3>
+            <p className="mt-prose">{meeting.internal_notes}</p>
+          </section>
         ) : null}
 
         {/* ── Related records ────────────────────────────────── */}
@@ -181,7 +223,7 @@ export default function MeetingDrawer({
         {/* ── Actions ────────────────────────────────────────── */}
         <section className="mt-actions">
           {open ? (
-            <Collapse label="Mark complete">
+            <Collapse label="Mark complete" defaultOpen={focus === "complete"}>
               <CompleteMeetingForm
                 meetingId={meeting.id}
                 action={completeMeetingAction}
@@ -191,7 +233,7 @@ export default function MeetingDrawer({
             </Collapse>
           ) : null}
 
-          <Collapse label="Reschedule">
+          <Collapse label="Reschedule" defaultOpen={focus === "reschedule"}>
             <form action={rescheduleMeetingAction} className="mt-form">
               <input type="hidden" name="meeting_id" value={meeting.id} />
               <div className="mt-row3">
@@ -229,7 +271,7 @@ export default function MeetingDrawer({
           </Collapse>
 
           {open ? (
-            <Collapse label="Cancel meeting" tone="danger">
+            <Collapse label="Cancel meeting" tone="danger" defaultOpen={focus === "cancel"}>
               <form action={cancelMeetingAction} className="mt-form">
                 <input type="hidden" name="meeting_id" value={meeting.id} />
                 <label className="tk-stack">

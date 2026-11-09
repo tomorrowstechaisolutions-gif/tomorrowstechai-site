@@ -162,3 +162,15 @@ export const DEFAULT_TERMS =
 
 export const DEFAULT_FOOTER =
   "Thank you — it is a pleasure building for you. Questions about anything on this invoice: john@tomorrowstechai.com.";
+
+/**
+ * When an invoice actually went out, or null if it has not.
+ *
+ * `invoices.sent_at` is NOT NULL DEFAULT now() (0004 — the original
+ * payment-link rows were "sent" the moment they existed), so on a hand-written
+ * draft it is just the creation time. An invoice has been sent only when a
+ * send recorded how (`sent_method`) or it has moved past draft.
+ */
+export function sentAtOf(inv: { sent_at: string | null; sent_method: string | null; status: string }): string | null {
+  return inv.sent_method || inv.status !== "draft" ? inv.sent_at : null;
+}

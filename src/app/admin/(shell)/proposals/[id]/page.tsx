@@ -3,6 +3,7 @@ import { providerStatuses } from "@/lib/meetings/providers";
 import { meetingsForRecord, resolveContact } from "@/lib/meetings/queries";
 import { scheduleMeetingAction } from "@/app/admin/meeting-actions";
 import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
+import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleConferenceLink";
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
 import { chicagoDate } from "@/lib/time/chicago";
@@ -80,19 +81,22 @@ export default async function ProposalDetailPage({
   ]);
 
   const scheduleButton = meetingContact ? (
-    <ScheduleMeetingButton
-      contact={meetingContact}
-      providers={providers}
-      action={scheduleMeetingAction}
-      defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
-      defaultType="proposal_review"
-      defaultTitle={`Proposal Review — ${p.client_business_name || p.client_contact_name || p.proposal_number}`}
-      proposalId={p.id}
-      returnTo={`/admin/proposals/${p.id}`}
-      label="Schedule Proposal Review"
-      timezone={BUSINESS_TIMEZONE}
-      timezoneLabel={BUSINESS_TIMEZONE_LABEL}
-    />
+    <>
+      <ScheduleMeetingButton
+        contact={meetingContact}
+        providers={providers}
+        action={scheduleMeetingAction}
+        defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+        defaultType="proposal_review"
+        defaultTitle={`Proposal Review — ${p.client_business_name || p.client_contact_name || p.proposal_number}`}
+        proposalId={p.id}
+        returnTo={`/admin/proposals/${p.id}`}
+        label="Schedule Proposal Review"
+        timezone={BUSINESS_TIMEZONE}
+        timezoneLabel={BUSINESS_TIMEZONE_LABEL}
+      />
+      <ScheduleConferenceLink contact={meetingContact} category="proposal_presentation" proposalId={p.id} label="Schedule Presentation" />
+    </>
   ) : null;
   const of = (type: string) => items.filter((item) => item.item_type === type);
 

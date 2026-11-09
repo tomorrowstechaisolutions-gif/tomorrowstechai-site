@@ -62,6 +62,10 @@ export type Meeting = {
   updated_at: string;
   completed_at: string | null;
   cancelled_at: string | null;
+
+  /** Conference Center migration. Optional until it is applied everywhere. */
+  source?: "admin" | "instant" | "booking" | "partner";
+  client_request_id?: string | null;
 };
 
 /**
