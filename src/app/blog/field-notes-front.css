@@ -1,0 +1,652 @@
+/*
+ * Field Notes — front page and section pages (Phase 4).
+ * Concept: a field logbook. A masthead with a dateline, a lead package
+ * (one large story, two supporting), then a "Latest" log whose entries carry
+ * their date in the margin, beside a rail of sections, newsletter and one
+ * service box. Shares tokens and the category label with the article page.
+ */
+
+.fnf-wrap {
+  max-width: 1200px;
+}
+
+/* ── Masthead ─────────────────────────────────────────────────────────── */
+
+.fnf-mast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px 40px;
+  padding-block: 40px 28px;
+}
+
+@media (min-width: 768px) {
+  .fnf-mast {
+    padding-block: 56px 32px;
+  }
+}
+
+.fnf-mast-text {
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.fnf-dateline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fn-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fnf-title {
+  margin-top: 12px;
+  font-size: clamp(44px, 7vw, 84px);
+  line-height: 0.95;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  color: var(--color-text);
+}
+
+.fnf-title span {
+  color: var(--color-blue-bright);
+}
+
+.fnf-dek {
+  margin-top: 16px;
+  max-width: 56ch;
+  font-size: clamp(16px, 1.5vw, 18.5px);
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.fnf-mast-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex: 0 1 340px;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .fnf-mast-tools {
+    flex-basis: 100%;
+    align-items: stretch;
+  }
+}
+
+.fnf-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 4px 4px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--fn-muted);
+  transition: border-color 0.15s;
+}
+
+.fnf-search:focus-within {
+  border-color: var(--color-blue);
+}
+
+.fnf-search svg {
+  flex: none;
+}
+
+.fnf-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 14.5px;
+  outline: none;
+}
+
+.fnf-search input::placeholder {
+  color: var(--fn-muted);
+}
+
+.fnf-search button {
+  flex: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.fnf-search button:hover {
+  color: var(--color-text);
+}
+
+.fnf-rss {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fn-muted);
+  text-decoration: none;
+}
+
+.fnf-rss:hover {
+  color: var(--color-amber);
+}
+
+/* ── Section bar ──────────────────────────────────────────────────────── */
+
+.fnf-cats {
+  position: sticky;
+  top: 68px;
+  z-index: 20;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(4, 7, 13, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.fnf-cats ul {
+  display: flex;
+  gap: 4px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 max(20px, env(safe-area-inset-left, 0px));
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+@media (min-width: 768px) {
+  .fnf-cats ul {
+    padding: 0 24px;
+  }
+}
+
+.fnf-cats ul::-webkit-scrollbar {
+  display: none;
+}
+
+.fnf-cats a {
+  display: block;
+  padding: 14px 12px 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.fnf-cats li:first-child a {
+  padding-left: 0;
+}
+
+.fnf-cats a:hover {
+  color: var(--color-text);
+}
+
+.fnf-cats a[aria-current="page"] {
+  border-bottom-color: var(--color-blue);
+  color: var(--color-text);
+}
+
+/* ── Lead package ─────────────────────────────────────────────────────── */
+
+.fnf-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  padding-top: 32px;
+}
+
+@media (min-width: 1024px) {
+  .fnf-top {
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    gap: 40px;
+    padding-top: 40px;
+  }
+  .fnf-top-solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fnf-top-solo .fnf-lead-link {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 40px;
+    align-items: center;
+  }
+  .fnf-top-solo .fnf-lead-body {
+    padding-top: 0;
+  }
+}
+
+.fnf-media {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.fnf-media img {
+  transition: transform 0.4s ease;
+}
+
+.fnf-lead a:hover .fnf-media img,
+.fnf-second a:hover .fnf-media img,
+.fnf-river-item a:hover .fnf-media img {
+  transform: scale(1.025);
+}
+
+.fnf-lead-link,
+.fnf-second a,
+.fnf-river-item a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fnf-lead-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.fnf-lead h2 {
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  text-wrap: balance;
+  transition: color 0.15s;
+}
+
+.fnf-lead a:hover h2,
+.fnf-second a:hover h3,
+.fnf-river-item a:hover h3 {
+  color: var(--color-blue-bright);
+}
+
+.fnf-summary {
+  max-width: 62ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.fnf-lead .fnf-summary {
+  font-size: clamp(16px, 1.4vw, 18px);
+}
+
+.fnf-meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--fn-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fnf-seconds {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.fnf-second {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.fnf-second:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.fnf-second-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.fnf-second h3 {
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+  text-wrap: balance;
+  transition: color 0.15s;
+}
+
+/* Tablet: supporting stories sit side by side under the lead. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .fnf-seconds {
+    flex-direction: row;
+  }
+  .fnf-second {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+/* Phone: supporting stories become compact rows with a thumbnail. */
+@media (max-width: 639px) {
+  .fnf-second a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 104px;
+    gap: 14px;
+    align-items: start;
+  }
+  .fnf-second .fnf-media {
+    grid-column: 2;
+    grid-row: 1;
+    aspect-ratio: 1;
+    border-radius: 6px;
+  }
+  .fnf-second-body {
+    grid-column: 1;
+    grid-row: 1;
+    padding-top: 0;
+  }
+  .fnf-second h3 {
+    font-size: 17px;
+  }
+}
+
+/* ── Body: log + rail ─────────────────────────────────────────────────── */
+
+.fnf-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 48px;
+  margin-top: 56px;
+}
+
+@media (min-width: 1024px) {
+  .fnf-body {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 56px;
+    margin-top: 64px;
+  }
+}
+
+.fnf-latest {
+  min-width: 0;
+}
+
+.fnf-sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-top: 12px;
+  border-top: 2px solid var(--color-text);
+}
+
+.fnf-sec-head h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--color-text);
+}
+
+.fnf-sec-link {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-blue-bright);
+  text-decoration: none;
+}
+
+.fnf-sec-link:hover {
+  text-decoration: underline;
+}
+
+.fnf-river {
+  display: flex;
+  flex-direction: column;
+}
+
+.fnf-river-item {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.fnf-river-item a {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 220px;
+  gap: 24px;
+  align-items: start;
+  padding-block: 24px;
+}
+
+.fnf-river-item-plain a {
+  grid-template-columns: minmax(0, 1fr) 220px;
+}
+
+.fnf-stamp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fnf-stamp span + span {
+  color: var(--fn-muted);
+  font-size: 11px;
+}
+
+.fnf-river-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fnf-river-item h3 {
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+  text-wrap: balance;
+  transition: color 0.15s;
+}
+
+.fnf-river-item .fnf-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+}
+
+.fnf-media-thumb {
+  border-radius: 6px;
+}
+
+@media (max-width: 767px) {
+  .fnf-river-item a,
+  .fnf-river-item-plain a {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 14px;
+    padding-block: 20px;
+  }
+  .fnf-stamp {
+    display: none;
+  }
+  .fnf-river-item h3 {
+    font-size: 17px;
+  }
+  .fnf-river-item .fnf-summary {
+    display: none;
+  }
+  .fnf-media-thumb {
+    aspect-ratio: 1;
+  }
+}
+
+.fnf-note {
+  padding-top: 20px;
+  font-size: 14px;
+  color: var(--fn-muted);
+}
+
+/* ── Rail ─────────────────────────────────────────────────────────────── */
+
+.fnf-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .fnf-rail {
+    position: sticky;
+    top: 132px;
+    align-self: start;
+  }
+}
+
+.fnf-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.fnf-box > p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.fnf-box-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.fnf-box-cta {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: linear-gradient(160deg, rgba(29, 78, 216, 0.14), var(--color-surface) 65%);
+}
+
+.fnf-section-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fnf-section-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-decoration: none;
+}
+
+.fnf-section-list li:last-child a {
+  border-bottom: 0;
+}
+
+.fnf-section-list a:hover .fn-kicker {
+  text-decoration: underline;
+}
+
+.fnf-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fn-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Empty states, search ─────────────────────────────────────────────── */
+
+.fnf-empty {
+  margin-top: 32px;
+  padding: 28px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+}
+
+.fnf-empty-title {
+  margin-bottom: 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.fnf-results {
+  padding-top: 32px;
+}
+
+.fnf-page a:focus-visible,
+.fnf-page button:focus-visible,
+.fnf-page input:focus-visible {
+  outline: 2px solid var(--color-blue-bright);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fnf-media img,
+  .fnf-lead h2,
+  .fnf-second h3,
+  .fnf-river-item h3,
+  .fnf-cats a {
+    transition: none;
+  }
+  .fnf-lead a:hover .fnf-media img,
+  .fnf-second a:hover .fnf-media img,
+  .fnf-river-item a:hover .fnf-media img {
+    transform: none;
+  }
+}
+
+/* The log stamp carries the date on wide screens. */
+@media (min-width: 768px) {
+  .fnf-meta-date {
+    display: none;
+  }
+}

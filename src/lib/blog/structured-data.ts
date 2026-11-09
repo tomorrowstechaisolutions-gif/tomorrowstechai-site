@@ -1,4 +1,4 @@
-import { PUBLICATION_NAME, PUBLISHER_NAME, SITE_URL } from "./taxonomy";
+import { PUBLICATION_NAME, PUBLISHER_NAME, SITE_URL, categoryPath } from "./taxonomy";
 import type { Article } from "./types";
 
 /** JSON for a <script type="application/ld+json">, safe against "</script>" in text. */
@@ -73,7 +73,8 @@ export function breadcrumbJsonLd(a: Article) {
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
       { "@type": "ListItem", position: 2, name: PUBLICATION_NAME, item: BLOG_URL },
-      { "@type": "ListItem", position: 3, name: a.title, item: a.url },
+      { "@type": "ListItem", position: 3, name: a.categoryInfo.name, item: `${SITE_URL}${categoryPath(a.category)}` },
+      { "@type": "ListItem", position: 4, name: a.title, item: a.url },
     ],
   };
 }

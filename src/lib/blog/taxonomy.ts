@@ -92,6 +92,10 @@ export function getCategory(slug: CategorySlug): CategoryInfo {
   return found;
 }
 
+export function categoryPath(slug: CategorySlug): string {
+  return `/blog/category/${slug}`;
+}
+
 export function isCategorySlug(value: string): value is CategorySlug {
   return CATEGORY_BY_SLUG.has(value as CategorySlug);
 }

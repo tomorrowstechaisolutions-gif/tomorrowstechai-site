@@ -2,7 +2,8 @@
 
 import { useState, FormEvent } from "react";
 
-export function NewsletterForm() {
+/** stacked: input above the button, for narrow columns like the Field Notes rail. */
+export function NewsletterForm({ stacked = false }: { stacked?: boolean } = {}) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -48,9 +49,11 @@ export function NewsletterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md">
+    <form onSubmit={handleSubmit} className={`flex flex-col ${stacked ? "" : "sm:flex-row"} gap-2 max-w-md`}>
       <input
         type="email"
+        aria-label="Email address"
+        autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@yourcompany.com"

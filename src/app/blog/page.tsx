@@ -1,8 +1,20 @@
-import Link from "next/link";
-import Image from "next/image";
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getListedArticles } from "@/lib/blog/repository";
+import { getFrontPage } from "@/lib/blog/repository";
 import { blogJsonLd, jsonLd } from "@/lib/blog/structured-data";
+import { CATEGORIES } from "@/lib/blog/taxonomy";
+import type { Article, CategorySlug } from "@/lib/blog/types";
+import { BlogSearch, type SearchEntry } from "@/components/blog/BlogSearch";
+import {
+  CategoryBar,
+  LeadStory,
+  Masthead,
+  Rail,
+  RiverItem,
+  SecondaryStory,
+} from "@/components/blog/FrontParts";
+import "./field-notes-article.css";
+import "./field-notes-front.css";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -21,68 +33,87 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function BlogPage() {
-  const posts = await getListedArticles();
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(blogJsonLd(posts)) }}
-      />
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
-        <div className="eyebrow mb-6">● Field notes</div>
-        <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1]">
-          Operations, AI, and the systems we wish existed.
-        </h1>
-        <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed mt-6">
-          Written by an operator. For operators. No buzzwords.
-        </p>
-      </section>
+function toSearchEntry(a: Article): SearchEntry {
+  return {
+    path: a.path,
+    title: a.title,
+    summary: a.summary,
+    tags: a.tags,
+    category: a.category,
+    categoryName: a.categoryInfo.name,
+    displayDate: a.displayDate,
+    publishedAt: a.publishedAt,
+    readTimeLabel: a.readTimeLabel,
+    hero: a.hero ? { src: a.hero.src, alt: a.hero.alt } : null,
+  };
+}
 
-      <section className="max-w-3xl mx-auto px-6 pb-20">
-        <div className="space-y-1">
-          {posts.map((post) => (
-            <Link
-              key={post.slug}
-              href={post.path}
-              className="block border-b border-[color:var(--color-border)] py-8 hover:bg-[color:var(--color-surface)]/40 transition-colors -mx-6 px-6 group"
-            >
-              {post.hero && (
-                <div className="relative w-full aspect-[16/9] mb-5 overflow-hidden rounded border border-[color:var(--color-border)]">
-                  <Image
-                    src={post.hero.src}
-                    alt={post.hero.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 720px"
-                    className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                  />
+export default async function BlogPage() {
+  const { lead, secondary, rest, all } = await getFrontPage();
+
+  const counts = Object.fromEntries(
+    CATEGORIES.map((c) => [
+      c.slug,
+      all.filter((a) => a.category === c.slug || a.secondaryCategories?.includes(c.slug)).length,
+    ])
+  ) as Record<CategorySlug, number>;
+
+  const front = (
+    <>
+            {lead && (
+              <section className="fnf-top" aria-label="Top stories">
+                <LeadStory a={lead} />
+                {secondary.length > 0 && (
+                  <div className="fnf-seconds">
+                    {secondary.map((a) => (
+                      <SecondaryStory key={a.slug} a={a} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            <div className="fnf-body">
+              <section aria-labelledby="fnf-latest" className="fnf-latest">
+                <div className="fnf-sec-head">
+                  <h2 id="fnf-latest">Latest</h2>
                 </div>
-              )}
-              <div className="flex items-center gap-3 mb-3 text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
-                <span>{post.displayDate}</span>
-                <span>·</span>
-                <span>{post.readTimeLabel}</span>
-              </div>
-              <h2 className="text-2xl font-medium leading-snug tracking-tight mb-3 group-hover:text-[color:var(--color-cyan)] transition-colors">
-                {post.title}
-              </h2>
-              <p className="text-[color:var(--color-text-secondary)] leading-relaxed">
-                {post.summary}
-              </p>
-              <div className="flex flex-wrap gap-2 mt-4">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs font-mono tracking-wider text-[color:var(--color-text-muted)] border border-[color:var(--color-border)] px-2 py-0.5 rounded"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+                {rest.length > 0 ? (
+                  <div className="fnf-river">
+                    {rest.map((a) => (
+                      <RiverItem key={a.slug} a={a} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="fnf-empty-title">More articles are on the way.</p>
+                )}
+              </section>
+              <Rail counts={counts} />
+            </div>
     </>
+  );
+
+  return (
+    <div className="fn-article fnf-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(blogJsonLd(all)) }} />
+
+      <div className="fn-wrap fnf-wrap">
+        <Masthead
+          title="Field Notes"
+          dek="AI, hardware and operations from the Tomorrow’s Tech AI team. Written for people who run things."
+          count={all.length}
+          latest={all[0]?.displayDate ?? null}
+        />
+      </div>
+      <CategoryBar active="all" />
+
+      <div className="fn-wrap fnf-wrap">
+        {/* The fallback is what the static HTML contains, so it must be the
+            full front page: crawlers and no-JS readers get real content. */}
+        <Suspense fallback={front}>
+          <BlogSearch index={all.map(toSearchEntry)}>{front}</BlogSearch>
+        </Suspense>
+      </div>
+    </div>
   );
 }

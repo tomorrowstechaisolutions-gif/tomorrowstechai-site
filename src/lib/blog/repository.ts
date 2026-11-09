@@ -1,7 +1,7 @@
 import { fileArticles } from "@/content/posts";
 import { countWords } from "./markdown";
 import { getAuthor, getCategory, SITE_URL } from "./taxonomy";
-import type { Article, ArticleRecord } from "./types";
+import type { Article, ArticleRecord, CategorySlug } from "./types";
 import { enforce, validateArticles } from "./validate";
 
 /**
@@ -117,4 +117,21 @@ export async function getRelatedArticles(article: Article, limit = 3): Promise<A
     .sort((x, y) => y.s - x.s || x.i - y.i)
     .slice(0, limit)
     .map((x) => x.a);
+}
+
+export async function getArticlesInCategory(slug: CategorySlug): Promise<Article[]> {
+  return (await getListedArticles()).filter(
+    (a) => a.category === slug || a.secondaryCategories?.includes(slug)
+  );
+}
+
+/**
+ * The front page's lead package: the newest featured article leads (newest
+ * overall when nothing is featured), followed by the next two newest.
+ */
+export async function getFrontPage(): Promise<{ lead: Article | null; secondary: Article[]; rest: Article[]; all: Article[] }> {
+  const all = await getListedArticles();
+  const lead = all.find((a) => a.featured) ?? all[0] ?? null;
+  const others = all.filter((a) => a !== lead);
+  return { lead, secondary: others.slice(0, 2), rest: others.slice(2), all };
 }

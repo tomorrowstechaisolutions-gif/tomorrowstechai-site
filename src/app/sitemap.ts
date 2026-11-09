@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getListedArticles } from "@/lib/blog/repository";
+import { CATEGORIES, categoryPath } from "@/lib/blog/taxonomy";
 
 const BASE_URL = "https://tomorrowstechai.com";
 
@@ -142,5 +143,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...postPages];
+  // Field Notes sections, only once they have articles (empty ones are noindex).
+  const listed = await getListedArticles();
+  const categoryPages: MetadataRoute.Sitemap = CATEGORIES.flatMap((c) => {
+    const inCat = listed.filter((a) => a.category === c.slug || a.secondaryCategories?.includes(c.slug));
+    if (inCat.length === 0) return [];
+    return [{
+      url: `${BASE_URL}${categoryPath(c.slug)}`,
+      lastModified: new Date(Math.max(...inCat.map((a) => Date.parse(a.modifiedAt)))),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }];
+  });
+
+  return [...staticPages, ...postPages, ...categoryPages];
 }

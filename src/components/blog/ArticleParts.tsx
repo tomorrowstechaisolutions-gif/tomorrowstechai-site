@@ -1,23 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { Article, CategorySlug } from "@/lib/blog/types";
+import type { Article } from "@/lib/blog/types";
 import { formatDate } from "@/lib/blog/repository";
-import { getCategory } from "@/lib/blog/taxonomy";
+import { categoryPath, getCategory } from "@/lib/blog/taxonomy";
 import { ShareLinks } from "./ShareLinks";
+import { CategoryLabel } from "./CategoryLabel";
 
-/** Category accents reuse the site's existing color tokens. */
-const ACCENT: Record<CategorySlug, string> = {
-  "ai-news": "var(--color-blue-bright)",
-  hardware: "var(--color-amber)",
-  "private-ai": "var(--color-success)",
-  "business-automation": "#818cf8", // indigo-400: 6.3:1 on panels (site indigo is 4.2:1)
-  "technology-guides": "#a78bfa", // violet-400: 7:1 on panels
-  "industry-insights": "var(--color-text-secondary)",
-};
-
-export function accentFor(slug: CategorySlug): string {
-  return ACCENT[slug];
-}
+export { accentFor } from "./CategoryLabel";
 
 export function contactHref(a: Article): string {
   return `/contact?service=${encodeURIComponent(a.categoryInfo.cta.service)}`;
@@ -33,13 +22,8 @@ function initials(name: string): string {
     .join("");
 }
 
-export function Kicker({ article }: { article: Article }) {
-  return (
-    <span className="fn-kicker" style={{ ["--fn-accent" as string]: accentFor(article.category) }}>
-      <i aria-hidden="true" />
-      {article.categoryInfo.name}
-    </span>
-  );
+export function Kicker({ article }: { article: Pick<Article, "category" | "categoryInfo"> }) {
+  return <CategoryLabel slug={article.category} name={article.categoryInfo.name} />;
 }
 
 export function ArticleHeader({ article, draft }: { article: Article; draft: boolean }) {
@@ -56,8 +40,9 @@ export function ArticleHeader({ article, draft }: { article: Article; draft: boo
             <Link href="/blog">Field Notes</Link>
           </li>
           <li aria-hidden="true">/</li>
-          {/* Category pages arrive in Phase 4; until then this is a label, not a link. */}
-          <li>{article.categoryInfo.name}</li>
+          <li>
+            <Link href={categoryPath(article.category)}>{article.categoryInfo.name}</Link>
+          </li>
         </ol>
       </nav>
 
