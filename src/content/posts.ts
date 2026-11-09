@@ -26,6 +26,189 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
+  // ── First AI News piece · DRAFT. Every figure below was checked against the
+  //    listed sources on 2026-11-09. Before release: set the real publishedAt,
+  //    add the hero image (ChatGPT illustration, credit as AI-generated) and
+  //    recheck pricing and availability.
+  {
+    slug: "smartsheet-vsactual-execution-drift-ai-agents",
+    title: "Smartsheet Built AI Agents to Catch \"Execution Drift.\" Here's What Operators Should Ask Before Trusting Them.",
+    status: "draft",
+    publishedAt: "2026-11-09",
+    category: "ai-news",
+    secondaryCategories: ["business-automation"],
+    seo: {
+      title: "Smartsheet vsActual: AI Agents That Watch for Execution Drift",
+      description:
+        "Smartsheet's new vsActual uses AI agents to flag when work drifts from the plan. What was announced, what's still unclear, and what operators should ask first.",
+    },
+    summary:
+      "Smartsheet's new vsActual reads across the systems a company already runs on and flags budget, schedule and staffing drift before the quarterly review. The idea is sound. Whether it works depends on the plan, the data and the permissions you give its agents.",
+    tags: ["Smartsheet", "vsActual", "AI agents", "Execution drift", "PMO", "Project controls", "Operations"],
+    cta: {
+      service: "command-centers",
+      label: "Catch drift without an enterprise rollout",
+      blurb:
+        "We build Smartsheet-based command centers with baselines, variance flags and readiness checks, so schedule, budget and crew problems show up while they're still fixable.",
+    },
+    sources: [
+      {
+        id: "smartsheet-pr",
+        title: "Smartsheet Unveils vsActual: The AI-Powered Future of Work Execution at ENGAGE 2026",
+        publisher: "Smartsheet",
+        url: "https://www.smartsheet.com/content-center/news/smartsheet-unveils-vsactual-ai-powered-future-work-execution-engage-2026",
+        publishedAt: "2026-11-04",
+        accessedAt: "2026-11-09",
+        kind: "vendor",
+        note: "The company's own announcement. Capability descriptions are Smartsheet's claims.",
+      },
+      {
+        id: "computerworld",
+        title: "Smartsheet's new AI tool tracks corporate strategies, suggests fixes",
+        publisher: "Computerworld",
+        author: "Matthew Finnegan",
+        url: "https://www.computerworld.com/article/4245034/smartsheets-new-ai-tool-tracks-corporate-strategies-suggests-fixes.html",
+        publishedAt: "2026-11-05",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Includes comment from Liz Miller, Constellation Research, and availability and pricing details confirmed by Smartsheet.",
+      },
+      {
+        id: "futurum",
+        title: "Can Smartsheet vsActual Close the Gap Between Strategy and Execution?",
+        publisher: "The Futurum Group",
+        author: "Keith Kirkpatrick",
+        url: "https://futurumgroup.com/insights/can-smartsheet-vsactual-close-the-gap-between-strategy-and-execution/",
+        publishedAt: "2026-11-04",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Analyst account of the ENGAGE 2026 keynote demo and customer remarks. Futurum discloses AI-assisted writing and advisory work with technology vendors.",
+      },
+      {
+        id: "itbrief",
+        title: "Smartsheet tackles execution drift in the age of AI agents",
+        publisher: "IT Brief Australia",
+        author: "Anthony Caruana",
+        url: "https://itbrief.com.au/story/smartsheet-tackles-execution-drift-in-the-age-of-ai-agents",
+        publishedAt: "2026-11-06",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Interview with Jarrod Kinchington, Smartsheet's APAC leader.",
+      },
+    ],
+    specs: [
+      { label: "Announced", value: "November 4, 2026, at Smartsheet's ENGAGE 2026 conference", sourceIds: ["smartsheet-pr", "futurum"], verified: true },
+      { label: "What it is", value: "A standalone AI planning and execution app, sold separately from Smartsheet's core product", sourceIds: ["computerworld", "futurum"], verified: true },
+      { label: "Systems it reads from", value: "Oracle, SAP, Workday, Salesforce, Jira, ServiceNow, Smartsheet; Slack per Computerworld", sourceIds: ["smartsheet-pr", "computerworld"], verified: false, note: "As described by Smartsheet and Computerworld; not tested by us." },
+      { label: "Agents", value: "Intake, planning, drift, data quality and reporting agents", sourceIds: ["computerworld"], verified: false },
+      { label: "Human control", value: "Agents can't change the plan of record on their own; human approval is the default", sourceIds: ["smartsheet-pr", "computerworld"], verified: false, note: "Computerworld reports agents can act autonomously when given permissions." },
+      { label: "Availability", value: "Early access now; general availability planned for early 2027", sourceIds: ["computerworld"], verified: false },
+      { label: "Pricing", value: "Not disclosed; usage-based billing", sourceIds: ["computerworld"], verified: false },
+      { label: "Design partners", value: "12 enterprise design partners", sourceIds: ["futurum"], verified: false },
+    ],
+    discrepancies: [
+      {
+        topic: "Can vsActual's agents act without a person approving it?",
+        accounts: [
+          { sourceId: "smartsheet-pr", claim: "Every recommendation comes with its reasoning so leaders can check it before acting, and agents can't change the plan on their own." },
+          { sourceId: "futurum", claim: "Agents gather data, flag drift and draft summaries, and a human approves every change." },
+          { sourceId: "computerworld", claim: "Agents can act autonomously, including updating data in third-party applications, when given the relevant permissions. Human approval is required by default." },
+        ],
+        resolution: "These can all be true at once: the plan of record is protected, approval is the default, and permissions can apparently allow agents to update other systems. We read it as configurable, not guaranteed, and suggest asking exactly which actions can run without approval.",
+      },
+      {
+        topic: "Have pricing and availability been announced?",
+        accounts: [
+          { sourceId: "futurum", claim: "Pricing and availability were not disclosed." },
+          { sourceId: "computerworld", claim: "vsActual is in early access with general availability planned for early 2027; pricing was not disclosed, but Smartsheet confirmed usage-based billing." },
+        ],
+        resolution: "Computerworld's report came a day later and cites Smartsheet's confirmation. We report its details as reported, not announced.",
+      },
+    ],
+    body: `Anyone who has run projects knows the moment. The status report says green. The superintendent's text says the crew never showed. By the time the two meet in a monthly review, the slip is three weeks old and expensive.
+
+Smartsheet now has a name for that gap, "execution drift," and a product built to catch it. On November 4, at its ENGAGE 2026 conference, the company announced vsActual, an AI planning and execution app whose agents read across the systems a business already runs on and flag budget, schedule and staffing problems as they appear.[^smartsheet-pr]
+
+It is the first big swing from a work-management platform at a problem operations people have handled by hand for decades. Here's what was announced, what's still unclear, and what to ask before trusting it.
+
+## What was announced
+
+| Item | What we know | Source |
+|:--|:--|:--|
+| Launch | Announced November 4, 2026, at ENGAGE 2026 | Smartsheet[^smartsheet-pr] |
+| Product | Standalone app, separate from Smartsheet's core software | Computerworld, Futurum[^computerworld][^futurum] |
+| Data it reads | Oracle, SAP, Workday, Salesforce, Jira, ServiceNow and more | Smartsheet[^smartsheet-pr] |
+| Availability | Early access; general availability planned for early 2027 | Computerworld (reported)[^computerworld] |
+| Pricing | Not disclosed; usage-based billing | Computerworld (reported)[^computerworld] |
+
+## How it's supposed to work
+
+vsActual starts with the plan. Its AI takes a company's strategy from wherever it lives (decks, budget memos, spreadsheets) and turns it into a single "plan of record" with goals, timelines and limits on budget and capacity. New requests are scored against that plan, and leaders can model scenarios before picking one.[^smartsheet-pr]
+
+From there, agents do the watching. Computerworld describes an intake agent, a planning agent, a drift agent that continuously looks for budget overruns, schedule delays and resource conflicts, plus data-quality and reporting agents. The drift agent draws on connected apps, including conversations in Slack, and can recommend fixes such as adding staff to a project heading for a delay.[^computerworld]
+
+Underneath is what Smartsheet calls the Execution Graph, a map of how tasks, projects, programs and goals connect, built on 20 years of workflow data. Smartsheet says agents can see and change only what the person they work for can.[^smartsheet-pr]
+
+The keynote demo, as described by Futurum analyst Keith Kirkpatrick, showed the pitch end to end. From a strategy deck, a budget spreadsheet and headcount data, vsActual scored 45 proposed initiatives against a $42 million budget and funded 37. Six weeks into the quarter, it caught a nine-week slip on a project that Jira still showed as green. Once a person approved a recovery option, it pushed the change into Smartsheet, Jira, ServiceNow, Workday and Slack.[^futurum]
+
+That is a demo, not a deployment. Smartsheet has acknowledged that customers with weak planning data won't get the results shown on stage.[^futurum]
+
+> [!NOTE] Reporting and analysis
+> Sections headed "Our take" are Tomorrow's Tech AI's own analysis, based on our work building project-controls and operations systems. Everything else is attributed to the sources listed below.
+
+## Who it's for
+
+This is aimed high. Liz Miller of Constellation Research told Computerworld the product targets the C-suite, specifically CFOs and COOs fighting budget creep and timeline drift, which today usually surfaces in quarterly slide decks and emailed spreadsheets.[^computerworld]
+
+That puts vsActual up against planning platforms such as Planview, ServiceNow's strategic portfolio tools, Workday Adaptive Planning and Anaplan, not the project trackers Smartsheet is known for. Kirkpatrick called the concept sound but noted that the launch asks Smartsheet to sell to a new buyer, with a product unlike the one it's known for.[^futurum]
+
+Smartsheet's APAC leader, Jarrod Kinchington, framed the split this way: teams keep running the live work in Smartsheet, and vsActual reports upward on whether that work is hitting the goals.[^itbrief]
+
+## The fine print on "people stay in control"
+
+Smartsheet's announcement says every recommendation comes with its reasoning so leaders can check it before acting, and that agents can't change the plan on their own.[^smartsheet-pr] Futurum's account of the demo says a human approves every change.[^futurum]
+
+Computerworld adds a detail that matters: vsActual's agents can act autonomously, including updating data in third-party applications, when they're given the relevant permissions. Human approval is required by default.[^computerworld]
+
+Those statements don't necessarily conflict. The plan of record is protected, and approval is the default setting. But a default is a setting, and settings change. Before a drift agent can write to your scheduling, HR or finance systems, someone should know exactly which actions run without a person signing off.
+
+## Our take: the idea isn't new. Automating it is.
+
+Catching drift early is what good project controls have always been about: baseline the schedule, track variance, flag the crew that isn't approved or the job that isn't ready before work is assigned, not after. The best PMO teams do this today with disciplined trackers and someone who reads them every morning.
+
+What vsActual changes is the reading. Instead of a person reconciling five systems before the weekly meeting, agents do it continuously. That is valuable, but it raises the stakes on everything the agents read.
+
+Three cautions from the launch coverage are worth taking seriously:
+
+- **Bad data gets worse, faster.** A planning lead from Eli Lilly, speaking at ENGAGE, put it this way: AI "does not fix operational inconsistencies; it intensifies them."[^futurum]
+- **Status is often subjective.** Smartsheet's own CEO, relaying what Fortune 500 CIOs told him, described red-yellow-green reports that every project manager scores differently.[^futurum] A drift agent reading inconsistent status will produce confident, inconsistent answers.
+- **Guardrails come first.** Miller advised that agents be tested, trained and grounded before working autonomously, with a clear path for human intervention.[^computerworld]
+
+In field operations, much of the drift never reaches an ERP. It lives in a foreman's text, a missed inspection or a crew that quietly moved to another job. A tool can only flag what someone records.
+
+## Our take: five questions to ask before you turn drift agents loose
+
+1. **What exactly is "the plan"?** vsActual depends on a single plan of record. If finance, operations and the field don't agree on one, the agent will measure against the wrong thing.
+2. **Which systems can it write to?** List them. Then list which writes need approval and who approves them.
+3. **Is approval required, or just the default?** Find out who in your organization can change that setting.
+4. **Is your status data honest?** Standardize what green, yellow and red mean before an agent starts summarizing them for executives.
+5. **What will usage cost?** Billing is reported to be usage-based.[^computerworld] Ask how agent activity is metered before you let it run continuously.
+
+## You don't need an enterprise platform to start
+
+vsActual is built for large organizations and isn't generally available until early 2027.[^computerworld] Most small and mid-sized operators don't need to wait for it.
+
+The discipline behind it can be built in the tools many teams already use: baselined schedules, variance columns, readiness checks and alerts that fire when a date slips, with AI layered on to summarize and flag. We covered one way to put AI on top of Smartsheet data in [our look at Claude's Smartsheet integration](/blog/smartsheet-claude-mcp).
+
+## What to watch
+
+- **Pricing.** Usage-based billing is reported; the actual numbers are not public.[^computerworld]
+- **Customer results.** Design partners such as Advanced Drainage Systems and Avid Technology spoke at ENGAGE; measurable results haven't been published.[^futurum]
+- **Agent permissions in practice.** How customers configure autonomy versus approval will say more than any keynote.
+- **The competition.** Kirkpatrick expects ServiceNow, Planview and Workday to sharpen their own AI planning pitches to PMO and finance buyers.[^futurum]
+
+Execution drift isn't a new problem. Software that watches for it all day, and can act on what it finds, is. The companies that get value from it will be the ones that fix the plan and the data before they turn the agents on.`,
+  },
   // ── Second flagship · published on its release date. Every figure below
   //    was checked against the listed sources on 2026-11-09 and rechecked for
   //    newer developments before release. Set updatedAt on any later change.
