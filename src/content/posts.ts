@@ -27,9 +27,8 @@ export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
   // ── First AI News piece · DRAFT. Every figure below was checked against the
-  //    listed sources on 2026-11-09. Before release: set the real publishedAt,
-  //    add the hero image (ChatGPT illustration, credit as AI-generated) and
-  //    recheck pricing and availability.
+  //    listed sources on 2026-11-09. Before release: set the real publishedAt
+  //    and recheck pricing and availability.
   {
     slug: "smartsheet-vsactual-execution-drift-ai-agents",
     title: "Smartsheet Built AI Agents to Catch \"Execution Drift.\" Here's What Operators Should Ask Before Trusting Them.",
@@ -45,6 +44,13 @@ export const fileArticles: FileArticle[] = [
     summary:
       "Smartsheet's new vsActual reads across the systems a company already runs on and flags budget, schedule and staffing drift before the quarterly review. The idea is sound. Whether it works depends on the plan, the data and the permissions you give its agents.",
     tags: ["Smartsheet", "vsActual", "AI agents", "Execution drift", "PMO", "Project controls", "Operations"],
+    hero: {
+      src: "/blog/smartsheet-vsactual-execution-drift.webp",
+      alt: "A job-site project office: a monitor shows a project schedule where actual progress bars trail the planned bars and a red alert reads Behind Plan by 3.5 weeks. A whiteboard lists recovery priorities, with a hard hat, safety vest and drawings on the desk and a building frame under construction outside the window.",
+      caption: "Illustration only. Not a Smartsheet or vsActual screen; the schedule and figures are invented.",
+      // Provenance: generated in ChatGPT for Tomorrow's Tech AI from our prompt (2026-11-09).
+      credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
+    },
     cta: {
       service: "command-centers",
       label: "Catch drift without an enterprise rollout",
