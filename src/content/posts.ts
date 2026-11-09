@@ -26,6 +26,104 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
+  // ── DRAFT (Phase 5 flagship). Design preview only; not published. ──────
+  {
+    slug: "lawyer-private-ai-server-used-v100-gpus",
+    title: "Eight Used V100s and a Law Office: What One Lawyer's Private AI Server Means for Small Firms",
+    status: "draft",
+    publishedAt: "2026-11-12",
+    category: "hardware",
+    secondaryCategories: ["private-ai"],
+    summary:
+      "A lawyer reports running DeepSeek-V4.1-Flash on eight 2018-era NVIDIA Tesla V100 GPUs at up to 215 tokens per second, with case files kept in the office. The speed is real. So are the wiring, the software deadline and the long wait on big documents.",
+    tags: ["NVIDIA V100", "Local AI", "DeepSeek", "Legal tech", "Homelab"],
+    sources: [
+      {
+        id: "reddit-part-4",
+        title: "Lawyer with too many GPUs, part 4: DeepSeek-V4.1-Flash on eight V100s from 2018",
+        publisher: "Reddit, r/LocalLLaMA",
+        url: "https://www.reddit.com/r/LocalLLaMA/comments/1xoubyo/lawyer_with_too_many_gpus_part_4_deepseekv41flash/",
+        accessedAt: "2026-11-09",
+        kind: "primary",
+        note: "The builder's own write-up. Posted in early November 2026.",
+      },
+      {
+        id: "toms",
+        title: "Lawyer builds private AI server with eight used Nvidia V100 GPUs",
+        publisher: "Tom's Hardware",
+        author: "Shane Downing",
+        url: "https://www.tomshardware.com/tech-industry/artificial-intelligence/lawyer-builds-private-ai-server-with-eight-used-nvidia-v100-gpus-up-to-215-tokens-per-second-to-keep-legal-files-offline-costing-about-usd2-400-per-four-gpu-board",
+        publishedAt: "2026-11-09",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+      },
+      {
+        id: "windowsforum",
+        title: "Lawyer Builds Private DeepSeek AI Server With Eight Used Nvidia V100 GPUs",
+        publisher: "WindowsForum",
+        url: "https://windowsforum.com/news/lawyer-builds-private-deepseek-ai-server-with-eight-used-nvidia-v100-gpus.451497/",
+        publishedAt: "2026-11-09",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+      },
+    ],
+    specs: [
+      { label: "GPUs", value: "8× NVIDIA Tesla V100 SXM2, 32 GB each", sourceIds: ["windowsforum"], verified: false },
+      { label: "GPU boards", value: "Two four-GPU SXM2 boards; NVLink within a board, PCIe between boards", sourceIds: ["windowsforum"], verified: false },
+      { label: "Board price", value: "About $2,400 per four-GPU board", note: "A board price, not the cost of the whole server.", sourceIds: ["toms", "windowsforum"], verified: false },
+      { label: "Platform", value: "Threadripper Pro 3945WX, 256 GB DDR4", sourceIds: ["windowsforum"], verified: false },
+      { label: "Power supplies", value: "Two, 2,800 W combined capacity", note: "Supply capacity, not measured draw.", sourceIds: ["windowsforum"], verified: false },
+      { label: "Model", value: "DeepSeek-V4.1-Flash, roughly 2-bit quantized", sourceIds: ["toms", "windowsforum"], verified: false },
+    ],
+    discrepancies: [
+      {
+        topic: "Does the whole model fit in GPU memory?",
+        accounts: [
+          { sourceId: "windowsforum", claim: "Notes the build was first described as running entirely in GPU memory (VRAM)." },
+          { sourceId: "windowsforum", claim: "Citing Tom's Hardware, reports that about 110 GB of Engram lookup tables sit in system RAM while the experts stay on the GPUs." },
+        ],
+      },
+    ],
+    body: `A practicing lawyer has spent the last few months documenting a private AI server built from used data-center parts, in a series of posts to Reddit's r/LocalLLaMA community.[^reddit-part-4] The latest update describes eight NVIDIA Tesla V100 GPUs running DeepSeek-V4.1-Flash for one user at a time, so case files never leave the office.[^toms]
+
+For a small firm, the interesting part isn't the speed. It's what it took to get there.
+
+## What he built
+
+The core is two four-GPU SXM2 boards, bought for roughly $2,400 each.[^toms] Each V100 carries 32 GB of memory. The four GPUs on a board talk over NVLink; the two boards talk over PCIe, which is much slower.[^windowsforum]
+
+That split drives the software layout. The model runs in two pipeline stages, one per board, with the work inside each board divided four ways. Most of the chatter stays on the fast links.[^windowsforum]
+
+## The numbers, with context
+
+These are the builder's own measurements, not independent tests.[^windowsforum]
+
+| Prompt length | Wait for first word | Code | Legal writing |
+|:--|--:|--:|--:|
+| 1K tokens | 1.2 s | 215 tok/s | 118 tok/s |
+| 32K tokens | 17.2 s | 200 tok/s | 117 tok/s |
+| 128K tokens | 59.2 s | 183 tok/s | 111 tok/s |
+| 256K tokens | 118.7 s | 160 tok/s | 103 tok/s |
+
+The second column is the one that matters for legal work. A large case bundle takes about a minute to read before the first word comes back, and fast generation doesn't change that.
+
+## What went wrong on the way
+
+The build wasn't smooth. Coverage of the project describes PCIe resets, a burnt power connector and memory errors during development. Stability improved after hardware changes, lower clocks and slower RAM settings, though the cause of the resets was never proven.[^windowsforum]
+
+## The catch: older GPUs, shorter software runway
+
+The V100 belongs to NVIDIA's Volta generation. According to WindowsForum's reading of NVIDIA's documentation, the R580 driver branch is Volta's last, CUDA 12.x is its last toolkit family, and support runs into mid-2028.[^windowsforum]
+
+> [!NOTE] What that means in practice
+> A build like this needs a frozen, known-good software stack. Newer AI tools may simply not support it.
+
+## What this means for a small firm
+
+Keeping the model in the building removes one outside party from the data path. It isn't a full privacy posture on its own: the tools, databases and remote access around the model need the same scrutiny.[^windowsforum]
+
+The other trade-off is ownership. This server is a serious engineering project that one person maintains. A firm that wants the same control without the troubleshooting needs a supported on-site system and someone accountable for it.`,
+  },
   {
     slug: "ems-fleet-three-numbers",
     title: "The Three Numbers Every EMS Fleet Director Should Know Without Opening a Spreadsheet",

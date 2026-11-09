@@ -75,8 +75,17 @@ export function isListed(a: ArticleRecord, now = new Date()): boolean {
   return (a.status === "published" || a.status === "scheduled") && Date.parse(a.publishedAt) <= now.getTime();
 }
 
+/**
+ * Local draft preview: `FIELD_NOTES_SHOW_DRAFTS=1 next dev`. Never true in a
+ * production build, so drafts can't leak to the live site.
+ */
+export function draftPreviewEnabled(): boolean {
+  return process.env.NODE_ENV === "development" && process.env.FIELD_NOTES_SHOW_DRAFTS === "1";
+}
+
 /** Has a working URL. Archived articles keep theirs so old links don't break. */
 export function isReachable(a: ArticleRecord, now = new Date()): boolean {
+  if (draftPreviewEnabled() && (a.status === "draft" || a.status === "scheduled")) return true;
   return isListed(a, now) || (a.status === "archived" && Date.parse(a.publishedAt) <= now.getTime());
 }
 

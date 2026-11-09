@@ -29,6 +29,11 @@ import type { ReactNode } from "react";
 export type RenderOptions = {
   /** Source ids in display order; [^id] renders as its 1-based position. */
   sourceIds?: string[];
+  /**
+   * Rendered once, just before the middle top-level H2, for articles with at
+   * least three H2 sections. Used for the in-article service note.
+   */
+  midSlot?: ReactNode;
 };
 
 type Ctx = {
@@ -398,7 +403,16 @@ export function renderMarkdown(body: string, options: RenderOptions = {}): React
     citeNumber: new Map((options.sourceIds ?? []).map((id, i) => [id, i + 1])),
     headingIds: new Set(),
   };
-  return renderBlocks(parseBlocks(body), ctx, "b");
+  const blocks = parseBlocks(body);
+  const nodes = renderBlocks(blocks, ctx, "b");
+  if (options.midSlot) {
+    const h2At = blocks.flatMap((b, i) => (b.kind === "heading" && b.level === 2 ? [i] : []));
+    if (h2At.length >= 3) {
+      const at = h2At[Math.ceil(h2At.length / 2)] ?? h2At[h2At.length - 1];
+      nodes.splice(at, 0, <div key="mid-slot" className="not-prose-slot">{options.midSlot}</div>);
+    }
+  }
+  return nodes;
 }
 
 // ── Helpers the validator, TOC and reading time use ───────────────────

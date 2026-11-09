@@ -115,7 +115,7 @@
 
 .prose-blog th {
   background: var(--color-surface);
-  color: var(--color-text-muted);
+  color: var(--fn-muted);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
@@ -172,7 +172,7 @@
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--color-text-muted);
+  color: var(--fn-muted);
 }
 
 .prose-blog hr {
@@ -204,5 +204,5 @@
 }
 
 .prose-blog .sources .source-meta {
-  color: var(--color-text-muted);
+  color: var(--fn-muted);
 }
