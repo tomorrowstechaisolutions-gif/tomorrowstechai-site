@@ -1,0 +1,326 @@
+/* Contact page booking panel. Uses the site tokens from globals.css. */
+
+.bk-wrap {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+.bk-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  overflow: hidden;
+  box-shadow: 0 30px 80px -40px rgba(29, 78, 216, 0.35);
+}
+
+@media (min-width: 960px) {
+  .bk-wrap {
+    max-width: 78rem;
+    padding: 0 1.5rem 5rem;
+  }
+}
+
+/* Side by side only when the calendar column can stay at least ~860px wide:
+   below that, Cal.com stacks its time slots under the month grid. */
+@media (min-width: 1240px) {
+  .bk-panel {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+/* ── Left: who, what, why ─────────────────────────────────────────── */
+.bk-side {
+  padding: 1.75rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background:
+    radial-gradient(120% 60% at 0% 0%, rgba(59, 130, 246, 0.09), transparent 70%),
+    var(--color-surface);
+}
+
+/* Mid-size screens: the intro sits above the calendar in two columns. */
+@media (min-width: 760px) and (max-width: 1239px) {
+  .bk-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 2.5rem;
+    align-items: start;
+    padding: 2rem;
+  }
+  .bk-detail > .bk-block:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
+@media (min-width: 1240px) {
+  .bk-side {
+    padding: 2rem 1.75rem;
+    border-bottom: 0;
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.bk-host {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.bk-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+  object-position: center 20%;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.bk-host-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.98rem;
+}
+
+.bk-host-role {
+  margin: 0.1rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.bk-title {
+  margin: 1.5rem 0 1rem;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.bk-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.bk-facts li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--color-text);
+  font-size: 0.92rem;
+}
+
+.bk-facts svg {
+  color: var(--color-blue-bright);
+  flex-shrink: 0;
+}
+
+.bk-block {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.bk-h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.bk-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.bk-list li {
+  position: relative;
+  padding-left: 1.05rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.bk-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--color-blue);
+}
+
+.bk-p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.bk-alt {
+  margin: 1.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.bk-alt a {
+  color: var(--color-blue-bright);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bk-alt a:focus-visible {
+  outline: 2px solid var(--color-blue-bright);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Right: the calendar ──────────────────────────────────────────── */
+.bk-main {
+  min-width: 0;
+  background: #0A111C;
+}
+
+/* Two-column layout: centre the calendar in the taller right column. */
+@media (min-width: 1240px) {
+  .bk-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+/* Below 1240px: a button opens Cal.com's full-screen booker. */
+.bk-mobile {
+  padding: 1.5rem;
+}
+
+
+.bk-mobile-btn {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 12px;
+  /* Deep blue: white text needs 4.5:1 (the brand #3B82F6 gives 3.7:1). */
+  background: var(--color-blue-deep);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 12px 30px -12px rgba(59, 130, 246, 0.6);
+}
+
+.bk-mobile-btn:hover {
+  background: #2563eb;
+}
+
+.bk-mobile-btn:focus-visible {
+  outline: 2px solid var(--color-blue-bright);
+  outline-offset: 3px;
+}
+
+.bk-mobile-note {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+@media (min-width: 760px) {
+  .bk-mobile {
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .bk-mobile-btn {
+    width: auto;
+    padding: 0 2.25rem;
+  }
+  .bk-mobile-note {
+    margin: 0;
+    text-align: left;
+  }
+}
+
+.bk-pending {
+  min-height: 112px;
+}
+
+@media (min-width: 1240px) {
+  .bk-pending {
+    min-height: 570px;
+  }
+}
+
+.bk-cal {
+  position: relative;
+  min-height: 460px;
+}
+
+.bk-cal.is-ready {
+  min-height: 0;
+}
+
+.bk-cal-skeleton {
+  position: absolute;
+  inset: 0;
+  padding: 1.75rem;
+}
+
+.bk-skel-head {
+  width: 160px;
+  height: 18px;
+  border-radius: 6px;
+  background: var(--color-surface-2);
+  margin-bottom: 1.5rem;
+}
+
+.bk-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  max-width: 460px;
+}
+
+.bk-skel-grid span {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  animation: bk-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes bk-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-skel-grid span {
+    animation: none;
+  }
+}
+
+.bk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

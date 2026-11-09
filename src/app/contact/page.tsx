@@ -1,8 +1,10 @@
+import Image from "next/image";
 import { ContactForm } from "@/components/ContactForm";
 import { CalEmbed } from "@/components/CalEmbed";
 import { getPublicPackage } from "@/lib/catalog/public";
 import { catalogPrice } from "@/lib/catalog/types";
 import { resolveSourcePage } from "@/lib/blog/lead-attribution";
+import "./contact-booking.css";
 
 export const metadata = {
   title: "Contact",
@@ -35,21 +37,68 @@ export default async function ContactPage({searchParams}:{searchParams:Promise<{
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed">
           Whether you need a complete business operating platform, a command
           center, or one broken workflow fixed, start with the way the company
-          runs today. Pick a time below, or send a message and we&apos;ll get
+          runs today. Book a call below, or send a message and we&apos;ll get
           back to you within one business day.
         </p>
       </section>
 
-      <section className="max-w-4xl mx-auto px-6 pb-12">
-        <div className="eyebrow-muted mb-3">● Book directly</div>
-        <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-3">
-          Pick a time.
-        </h2>
-        <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
-          30 minutes. No pitch, just notes. Pick a slot that works and
-          you&apos;ll get a calendar invite with a video link instantly.
-        </p>
-        <CalEmbed />
+      <section className="bk-wrap" aria-labelledby="bk-title">
+        <div className="bk-panel">
+          <div className="bk-side">
+            <div className="bk-intro">
+            <div className="bk-host">
+              <Image
+                src="/about/john-hockinson-portrait.png"
+                alt=""
+                width={56}
+                height={56}
+                className="bk-avatar"
+              />
+              <div>
+                <p className="bk-host-name">John Hockinson</p>
+                <p className="bk-host-role">Founder, Tomorrow&apos;s Tech AI</p>
+              </div>
+            </div>
+
+            <h2 id="bk-title" className="bk-title">Book a 30-minute discovery call</h2>
+
+            <ul className="bk-facts">
+              <li><ClockIcon />30 minutes</li>
+              <li><VideoIcon />Video call, link in your invite</li>
+              <li><GlobeIcon />Times shown in Central Time</li>
+            </ul>
+            </div>
+
+            <div className="bk-detail">
+            <div className="bk-block">
+              <h3 className="bk-h3">What we&apos;ll cover</h3>
+              <ul className="bk-list">
+                <li>How work moves through your business today: requests, scheduling, tracking, reporting</li>
+                <li>Where it breaks down or eats your week</li>
+                <li>Whether we&apos;re the right fit, and roughly what it would take</li>
+              </ul>
+            </div>
+
+            <div className="bk-block">
+              <h3 className="bk-h3">You leave with</h3>
+              <p className="bk-p">
+                A straight answer and practical next steps, even if the answer
+                is that you don&apos;t need us.
+              </p>
+            </div>
+
+            <p className="bk-alt">
+              None of these times work?{" "}
+              <a href="mailto:john@tomorrowstechai.com?subject=Discovery%20call">Email John</a>{" "}
+              and we&apos;ll find one.
+            </p>
+            </div>
+          </div>
+
+          <div className="bk-main">
+            <CalEmbed />
+          </div>
+        </div>
       </section>
 
       <section className="max-w-3xl mx-auto px-6 py-16 border-t border-[color:var(--color-border)]">
@@ -110,5 +159,32 @@ function DirectChannel({
       <div className="eyebrow-muted mb-2 !text-[#7d8ba1]">{label}</div>
       <div className="text-[color:var(--color-cyan)] text-[15px]">{value}</div>
     </a>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="10" cy="10" r="7.25" />
+      <path d="M10 6v4.2l2.8 1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function VideoIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <rect x="2.75" y="5.25" width="10.5" height="9.5" rx="2" />
+      <path d="M13.25 8.6 17.25 6.5v7l-4-2.1" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="10" cy="10" r="7.25" />
+      <path d="M2.75 10h14.5M10 2.75c2 2.2 2.9 4.6 2.9 7.25S12 15.05 10 17.25C8 15.05 7.1 12.65 7.1 10S8 4.95 10 2.75Z" />
+    </svg>
   );
 }
