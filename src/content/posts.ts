@@ -26,16 +26,13 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
-  // ── Phase 5 flagship · approved, held as "draft" until release.
-  //    RELEASE STEP (in the deploy commit): set status to "published" and
-  //    publishedAt to the actual deployment date. The validator rejects a
-  //    published article dated in the future. Every figure below was checked
-  //    against the listed sources on 2026-11-09.
+  // ── Phase 5 flagship · published on its release (deployment) date.
+  //    Every figure below was checked against the listed sources on
+  //    2026-11-09. Set updatedAt on any later factual change.
   {
     slug: "lawyer-private-ai-server-used-v100-gpus",
     title: "A Lawyer Built His Own Private AI Server. Here's Why Every Business Should Pay Attention.",
-    status: "draft",
-    // Placeholder (not a future date). Replace with the deployment date at release.
+    status: "published",
     publishedAt: "2026-11-09",
     category: "private-ai",
     secondaryCategories: ["hardware"],
