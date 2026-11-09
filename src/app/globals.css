@@ -5452,7 +5452,9 @@ body {
     opacity: 0.8;
   }
 
-  .ad-check {
+  /* Scoped to the jobs checklist button. As a bare .ad-check it also hit the
+     form checkbox labels and squeezed their text into a 20px box. */
+  button.ad-check {
     flex: 0 0 auto;
     width: 20px;
     height: 20px;
@@ -5465,7 +5467,7 @@ body {
     cursor: pointer;
   }
 
-  .ad-check:hover {
+  button.ad-check:hover {
     border-color: var(--color-blue-bright, #3b82f6);
   }
 
@@ -11727,5 +11729,97 @@ body {
   @media (max-width: 1100px) {
     .cc-root .pc-cards { grid-template-columns: minmax(0, 1fr); }
     .cc-root .pc-totals, .cc-root .pc-grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+}
+
+@layer components {
+  /* ── Lead page: what they wrote + email composer ─────────────────────── */
+  .ad-message blockquote {
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--color-blue);
+    background: rgba(59, 130, 246, 0.06);
+    border-radius: 0 8px 8px 0;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+  .ad-message.is-older {
+    margin-top: 14px;
+    opacity: 0.8;
+  }
+  .ad-compose-alt {
+    font-size: 12.5px;
+  }
+  .ad-compose-templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .ad-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .ad-chip:hover {
+    border-color: var(--color-blue);
+    color: var(--color-text);
+  }
+  .ad-chip:focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+  .ad-chip.is-on {
+    border-color: var(--color-blue);
+    background: rgba(59, 130, 246, 0.14);
+    color: var(--color-text);
+  }
+  .ad-compose-to {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.92rem;
+  }
+  textarea.ad-input.ad-compose-body {
+    min-height: 240px;
+    font-family: inherit;
+  }
+  .ad-compose-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+  }
+  .ad-compose-warn {
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+  .ad-compose-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ad-compose-result {
+    margin: 0;
+    min-height: 1.2em;
+    font-size: 0.85rem;
+  }
+  .ad-compose-result.is-ok {
+    color: var(--cc-ok, #22c55e);
+  }
+  .ad-compose-result.is-err {
+    color: #f87171;
   }
 }

@@ -64,7 +64,28 @@ export async function POST(request: Request) {
     // Source page, CTA position and campaign UTMs (validated in the builder).
     const { lead: attributed, eventMeta } = buildContactLeadFields(offer, attribution);
     const intake=await intakeLead({first_name:firstName,last_name:lastName,email,business_name:company||null,business_type:offer?.category||null,services_interested:offer?.name?[`${offer.category||"Service"} — ${offer.name} — ${offer.price||"Price not provided"}`]:[],source:"contact-form",campaign:offer?.name||null,...attributed,email_consent:true,sms_consent:false});
-    if(intake.leadId&&offer){ const {supabaseAdmin}=await import("@/lib/supabase/admin"); const db=supabaseAdmin(); await db.from("lead_events").insert({lead_id:intake.leadId,type:"catalog_inquiry",body:`${offer.name||offer.slug} inquiry from contact form.`,actor:"system",meta:{package_id:offer.id||null,package:offer.slug||null,package_name:offer.name||null,category:offer.category||null,price:offer.price||null,...eventMeta}}); }
+    // Keep what they actually wrote on the lead. Before this, the message only
+    // reached the notification email and the CRM record had none of it.
+    // 'form_submit' is one of the types the lead_events check constraint
+    // allows (the earlier 'catalog_inquiry' type is not in it).
+    if (intake.leadId) {
+      const { supabaseAdmin } = await import("@/lib/supabase/admin");
+      const { error: eventError } = await supabaseAdmin().from("lead_events").insert({
+        lead_id: intake.leadId,
+        type: "form_submit",
+        body: String(message).trim().slice(0, 8000),
+        actor: "contact-form",
+        meta: {
+          kind: "contact_message",
+          company: company || null,
+          ...(offer
+            ? { package_id: offer.id || null, package: offer.slug || null, package_name: offer.name || null, category: offer.category || null, price: offer.price || null }
+            : {}),
+          ...eventMeta,
+        },
+      });
+      if (eventError) console.error("Contact message not saved to lead:", eventError.message);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

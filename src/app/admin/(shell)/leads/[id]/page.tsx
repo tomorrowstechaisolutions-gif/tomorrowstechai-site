@@ -22,6 +22,8 @@ import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/confi
 import { chicagoDate } from "@/lib/time/chicago";
 
 import { PaymentLinkButton } from "@/components/admin/PaymentLinkButton";
+import { LeadEmailComposer } from "@/components/admin/LeadEmailComposer";
+import { sendLeadEmailAction } from "@/app/admin/lead-email-actions";
 import { SellUpsellButton } from "@/components/admin/SellUpsellButton";
 import { fmtMoney } from "@/lib/campaign/metrics";
 import {
@@ -118,6 +120,13 @@ export default async function LeadDetailPage({
   const lifetime = initial + recurring + upsell;
 
   const band = scoreBand(lead.lead_score);
+  const pendingFollowups = (followups ?? []).filter((f) => f.status === "pending").length;
+
+  // What they wrote on the contact form (saved since the contact route began
+  // storing it). Newest first, so a returning visitor's latest note leads.
+  const messages = events.filter(
+    (e) => e.type === "form_submit" && (e.meta as Record<string, unknown> | null)?.kind === "contact_message" && e.body
+  );
 
   // Central Texas AI Initiative: every field the visitor typed is kept on the
   // form_submit event. Show the most recent one as a readable panel.
@@ -167,11 +176,67 @@ export default async function LeadDetailPage({
           {lead.business_name ?? "No business name"} ·{" "}
           {lead.business_type ?? "Type not given"} · from {lead.source}
         </p>
-        {scheduleButton ? <div className="ad-headactions">{scheduleButton}</div> : null}
+        <div className="ad-headactions">
+          {!lead.do_not_contact && lead.email ? (
+            <a href="#email" className="ad-btn primary">Email {lead.first_name || "lead"}</a>
+          ) : null}
+          {lead.phone && !lead.do_not_contact ? (
+            <a href={`tel:${lead.phone.replace(/[^0-9+]/g, "")}`} className="ad-btn">Call {lead.phone}</a>
+          ) : null}
+          {scheduleButton}
+        </div>
       </header>
 
       <div className="ad-two">
         <div className="ad-col-main">
+          <section className="ad-panel">
+            <div className="ad-panel-head">
+              <h2>What they wrote</h2>
+              {messages[0] ? (
+                <span className="ad-muted">{new Date(messages[0].created_at).toLocaleString("en-US")}</span>
+              ) : null}
+            </div>
+            {messages.length === 0 ? (
+              <p className="ad-empty" style={{ margin: 0 }}>
+                No message on file. Contact-form messages are saved here from now on; for earlier
+                leads the message is in the notification email sent to your inbox when they submitted.
+              </p>
+            ) : (
+              messages.slice(0, 3).map((m, i) => {
+                const meta = (m.meta ?? {}) as Record<string, unknown>;
+                return (
+                  <div key={m.id} className={`ad-message${i > 0 ? " is-older" : ""}`}>
+                    {i > 0 ? (
+                      <span className="ad-muted">{new Date(m.created_at).toLocaleString("en-US")}</span>
+                    ) : null}
+                    <blockquote>{m.body}</blockquote>
+                    {meta.package_name || meta.source_page ? (
+                      <p className="ad-muted" style={{ margin: 0 }}>
+                        {meta.package_name ? `Asked about: ${String(meta.package_name)}` : null}
+                        {meta.package_name && meta.source_page ? " · " : null}
+                        {meta.source_page ? `Sent from ${String(meta.source_page)}` : null}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </section>
+
+          <LeadEmailComposer
+            lead={{
+              id: lead.id,
+              first_name: lead.first_name,
+              business_name: lead.business_name,
+              email: lead.email,
+              do_not_contact: lead.do_not_contact,
+              unsubscribed_at: lead.unsubscribed_at,
+              lead_status: lead.lead_status,
+            }}
+            pendingFollowups={pendingFollowups}
+            action={sendLeadEmailAction}
+          />
+
           <section className="ad-panel">
             <div className="ad-panel-head">
               <h2>Contact &amp; business</h2>
@@ -327,7 +392,7 @@ export default async function LeadDetailPage({
                     {new Date(e.created_at).toLocaleString("en-US")}
                   </span>
                   <span className="ad-timeline-type">{e.type.replace(/_/g, " ")}</span>
-                  <p>{e.body}</p>
+                  <p style={{ whiteSpace: "pre-wrap" }}>{e.body}</p>
                   <span className="ad-timeline-actor">{e.actor}</span>
                 </li>
               ))}
