@@ -89,9 +89,9 @@ async function fetchPage(url: string, path: string): Promise<AuditPage> {
 }
 
 /** The URLs to check, from the sitemap the site publishes. */
-export function auditTargets(): { path: string; url: string }[] {
+export async function auditTargets(): Promise<{ path: string; url: string }[]> {
   const base = baseUrl();
-  return sitemap().map((entry) => {
+  return (await sitemap()).map((entry) => {
     const url = String(entry.url);
     let path = "/";
     try {
@@ -115,7 +115,7 @@ export async function runAudit(
   sb: SupabaseClient,
   actor: string
 ): Promise<AuditResult> {
-  const targets = auditTargets();
+  const targets = await auditTargets();
   const base = baseUrl();
 
   const { data: run, error: runError } = await sb

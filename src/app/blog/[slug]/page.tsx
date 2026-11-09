@@ -1,48 +1,60 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getPostBySlug, posts } from "@/content/posts";
+import type { Metadata } from "next";
+import { renderMarkdown } from "@/lib/blog/markdown";
+import { getArticle, getListedArticles, getReachableArticles, formatDate } from "@/lib/blog/repository";
+import { articleJsonLd, breadcrumbJsonLd, jsonLd } from "@/lib/blog/structured-data";
+import { PUBLISHER_NAME, SITE_URL } from "@/lib/blog/taxonomy";
+import "../field-notes-prose.css";
 
 export async function generateStaticParams() {
-  return posts.map((post) => ({ slug: post.slug }));
+  return (await getReachableArticles()).map((a) => ({ slug: a.slug }));
 }
-
-const SITE_URL = "https://tomorrowstechai.com";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
-  if (!post) return { title: "Not found" };
-  const url = `${SITE_URL}/blog/${post.slug}`;
+  const article = await getArticle(slug);
+  if (!article) return { title: "Not found" };
+  const title = article.seo?.title ?? article.title;
+  const description = article.seo?.description ?? article.summary;
+  const image = article.hero
+    ? article.hero.src.startsWith("http")
+      ? article.hero.src
+      : `${SITE_URL}${article.hero.src}`
+    : undefined;
   return {
-    title: post.title,
-    description: post.excerpt,
-    keywords: post.tags,
+    title,
+    description,
+    keywords: article.tags,
     alternates: {
-      canonical: url,
+      canonical: article.seo?.canonical ?? article.url,
+      types: { "application/rss+xml": [{ url: "/blog/feed.xml", title: "Field Notes" }] },
     },
+    // Only set when needed: an explicit undefined replaces the site-wide robots tags.
+    ...(article.status === "archived" ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       type: "article",
-      url,
-      publishedTime: new Date(post.date).toISOString(),
-      authors: ["John Hockinson"],
-      tags: post.tags,
-      siteName: "Tomorrow’s Tech AI",
-      images: post.image
-        ? [{ url: `${SITE_URL}${post.image}`, alt: post.title }]
-        : undefined,
+      url: article.url,
+      publishedTime: new Date(article.publishedAt).toISOString(),
+      modifiedTime: new Date(article.modifiedAt).toISOString(),
+      authors: [article.author.name],
+      section: article.categoryInfo.name,
+      tags: article.tags,
+      siteName: PUBLISHER_NAME,
+      images: image ? [{ url: image, alt: article.hero!.alt }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
-      description: post.excerpt,
-      images: post.image ? [`${SITE_URL}${post.image}`] : undefined,
+      title,
+      description,
+      images: image ? [image] : undefined,
     },
   };
 }
@@ -53,44 +65,21 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getArticle(slug);
   if (!post) notFound();
 
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.excerpt,
-    image: post.image ? `${SITE_URL}${post.image}` : undefined,
-    datePublished: new Date(post.date).toISOString(),
-    dateModified: new Date(post.date).toISOString(),
-    keywords: post.tags.join(", "),
-    articleSection: "Operations & AI",
-    author: {
-      "@type": "Person",
-      name: "John Hockinson",
-      url: SITE_URL,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Tomorrow’s Tech AI",
-      url: SITE_URL,
-      logo: {
-        "@type": "ImageObject",
-        url: `${SITE_URL}/icon.svg`,
-      },
-    },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `${SITE_URL}/blog/${post.slug}`,
-    },
-  };
+  const sources = post.sources ?? [];
+  const related = (await getListedArticles()).filter((p) => p.slug !== post.slug).slice(0, 3);
 
   return (
     <article>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(articleJsonLd(post)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd(post)) }}
       />
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
         <Link
@@ -100,9 +89,9 @@ export default async function BlogPostPage({
           ← All posts
         </Link>
         <div className="flex flex-wrap items-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
-          <span>{post.date}</span>
+          <span>{post.displayDate}</span>
           <span>·</span>
-          <span>{post.readTime}</span>
+          <span>{post.readTimeLabel}</span>
           <span>·</span>
           <span>
             By{" "}
@@ -110,7 +99,7 @@ export default async function BlogPostPage({
               href="/about"
               className="text-[color:var(--color-cyan)] hover:underline"
             >
-              John Hockinson
+              {post.author.name}
             </Link>
           </span>
         </div>
@@ -118,7 +107,7 @@ export default async function BlogPostPage({
           {post.title}
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed">
-          {post.excerpt}
+          {post.summary}
         </p>
         <div className="flex flex-wrap gap-2 mt-6">
           {post.tags.map((tag) => (
@@ -132,95 +121,129 @@ export default async function BlogPostPage({
         </div>
       </section>
 
-      {post.image && (
+      {post.hero && (
         <section className="max-w-3xl mx-auto px-6 pt-2 pb-4">
           <div className="relative w-full aspect-[16/9] overflow-hidden rounded border border-[color:var(--color-border)]">
             <Image
-              src={post.image}
-              alt={post.title}
+              src={post.hero.src}
+              alt={post.hero.alt}
               fill
               priority
               sizes="(max-width: 768px) 100vw, 720px"
               className="object-cover"
             />
           </div>
+          {(post.hero.caption || post.hero.credit) && (
+            <p className="mt-2 flex flex-wrap justify-between gap-x-4 text-xs text-[color:var(--color-text-muted)]">
+              {post.hero.caption && <span>{post.hero.caption}</span>}
+              {post.hero.credit && <span>{post.hero.credit}</span>}
+            </p>
+          )}
         </section>
       )}
 
       <section className="max-w-3xl mx-auto px-6 py-10">
         <div className="prose-blog">
-          {renderBody(post.body)}
-        </div>
-      </section>
-
-      <section className="max-w-3xl mx-auto px-6 py-12">
-        <div className="card flex items-start gap-5 p-8">
-          <div className="w-16 h-16 shrink-0 rounded-full bg-[color:var(--color-cyan-deep)]/30 border border-[color:var(--color-cyan)]/40 flex items-center justify-center">
-            <span className="font-mono text-[color:var(--color-cyan)] text-lg tracking-widest">
-              JH
-            </span>
-          </div>
-          <div>
-            <div className="eyebrow-muted mb-1">About the author</div>
-            <h3 className="text-lg font-medium mb-2">John Hockinson</h3>
-            <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-3">
-              Founder of Tomorrow’s Tech AI. 18 years inside telecom and
-              infrastructure programs — now building business operating
-              platforms, AI command centers, and operations systems for businesses still
-              running on spreadsheets and email chains.
+          {renderMarkdown(post.body, { sourceIds: sources.map((s) => s.id) })}
+          {post.displayUpdated && (
+            <p className="text-sm text-[color:var(--color-text-muted)]">
+              Updated {post.displayUpdated}.
             </p>
-            <Link
-              href="/about"
-              className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
-            >
-              More about John →
-            </Link>
-          </div>
+          )}
+          {sources.length > 0 && (
+            <section className="sources" aria-labelledby="sources-heading">
+              <h2 id="sources-heading">Sources</h2>
+              <ol>
+                {sources.map((s) => (
+                  <li key={s.id} id={`source-${s.id}`}>
+                    {s.url ? (
+                      <a href={s.url} target="_blank" rel="noopener noreferrer">
+                        {s.title}
+                      </a>
+                    ) : (
+                      s.title
+                    )}
+                    <span className="source-meta">
+                      {" — "}
+                      {[s.author, s.publisher, s.publishedAt && formatDate(s.publishedAt)]
+                        .filter(Boolean)
+                        .join(", ")}
+                      {s.accessedAt && ` (accessed ${formatDate(s.accessedAt)})`}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
         </div>
       </section>
 
-      {(() => {
-        const related = posts
-          .filter((p) => p.slug !== post.slug)
-          .slice(0, 3);
-        if (related.length === 0) return null;
-        return (
-          <section className="max-w-6xl mx-auto px-6 py-16">
-            <div className="eyebrow-muted mb-3">Keep reading</div>
-            <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-10 max-w-2xl">
-              More from the field.
-            </h2>
-            <div className="grid md:grid-cols-3 gap-5">
-              {related.map((r) => (
-                <Link
-                  key={r.slug}
-                  href={`/blog/${r.slug}`}
-                  className="card hover:border-[color:var(--color-cyan-deep)] block group overflow-hidden"
-                >
-                  {r.image && (
-                    <div className="relative w-full aspect-[16/9] -mx-6 -mt-6 mb-4 overflow-hidden border-b border-[color:var(--color-border)]">
-                      <Image
-                        src={r.image}
-                        alt={r.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 360px"
-                        className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                      />
-                    </div>
-                  )}
-                  <div className="eyebrow-muted mb-3">{r.date}</div>
-                  <h3 className="text-lg font-medium leading-snug mb-2 group-hover:text-[color:var(--color-cyan)] transition-colors">
-                    {r.title}
-                  </h3>
-                  <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
-                    {r.excerpt}
-                  </p>
-                </Link>
-              ))}
+      {/* The approved-bio author box is a Phase 3 item. Until then only the
+          existing box for John's legacy articles renders, unchanged. */}
+      {post.author.id === "john-hockinson" && (
+        <section className="max-w-3xl mx-auto px-6 py-12">
+          <div className="card flex items-start gap-5 p-8">
+            <div className="w-16 h-16 shrink-0 rounded-full bg-[color:var(--color-cyan-deep)]/30 border border-[color:var(--color-cyan)]/40 flex items-center justify-center">
+              <span className="font-mono text-[color:var(--color-cyan)] text-lg tracking-widest">
+                JH
+              </span>
             </div>
-          </section>
-        );
-      })()}
+            <div>
+              <div className="eyebrow-muted mb-1">About the author</div>
+              <h3 className="text-lg font-medium mb-2">John Hockinson</h3>
+              <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-3">
+                Founder of Tomorrow’s Tech AI. 18 years inside telecom and
+                infrastructure programs — now building business operating
+                platforms, AI command centers, and operations systems for businesses still
+                running on spreadsheets and email chains.
+              </p>
+              <Link
+                href="/about"
+                className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-cyan)] hover:underline"
+              >
+                More about John →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {related.length > 0 && (
+        <section className="max-w-6xl mx-auto px-6 py-16">
+          <div className="eyebrow-muted mb-3">Keep reading</div>
+          <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-10 max-w-2xl">
+            More from the field.
+          </h2>
+          <div className="grid md:grid-cols-3 gap-5">
+            {related.map((r) => (
+              <Link
+                key={r.slug}
+                href={r.path}
+                className="card hover:border-[color:var(--color-cyan-deep)] block group overflow-hidden"
+              >
+                {r.hero && (
+                  <div className="relative w-full aspect-[16/9] -mx-6 -mt-6 mb-4 overflow-hidden border-b border-[color:var(--color-border)]">
+                    <Image
+                      src={r.hero.src}
+                      alt={r.hero.alt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 360px"
+                      className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div className="eyebrow-muted mb-3">{r.displayDate}</div>
+                <h3 className="text-lg font-medium leading-snug mb-2 group-hover:text-[color:var(--color-cyan)] transition-colors">
+                  {r.title}
+                </h3>
+                <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed">
+                  {r.summary}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="max-w-3xl mx-auto px-6 py-16">
         <div className="card card-accent p-10">
@@ -238,41 +261,4 @@ export default async function BlogPostPage({
       </section>
     </article>
   );
-}
-
-function renderBody(body: string) {
-  const blocks = body.split(/\n\n+/);
-  return blocks.map((block, i) => {
-    if (block.startsWith("## ")) {
-      return <h2 key={i}>{block.replace(/^## /, "")}</h2>;
-    }
-    if (block.startsWith("### ")) {
-      return <h3 key={i}>{block.replace(/^### /, "")}</h3>;
-    }
-    if (block.startsWith("- ")) {
-      const items = block.split(/\n/).map((line) => line.replace(/^- /, ""));
-      return (
-        <ul key={i}>
-          {items.map((item, j) => (
-            <li key={j} dangerouslySetInnerHTML={{ __html: formatInline(item) }} />
-          ))}
-        </ul>
-      );
-    }
-    return <p key={i} dangerouslySetInnerHTML={{ __html: formatInline(block) }} />;
-  });
-}
-
-function formatInline(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(
-      /\[(.+?)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    )
-    .replace(
-      /\[(.+?)\]\((\/[^)]*)\)/g,
-      '<a href="$2">$1</a>'
-    );
 }

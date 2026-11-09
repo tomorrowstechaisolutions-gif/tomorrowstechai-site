@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { posts } from "@/content/posts";
+import { getListedArticles } from "@/lib/blog/repository";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { IndustryRail } from "@/components/IndustryRail";
 import { CommandCenter } from "@/components/home/CommandCenter";
@@ -126,8 +126,8 @@ const CASES = [
 
 const CLIENT_LOGOS = ["Field House", "Mintline", "Held", "Purrfrequency", "Job Catcher"];
 
-export default function Home() {
-  const latestPosts = posts
+export default async function Home() {
+  const latestPosts = (await getListedArticles())
     .filter((post) => !post.tags.includes("Aegis Fleet AI"))
     .slice(0, 3);
 
@@ -414,11 +414,11 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-4">
           {latestPosts.map((post) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="tt-case group" data-spotlight>
-              {post.image && (
+              {post.hero && (
                 <div className="tt-case-media !aspect-[16/9]">
                   <Image
-                    src={post.image}
-                    alt={post.title}
+                    src={post.hero.src}
+                    alt={post.hero.alt}
                     fill
                     sizes="(max-width: 768px) 100vw, 380px"
                     className="object-cover"
@@ -427,11 +427,11 @@ export default function Home() {
               )}
               <div className="p-5">
                 <div className="text-[10.5px] font-semibold tracking-[0.16em] uppercase text-[color:var(--color-text-muted)] mb-2.5">
-                  {post.date}
+                  {post.displayDate}
                 </div>
                 <h3 className="text-[17px] font-semibold leading-snug mb-2">{post.title}</h3>
                 <p className="text-[13.5px] text-[color:var(--color-text-secondary)] leading-relaxed">
-                  {post.excerpt}
+                  {post.summary}
                 </p>
               </div>
             </Link>

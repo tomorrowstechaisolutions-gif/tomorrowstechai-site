@@ -1,0 +1,208 @@
+/*
+ * Field Notes — styles for the Markdown elements the new renderer adds.
+ * Headings, paragraphs, bullets, links, bold and blockquotes keep their
+ * existing .prose-blog rules in globals.css. Everything here only applies to
+ * elements the seven existing articles don't use, so their appearance is
+ * unchanged. The full article redesign is Phase 3.
+ */
+
+.prose-blog h2,
+.prose-blog h3,
+.prose-blog h4 {
+  scroll-margin-top: 96px;
+}
+
+.prose-blog h4 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 28px;
+  margin-bottom: 10px;
+  color: var(--color-text);
+}
+
+.prose-blog ol {
+  margin-bottom: 18px;
+  padding-left: 1.6em;
+  list-style: decimal;
+}
+
+.prose-blog ol li {
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.prose-blog ol li::marker {
+  color: var(--color-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.prose-blog blockquote > p:last-child,
+.prose-blog .callout > p:last-child {
+  margin-bottom: 0;
+}
+
+/* Callouts: > [!NOTE], > [!DISCREPANCY], … */
+.prose-blog .callout {
+  margin: 28px 0;
+  padding: 16px 20px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-cyan);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 16px;
+}
+
+.prose-blog .callout-title {
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-cyan);
+}
+
+.prose-blog .callout-warning,
+.prose-blog .callout-discrepancy,
+.prose-blog .callout-correction {
+  border-left-color: var(--color-amber);
+}
+
+.prose-blog .callout-warning .callout-title,
+.prose-blog .callout-discrepancy .callout-title,
+.prose-blog .callout-correction .callout-title {
+  color: var(--color-amber);
+}
+
+.prose-blog .callout-tip,
+.prose-blog .callout-update {
+  border-left-color: var(--color-success);
+}
+
+.prose-blog .callout-tip .callout-title,
+.prose-blog .callout-update .callout-title {
+  color: var(--color-success);
+}
+
+/* Tables scroll inside their own box on narrow screens. */
+.prose-blog .table-scroll {
+  margin: 28px 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.prose-blog .table-scroll:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+.prose-blog table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.prose-blog th,
+.prose-blog td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose-blog th {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.prose-blog tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.prose-blog code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+}
+
+.prose-blog pre {
+  margin: 24px 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.prose-blog pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.prose-blog figure {
+  margin: 32px 0;
+}
+
+.prose-blog figure img {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.prose-blog figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.prose-blog hr {
+  margin: 40px 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.prose-blog sup.cite {
+  margin-left: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.68em;
+  line-height: 0;
+}
+
+.prose-blog sup.cite a {
+  text-decoration: none;
+}
+
+/* Sources list — only rendered on articles that cite sources. */
+.prose-blog .sources ol {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.prose-blog .sources li:target {
+  color: var(--color-text);
+}
+
+.prose-blog .sources .source-meta {
+  color: var(--color-text-muted);
+}

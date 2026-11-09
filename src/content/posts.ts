@@ -1,24 +1,49 @@
-export type Post = {
-  slug: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  readTime: string;
-  tags: string[];
-  body: string;
-  image?: string;
-};
+import type { ArticleRecord } from "@/lib/blog/types";
 
-export const posts: Post[] = [
+/**
+ * Field Notes articles that live in code.
+ *
+ * Read through src/lib/blog/repository.ts — never import this array directly
+ * into a page. The repository validates every entry against the editorial
+ * standards (src/lib/blog/validate.ts) and fails the build on errors.
+ *
+ * New article checklist:
+ *   - slug never changes once published (it is the URL)
+ *   - status "draft" until it should go live; publishedAt is an ISO date
+ *   - set updatedAt on meaningful edits
+ *   - category is one of the six in src/lib/blog/taxonomy.ts
+ *   - authorId defaults to the editorial team
+ *   - hero needs descriptive alt text AND a credit
+ *   - every factual claim from elsewhere cites a source: [^source-id] in the
+ *     body, with the matching entry in sources[]
+ *   - specs[] for technical figures; verified: true only after checking
+ *   - discrepancies[] (and a > [!DISCREPANCY] callout) when sources disagree
+ *   - body syntax: see the comment at the top of src/lib/blog/markdown.tsx
+ *
+ * The seven articles marked legacy predate these standards; their slugs,
+ * titles, summaries and bodies are unchanged.
+ */
+export type FileArticle = Omit<ArticleRecord, "origin">;
+
+export const fileArticles: FileArticle[] = [
   {
     slug: "ems-fleet-three-numbers",
     title: "The Three Numbers Every EMS Fleet Director Should Know Without Opening a Spreadsheet",
-    date: "May 20, 2026",
-    excerpt:
+    status: "published",
+    publishedAt: "2026-05-20",
+    category: "industry-insights",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "Most fleet software was built for trucking, not ambulances. Here's the operational reality of running an EMS service — and what changes when you finally build software for the actual job.",
     readTime: "6 min read",
     tags: ["Fleet operations", "EMS", "Compliance", "Aegis Fleet AI", "Operations"],
-    image: "/blog/ems-fleet-three-numbers.png",
+    hero: {
+      src: "/blog/ems-fleet-three-numbers.png",
+      alt: "A curved monitor in a dark room showing three large status numbers: 12 dispatchable, 4 PM due and 2 expiring, with the time 02:47 in the corner.",
+      // Provenance: embedded C2PA record (OpenAI gpt-image, IPTC trainedAlgorithmicMedia).
+      credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
+    },
     body: `There's a question every EMS director should be able to answer in under five seconds, at any hour of the day:
 
 **How many units are dispatchable right now?**
@@ -111,12 +136,21 @@ Built by operators who carried the radio.`,
   {
     slug: "smartsheet-claude-mcp",
     title: "The Smartsheet Tool I Wish I'd Had 18 Years Ago: Claude's MCP Integration",
-    date: "May 19, 2026",
-    excerpt:
+    status: "published",
+    publishedAt: "2026-05-19",
+    category: "business-automation",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "For two decades, my job was finding the answer hidden in the spreadsheet. Claude's MCP integration just changed what's possible for operations teams running on Smartsheet.",
     readTime: "6 min read",
     tags: ["Smartsheet", "Claude AI", "MCP", "Operations"],
-    image: "/blog/smartsheet-claude-mcp.png",
+    hero: {
+      src: "/blog/smartsheet-claude-mcp.png",
+      alt: "Streams of blue data lines flowing into a project dashboard with a Gantt schedule, a contractor master sheet, a status feed and project health scores.",
+      // Provenance: embedded C2PA record (OpenAI gpt-image, IPTC trainedAlgorithmicMedia).
+      credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
+    },
     body: `For most of my career running telecom and infrastructure programs, my job was finding the answer hidden in the spreadsheet.
 
 Which crew is approved to work in this market? Pull the contractor master sheet, filter, cross-reference compliance, check capacity, look up mobilization lead time.
@@ -189,12 +223,19 @@ That's where we work. If your team is running operations through Smartsheet and 
   {
     slug: "what-a-private-ai-business-unit-actually-does",
     title: "What a Private AI Business Unit Actually Does for a Company",
-    date: "March 12, 2026",
-    excerpt:
+    status: "published",
+    publishedAt: "2026-03-12",
+    category: "private-ai",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "A lot of people hear the term AI and immediately think of chatbots, public tools, or content generation. A private AI business unit is something different.",
     readTime: "4 min read",
     tags: ["Business AI", "Internal Tools", "Nexus One", "Private AI Business Unit"],
-    image: "/blog/what-a-private-ai-business-unit-actually-does.png",
+    hero: {
+      src: "/blog/what-a-private-ai-business-unit-actually-does.png",
+      alt: "Illustration of two business people facing a glowing server tower labeled Nexus One, under the headline Private AI Business Unit for Companies, with icons for custom AI agents, internal tools, smarter workflows and better control.",
+    },
     body: `A lot of people hear the term AI and immediately think of chatbots, public tools, or content generation.
 
 But a private AI business unit is something different.
@@ -230,12 +271,19 @@ For companies that want to move beyond surface-level AI use, that is where the r
   {
     slug: "hidden-cost-of-broken-workflows",
     title: "The Hidden Cost of Broken Workflows in Growing Businesses",
-    date: "March 12, 2026",
-    excerpt:
+    status: "published",
+    publishedAt: "2026-03-12",
+    category: "business-automation",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "Broken workflows do not always look dramatic. They often look like delays, rework, confusion, and wasted payroll. That is where businesses quietly lose money.",
     readTime: "5 min read",
     tags: ["Approvals", "Broken Workflows", "Business Operations", "Process Improvement", "Workflow Automation"],
-    image: "/blog/hidden-cost-of-broken-workflows.png",
+    hero: {
+      src: "/blog/hidden-cost-of-broken-workflows.png",
+      alt: "Illustration of a shattered gear with a warning sign next to a dashboard and a workflow report, under the headline The Hidden Cost of Broken Workflows, with labels for delayed approvals, rework and errors, wasted payroll and reporting delays.",
+    },
     body: `Broken workflows do not always look dramatic. They often look like delays, rework, confusion, and wasted payroll. That is where businesses quietly lose money.
 
 A broken workflow does not always announce itself.
@@ -277,12 +325,19 @@ That is why broken workflows should not be treated like minor annoyances. In man
   {
     slug: "why-companies-need-a-command-center",
     title: "Why Most Companies Don't Need More Software — They Need a Command Center",
-    date: "March 12, 2026",
-    excerpt:
+    status: "published",
+    publishedAt: "2026-03-12",
+    category: "industry-insights",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "Most companies assume the answer to operational problems is adding another tool. But the real issue is usually that the business has become too scattered to see clearly.",
     readTime: "5 min read",
     tags: ["Business Systems", "Command Center", "Leadership", "Operations", "Visibility"],
-    image: "/blog/why-companies-need-a-command-center.png",
+    hero: {
+      src: "/blog/why-companies-need-a-command-center.png",
+      alt: "Illustration of a team in suits standing in a server corridor framed by a command center dashboard, under the headline Why Most Companies Don't Need More Software, They Need a Command Center.",
+    },
     body: `Most companies assume the answer to operational problems is adding another tool.
 
 Another app. Another platform. Another report. Another place for information to live.
@@ -314,12 +369,21 @@ In a lot of cases, what the business really needs is a command center built arou
   {
     slug: "1-ai-mistake-businesses-make",
     title: "The #1 AI Mistake Businesses Make (And How to Avoid It)",
-    date: "February 4, 2025",
-    excerpt:
+    status: "published",
+    publishedAt: "2025-02-04",
+    category: "technology-guides",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "Too many companies are diving into AI without a clear strategy. The biggest mistake? Implementing AI without a business-driven approach. AI should solve real problems, not just be a shiny new tool.",
     readTime: "6 min read",
     tags: ["AI Adoption", "AI Strategy", "Business AI", "AI Implementation"],
-    image: "/blog/1-ai-mistake-businesses-make.png",
+    hero: {
+      src: "/blog/1-ai-mistake-businesses-make.png",
+      alt: "Split image: on the left, a desk covered in sticky notes reading No Clear Strategy, Budget Overrun and Use Cases Unclear; on the right, the same work organized into a project timeline, contractor sheet and status dashboard.",
+      // Provenance: embedded C2PA record (OpenAI gpt-image, IPTC trainedAlgorithmicMedia).
+      credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
+    },
     body: `Artificial Intelligence (AI) is no longer a futuristic concept — it's here, and businesses are racing to adopt it. But there's a problem.
 
 Too many companies are diving into AI without a clear strategy. They're chasing trends, investing in AI tools without defined objectives, and expecting magic. The result? Wasted budgets, failed projects, and frustrated teams.
@@ -374,12 +438,19 @@ If you're looking to future-proof your business with AI, let's talk.`,
   {
     slug: "why-ai-isnt-optional",
     title: "Why AI in Business and Project Management Isn't Optional — It's the Future",
-    date: "February 3, 2025",
-    excerpt:
+    status: "published",
+    publishedAt: "2025-02-03",
+    category: "industry-insights",
+    authorId: "john-hockinson",
+    legacy: true,
+    summary:
       "AI is the ultimate game-changer for project management and startups. Companies slow to adopt will find themselves outpaced by competitors who embrace it. The early movers will dominate.",
     readTime: "5 min read",
     tags: ["AI Adoption", "AI Project Management", "Automation Strategies", "Business AI", "Future of AI"],
-    image: "/blog/why-ai-isnt-optional.webp",
+    hero: {
+      src: "/blog/why-ai-isnt-optional.webp",
+      alt: "Illustration of a translucent humanoid AI figure standing in a glass-walled boardroom while business people sit around a conference table.",
+    },
     body: `AI isn't coming — it's here. And those who embrace it now will lead the next wave of innovation.
 
 For years, businesses have relied on manual decision-making, outdated workflows, and gut instinct. But in a world where speed, precision, and adaptability define success, AI is the ultimate game-changer — especially in project management and startups.
@@ -411,7 +482,3 @@ AI isn't replacing business leaders — it's enhancing them. The future belongs 
 We're all in. Are you?`,
   },
 ];
-
-export function getPostBySlug(slug: string): Post | undefined {
-  return posts.find((p) => p.slug === slug);
-}

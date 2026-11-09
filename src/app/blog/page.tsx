@@ -1,12 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
-import { posts } from "@/content/posts";
+import type { Metadata } from "next";
+import { getListedArticles } from "@/lib/blog/repository";
+import { blogJsonLd, jsonLd } from "@/lib/blog/structured-data";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Blog",
   description:
     "Field notes from the intersection of AI and operations. Smartsheet, Claude, MCP, construction tech, and the systems we wish existed.",
-  alternates: { canonical: "/blog" },
+  alternates: {
+    canonical: "/blog",
+    types: { "application/rss+xml": [{ url: "/blog/feed.xml", title: "Field Notes" }] },
+  },
   openGraph: {
     title: "Blog · Tomorrow’s Tech AI",
     description:
@@ -16,9 +21,14 @@ export const metadata = {
   },
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const posts = await getListedArticles();
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(blogJsonLd(posts)) }}
+      />
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
         <div className="eyebrow mb-6">● Field notes</div>
         <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.1]">
@@ -34,14 +44,14 @@ export default function BlogPage() {
           {posts.map((post) => (
             <Link
               key={post.slug}
-              href={`/blog/${post.slug}`}
+              href={post.path}
               className="block border-b border-[color:var(--color-border)] py-8 hover:bg-[color:var(--color-surface)]/40 transition-colors -mx-6 px-6 group"
             >
-              {post.image && (
+              {post.hero && (
                 <div className="relative w-full aspect-[16/9] mb-5 overflow-hidden rounded border border-[color:var(--color-border)]">
                   <Image
-                    src={post.image}
-                    alt={post.title}
+                    src={post.hero.src}
+                    alt={post.hero.alt}
                     fill
                     sizes="(max-width: 768px) 100vw, 720px"
                     className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
@@ -49,15 +59,15 @@ export default function BlogPage() {
                 </div>
               )}
               <div className="flex items-center gap-3 mb-3 text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)]">
-                <span>{post.date}</span>
+                <span>{post.displayDate}</span>
                 <span>·</span>
-                <span>{post.readTime}</span>
+                <span>{post.readTimeLabel}</span>
               </div>
               <h2 className="text-2xl font-medium leading-snug tracking-tight mb-3 group-hover:text-[color:var(--color-cyan)] transition-colors">
                 {post.title}
               </h2>
               <p className="text-[color:var(--color-text-secondary)] leading-relaxed">
-                {post.excerpt}
+                {post.summary}
               </p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {post.tags.map((tag) => (

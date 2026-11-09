@@ -347,7 +347,7 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
   // The site's own sitemap is the authority on which pages exist, so this
   // stays right even before the first audit has been run.
   const publishedPaths = new Set(
-    auditTargets().map((t) => t.path.replace(/\/$/, "") || "/")
+    (await auditTargets()).map((t) => t.path.replace(/\/$/, "") || "/")
   );
 
   const interestCounts = new Map<string, number>();

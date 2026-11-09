@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
-import { posts } from "@/content/posts";
+import { getListedArticles } from "@/lib/blog/repository";
 
 const BASE_URL = "https://tomorrowstechai.com";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -135,9 +135,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
+  const postPages: MetadataRoute.Sitemap = (await getListedArticles()).map((post) => ({
     url: `${BASE_URL}/blog/${post.slug}`,
-    lastModified: new Date(post.date),
+    lastModified: new Date(post.modifiedAt),
     changeFrequency: "monthly",
     priority: 0.7,
   }));
