@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { captureAttribution, getAttribution } from "@/lib/campaign/attribution";
+import { analyticsConsented, gaEvent } from "@/lib/analytics";
 
 /**
  * Service pages link here with ?service=…&plan=… so the enquiry arrives already
@@ -39,13 +41,19 @@ function prefillFromQuery(): string {
     : `I'd like to talk about the ${service} service.\n\n`;
 }
 
-type ContactOffer={id:string|null;slug:string;name:string;category:string;price:string;sourcePage:string};
+type ContactOffer={id:string|null;slug:string;name:string;category:string;price:string;sourcePage:string;cta?:string|null};
 export function ContactForm({offer}:{offer?:ContactOffer|null}) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
   const [error, setError] = useState<string>("");
   const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  // Keep the visit's first-touch campaign data (set on the first page of the
+  // session, e.g. a Field Notes article opened from LinkedIn).
+  useEffect(() => {
+    captureAttribution();
+  }, []);
 
   useEffect(() => {
     const el = messageRef.current;
@@ -66,6 +74,8 @@ export function ContactForm({offer}:{offer?:ContactOffer|null}) {
       company: (form.elements.namedItem("company") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
       offer: offer??null,
+      // Only campaign fields; the server ignores anything else it is sent.
+      attribution: getAttribution(),
     };
 
     try {
@@ -80,6 +90,14 @@ export function ContactForm({offer}:{offer?:ContactOffer|null}) {
       }
       setState("sent");
       form.reset();
+      // GA4 key event, only with analytics consent. No personal data.
+      if (analyticsConsented()) {
+        gaEvent("generate_lead", {
+          source_page: offer?.sourcePage ?? "/contact",
+          service: offer?.slug ?? null,
+          cta: offer?.cta ?? null,
+        });
+      }
     } catch (err) {
       setState("error");
       setError(err instanceof Error ? err.message : "Unknown error");

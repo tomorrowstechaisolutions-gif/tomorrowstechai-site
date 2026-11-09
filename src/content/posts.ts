@@ -26,26 +26,56 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
-  // ── DRAFT (Phase 5 flagship). Design preview only; not published. ──────
+  // ── Phase 5 flagship · approved, held as "draft" until release.
+  //    RELEASE STEP (in the deploy commit): set status to "published" and
+  //    publishedAt to the actual deployment date. The validator rejects a
+  //    published article dated in the future. Every figure below was checked
+  //    against the listed sources on 2026-11-09.
   {
     slug: "lawyer-private-ai-server-used-v100-gpus",
-    title: "Eight Used V100s and a Law Office: What One Lawyer's Private AI Server Means for Small Firms",
+    title: "A Lawyer Built His Own Private AI Server. Here's Why Every Business Should Pay Attention.",
     status: "draft",
-    publishedAt: "2026-11-12",
-    category: "hardware",
-    secondaryCategories: ["private-ai"],
+    // Placeholder (not a future date). Replace with the deployment date at release.
+    publishedAt: "2026-11-09",
+    category: "private-ai",
+    secondaryCategories: ["hardware"],
+    featured: true,
+    seo: {
+      title: "A Lawyer Built His Own Private AI Server: What It Means for Business",
+      description:
+        "A South Carolina trial lawyer runs a large open AI model on eight used NVIDIA V100 GPUs so case files stay in his office. What it cost, how it performs, and what it means for any business with data it can't share.",
+    },
     summary:
-      "A lawyer reports running DeepSeek-V4.1-Flash on eight 2018-era NVIDIA Tesla V100 GPUs at up to 215 tokens per second, with case files kept in the office. The speed is real. So are the wiring, the software deadline and the long wait on big documents.",
-    tags: ["NVIDIA V100", "Local AI", "DeepSeek", "Legal tech", "Homelab"],
+      "A South Carolina trial lawyer turned eight used data-center GPUs into an AI server that reads his case files without sending them anywhere. The build is rough around the edges. The idea behind it applies to any business with information it can't afford to share.",
+    tags: ["Private AI", "Local AI", "NVIDIA V100", "DeepSeek", "Legal tech", "Data privacy"],
+    hero: {
+      src: "/blog/lawyer-private-ai-server-illustration.webp",
+      alt: "Illustration of an open server chassis holding eight NVIDIA Tesla V100 graphics cards in two stacks of four, with braided power cables and a motherboard behind them.",
+      caption:
+        "Illustrative recreation, not a photo of Nick Mermiges's server. His build uses SXM2 GPU modules on two NVLink boards rather than the PCIe cards shown.",
+      // Provenance: embedded C2PA record (ChatGPT, gpt-image; IPTC trainedAlgorithmicMedia).
+      credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
+    },
     sources: [
       {
-        id: "reddit-part-4",
-        title: "Lawyer with too many GPUs, part 4: DeepSeek-V4.1-Flash on eight V100s from 2018",
-        publisher: "Reddit, r/LocalLLaMA",
-        url: "https://www.reddit.com/r/LocalLLaMA/comments/1xoubyo/lawyer_with_too_many_gpus_part_4_deepseekv41flash/",
+        id: "homelab-post",
+        title: "Lawyer's V100 homelab, update: two 4-card SXM2 NVLink boards, four PEX switches, SlimSAS everywhere, one burnt power connector, and a 250 GB model running entirely in VRAM at 200+ tok/s",
+        publisher: "Reddit, r/homelab",
+        author: "u/TumbleweedNew6515",
+        url: "https://www.reddit.com/r/homelab/comments/1xoumr9/lawyers_v100_homelab_update_two_4card_sxm2_nvlink/",
+        publishedAt: "2026-11-05",
         accessedAt: "2026-11-09",
         kind: "primary",
-        note: "The builder's own write-up. Posted in early November 2026.",
+        note: "The builder's own write-up. Read as embedded in the Tom's Hardware article; the post's title predates the builder's correction about system RAM.",
+      },
+      {
+        id: "github",
+        title: "Volta-sPLIt: DeepSeek-V4.1-Flash on 8x V100-SXM2 (PP2 x TP4), build notes and benchmarks",
+        publisher: "GitHub, ProprietaryLegal",
+        url: "https://github.com/ProprietaryLegal/Volta-sPLIt-DeepSeek-V4.1-Flash-1017-8xV100-SXM2-PP2xTP4",
+        accessedAt: "2026-11-09",
+        kind: "primary",
+        note: "The builder's published configuration and full benchmark tables.",
       },
       {
         id: "toms",
@@ -58,71 +88,148 @@ export const fileArticles: FileArticle[] = [
         kind: "secondary",
       },
       {
-        id: "windowsforum",
-        title: "Lawyer Builds Private DeepSeek AI Server With Eight Used Nvidia V100 GPUs",
-        publisher: "WindowsForum",
-        url: "https://windowsforum.com/news/lawyer-builds-private-deepseek-ai-server-with-eight-used-nvidia-v100-gpus.451497/",
-        publishedAt: "2026-11-09",
+        id: "toms-forum",
+        title: "Comments by the builder on the Tom's Hardware article",
+        publisher: "Tom's Hardware forums",
+        url: "https://forums.tomshardware.com/threads/lawyer-builds-private-ai-server-with-eight-used-nvidia-v100-gpus.3902115/",
+        accessedAt: "2026-11-09",
+        kind: "primary",
+        note: "The builder identifies himself and describes his plans for a fully offline setup.",
+      },
+      {
+        id: "pli",
+        title: "Proprietary Legal Intelligence: about the founder",
+        publisher: "Proprietary Legal Intelligence",
+        url: "https://proprietarylegal.ai/",
+        accessedAt: "2026-11-09",
+        kind: "primary",
+      },
+      {
+        id: "nvidia",
+        title: "CUDA Toolkit, Driver, and Architecture Matrix",
+        publisher: "NVIDIA",
+        url: "https://docs.nvidia.com/datacenter/tesla/drivers/cuda-toolkit-driver-and-architecture-matrix.html",
+        accessedAt: "2026-11-09",
+        kind: "vendor",
+      },
+      {
+        id: "aba",
+        title: "ABA issues first ethics guidance on a lawyer's use of AI tools",
+        publisher: "American Bar Association",
+        url: "https://www.americanbar.org/news/abanews/aba-news-archives/2024/07/aba-issues-first-ethics-guidance-ai-tools/",
+        accessedAt: "2026-11-09",
+        kind: "primary",
+        note: "Announces ABA Formal Opinion 512, issued July 29, 2024.",
+      },
+      {
+        id: "ncbex",
+        title: "Generative Artificial Intelligence Tools: ABA Formal Opinion 512 Provides Needed Guidance",
+        publisher: "The Bar Examiner (NCBE)",
+        url: "https://thebarexaminer.ncbex.org/article/fall-2024/generative-artificial-intelligence-tools/",
         accessedAt: "2026-11-09",
         kind: "secondary",
       },
     ],
     specs: [
-      { label: "GPUs", value: "8× NVIDIA Tesla V100 SXM2, 32 GB each", sourceIds: ["windowsforum"], verified: false },
-      { label: "GPU boards", value: "Two four-GPU SXM2 boards; NVLink within a board, PCIe between boards", sourceIds: ["windowsforum"], verified: false },
-      { label: "Board price", value: "About $2,400 per four-GPU board", note: "A board price, not the cost of the whole server.", sourceIds: ["toms", "windowsforum"], verified: false },
-      { label: "Platform", value: "Threadripper Pro 3945WX, 256 GB DDR4", sourceIds: ["windowsforum"], verified: false },
-      { label: "Power supplies", value: "Two, 2,800 W combined capacity", note: "Supply capacity, not measured draw.", sourceIds: ["windowsforum"], verified: false },
-      { label: "Model", value: "DeepSeek-V4.1-Flash, roughly 2-bit quantized", sourceIds: ["toms", "windowsforum"], verified: false },
+      { label: "GPUs", value: "8× NVIDIA Tesla V100-SXM2, 32 GB HBM2 each (2018 data-center cards)", sourceIds: ["homelab-post", "toms"], verified: true },
+      { label: "GPU layout", value: "Two 4-GPU SXM2 boards; NVLink inside each board (128 GB per board), PCIe between boards", sourceIds: ["homelab-post", "toms"], verified: true },
+      { label: "Cost per 128 GB board", value: "About $2,400 (four cards ~$1,600, board and switch card ~$750)", note: "The builder's purchase prices. Tom's Hardware found used cards listed at about $900 each by November 2026.", sourceIds: ["homelab-post", "toms"], verified: true },
+      { label: "Host", value: "Threadripper PRO 3945WX (12 cores), 8× 32 GB DDR4 RDIMM", sourceIds: ["homelab-post", "toms"], verified: true },
+      { label: "Power", value: "Two PSUs, 2,800 W total, on two ordinary office circuits; each GPU capped at 150 W", sourceIds: ["homelab-post", "toms"], verified: true },
+      { label: "Model", value: "DeepSeek-V4.1-Flash, mostly 2-bit, 248.8 GB of weights; 524K-token context", sourceIds: ["homelab-post", "toms"], verified: true },
+      { label: "Memory placement", value: "All model experts in GPU memory; about 110 GB of Engram tables in system RAM", sourceIds: ["homelab-post", "github", "toms"], verified: true },
+      { label: "Driver", value: "NVIDIA R580, the last branch that supports Volta GPUs", sourceIds: ["homelab-post", "nvidia"], verified: true },
+      { label: "Users at once", value: "One request at a time (two to three in testing)", sourceIds: ["homelab-post", "toms"], verified: true },
     ],
     discrepancies: [
       {
-        topic: "Does the whole model fit in GPU memory?",
+        topic: "Is the setup fully offline today?",
         accounts: [
-          { sourceId: "windowsforum", claim: "Notes the build was first described as running entirely in GPU memory (VRAM)." },
-          { sourceId: "windowsforum", claim: "Citing Tom's Hardware, reports that about 110 GB of Engram lookup tables sit in system RAM while the experts stay on the GPUs." },
+          { sourceId: "toms", claim: "Headline describes the server as keeping legal files offline." },
+          { sourceId: "homelab-post", claim: "Documents processed on this server never leave the office, but by the builder's estimate it handles 50–60% of his AI work; the rest still runs on frontier models." },
+          { sourceId: "toms-forum", claim: "The builder says he is working toward a fully offline local setup." },
         ],
+        resolution:
+          "Both are true at different scopes. Case files sent to this server stay in the building; the practice as a whole is not yet fully self-contained, by the builder's own account.",
       },
     ],
-    body: `A practicing lawyer has spent the last few months documenting a private AI server built from used data-center parts, in a series of posts to Reddit's r/LocalLLaMA community.[^reddit-part-4] The latest update describes eight NVIDIA Tesla V100 GPUs running DeepSeek-V4.1-Flash for one user at a time, so case files never leave the office.[^toms]
+    body: `Most conversations about AI in business start with a subscription: pick a vendor, sign up, paste in your documents. Nick Mermiges took a different route. The South Carolina trial lawyer, who has practiced for more than eleven years, built an AI server out of used data-center parts so his case files never have to leave his office.[^pli][^toms]
 
-For a small firm, the interesting part isn't the speed. It's what it took to get there.
+He documented the build in public, including the parts that broke.[^homelab-post] It's worth a close look even if you'll never own a GPU. The questions he had to answer are the same ones any business faces once its data is too sensitive to hand to someone else.
 
 ## What he built
 
-The core is two four-GPU SXM2 boards, bought for roughly $2,400 each.[^toms] Each V100 carries 32 GB of memory. The four GPUs on a board talk over NVLink; the two boards talk over PCIe, which is much slower.[^windowsforum]
+The heart of the machine is eight NVIDIA Tesla V100 GPUs. They are 2018 data-center cards, each with 32 GB of fast memory, mounted four to a board. The four cards on each board share a high-speed NVLink connection, which gives each board 128 GB of memory that works as one pool. The two boards talk to each other over ordinary PCIe, which is much slower.[^homelab-post]
 
-That split drives the software layout. The model runs in two pipeline stages, one per board, with the work inside each board divided four ways. Most of the chatter stays on the fast links.[^windowsforum]
+That design choice is the whole trick. Used boards like these were, in his words, "the cheapest big pool of fast VRAM I know of." He paid about $1,600 for four cards with heatsinks and about $750 for the board and a switch card, roughly $2,400 for each 128 GB block.[^homelab-post] Those were his prices at the time. By early November 2026, Tom's Hardware found the same used cards listed at about $900 each, more than double what he paid.[^toms]
 
-## The numbers, with context
+The rest is workstation hardware: a 12-core Threadripper PRO, 256 GB of server memory, and two power supplies totaling 2,800 W, plugged into two separate ordinary office circuits.[^homelab-post]
 
-These are the builder's own measurements, not independent tests.[^windowsforum]
+## How it performs
 
-| Prompt length | Wait for first word | Code | Legal writing |
+The server runs DeepSeek-V4.1-Flash, a large open AI model, compressed to mostly 2 bits so its 248.8 GB of weights fit the hardware. To keep the slow link between boards from becoming a bottleneck, the model is split in half: the first 20 layers run on one board, the last 20 on the other, so only one hand-off per step crosses PCIe.[^homelab-post][^toms]
+
+Here are his measurements from November 5, 2026:[^github]
+
+| Document size | Wait for first word | Code (tokens/s) | Legal writing (tokens/s) |
 |:--|--:|--:|--:|
-| 1K tokens | 1.2 s | 215 tok/s | 118 tok/s |
-| 32K tokens | 17.2 s | 200 tok/s | 117 tok/s |
-| 128K tokens | 59.2 s | 183 tok/s | 111 tok/s |
-| 256K tokens | 118.7 s | 160 tok/s | 103 tok/s |
+| 1K tokens | 1.2 s | 215 | 118 |
+| 32K tokens | 17.2 s | 200 | 117 |
+| 128K tokens | 59.2 s | 183 | 111 |
+| 256K tokens | 118.7 s | 160 | 103 |
 
-The second column is the one that matters for legal work. A large case bundle takes about a minute to read before the first word comes back, and fast generation doesn't change that.
+Code comes out faster than legal prose because a small built-in model guesses five tokens ahead, and code is easy to guess.[^homelab-post] For a lawyer, the column that matters most is the second one. The server reads documents at about 2,200 tokens per second, so a 128K-token case bundle takes about a minute before the first word of the answer appears.[^homelab-post]
 
-## What went wrong on the way
+> [!NOTE] A correction in the source
+> The builder first wrote that the entire model sat in GPU memory. He corrected himself: the model's experts do, but about 110 GB of lookup tables live in ordinary system RAM. He measured the cost of that at about 0.12 ms per step.[^homelab-post][^github]
 
-The build wasn't smooth. Coverage of the project describes PCIe resets, a burnt power connector and memory errors during development. Stability improved after hardware changes, lower clocks and slower RAM settings, though the cause of the resets was never proven.[^windowsforum]
+## What it took to get there
 
-## The catch: older GPUs, shorter software runway
+None of this worked on the first try. The machine reset itself twice with a fatal PCIe error, both times with the cards running at higher power and uncapped clock speeds. One GPU board had a burn mark on its power connector and was removed. System memory threw uncorrected errors until he slowed it from DDR4-3200 to DDR4-2666.[^homelab-post]
 
-The V100 belongs to NVIDIA's Volta generation. According to WindowsForum's reading of NVIDIA's documentation, the R580 driver branch is Volta's last, CUDA 12.x is its last toolkit family, and support runs into mid-2028.[^windowsforum]
+The fix was patience and restraint. Each card now runs capped at 150 W with a lower clock speed, and he checks the memory error counters before and after every run. A higher 200 W cap made no measurable difference to speed.[^homelab-post] Three days before his latest update, the same model on four cards managed 36–38 tokens per second; custom software work on the full eight-card setup produced the numbers above.[^homelab-post]
 
-> [!NOTE] What that means in practice
-> A build like this needs a frozen, known-good software stack. Newer AI tools may simply not support it.
+## What it does all day
 
-## What this means for a small firm
+The server does first-pass work on his own case files. It reads a folder of records, pulls out the facts, dates and numbers, writes summaries, and drafts routine documents. He drives it in plain English from a Windows PC, and it's connected to his own document databases.[^homelab-post]
 
-Keeping the model in the building removes one outside party from the data path. It isn't a full privacy posture on its own: the tools, databases and remote access around the model need the same scrutiny.[^windowsforum]
+The rule that makes it usable is simple: nothing leaves the office without a real review by the lawyer.[^homelab-post] The machine prepares. The lawyer decides.
 
-The other trade-off is ownership. This server is a serious engineering project that one person maintains. A firm that wants the same control without the troubleshooting needs a supported on-site system and someone accountable for it.`,
+By his estimate, 50–60% of his existing AI workflows can now run on this box instead of on cloud models.[^homelab-post] He has said the goal is a fully offline setup, which he believes will have real value for regulated professions.[^toms-forum]
+
+## The honest limits
+
+It would be easy to read this as "anyone can replace cloud AI for a few thousand dollars." That's not what the build shows.
+
+- **One user at a time.** The server handles a single request at a time today. Running two or three at once works on his test machine but isn't in production yet.[^homelab-post][^toms]
+- **Long documents mean waiting.** Fast generation doesn't remove the minute-long read on a large file.[^homelab-post]
+- **Aggressive compression.** Squeezing the model to about 2 bits is what makes it fit. He reports solid scores on legal and general benchmarks and is working on a higher-precision version that he hopes will run at about 80 tokens per second.[^github][^toms-forum]
+- **Old hardware, short runway.** NVIDIA's R580 driver is the last branch that supports these Volta-generation GPUs, and CUDA 12 is their last toolkit family.[^nvidia] Anyone copying this build is buying into a frozen software stack.
+- **It's a serious engineering project.** PCIe switches, cable runs, power limits and custom kernels. He calls it, in part, a hobby.[^toms-forum]
+
+## Why every business should pay attention
+
+The lawyer's motivation is professional duty. In July 2024 the American Bar Association issued Formal Opinion 512, its first formal guidance on generative AI. It reminds lawyers that the duty to keep client information confidential applies to these tools, and that client consent is needed before entering client information into AI tools that learn from what they're given.[^aba][^ncbex]
+
+Most businesses don't answer to a bar association. Plenty answer to something similar: patient records, financial data, employee files, bid pricing, customer contracts, proprietary designs. The question this lawyer answered with hardware is one every one of those businesses has to answer somehow: **which information is allowed to leave the building, and who decides?**
+
+Three lessons carry over directly:
+
+1. **Private AI is now within reach of a small firm.** One professional, working largely alone, built a system that handles real daily work on hardware bought used at a few thousand dollars per GPU board.
+2. **The hardware is the easy part to buy and the hard part to run.** The real work in this build was power, stability, memory errors, model splitting and software. That's an operations problem, not a shopping problem.
+3. **Hybrid is the realistic starting point.** Even this build sends part of the workload to cloud models today. Deciding which work runs where, and enforcing it, matters more than going all-in on either side.
+
+## What it would take for your business
+
+If your company handles information it can't share, the path doesn't start with GPUs. It starts with a few plain questions:
+
+- **What data has to stay in-house,** and which workflows touch it?
+- **Which tasks are worth automating first?** Extraction, summaries and first drafts are where this lawyer started.
+- **How many people need it at once?** Concurrency changes the hardware more than anything else.
+- **Who keeps it running?** Drivers, updates, monitoring and security don't stop after setup.
+- **Where does a person review the output** before it reaches a client or a decision?
+
+Tomorrow's Tech AI designs and builds private AI systems for businesses that need this kind of control, from a single on-site workstation to a hybrid setup that keeps sensitive work local and sends the rest to approved cloud models. If you're weighing it, [book a private AI consultation](/contact?service=private-on-site-ai&from=/blog/lawyer-private-ai-server-used-v100-gpus&cta=body) and we'll map what should stay in your building and what it would take.`,
   },
   {
     slug: "ems-fleet-three-numbers",

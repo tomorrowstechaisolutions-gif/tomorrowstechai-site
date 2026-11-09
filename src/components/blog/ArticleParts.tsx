@@ -4,12 +4,14 @@ import type { Article } from "@/lib/blog/types";
 import { formatDate } from "@/lib/blog/repository";
 import { categoryPath, getCategory } from "@/lib/blog/taxonomy";
 import { ShareLinks } from "./ShareLinks";
+import { articleContactHref, type CtaPosition } from "@/lib/blog/lead-attribution";
 import { CategoryLabel } from "./CategoryLabel";
 
 export { accentFor } from "./CategoryLabel";
 
-export function contactHref(a: Article): string {
-  return `/contact?service=${encodeURIComponent(a.categoryInfo.cta.service)}`;
+/** Contact link tagged with the article and the button's position (CRM attribution). */
+export function contactHref(a: Article, cta: CtaPosition): string {
+  return articleContactHref(a.categoryInfo.cta.service, a.path, cta);
 }
 
 function initials(name: string): string {
@@ -250,7 +252,7 @@ export function InlineCta({ article }: { article: Article }) {
       <p>
         <b>{cta.label}.</b> {cta.blurb}
       </p>
-      <Link href={contactHref(article)}>Talk to us →</Link>
+      <Link href={contactHref(article, "inline")}>Talk to us →</Link>
     </aside>
   );
 }
@@ -262,7 +264,7 @@ export function RailCta({ article }: { article: Article }) {
       <Kicker article={article} />
       <p className="fn-rail-cta-title">{cta.label}</p>
       <p className="fn-rail-cta-body">{cta.blurb}</p>
-      <Link href={contactHref(article)}>Book a discovery call →</Link>
+      <Link href={contactHref(article, "rail")}>Book a discovery call →</Link>
     </div>
   );
 }
@@ -344,7 +346,7 @@ export function EndCta({ article }: { article: Article }) {
         <p>{cta.blurb} 30 minutes, no pitch, real conversation.</p>
       </div>
       <div className="fn-end-cta-actions">
-        <Link href={contactHref(article)} className="btn-primary">
+        <Link href={contactHref(article, "end")} className="btn-primary">
           Book a discovery call →
         </Link>
         <Link href="/services" className="fn-text-link">

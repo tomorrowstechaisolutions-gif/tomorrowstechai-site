@@ -5,6 +5,7 @@ import { blogJsonLd, jsonLd } from "@/lib/blog/structured-data";
 import { CATEGORIES } from "@/lib/blog/taxonomy";
 import type { Article, CategorySlug } from "@/lib/blog/types";
 import { BlogSearch, type SearchEntry } from "@/components/blog/BlogSearch";
+import { FieldNotesTracking } from "@/components/blog/FieldNotesTracking";
 import {
   CategoryBar,
   LeadStory,
@@ -95,6 +96,7 @@ export default async function BlogPage() {
 
   return (
     <div className="fn-article fnf-page">
+      <FieldNotesTracking />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(blogJsonLd(all)) }} />
 
       <div className="fn-wrap fnf-wrap">

@@ -48,6 +48,10 @@ export function validateArticles(records: ArticleRecord[]): Issue[] {
 
     // Dates
     if (!validDate(a.publishedAt)) err(`publishedAt "${a.publishedAt}" is not an ISO date`);
+    // A published article must carry its real (past) publication date.
+    if (a.status === "published" && validDate(a.publishedAt) && Date.parse(a.publishedAt) > Date.now()) {
+      err("published article has a future publishedAt; use the actual publication date");
+    }
     if (a.updatedAt !== undefined) {
       if (!validDate(a.updatedAt)) err(`updatedAt "${a.updatedAt}" is not an ISO date`);
       else if (validDate(a.publishedAt) && Date.parse(a.updatedAt) < Date.parse(a.publishedAt))

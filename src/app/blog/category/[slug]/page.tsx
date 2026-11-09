@@ -13,6 +13,7 @@ import {
   RiverItem,
   SectionHead,
 } from "@/components/blog/FrontParts";
+import { FieldNotesTracking } from "@/components/blog/FieldNotesTracking";
 import "../../field-notes-article.css";
 import "../../field-notes-front.css";
 
@@ -73,6 +74,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="fn-article fnf-page">
+      <FieldNotesTracking />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumb) }} />
       <div className="fn-wrap fnf-wrap">
         <Masthead

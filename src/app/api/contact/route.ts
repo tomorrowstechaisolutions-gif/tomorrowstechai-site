@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { intakeLead } from "@/lib/campaign/intake";
+import { buildContactLeadFields } from "@/lib/blog/lead-attribution";
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
 const FROM_EMAIL =
@@ -9,12 +10,13 @@ const FROM_EMAIL =
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, company, message,offer } = body as {
+    const { name, email, company, message,offer,attribution } = body as {
       name?: string;
       email?: string;
       company?: string;
       message?: string;
-      offer?:{id?:string|null;slug?:string;name?:string;category?:string;price?:string;sourcePage?:string}|null;
+      offer?:{id?:string|null;slug?:string;name?:string;category?:string;price?:string;sourcePage?:string;cta?:string|null}|null;
+      attribution?:unknown;
     };
 
     if (!name || !email || !message) {
@@ -59,8 +61,10 @@ export async function POST(request: Request) {
     }
 
     const parts=name.trim().split(/\s+/); const firstName=parts.shift()||name; const lastName=parts.join(" ");
-    const intake=await intakeLead({first_name:firstName,last_name:lastName,email,business_name:company||null,business_type:offer?.category||null,services_interested:offer?.name?[`${offer.category||"Service"} — ${offer.name} — ${offer.price||"Price not provided"}`]:[],source:"contact-form",campaign:offer?.name||null,landing_page:offer?.sourcePage||"/contact",email_consent:true,sms_consent:false});
-    if(intake.leadId&&offer){ const {supabaseAdmin}=await import("@/lib/supabase/admin"); const db=supabaseAdmin(); await db.from("lead_events").insert({lead_id:intake.leadId,type:"catalog_inquiry",body:`${offer.name||offer.slug} inquiry from contact form.`,actor:"system",meta:{package_id:offer.id||null,package:offer.slug||null,package_name:offer.name||null,category:offer.category||null,price:offer.price||null,source_page:offer.sourcePage||"/contact"}}); }
+    // Source page, CTA position and campaign UTMs (validated in the builder).
+    const { lead: attributed, eventMeta } = buildContactLeadFields(offer, attribution);
+    const intake=await intakeLead({first_name:firstName,last_name:lastName,email,business_name:company||null,business_type:offer?.category||null,services_interested:offer?.name?[`${offer.category||"Service"} — ${offer.name} — ${offer.price||"Price not provided"}`]:[],source:"contact-form",campaign:offer?.name||null,...attributed,email_consent:true,sms_consent:false});
+    if(intake.leadId&&offer){ const {supabaseAdmin}=await import("@/lib/supabase/admin"); const db=supabaseAdmin(); await db.from("lead_events").insert({lead_id:intake.leadId,type:"catalog_inquiry",body:`${offer.name||offer.slug} inquiry from contact form.`,actor:"system",meta:{package_id:offer.id||null,package:offer.slug||null,package_name:offer.name||null,category:offer.category||null,price:offer.price||null,...eventMeta}}); }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

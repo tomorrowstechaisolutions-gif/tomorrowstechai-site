@@ -18,6 +18,7 @@ import {
   SpecsTable,
 } from "@/components/blog/ArticleParts";
 import { TableOfContents } from "@/components/blog/TableOfContents";
+import { FieldNotesTracking } from "@/components/blog/FieldNotesTracking";
 import "../field-notes-prose.css";
 import "../field-notes-article.css";
 
@@ -93,6 +94,7 @@ export default async function BlogPostPage({
 
   return (
     <article className="fn-article">
+      <FieldNotesTracking slug={post.slug} category={post.category} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(articleJsonLd(post)) }}

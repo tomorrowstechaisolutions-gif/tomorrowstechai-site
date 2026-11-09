@@ -32,6 +32,19 @@ export function newEventId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+/**
+ * True only after the visitor clicked Accept on the cookie banner (stored by
+ * CookieConsent.tsx). Use it to gate custom analytics events: with consent
+ * mode, GA would otherwise still receive cookieless pings.
+ */
+export function analyticsConsented(): boolean {
+  try {
+    return typeof window !== "undefined" && localStorage.getItem("tomorrowstechai_cookie_consent") === "accepted";
+  } catch {
+    return false;
+  }
+}
+
 export function gaEvent(name: string, params: Record<string, unknown> = {}) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
   window.gtag("event", name, params);
