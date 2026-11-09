@@ -10,8 +10,13 @@ import { CategoryLabel } from "./CategoryLabel";
 export { accentFor } from "./CategoryLabel";
 
 /** Contact link tagged with the article and the button's position (CRM attribution). */
+/** The article's own service CTA when it sets one, else its category's. */
+export function ctaFor(a: Article) {
+  return a.cta ?? a.categoryInfo.cta;
+}
+
 export function contactHref(a: Article, cta: CtaPosition): string {
-  return articleContactHref(a.categoryInfo.cta.service, a.path, cta);
+  return articleContactHref(ctaFor(a).service, a.path, cta);
 }
 
 function initials(name: string): string {
@@ -168,7 +173,7 @@ export function SpecsTable({ article }: { article: Article }) {
       </div>
       {reported && (
         <p className="fn-panel-foot">
-          Reported figures come from the listed sources and have not been independently tested by
+          Reported figures come from the listed sources and have not been independently verified by
           Tomorrow’s Tech AI.
         </p>
       )}
@@ -246,7 +251,7 @@ export function SourcesList({ article }: { article: Article }) {
 }
 
 export function InlineCta({ article }: { article: Article }) {
-  const cta = article.categoryInfo.cta;
+  const cta = ctaFor(article);
   return (
     <aside className="fn-inline-cta" aria-label="From Tomorrow’s Tech AI">
       <p>
@@ -258,7 +263,7 @@ export function InlineCta({ article }: { article: Article }) {
 }
 
 export function RailCta({ article }: { article: Article }) {
-  const cta = article.categoryInfo.cta;
+  const cta = ctaFor(article);
   return (
     <div className="fn-rail-cta">
       <Kicker article={article} />
@@ -337,7 +342,7 @@ export function AuthorCard({ article }: { article: Article }) {
 }
 
 export function EndCta({ article }: { article: Article }) {
-  const cta = article.categoryInfo.cta;
+  const cta = ctaFor(article);
   return (
     <section className="fn-end-cta" aria-labelledby="fn-end-cta">
       <div>

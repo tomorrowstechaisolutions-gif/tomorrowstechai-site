@@ -69,6 +69,13 @@ export type Discrepancy = {
   resolution?: string;
 };
 
+export type ArticleCta = {
+  /** Passed to /contact?service=. Lowercase words joined by hyphens. */
+  service: string;
+  label: string;
+  blurb: string;
+};
+
 export type ArticleSeo = {
   title?: string;
   description?: string;
@@ -101,6 +108,11 @@ export type ArticleRecord = {
   /** Candidate for the lead slot on the blog front page. */
   featured?: boolean;
   seo?: ArticleSeo;
+  /**
+   * Overrides the category's service call to action for this article (rail,
+   * mid-article and end). Same shape as CategoryInfo["cta"].
+   */
+  cta?: ArticleCta;
   /** Hand-set label, e.g. "6 min read". Computed from the body when absent. */
   readTime?: string;
   /**

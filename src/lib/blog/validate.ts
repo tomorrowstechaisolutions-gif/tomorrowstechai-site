@@ -111,6 +111,12 @@ export function validateArticles(records: ArticleRecord[]): Issue[] {
       }
     }
 
+    // Article-level service CTA
+    if (a.cta) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a.cta.service)) err(`cta.service "${a.cta.service}" must be lowercase words joined by hyphens`);
+      if (!a.cta.label.trim() || !a.cta.blurb.trim()) err("cta needs a label and a blurb");
+    }
+
     // SEO
     if (a.seo?.canonical && !/^https:\/\//.test(a.seo.canonical)) err("seo.canonical must be an absolute https URL");
   }
