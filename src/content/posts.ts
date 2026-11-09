@@ -29,7 +29,8 @@ export const fileArticles: FileArticle[] = [
   // ── AI News · DRAFT. Fast-moving story. Every figure below was checked
   //    against the listed sources on 2026-11-09. Before release: recheck for
   //    new developments (investigation findings, leadership changes, Nov. 17
-  //    earnings), set the real publishedAt and add the hero image.
+  //    earnings, the FBI comment), set the real publishedAt and add the hero
+  //    image. FBI line added 2026-11-09 evening after Trump's remarks.
   //    Editorial choice: the woman at the centre of the allegations is not
   //    named. The spying claim rests on unnamed officials and is denied.
   {
@@ -107,6 +108,28 @@ export const fileArticles: FileArticle[] = [
         kind: "secondary",
         note: "Includes Nvidia's spokesperson statement, Megaspeed's denial and analyst views on export controls.",
       },
+      {
+        id: "ap-fbi",
+        title: "Trump says FBI is looking at Nvidia CEO Jensen Huang's affair with alleged Chinese agent",
+        publisher: "Associated Press",
+        author: "Josh Boak, Seung Min Kim and Kaitlyn Huamani",
+        url: "https://apnews.com/article/china-denies-spy-jensen-huang-nvidia-3345b9f05c54d58909e88f6dcb9c1cd8",
+        publishedAt: "2026-11-09",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "President Trump's White House remarks on the FBI and his call with Huang.",
+      },
+      {
+        id: "reuters",
+        title: "Nvidia slides as CEO Huang faces board scrutiny over affair with alleged spy",
+        publisher: "Reuters",
+        author: "Heekyong Yang, Kyu-Seok Shim and Tom Westbrook",
+        url: "https://www.reuters.com/world/asia-pacific/south-korea-says-nvidia-issues-wont-affect-contracted-gpu-supplies-2026-11-09/",
+        publishedAt: "2026-11-09",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Supply-side reaction in Asia, including South Korea's expectation of no disruption to contracted GPU deliveries.",
+      },
     ],
     specs: [
       { label: "Investigation announced", value: "November 8, 2026, by Nvidia's board", sourceIds: ["nvidia-board"], verified: true },
@@ -115,6 +138,8 @@ export const fileArticles: FileArticle[] = [
       { label: "Huang's role", value: "Remains CEO and says he will cooperate fully", sourceIds: ["nvidia-board", "ap"], verified: true },
       { label: "The allegation", value: "U.S. intelligence officials believe a businesswoman close to Huang passed information to Beijing", note: "Reported by The New York Times citing unnamed sources; denied by China.", sourceIds: ["bbc", "ap"], verified: false },
       { label: "Megaspeed's Nvidia purchases", value: "More than $4.8 billion of chips over two years", note: "New York Times figure, as cited by the AP.", sourceIds: ["ap"], verified: false },
+      { label: "Federal involvement", value: "President Trump said the FBI is \"looking into it in terms of something else\"", note: "Scope not described. Trump said Huang told him he had no idea the person was a spy.", sourceIds: ["ap-fbi"], verified: false },
+      { label: "Contracted GPU deliveries", value: "South Korea expects no disruption to contracted Nvidia GPU deliveries", sourceIds: ["reuters"], verified: false },
       { label: "Huang's ownership", value: "Just over 3% of shares; one of 11 directors on a board with no official chair", sourceIds: ["cnbc-succession"], verified: false },
       { label: "Upcoming dates", value: "Third-quarter earnings Nov. 17; requested congressional briefing Nov. 18", sourceIds: ["cnbc"], verified: false },
     ],
@@ -123,9 +148,10 @@ export const fileArticles: FileArticle[] = [
         topic: "How far did Nvidia's stock fall on Monday, November 9?",
         accounts: [
           { sourceId: "ap", claim: "Shares sank nearly 5% as of midday Monday." },
+          { sourceId: "reuters", claim: "Shares pared losses from an 8% slide to be down about 6% in early trading." },
           { sourceId: "cnbc-succession", claim: "Shares sank more than 4% on Monday, closing down 4.27%." },
         ],
-        resolution: "The two figures are from different times of day. We use the closing figure, down about 4%.",
+        resolution: "The figures are from different times of day. We use the closing figure, down about 4%.",
       },
     ],
     body: `Most companies that buy AI hardware have never thought about Nvidia's board of directors. This week, that board became the story.
@@ -133,6 +159,8 @@ export const fileArticles: FileArticle[] = [
 On Sunday, November 8, Nvidia's board announced an independent investigation "in light of recent reporting that founder and CEO Jensen Huang has been the target of a foreign intelligence effort." A committee of independent directors, working with outside counsel, will run it.[^nvidia-board]
 
 The same day, Huang told employees he had had an affair, writing, "I was unfaithful to my wife," and said he supports the investigation.[^cnbc] Nvidia's shares closed down more than 4% on Monday while the broader market rallied.[^cnbc-succession]
+
+On Monday evening, President Trump added a federal angle. "I know the FBI is looking into it in terms of something else, and I think that he'll be in good shape," he said at a White House briefing, without describing the scope. Trump said Huang told him "he had absolutely no idea that the person in question was a spy."[^ap-fbi]
 
 The personal side of this story is being covered everywhere. This piece is about the other side: what's actually confirmed, and what it means if your business runs on, or is planning around, Nvidia hardware.
 
@@ -144,6 +172,7 @@ The personal side of this story is being covered everywhere. This piece is about
 | Board sees "no reason to believe" secrets were compromised | Board's stated position, investigation ongoing | Nvidia[^nvidia-board] |
 | Huang stays on as CEO and will cooperate | Confirmed by Nvidia | Nvidia, AP[^nvidia-board][^ap] |
 | A businesswoman close to Huang passed information to Beijing | Alleged by U.S. intelligence officials, per The New York Times; China denies it | BBC, AP[^bbc][^ap] |
+| FBI "looking into it" | Stated by President Trump; scope not described | AP[^ap-fbi] |
 | Congressional briefing on Nvidia's security protocols | Requested by three House committee chairs | CNBC, BBC[^cnbc][^bbc] |
 
 The spying claim is an allegation. According to The New York Times, as summarized by the BBC and the AP, U.S. intelligence officials concluded that a businesswoman with a close relationship to Huang was gathering information for Beijing. She is a former executive of Megaspeed, a Singapore-based data center company and Nvidia customer.[^bbc][^ap] It remains unclear what information was allegedly passed or how valuable it was.[^bbc] China's foreign ministry called the allegation "groundless" and a smear.[^bbc][^ap]
@@ -155,7 +184,7 @@ Megaspeed bought more than $4.8 billion of Nvidia chips over two years, accordin
 
 ## Why one person matters so much to Nvidia
 
-Analysts have been blunt about how much Nvidia depends on its founder. "Jensen is Nvidia. Nvidia is Jensen," Bernstein's Stacy Rasgon told CNBC. Melius Research noted there is "no clear successor" and said it had expected Huang to stay at least ten more years.[^cnbc-succession]
+Analysts have been blunt about how much Nvidia depends on its founder. "Jensen is Nvidia. Nvidia is Jensen," Bernstein's Stacy Rasgon told CNBC. Melius Research noted there is "no clear successor" and said it had expected Huang to stay at least ten more years.[^cnbc-succession] Shay Boloor of Futurum Equities told Reuters the key-person risk is "massive."[^reuters]
 
 The structure explains why. Huang is co-founder, president and CEO, runs a famously flat organization and had 33 direct reports as of this week, according to internal records reviewed by CNBC.[^cnbc-succession]
 
@@ -183,12 +212,13 @@ The practical defenses are boring and effective. Verify payment and banking chan
 
 ## Our take: what it means for businesses buying AI hardware
 
-For most U.S. businesses buying GPUs or AI servers, nothing changes this week. The board says Huang stays on, the company says it "will not slow," and no supply disruption has been announced.[^ap]
+For most U.S. businesses buying GPUs or AI servers, nothing changes this week. The board says Huang stays on, the company says it "will not slow," and no supply disruption has been announced.[^ap] In South Korea, the deputy science minister said the government expects no disruption to contracted Nvidia GPU deliveries.[^reuters]
 
 What could matter over the coming months:
 
 - **Export controls.** Raymond James analysts wrote that the allegations will likely strengthen support in Congress for tighter limits on chip sales to China.[^ap] Those rules mostly target exports, but policy shifts can ripple into pricing and availability elsewhere.
 - **Leadership uncertainty.** Analysts at Rothschild & Co. Redburn said Huang could be forced to step back only if the investigation finds "something materially more serious," and that a resignation is not a foregone conclusion.[^cnbc-succession]
+- **Slower decisions.** Analysts told Reuters a prolonged investigation could delay Nvidia's investment decisions or product launches. One also noted Nvidia's products would be hard to replace, which limits the impact, and that rivals such as AMD could draw more attention in the short term.[^reuters]
 - **Single-vendor dependence.** If your AI plans assume one supplier's hardware, one software stack and one delivery timeline, this is a reminder to know your alternatives. That doesn't mean switching. It means knowing what you'd do if prices, lead times or support terms changed.
 
 If you're planning a private AI system, like the eight-GPU server we covered in [our look at a lawyer's private AI build](/blog/lawyer-private-ai-server-used-v100-gpus), build the plan around the workload, not the brand. Know which models you'll run, what hardware they actually need and which alternatives would work.
@@ -196,6 +226,7 @@ If you're planning a private AI system, like the eight-GPU server we covered in 
 ## What to watch
 
 - **The investigation's findings.** The board says it will provide updates "as appropriate."[^nvidia-board]
+- **The FBI.** Whether the bureau or the Justice Department says anything about the scope Trump described.[^ap-fbi]
 - **November 17 earnings.** Nvidia reports third-quarter results; watch for any comment on leadership, governance or China.[^cnbc]
 - **November 18.** Three House Republican committee chairs have asked Huang for a closed-door briefing on Nvidia's security protocols.[^cnbc][^bbc]
 - **Export-control legislation.** Any new limits on chip sales to China.[^ap]
