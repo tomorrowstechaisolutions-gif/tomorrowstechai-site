@@ -26,6 +26,182 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
+  // ── AI News · DRAFT. Fast-moving story. Every figure below was checked
+  //    against the listed sources on 2026-11-09. Before release: recheck for
+  //    new developments (investigation findings, leadership changes, Nov. 17
+  //    earnings), set the real publishedAt and add the hero image.
+  //    Editorial choice: the woman at the centre of the allegations is not
+  //    named. The spying claim rests on unnamed officials and is denied.
+  {
+    slug: "nvidia-ceo-investigation-ai-hardware-buyers",
+    title: "Nvidia Is Investigating Its Own CEO. Here's What It Means for Businesses Betting on AI Hardware.",
+    status: "draft",
+    publishedAt: "2026-11-09",
+    category: "ai-news",
+    secondaryCategories: ["hardware"],
+    seo: {
+      title: "Nvidia's CEO Investigation: What It Means for AI Hardware Buyers",
+      description:
+        "Nvidia's board is investigating whether CEO Jensen Huang was targeted by foreign intelligence. What's confirmed, what's alleged, and what it means for businesses.",
+    },
+    summary:
+      "Nvidia's board has opened an independent investigation into reports that CEO Jensen Huang was the target of a foreign intelligence effort. Here's what's confirmed, what's only alleged, and the lessons for businesses that depend on one supplier, or one leader.",
+    tags: ["Nvidia", "Jensen Huang", "AI hardware", "GPUs", "Key-person risk", "Social engineering", "Export controls", "Supply chain"],
+    cta: {
+      service: "private-on-site-ai",
+      label: "Plan AI hardware with less supplier risk",
+      blurb:
+        "We help businesses size, source and run private AI systems, including a plan for what happens when a key supplier hits turbulence.",
+    },
+    sources: [
+      {
+        id: "nvidia-board",
+        title: "Statement from NVIDIA Board of Directors",
+        publisher: "NVIDIA (via GlobeNewswire)",
+        url: "https://www.globenewswire.com/news-release/2026/11/08/3398017/0/en/statement-from-nvidia-board-of-directors.html",
+        publishedAt: "2026-11-08",
+        accessedAt: "2026-11-09",
+        kind: "primary",
+        note: "The board's own statement announcing the investigation.",
+      },
+      {
+        id: "cnbc",
+        title: "Nvidia investigates CEO Jensen Huang's relationship with alleged Chinese spy",
+        publisher: "CNBC",
+        author: "Kif Leswing and Kamaron McNair",
+        url: "https://www.cnbc.com/2026/11/08/nvidia-jensen-huang-investigation-china-spy.html",
+        publishedAt: "2026-11-08",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Includes Huang's email to staff, Megaspeed background and upcoming dates.",
+      },
+      {
+        id: "cnbc-succession",
+        title: "Jensen Huang affair puts Nvidia's future at risk, with no clear successor to the renowned CEO",
+        publisher: "CNBC",
+        author: "Annie Palmer and Lora Kolodny",
+        url: "https://www.cnbc.com/2026/11/09/jensen-huang-affair-nvidia-succession.html",
+        publishedAt: "2026-11-09",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Analyst comment on succession, Huang's ownership and Nvidia's own risk-factor language.",
+      },
+      {
+        id: "bbc",
+        title: "Nvidia launches investigation into CEO's affair with suspected Chinese spy",
+        publisher: "BBC News",
+        author: "Nathan Williams and Zoe Kleinman",
+        url: "https://www.bbc.com/news/articles/c3dxw10rjn9no",
+        publishedAt: "2026-11-08",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Summarises The New York Times' reporting and China's denial.",
+      },
+      {
+        id: "ap",
+        title: "What we know — and what we don't — as Nvidia investigates an alleged spy plot involving its CEO",
+        publisher: "Associated Press (via Spectrum News)",
+        url: "https://spectrumlocalnews.com/us/snplus/international/2026/11/09/nvidia-spy-plot-investigation-jensen-huang-what-we-know",
+        publishedAt: "2026-11-09",
+        accessedAt: "2026-11-09",
+        kind: "secondary",
+        note: "Includes Nvidia's spokesperson statement, Megaspeed's denial and analyst views on export controls.",
+      },
+    ],
+    specs: [
+      { label: "Investigation announced", value: "November 8, 2026, by Nvidia's board", sourceIds: ["nvidia-board"], verified: true },
+      { label: "Who runs it", value: "A committee of independent directors, with outside independent counsel", sourceIds: ["nvidia-board"], verified: true },
+      { label: "Board's position so far", value: "\"No reason to believe\" national security or Nvidia secrets were compromised; confidence in Huang", sourceIds: ["nvidia-board"], verified: true },
+      { label: "Huang's role", value: "Remains CEO and says he will cooperate fully", sourceIds: ["nvidia-board", "ap"], verified: true },
+      { label: "The allegation", value: "U.S. intelligence officials believe a businesswoman close to Huang passed information to Beijing", note: "Reported by The New York Times citing unnamed sources; denied by China.", sourceIds: ["bbc", "ap"], verified: false },
+      { label: "Megaspeed's Nvidia purchases", value: "More than $4.8 billion of chips over two years", note: "New York Times figure, as cited by the AP.", sourceIds: ["ap"], verified: false },
+      { label: "Huang's ownership", value: "Just over 3% of shares; one of 11 directors on a board with no official chair", sourceIds: ["cnbc-succession"], verified: false },
+      { label: "Upcoming dates", value: "Third-quarter earnings Nov. 17; requested congressional briefing Nov. 18", sourceIds: ["cnbc"], verified: false },
+    ],
+    discrepancies: [
+      {
+        topic: "How far did Nvidia's stock fall on Monday, November 9?",
+        accounts: [
+          { sourceId: "ap", claim: "Shares sank nearly 5% as of midday Monday." },
+          { sourceId: "cnbc-succession", claim: "Shares sank more than 4% on Monday, closing down 4.27%." },
+        ],
+        resolution: "The two figures are from different times of day. We use the closing figure, down about 4%.",
+      },
+    ],
+    body: `Most companies that buy AI hardware have never thought about Nvidia's board of directors. This week, that board became the story.
+
+On Sunday, November 8, Nvidia's board announced an independent investigation "in light of recent reporting that founder and CEO Jensen Huang has been the target of a foreign intelligence effort." A committee of independent directors, working with outside counsel, will run it.[^nvidia-board]
+
+The same day, Huang told employees he had had an affair, writing, "I was unfaithful to my wife," and said he supports the investigation.[^cnbc] Nvidia's shares closed down more than 4% on Monday while the broader market rallied.[^cnbc-succession]
+
+The personal side of this story is being covered everywhere. This piece is about the other side: what's actually confirmed, and what it means if your business runs on, or is planning around, Nvidia hardware.
+
+## What's confirmed and what's alleged
+
+| Development | Status | Source |
+|:--|:--|:--|
+| Board investigation into whether Huang was targeted | Confirmed by Nvidia's board | Nvidia[^nvidia-board] |
+| Board sees "no reason to believe" secrets were compromised | Board's stated position, investigation ongoing | Nvidia[^nvidia-board] |
+| Huang stays on as CEO and will cooperate | Confirmed by Nvidia | Nvidia, AP[^nvidia-board][^ap] |
+| A businesswoman close to Huang passed information to Beijing | Alleged by U.S. intelligence officials, per The New York Times; China denies it | BBC, AP[^bbc][^ap] |
+| Congressional briefing on Nvidia's security protocols | Requested by three House committee chairs | CNBC, BBC[^cnbc][^bbc] |
+
+The spying claim is an allegation. According to The New York Times, as summarized by the BBC and the AP, U.S. intelligence officials concluded that a businesswoman with a close relationship to Huang was gathering information for Beijing. She is a former executive of Megaspeed, a Singapore-based data center company and Nvidia customer.[^bbc][^ap] It remains unclear what information was allegedly passed or how valuable it was.[^bbc] China's foreign ministry called the allegation "groundless" and a smear.[^bbc][^ap]
+
+Megaspeed bought more than $4.8 billion of Nvidia chips over two years, according to the Times.[^ap] It has faced claims that it helped restricted Chinese companies obtain Nvidia's AI chips; the company has said there was "no evidence" of illicit shipping.[^cnbc][^ap]
+
+> [!NOTE] Reporting and analysis
+> Sections headed "Our take" are Tomorrow's Tech AI's own analysis for businesses that buy and run AI systems. They are not predictions about the investigation's outcome.
+
+## Why one person matters so much to Nvidia
+
+Analysts have been blunt about how much Nvidia depends on its founder. "Jensen is Nvidia. Nvidia is Jensen," Bernstein's Stacy Rasgon told CNBC. Melius Research noted there is "no clear successor" and said it had expected Huang to stay at least ten more years.[^cnbc-succession]
+
+The structure explains why. Huang is co-founder, president and CEO, runs a famously flat organization and had 33 direct reports as of this week, according to internal records reviewed by CNBC.[^cnbc-succession]
+
+There is a counterweight. Huang owns just over 3% of the company and is one of 11 directors on a board with no official chair. Nvidia's own filings don't single him out as a key person; they say the company is "highly dependent on the services of our longstanding executive team." Several analysts expect the investigation to bring governance changes such as a formal transition plan.[^cnbc-succession]
+
+## Our take: key-person risk isn't just a Fortune 500 problem
+
+Nvidia's situation is extreme, but the pattern is familiar to anyone who has run operations. A small contractor whose owner holds every client relationship. A shop where one estimator knows how every bid gets built. A business where one person has all the passwords.
+
+Nvidia, with thousands of engineers, is still being asked who could step in. Most small businesses have a much thinner bench.
+
+A few questions worth asking about your own company:
+
+- **If your key person were out for 90 days, what would stop?** Write the list. That list is your key-person risk.
+- **Is the knowledge written down?** Processes, pricing logic, vendor contacts and system access should live somewhere other than one person's head.
+- **Who can make decisions when that person can't?** A named backup with real authority beats an org chart.
+
+## Our take: the social engineering lesson
+
+Whatever the investigation finds, the alleged method is worth understanding. It isn't malware or a breached firewall. It's building a close personal relationship with someone who has access.
+
+That playbook is old, and it doesn't only target billionaires. Small businesses see the same idea at smaller scale: the friendly "vendor" who asks for a copy of the bid, the new contact who wants to move a payment to a different account, the caller who already knows your project names. Attackers go after people because people have access.
+
+The practical defenses are boring and effective. Verify payment and banking changes by calling a number you already have. Limit who can see pricing, contracts and client data. Make it normal for staff to say, "Let me confirm that and call you back."
+
+## Our take: what it means for businesses buying AI hardware
+
+For most U.S. businesses buying GPUs or AI servers, nothing changes this week. The board says Huang stays on, the company says it "will not slow," and no supply disruption has been announced.[^ap]
+
+What could matter over the coming months:
+
+- **Export controls.** Raymond James analysts wrote that the allegations will likely strengthen support in Congress for tighter limits on chip sales to China.[^ap] Those rules mostly target exports, but policy shifts can ripple into pricing and availability elsewhere.
+- **Leadership uncertainty.** Analysts at Rothschild & Co. Redburn said Huang could be forced to step back only if the investigation finds "something materially more serious," and that a resignation is not a foregone conclusion.[^cnbc-succession]
+- **Single-vendor dependence.** If your AI plans assume one supplier's hardware, one software stack and one delivery timeline, this is a reminder to know your alternatives. That doesn't mean switching. It means knowing what you'd do if prices, lead times or support terms changed.
+
+If you're planning a private AI system, like the eight-GPU server we covered in [our look at a lawyer's private AI build](/blog/lawyer-private-ai-server-used-v100-gpus), build the plan around the workload, not the brand. Know which models you'll run, what hardware they actually need and which alternatives would work.
+
+## What to watch
+
+- **The investigation's findings.** The board says it will provide updates "as appropriate."[^nvidia-board]
+- **November 17 earnings.** Nvidia reports third-quarter results; watch for any comment on leadership, governance or China.[^cnbc]
+- **November 18.** Three House Republican committee chairs have asked Huang for a closed-door briefing on Nvidia's security protocols.[^cnbc][^bbc]
+- **Export-control legislation.** Any new limits on chip sales to China.[^ap]
+
+The story will keep moving. We'll update this article when the investigation, Nvidia or Congress adds something material.`,
+  },
   // ── First AI News piece · published on its release date. Every figure below
   //    was checked against the listed sources on 2026-11-09 and rechecked for
   //    pricing/availability news before release. Set updatedAt on any change.
