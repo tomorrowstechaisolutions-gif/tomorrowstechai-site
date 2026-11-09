@@ -26,13 +26,13 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
-  // ── First AI News piece · DRAFT. Every figure below was checked against the
-  //    listed sources on 2026-11-09. Before release: set the real publishedAt
-  //    and recheck pricing and availability.
+  // ── First AI News piece · published on its release date. Every figure below
+  //    was checked against the listed sources on 2026-11-09 and rechecked for
+  //    pricing/availability news before release. Set updatedAt on any change.
   {
     slug: "smartsheet-vsactual-execution-drift-ai-agents",
     title: "Smartsheet Built AI Agents to Catch \"Execution Drift.\" Here's What Operators Should Ask Before Trusting Them.",
-    status: "draft",
+    status: "published",
     publishedAt: "2026-11-09",
     category: "ai-news",
     secondaryCategories: ["business-automation"],
