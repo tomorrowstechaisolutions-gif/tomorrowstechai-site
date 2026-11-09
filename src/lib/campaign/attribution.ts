@@ -42,6 +42,35 @@ function clean(v: string | null | undefined): string | undefined {
 }
 
 /**
+ * Placeholder click ids that must never become a match key.
+ *
+ * An ad whose destination URL ships with a literal `&fbclid=fbclid` (this
+ * happened on the $399 Business Launch ad) produces a URL carrying TWO fbclid
+ * params once Meta appends the real one. `params.get()` returns the first,
+ * so the placeholder wins and every downstream match key is built from
+ * garbage. Rejecting known placeholders and implausibly short values means a
+ * bad ad URL degrades to "no click id" instead of "a wrong click id".
+ */
+const FBCLID_PLACEHOLDERS = new Set([
+  "fbclid",
+  "null",
+  "undefined",
+  "none",
+  "test",
+  "{{fbclid}}",
+]);
+
+/** Real click ids are long, opaque and base64url-shaped. */
+function validFbclid(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const v = value.trim();
+  if (FBCLID_PLACEHOLDERS.has(v.toLowerCase())) return undefined;
+  if (v.length < 20) return undefined;
+  if (!/^[A-Za-z0-9_-]+$/.test(v)) return undefined;
+  return v;
+}
+
+/**
  * Meta's click id cookie. If the pixel hasn't set _fbc yet (first paint, or
  * the visitor declined ad cookies) we still reconstruct it from ?fbclid so
  * the Conversions API gets a match key.
@@ -49,15 +78,25 @@ function clean(v: string | null | undefined): string | undefined {
 function deriveFbc(fbclid?: string): string | undefined {
   const cookie = readCookie("_fbc");
   if (cookie) return cookie;
-  if (!fbclid) return undefined;
-  return `fb.1.${Date.now()}.${fbclid}`;
+  // Re-validate: a session stored before this guard shipped may hold a
+  // placeholder, and a bad match key is worse than none.
+  const valid = validFbclid(fbclid);
+  if (!valid) return undefined;
+  return `fb.1.${Date.now()}.${valid}`;
 }
 
 export function captureAttribution(): Attribution {
   if (typeof window === "undefined") return { source: "website" };
 
   const params = new URLSearchParams(window.location.search);
-  const fbclid = clean(params.get("fbclid"));
+
+  // getAll, not get: a duplicated fbclid must not let a placeholder shadow the
+  // real click id Meta appended. Take the first value that actually looks like
+  // one, wherever it sits in the query string.
+  const fbclid = params
+    .getAll("fbclid")
+    .map((v) => validFbclid(clean(v)))
+    .find(Boolean);
 
   const fresh: Attribution = {
     source: clean(params.get("utm_source")) === "ig" ? "instagram" : fbclid ? "facebook" : "website",

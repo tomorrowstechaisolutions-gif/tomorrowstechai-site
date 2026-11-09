@@ -184,7 +184,7 @@ export async function POST(req: Request) {
     // ── Server half of the Meta conversion, deduped by event_id. ──────────
     const eventId = text(body.event_id, 100);
     if (eventId) {
-      await sendCapiEvent({
+      const capi = await sendCapiEvent({
         eventName: "Lead",
         eventId,
         eventSourceUrl: optional(a.landing_page, 500)
@@ -209,6 +209,23 @@ export async function POST(req: Request) {
           lead_score: result.score,
         },
       });
+
+      // A CAPI call that silently no-ops is how a whole campaign ran without
+      // Meta receiving one Lead: the browser pixel is consent-gated, so when
+      // the access token is unset there is no path at all. Record the miss
+      // against the lead so it surfaces in the admin instead of dying in a
+      // server log nobody reads.
+      if (!capi.ok && result.leadId && supabaseConfigured()) {
+        await supabaseAdmin().from("lead_events").insert({
+          lead_id: result.leadId,
+          type: "system",
+          body: capi.skipped
+            ? "Meta did NOT receive this Lead — the Conversions API is not configured (META_CAPI_ACCESS_TOKEN is unset)."
+            : `Meta rejected this Lead through the Conversions API: ${capi.error ?? "unknown error"}.`,
+          actor: "system",
+          meta: { capi: capi.skipped ? "unconfigured" : "failed", event_id: eventId },
+        });
+      }
     }
 
     return NextResponse.json({ ok: true, duplicate: result.duplicate });
