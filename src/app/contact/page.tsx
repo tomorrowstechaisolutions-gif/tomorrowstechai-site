@@ -107,7 +107,7 @@ function DirectChannel({
       rel={external ? "noopener noreferrer" : undefined}
       className="card hover:border-[color:var(--color-cyan-deep)] block"
     >
-      <div className="eyebrow-muted mb-2">{label}</div>
+      <div className="eyebrow-muted mb-2 !text-[#7d8ba1]">{label}</div>
       <div className="text-[color:var(--color-cyan)] text-[15px]">{value}</div>
     </a>
   );

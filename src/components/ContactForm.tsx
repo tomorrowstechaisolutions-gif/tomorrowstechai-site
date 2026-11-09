@@ -30,6 +30,10 @@ const PLAN_LABELS: Record<string, string> = {
   custom: "Custom Growth System — from $999/mo",
 };
 
+/*
+ * Small labels on this form use #7d8ba1 (5.5:1 on the card) instead of
+ * --color-text-muted (3.97:1), which fails WCAG AA for text this size.
+ */
 function prefillFromQuery(): string {
   if (typeof window === "undefined") return "";
   const params = new URLSearchParams(window.location.search);
@@ -134,7 +138,7 @@ export function ContactForm({offer}:{offer?:ContactOffer|null}) {
       <div>
         <label
           htmlFor="message"
-          className="block text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2"
+          className="block text-xs font-mono uppercase tracking-widest text-[#7d8ba1] mb-2"
         >
           What are you working on?
         </label>
@@ -149,7 +153,7 @@ export function ContactForm({offer}:{offer?:ContactOffer|null}) {
         />
       </div>
       <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-[color:var(--color-text-muted)] font-mono uppercase tracking-wider">
+        <p className="text-xs text-[#7d8ba1] font-mono uppercase tracking-wider">
           Propose · Never Act
         </p>
         <button
@@ -182,7 +186,7 @@ function Field({
     <div>
       <label
         htmlFor={name}
-        className="block text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2"
+        className="block text-xs font-mono uppercase tracking-widest text-[#7d8ba1] mb-2"
       >
         {label}
       </label>
