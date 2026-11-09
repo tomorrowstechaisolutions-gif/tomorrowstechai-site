@@ -26,17 +26,16 @@ import type { ArticleRecord } from "@/lib/blog/types";
 export type FileArticle = Omit<ArticleRecord, "origin">;
 
 export const fileArticles: FileArticle[] = [
-  // ── AI News · DRAFT. Fast-moving story. Every figure below was checked
-  //    against the listed sources on 2026-11-09. Before release: recheck for
-  //    new developments (investigation findings, leadership changes, Nov. 17
-  //    earnings, the FBI comment), set the real publishedAt and add the hero
-  //    image. FBI line added 2026-11-09 evening after Trump's remarks.
+  // ── AI News · published 2026-11-09. Fast-moving story: every figure was
+  //    checked against the listed sources that day and rechecked just before
+  //    release. Set updatedAt when the investigation, the FBI, Nvidia or
+  //    Congress adds something material. Hero image still to come.
   //    Editorial choice: the woman at the centre of the allegations is not
   //    named. The spying claim rests on unnamed officials and is denied.
   {
     slug: "nvidia-ceo-investigation-ai-hardware-buyers",
     title: "Nvidia Is Investigating Its Own CEO. Here's What It Means for Businesses Betting on AI Hardware.",
-    status: "draft",
+    status: "published",
     publishedAt: "2026-11-09",
     category: "ai-news",
     secondaryCategories: ["hardware"],
