@@ -80,11 +80,14 @@ export function CookieConsent() {
 
   if (!visible) return null;
 
+  // Top layer: the LeadConnector chat widget's greeting bubble sits at a very
+  // high z-index and covered the Decline/Accept buttons on tablet widths.
+  // Consent comes first; the banner is gone as soon as it's answered.
   return (
     <div
       role="dialog"
       aria-label="Cookie consent"
-      className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 z-[60] max-w-3xl md:mx-auto"
+      className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 z-[2147483647] max-w-3xl md:mx-auto"
     >
       <div className="bg-[color:var(--color-bg)] border border-[color:var(--color-cyan-deep)] rounded-lg shadow-2xl p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-start md:gap-6">
