@@ -718,7 +718,7 @@ export async function convertProposalToProjectAction(formData: FormData) {
         company_id: p.company_id,
         name: p.client_contact_name,
         business_name: p.client_business_name,
-        email: p.client_email ?? "",
+        email: p.client_email || null,
         phone: p.client_phone,
         status: "active",
         mrr_cents: p.recurring_price_cents,

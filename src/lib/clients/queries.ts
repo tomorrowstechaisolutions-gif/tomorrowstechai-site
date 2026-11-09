@@ -302,7 +302,7 @@ export async function loadClientsBoard(
 
     return {
       id: c.id,
-      businessName: c.business_name || c.name || c.email,
+      businessName: c.business_name || c.name || c.email || "Unnamed client",
       contactName: c.name,
       email: c.email,
       phone: c.phone,

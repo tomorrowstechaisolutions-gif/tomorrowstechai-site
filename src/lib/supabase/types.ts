@@ -146,7 +146,8 @@ export type Customer = {
   lead_id: string | null;
   name: string | null;
   business_name: string | null;
-  email: string;
+  /** Null when the client hasn't given one yet (customers_email_optional). */
+  email: string | null;
   phone: string | null;
   status: "active" | "paused" | "churned";
   won_at: string;

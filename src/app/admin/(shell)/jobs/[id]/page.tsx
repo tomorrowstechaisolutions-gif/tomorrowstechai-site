@@ -322,7 +322,7 @@ export default async function JobDetailPage({
                 <dt>Business</dt>
                 <dd>{customer.business_name || "—"}</dd>
                 <dt>Email</dt>
-                <dd>{customer.email}</dd>
+                <dd>{customer.email || "—"}</dd>
                 <dt>Phone</dt>
                 <dd>{customer.phone || "—"}</dd>
                 <dt>Hosting</dt>

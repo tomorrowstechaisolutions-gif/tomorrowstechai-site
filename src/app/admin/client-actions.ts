@@ -230,14 +230,18 @@ export async function recordSatisfaction(formData: FormData) {
 
 export async function addClient(formData: FormData) {
   const { supabase } = await requireAdmin();
-  const email = str(formData, "email", 200).toLowerCase();
-  if (!email) return;
+  // Email is optional (a client can be recorded before they've given one),
+  // but a client needs at least a name to be findable.
+  const email = str(formData, "email", 200).toLowerCase() || null;
+  const businessName = str(formData, "business_name", 200) || null;
+  const name = str(formData, "name", 200) || null;
+  if (!email && !businessName && !name) return;
 
   const { data } = await supabase
     .from("customers")
     .insert({
-      business_name: str(formData, "business_name", 200) || null,
-      name: str(formData, "name", 200) || null,
+      business_name: businessName,
+      name,
       email,
       phone: str(formData, "phone", 40) || null,
       business_type: str(formData, "business_type", 100) || null,

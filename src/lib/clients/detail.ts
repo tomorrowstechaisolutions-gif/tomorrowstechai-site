@@ -382,7 +382,7 @@ export async function loadClient(
 
   return {
     id: customer.id,
-    businessName: customer.business_name || customer.name || customer.email,
+    businessName: customer.business_name || customer.name || customer.email || "Unnamed client",
     contactName: customer.name,
     email: customer.email,
     phone: customer.phone,

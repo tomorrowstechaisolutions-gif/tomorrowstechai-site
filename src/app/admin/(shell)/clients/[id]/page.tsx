@@ -382,7 +382,7 @@ export default async function ClientPage({
             <div className="cc-field row2">
               <div className="cc-field">
                 <label className="cc-label" htmlFor="cd-email">Email</label>
-                <input id="cd-email" name="email" type="email" className="cc-input" defaultValue={client.email} />
+                <input id="cd-email" name="email" type="email" className="cc-input" defaultValue={client.email ?? ""} placeholder="Not on file yet" />
               </div>
               <div className="cc-field">
                 <label className="cc-label" htmlFor="cd-phone">Phone</label>
@@ -632,7 +632,7 @@ export default async function ClientPage({
         {/* ── Waiting on them ──────────────────────────────────────── */}
         <RequestsPanel
           customerId={client.id}
-          email={client.email}
+          email={client.email ?? ""}
           name={client.contactName}
           board={requests}
         />

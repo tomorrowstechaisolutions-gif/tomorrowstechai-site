@@ -79,7 +79,13 @@ export async function POST(req: Request) {
     if (!customer) {
       return NextResponse.json({ ok: false, error: "Customer not found." }, { status: 404 });
     }
-    email = customer.email;
+    if (!customer.email && !customer.stripe_customer_id) {
+      return NextResponse.json(
+        { ok: false, error: "This client has no email address. Add one on their page first." },
+        { status: 400 }
+      );
+    }
+    email = customer.email ?? "";
     stripeCustomerId = customer.stripe_customer_id;
     resolvedLeadId = resolvedLeadId ?? customer.lead_id;
   } else if (leadId) {

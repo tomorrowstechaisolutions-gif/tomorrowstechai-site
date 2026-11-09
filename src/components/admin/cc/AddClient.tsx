@@ -81,8 +81,8 @@ export default function AddClient() {
 
                 <div className="cc-field row2">
                   <div className="cc-field">
-                    <label className="cc-label" htmlFor="ac-email">Email</label>
-                    <input id="ac-email" name="email" type="email" className="cc-input" required />
+                    <label className="cc-label" htmlFor="ac-email">Email (optional)</label>
+                    <input id="ac-email" name="email" type="email" className="cc-input" placeholder="Add later if you don't have it" />
                   </div>
                   <div className="cc-field">
                     <label className="cc-label" htmlFor="ac-phone">Phone</label>
@@ -115,7 +115,9 @@ export default function AddClient() {
                 <p className="cc-note">
                   No Stripe subscription is created by this. It records a client
                   you already have — billing them through Stripe is a separate,
-                  deliberate step from their own page.
+                  deliberate step from their own page. Without an email the client
+                  is saved, but invoices and proposals can&apos;t be emailed until
+                  you add one.
                 </p>
 
                 <div className="cc-sheet-foot">

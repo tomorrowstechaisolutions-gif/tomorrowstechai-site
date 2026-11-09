@@ -87,7 +87,7 @@ export default async function PartnerPage({ params }: { params: Promise<{ key: s
             <>
               <p className="pc-big">{money(o.client.mrrCents)}<span>/month</span></p>
               <p>Website &amp; backend management for <Link href={`/admin/clients/${o.client.id}`}>{o.client.name}</Link></p>
-              <p className="cc-faint">{o.client.email}</p>
+              {o.client.email ? <p className="cc-faint">{o.client.email}</p> : null}
               {o.website ? <p className="cc-faint">Site: <Link href="/admin/websites">{o.website.domain ?? o.website.name}</Link></p> : null}
               {o.invoices.map((i) => (
                 <p key={i.id} className="cc-faint">

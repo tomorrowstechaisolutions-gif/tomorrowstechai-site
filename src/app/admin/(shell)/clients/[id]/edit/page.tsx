@@ -90,7 +90,7 @@ export default async function EditClientPage({
             <div className="cc-field row2">
               <div className="cc-field">
                 <label className="cc-label" htmlFor="ce-email">Contact email</label>
-                <input id="ce-email" name="email" type="email" className="cc-input" defaultValue={client.email} required />
+                <input id="ce-email" name="email" type="email" className="cc-input" defaultValue={client.email ?? ""} placeholder="Not on file yet" />
               </div>
               <div className="cc-field">
                 <label className="cc-label" htmlFor="ce-phone">Contact phone</label>

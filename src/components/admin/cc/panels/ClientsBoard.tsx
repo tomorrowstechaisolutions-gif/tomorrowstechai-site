@@ -434,9 +434,9 @@ function Row({ row }: { row: ClientRow }) {
       <td>
         <span className="cc-client-text">
           <span className="cc-client-name" style={{ fontWeight: 400 }}>
-            {row.contactName ?? row.email}
+            {row.contactName ?? row.email ?? "—"}
           </span>
-          <span className="cc-client-sub">{row.phone ?? row.email}</span>
+          <span className="cc-client-sub">{row.phone ?? row.email ?? "No email on file"}</span>
         </span>
       </td>
 
