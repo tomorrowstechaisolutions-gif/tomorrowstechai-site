@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     title: "Launch Your Online Store · Tomorrow’s Tech AI",
     description:
       "Your store. Our technology. Your success. A custom e-commerce website for $999 one time, plus $29/month hosting.",
-    url: "https://tomorrowstechai.com/ecommerce-website",
+    url: "https://www.tomorrowstechai.com/ecommerce-website",
     type: "website",
   },
 };

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     title: "Blog · Tomorrow’s Tech AI",
     description:
       "Field notes from the intersection of AI and operations. Written by an operator. For operators. No buzzwords.",
-    url: "https://tomorrowstechai.com/blog",
+    url: "https://www.tomorrowstechai.com/blog",
     type: "website",
   },
 };

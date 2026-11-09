@@ -29,7 +29,7 @@ const CONCURRENCY = 6;
 function baseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "https://tomorrowstechai.com"
+    "https://www.tomorrowstechai.com"
   );
 }
 

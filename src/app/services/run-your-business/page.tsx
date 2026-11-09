@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: { absolute: "Custom Business Management Software | Tomorrow’s Tech AI" },
   description: "Run your business from one custom platform. Tomorrow’s Tech AI builds AI-powered dashboards, CRM, scheduling, projects, automation and business management systems designed around your operation.",
   alternates: { canonical: "/services/run-your-business" },
-  openGraph: { title: "Custom Business Management Software | Tomorrow’s Tech AI", description: "One custom platform for your dashboard, CRM, scheduling, projects, automation and AI.", url: "https://tomorrowstechai.com/services/run-your-business", type: "website" },
+  openGraph: { title: "Custom Business Management Software | Tomorrow’s Tech AI", description: "One custom platform for your dashboard, CRM, scheduling, projects, automation and AI.", url: "https://www.tomorrowstechai.com/services/run-your-business", type: "website" },
 };
 
 export default function RunYourBusinessPage() {

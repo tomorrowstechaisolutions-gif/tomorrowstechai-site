@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getListedArticles } from "@/lib/blog/repository";
 import { CATEGORIES, categoryPath } from "@/lib/blog/taxonomy";
 
-const BASE_URL = "https://tomorrowstechai.com";
+const BASE_URL = "https://www.tomorrowstechai.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

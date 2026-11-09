@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     title: "AI Business Operator | Tomorrow’s Tech AI",
     description:
       "A managed AI operating system that captures leads, follows up, books appointments and keeps your service business moving.",
-    url: "https://tomorrowstechai.com/services/ai-business-operator",
+    url: "https://www.tomorrowstechai.com/services/ai-business-operator",
     type: "website",
   },
 };

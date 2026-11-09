@@ -10,7 +10,7 @@ export const metadata = {
     title: "About · Tomorrow’s Tech AI",
     description:
       "Meet John Hockinson—18 years inside operations, now building custom business platforms, command centers, dashboards, and AI systems.",
-    url: "https://tomorrowstechai.com/about",
+    url: "https://www.tomorrowstechai.com/about",
     type: "website",
   },
 };

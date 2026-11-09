@@ -9,7 +9,7 @@ export const metadata = {
     title: "FAQ · Tomorrow’s Tech AI",
     description:
       "Common questions about Tomorrow’s Tech AI — services, timelines, pricing, and how we work.",
-    url: "https://tomorrowstechai.com/faq",
+    url: "https://www.tomorrowstechai.com/faq",
     type: "website",
   },
 };

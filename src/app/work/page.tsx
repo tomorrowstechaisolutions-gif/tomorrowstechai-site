@@ -11,7 +11,7 @@ export const metadata = {
     title: "Work · Tomorrow’s Tech AI",
     description:
       "Storyborn, SplicePoint, storefronts, business operating platforms, command centers, Job Catcher, and client systems built around the way real companies operate.",
-    url: "https://tomorrowstechai.com/work",
+    url: "https://www.tomorrowstechai.com/work",
     type: "website",
   },
 };

@@ -11,7 +11,7 @@ export const metadata = {
     title: "The Operations Audit Checklist · Tomorrow’s Tech AI",
     description:
       "12 questions to ask before adding AI to your operation. Score yourself honestly — find out where your foundation is ready and where it needs work.",
-    url: "https://tomorrowstechai.com/operations-audit",
+    url: "https://www.tomorrowstechai.com/operations-audit",
     type: "article",
   },
 };

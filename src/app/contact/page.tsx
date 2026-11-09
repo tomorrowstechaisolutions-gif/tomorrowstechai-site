@@ -13,7 +13,7 @@ export const metadata = {
     title: "Contact · Tomorrow’s Tech AI",
     description:
       "Book a discovery call. 30 minutes, no pitch, just notes.",
-    url: "https://tomorrowstechai.com/contact",
+    url: "https://www.tomorrowstechai.com/contact",
     type: "website",
   },
 };

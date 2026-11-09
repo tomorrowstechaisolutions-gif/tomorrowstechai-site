@@ -20,7 +20,7 @@ export const metadata = {
     title: "Job Catcher — Never Lose Another Job to a Missed Call",
     description:
       "Custom missed-call text responses, lead alerts, follow-up, and review workflows for Central Texas contractors. Fully configured and managed for $350/month.",
-    url: "https://tomorrowstechai.com/job-catcher",
+    url: "https://www.tomorrowstechai.com/job-catcher",
     type: "website",
   },
 };

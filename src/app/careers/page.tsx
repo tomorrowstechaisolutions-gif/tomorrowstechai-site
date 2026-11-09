@@ -9,7 +9,7 @@ export const metadata = {
     title: "Careers · Tomorrow’s Tech AI",
     description:
       "Help build and support the systems modern businesses run on. See current openings at Tomorrow’s Tech AI.",
-    url: "https://tomorrowstechai.com/careers",
+    url: "https://www.tomorrowstechai.com/careers",
     type: "website",
   },
 };

@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   authors: [{ name: "John Hockinson" }],
   creator: "John Hockinson",
   publisher: "Tomorrow’s Tech AI",
-  metadataBase: new URL("https://tomorrowstechai.com"),
+  metadataBase: new URL("https://www.tomorrowstechai.com"),
   alternates: {
     canonical: "/",
   },
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     title: "Tomorrow’s Tech AI — We build modern businesses",
     description:
       "We build the complete digital foundation of a modern business — brand, website, ecommerce, CRM, admin dashboard, automation and AI, in one connected system.",
-    url: "https://tomorrowstechai.com",
+    url: "https://www.tomorrowstechai.com",
     siteName: "Tomorrow’s Tech AI",
     type: "website",
     locale: "en_US",
@@ -131,9 +131,9 @@ const organizationJsonLd = {
   "@type": "ProfessionalService",
   name: "Tomorrow’s Tech AI",
   alternateName: "Tomorrowstek LLC",
-  url: "https://tomorrowstechai.com",
-  logo: "https://tomorrowstechai.com/brand/icon-512.png",
-  image: "https://tomorrowstechai.com/brand/icon-512.png",
+  url: "https://www.tomorrowstechai.com",
+  logo: "https://www.tomorrowstechai.com/brand/icon-512.png",
+  image: "https://www.tomorrowstechai.com/brand/icon-512.png",
   description:
     "We build the complete digital foundation of a modern business — brand, website, ecommerce, CRM, admin dashboard, automation and AI, in one connected system.",
   founder: {
@@ -141,7 +141,7 @@ const organizationJsonLd = {
     name: "John Hockinson",
     jobTitle: "Founder",
     image:
-      "https://tomorrowstechai.com/about/john-hockinson-portrait.png",
+      "https://www.tomorrowstechai.com/about/john-hockinson-portrait.png",
     sameAs: "https://www.linkedin.com/in/johnhockinson/",
   },
   priceRange: "$$$",
@@ -154,7 +154,7 @@ const organizationJsonLd = {
     "@type": "ContactPoint",
     contactType: "Customer Service",
     email: "john@tomorrowstechai.com",
-    url: "https://tomorrowstechai.com/contact",
+    url: "https://www.tomorrowstechai.com/contact",
     availableLanguage: "English",
   },
   areaServed: {
@@ -195,10 +195,10 @@ const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Tomorrow’s Tech AI",
-  url: "https://tomorrowstechai.com",
+  url: "https://www.tomorrowstechai.com",
   potentialAction: {
     "@type": "SearchAction",
-    target: "https://tomorrowstechai.com/blog?q={search_term_string}",
+    target: "https://www.tomorrowstechai.com/blog?q={search_term_string}",
     "query-input": "required name=search_term_string",
   },
 };

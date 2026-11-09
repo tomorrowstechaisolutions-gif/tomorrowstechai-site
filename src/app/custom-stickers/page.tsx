@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Custom Business Stickers · Tomorrow's Tech AI",
     description: "Premium custom stickers for business branding, products, packaging, vehicles, events, and more.",
-    url: "https://tomorrowstechai.com/custom-stickers",
+    url: "https://www.tomorrowstechai.com/custom-stickers",
     images: [{ url: "/custom-stickers/sticker-hero.png", width: 1680, height: 945, alt: "Custom business sticker collection" }],
   },
 };

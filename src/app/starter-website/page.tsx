@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     title: "Get Your Business Online for $149 · Tomorrow’s Tech AI",
     description:
       "Fast and affordable. A professional 3-page website live in 2–3 business days. $149 one time, plus $29/month hosting.",
-    url: "https://tomorrowstechai.com/starter-website",
+    url: "https://www.tomorrowstechai.com/starter-website",
     type: "website",
   },
 };

@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: "Central Texas AI Business Modernization Initiative",
     description:
       "A proposed regional pilot helping Central Texas businesses explore practical AI, modernization, and workforce training.",
-    url: "https://tomorrowstechai.com/central-texas-ai",
+    url: "https://www.tomorrowstechai.com/central-texas-ai",
     images: ["/central-texas-ai/central-texas-initiative-hero.png"],
   },
 };

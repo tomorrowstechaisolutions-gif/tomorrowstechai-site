@@ -1,6 +1,6 @@
 import type { Author, CategoryInfo, CategorySlug } from "./types";
 
-export const SITE_URL = "https://tomorrowstechai.com";
+export const SITE_URL = "https://www.tomorrowstechai.com";
 export const PUBLICATION_NAME = "Field Notes";
 export const PUBLISHER_NAME = "Tomorrow’s Tech AI";
 

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Ad Creative Studio | Tomorrow’s Tech AI",
     description: "Professional, on-brand image ads generated from your real catalog and brand system.",
-    url: "https://tomorrowstechai.com/services/ai-ad-creative-studio",
+    url: "https://www.tomorrowstechai.com/services/ai-ad-creative-studio",
     type: "website",
     images: [{ url: COVER, width: 1254, height: 1254, alt: "AI Ad Creative Studio" }],
   },
@@ -60,9 +60,9 @@ export default function AiAdCreativeStudioPage() {
     "@type": "Service",
     name: "AI Ad Creative Studio",
     serviceType: "AI-powered advertising creative production",
-    provider: { "@type": "Organization", name: "Tomorrow’s Tech AI", url: "https://tomorrowstechai.com" },
-    url: "https://tomorrowstechai.com/services/ai-ad-creative-studio",
-    image: `https://tomorrowstechai.com${COVER}`,
+    provider: { "@type": "Organization", name: "Tomorrow’s Tech AI", url: "https://www.tomorrowstechai.com" },
+    url: "https://www.tomorrowstechai.com/services/ai-ad-creative-studio",
+    image: `https://www.tomorrowstechai.com${COVER}`,
     description: "A branded system for creating, reviewing, and managing multi-format image advertisements from real service and package catalog data.",
   };
 

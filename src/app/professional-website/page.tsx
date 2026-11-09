@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     title: "Build More Than a Website · Tomorrow’s Tech AI",
     description:
       "Not just a website — a website designed to generate and organize business. $699 one time, plus $29/month hosting.",
-    url: "https://tomorrowstechai.com/professional-website",
+    url: "https://www.tomorrowstechai.com/professional-website",
     type: "website",
   },
 };

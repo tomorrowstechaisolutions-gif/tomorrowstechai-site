@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: TITLE,
     description:
       "Social media, content, campaigns, lead generation and reputation — managed from one platform.",
-    url: "https://tomorrowstechai.com/services/grow-your-audience",
+    url: "https://www.tomorrowstechai.com/services/grow-your-audience",
     type: "website",
   },
 };

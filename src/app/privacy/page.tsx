@@ -9,7 +9,7 @@ export const metadata = {
     title: "Privacy Policy · Tomorrow’s Tech AI",
     description:
       "How Tomorrow’s Tech AI collects, uses, and protects your information.",
-    url: "https://tomorrowstechai.com/privacy",
+    url: "https://www.tomorrowstechai.com/privacy",
     type: "website",
   },
 };

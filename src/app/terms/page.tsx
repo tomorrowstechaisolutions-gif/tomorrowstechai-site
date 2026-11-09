@@ -9,7 +9,7 @@ export const metadata = {
     title: "Terms of Service · Tomorrow’s Tech AI",
     description:
       "The terms under which you may use the Tomorrow’s Tech AI website and our services.",
-    url: "https://tomorrowstechai.com/terms",
+    url: "https://www.tomorrowstechai.com/terms",
     type: "website",
   },
 };

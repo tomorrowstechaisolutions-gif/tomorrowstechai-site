@@ -11,7 +11,7 @@ export const metadata = {
     title: "Your Best Next Hire Is AI · Tomorrow’s Tech AI",
     description:
       "Free 6-page field guide. Plain English. No code. By Friday you can have a real AI workflow running for your business.",
-    url: "https://tomorrowstechai.com/ai-field-guide",
+    url: "https://www.tomorrowstechai.com/ai-field-guide",
     type: "article",
   },
 };
