@@ -81,7 +81,7 @@ export function statusFrom(err: unknown): TrafficStatus {
     if (err.status === 404) return { state: "not-enabled" };
     if (err.status === 401 || err.status === 403)
       return { state: "error", message: "The Vercel token was rejected. Check that it is valid and scoped to the team." };
-    return { state: "error", message: `Vercel Web Analytics returned ${err.message}.` };
+    return { state: "error", message: `Vercel Web Analytics: ${err.message.replace(/\.+$/, "")}.` };
   }
   return { state: "error", message: err instanceof Error ? err.message : "Unknown error" };
 }

@@ -52,39 +52,56 @@ function bars(rows: { key: string; value: number }[], total: number, label?: (k:
   }));
 }
 
+type Part<T> = { ok: true; data: T } | { ok: false; error: string };
+
 type Traffic = {
   status: TrafficStatus;
-  totals?: Counts;
-  blog?: Counts;
-  daily?: { day: string; pageviews: number; visitors: number }[];
-  pages?: Row[];
-  articles?: Row[];
-  referrers?: Row[];
-  utm?: Row[];
-  countries?: Row[];
-  devices?: Row[];
+  totals?: Part<Counts>;
+  blog?: Part<Counts>;
+  daily?: Part<{ day: string; pageviews: number; visitors: number }[]>;
+  pages?: Part<Row[]>;
+  articles?: Part<Row[]>;
+  referrers?: Part<Row[]>;
+  countries?: Part<Row[]>;
+  devices?: Part<Row[]>;
 };
 
-async function loadTraffic(since: Date, until: Date): Promise<Traffic> {
-  if (!analyticsConfigured()) return { status: { state: "no-token" } };
+async function part<T>(p: Promise<T>): Promise<Part<T>> {
   try {
-    const blogFilter = "startswith(requestPath, '/blog/')";
-    const [t, blog, daily, pages, articles, referrers, utm, countries, devices] = await Promise.all([
-      totals(since, until),
-      totals(since, until, blogFilter),
-      perDay(since, until),
-      byDimension("requestPath", since, until, { limit: 10 }),
-      byDimension("requestPath", since, until, { limit: 10, filter: blogFilter }),
-      byDimension("referrerHostname", since, until, { limit: 8 }),
-      byDimension("utmSource", since, until, { limit: 8 }),
-      byDimension("country", since, until, { limit: 6 }),
-      byDimension("deviceType", since, until, { limit: 4 }),
-    ]);
-    return { status: { state: "ok" }, totals: t, blog, daily, pages, articles, referrers, utm, countries, devices };
+    return { ok: true, data: await p };
   } catch (err) {
-    return { status: statusFrom(err) };
+    const st = statusFrom(err);
+    return { ok: false, error: st.state === "error" ? st.message : st.state };
   }
 }
+
+/**
+ * Each query stands alone: one refused breakdown (Vercel gates some dimensions
+ * by plan) must not blank the rest of the page.
+ */
+async function loadTraffic(since: Date, until: Date): Promise<Traffic> {
+  if (!analyticsConfigured()) return { status: { state: "no-token" } };
+  const blogFilter = "startswith(requestPath, '/blog/')";
+  const [t, blog, daily, pages, articles, referrers, countries, devices] = await Promise.all([
+    part(totals(since, until)),
+    part(totals(since, until, blogFilter)),
+    part(perDay(since, until)),
+    part(byDimension("requestPath", since, until, { limit: 10 })),
+    part(byDimension("requestPath", since, until, { limit: 10, filter: blogFilter })),
+    part(byDimension("referrerHostname", since, until, { limit: 8 })),
+    part(byDimension("country", since, until, { limit: 6 })),
+    part(byDimension("deviceType", since, until, { limit: 4 })),
+  ]);
+  // If even the headline count fails, report why (not enabled, bad token...).
+  if (!t.ok) {
+    const status: TrafficStatus =
+      t.error === "not-enabled" ? { state: "not-enabled" } : t.error === "no-token" ? { state: "no-token" } : { state: "error", message: t.error };
+    return { status };
+  }
+  return { status: { state: "ok" }, totals: t, blog, daily, pages, articles, referrers, countries, devices };
+}
+
+const val = <T,>(p?: Part<T>): T | undefined => (p && p.ok ? p.data : undefined);
 
 export default async function AnalyticsPage({
   searchParams,
@@ -110,16 +127,19 @@ export default async function AnalyticsPage({
   const leads: LeadStats | null = leadsResult.ok ? leadsResult.data : null;
   const trafficOk = traffic.status.state === "ok";
 
-  const visitors = traffic.totals?.visitors ?? 0;
+  const tot = val(traffic.totals);
+  const blogTot = val(traffic.blog);
+  const visitors = tot?.visitors ?? 0;
   const conversion = trafficOk && leads && visitors > 0 ? (leads.total / visitors) * 100 : null;
 
-  const dailyViews = days.map((d) => ({ key: d, value: traffic.daily?.find((x) => x.day === d)?.pageviews ?? 0 }));
+  const daily = val(traffic.daily);
+  const dailyViews = days.map((d) => ({ key: d, value: daily?.find((x) => x.day === d)?.pageviews ?? 0 }));
   const dailyLeads = (leads?.perDay ?? days.map((d) => ({ day: d, count: 0 }))).map((d) => ({ key: d.day, value: d.count }));
 
   const kpis = [
     { label: "Visitors", value: trafficOk ? fmt(visitors) : "—", hint: "Unique, cookieless" },
-    { label: "Page views", value: trafficOk ? fmt(traffic.totals?.pageviews ?? 0) : "—", hint: "All public pages" },
-    { label: "Field Notes views", value: trafficOk ? fmt(traffic.blog?.pageviews ?? 0) : "—", hint: "Article page views" },
+    { label: "Page views", value: trafficOk ? fmt(tot?.pageviews ?? 0) : "—", hint: "All public pages" },
+    { label: "Field Notes views", value: trafficOk && blogTot ? fmt(blogTot.pageviews) : "—", hint: "Article page views" },
     { label: "Leads", value: leads ? fmt(leads.total) : "—", hint: leads ? `${fmt(leads.open)} open · ${fmt(leads.won)} won` : "Could not load" },
     {
       label: "Visit → lead",
@@ -167,7 +187,7 @@ export default async function AnalyticsPage({
 
       <div className="cc-board" style={{ marginTop: 16 }}>
         <Panel title="Page views per day" sub={`Last ${nDays} days`} icon={<IconChart size={15} />} className="cc-s6">
-          {trafficOk ? (
+          {trafficOk && daily ? (
             <MiniBars
               points={dailyViews}
               labelLeft={shortDay(days[0])}
@@ -192,26 +212,25 @@ export default async function AnalyticsPage({
           )}
         </Panel>
 
-        <RowsPanel title="Top pages" icon={<IconFile size={15} />} rows={traffic.pages} ok={trafficOk} total={traffic.totals?.pageviews} />
+        <RowsPanel title="Top pages" icon={<IconFile size={15} />} part={traffic.pages} ok={trafficOk} total={tot?.pageviews} />
         <RowsPanel
           title="Field Notes articles"
           icon={<IconFile size={15} />}
-          rows={traffic.articles}
+          part={traffic.articles}
           ok={trafficOk}
-          total={traffic.blog?.pageviews}
+          total={blogTot?.pageviews}
           label={(k) => k.replace(/^\/blog\//, "")}
           action={{ href: "/admin/marketing/seo", label: "SEO" }}
         />
-        <RowsPanel title="Where visitors come from" sub="Referring sites" icon={<IconGlobe size={15} />} rows={traffic.referrers} ok={trafficOk} total={traffic.totals?.pageviews} label={(k) => (k === "(none)" ? "Direct / unknown" : k)} />
-        <RowsPanel title="Campaign traffic" sub="utm_source" icon={<IconChart size={15} />} rows={traffic.utm} ok={trafficOk} total={traffic.totals?.pageviews} label={(k) => (k === "(none)" ? "No UTM tag" : k)} />
+        <RowsPanel title="Where visitors come from" sub="Referring sites" icon={<IconGlobe size={15} />} part={traffic.referrers} ok={trafficOk} total={tot?.pageviews} label={(k) => (k === "(none)" ? "Direct / unknown" : k)} />
 
         <LeadRowsPanel title="Leads by source" rows={leads?.bySource} total={leads?.total ?? 0} ok={Boolean(leads)} />
         <LeadRowsPanel title="Leads by landing page" sub="Page or article that sent them" rows={leads?.byLanding} total={leads?.total ?? 0} ok={Boolean(leads)} />
         <LeadRowsPanel title="Leads by campaign" sub="utm_source / utm_campaign" rows={leads?.byUtm} total={leads?.total ?? 0} ok={Boolean(leads)} label={(k) => (k === "(none)" ? "No UTM tag" : k)} />
         <LeadRowsPanel title="Lead status" rows={leads?.byStatus} total={leads?.total ?? 0} ok={Boolean(leads)} />
 
-        <RowsPanel title="Countries" icon={<IconGlobe size={15} />} rows={traffic.countries} ok={trafficOk} total={traffic.totals?.pageviews} />
-        <RowsPanel title="Devices" icon={<IconUsers size={15} />} rows={traffic.devices} ok={trafficOk} total={traffic.totals?.pageviews} />
+        <RowsPanel title="Countries" icon={<IconGlobe size={15} />} part={traffic.countries} ok={trafficOk} total={tot?.pageviews} />
+        <RowsPanel title="Devices" icon={<IconUsers size={15} />} part={traffic.devices} ok={trafficOk} total={tot?.pageviews} />
       </div>
     </>
   );
@@ -221,7 +240,7 @@ function RowsPanel({
   title,
   sub,
   icon,
-  rows,
+  part: result,
   ok,
   total,
   label,
@@ -230,16 +249,19 @@ function RowsPanel({
   title: string;
   sub?: string;
   icon: React.ReactNode;
-  rows?: Row[];
+  part?: Part<Row[]>;
   ok: boolean;
   total?: number;
   label?: (k: string) => string;
   action?: { href: string; label: string };
 }) {
+  const rows = result && result.ok ? result.data : undefined;
   return (
     <Panel title={title} sub={sub} icon={icon} className="cc-s6" action={action}>
       {!ok ? (
         <EmptyState title="No traffic data yet" text="Fills in once Vercel Web Analytics is connected." />
+      ) : result && !result.ok ? (
+        <ErrorState message={result.error} />
       ) : !rows || rows.length === 0 ? (
         <EmptyState title="Nothing in this range" text="No page views matched yet." />
       ) : (
