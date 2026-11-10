@@ -69,6 +69,21 @@ export default function PrivacyPage() {
               can unsubscribe at any time.
             </li>
             <li>
+              <strong>Facebook and Instagram lead forms</strong> — if you fill
+              in one of our lead forms on Facebook or Instagram, Meta passes us
+              the answers you submitted (typically your name, email, phone and
+              what you need help with). We store them with our other enquiries
+              and use them only to follow up with you.
+            </li>
+            <li>
+              <strong>Connected social accounts</strong> — when a client asks
+              us to manage their social media, they may connect a Facebook Page,
+              Instagram business account or LinkedIn profile through that
+              platform&apos;s own sign-in. We store the account name and an
+              encrypted access token, and use them only to publish posts the
+              client has approved.
+            </li>
+            <li>
               <strong>Standard server logs</strong> — IP address, browser type,
               and pages visited. Used for security, rate limiting, and
               understanding how the site is used in aggregate.
@@ -181,6 +196,28 @@ export default function PrivacyPage() {
             To exercise any of these rights, email us at{" "}
             <strong>tomorrowstechaisolutions@gmail.com</strong> or use the{" "}
             <Link href="/contact">contact form</Link>.
+          </p>
+
+          <h2 id="data-deletion">Deleting your data</h2>
+          <p>You can have everything we hold about you deleted at any time:</p>
+          <ol>
+            <li>
+              Email <strong>tomorrowstechaisolutions@gmail.com</strong> with the
+              subject &quot;Delete my data&quot;, from the email address you used
+              with us (or tell us the name, email or phone on your enquiry).
+            </li>
+            <li>
+              We delete your enquiry, lead form answers, newsletter subscription
+              and any connected social account details within 30 days, and reply
+              to confirm when it&apos;s done.
+            </li>
+          </ol>
+          <p>
+            If you connected a Facebook, Instagram or LinkedIn account, you can
+            also remove our access yourself at any time: on Facebook go to
+            Settings &amp; privacy → Settings → Business integrations; on
+            LinkedIn go to Settings → Data privacy → Permitted services. Removing
+            access stops all publishing immediately.
           </p>
 
           <h2>Children</h2>
