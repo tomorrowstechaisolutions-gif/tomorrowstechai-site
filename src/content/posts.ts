@@ -29,7 +29,7 @@ export const fileArticles: FileArticle[] = [
   // ── AI News · published 2026-11-09. Fast-moving story: every figure was
   //    checked against the listed sources that day and rechecked just before
   //    release. Set updatedAt when the investigation, the FBI, Nvidia or
-  //    Congress adds something material. Hero image still to come.
+  //    Congress adds something material. Hero: in-house text summary card.
   //    Editorial choice: the woman at the centre of the allegations is not
   //    named. The spying claim rests on unnamed officials and is denied.
   {
@@ -47,6 +47,13 @@ export const fileArticles: FileArticle[] = [
     summary:
       "Nvidia's board has opened an independent investigation into reports that CEO Jensen Huang was the target of a foreign intelligence effort. Here's what's confirmed, what's only alleged, and the lessons for businesses that depend on one supplier, or one leader.",
     tags: ["Nvidia", "Jensen Huang", "AI hardware", "GPUs", "Key-person risk", "Social engineering", "Export controls", "Supply chain"],
+    hero: {
+      src: "/blog/nvidia-ceo-investigation-card.webp",
+      alt: "Summary graphic headed Nvidia Is Investigating Its Own CEO. Five points as of November 9, 2026: the board opens an independent investigation; Trump says the FBI is looking into it, scope not described; Huang admits an affair and will cooperate; the board says it has no reason to believe secrets were compromised; Congress requests a security briefing.",
+      caption: "Summary as of November 9, 2026. Each point is sourced in the article.",
+      // Text-only graphic made in-house; no photos, logos or likenesses.
+      credit: "Graphic: Tomorrow’s Tech AI Solutions",
+    },
     cta: {
       service: "private-on-site-ai",
       label: "Plan AI hardware with less supplier risk",
