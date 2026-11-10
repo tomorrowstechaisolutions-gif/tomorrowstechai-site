@@ -2,3 +2,53 @@
 @media(max-width:1250px){.kpis{grid-template-columns:repeat(3,1fr)}.attentionItems{grid-template-columns:repeat(2,1fr)}.attentionItems .attentionItem:nth-child(n+3){display:none}.previewRail{grid-template-columns:repeat(4,minmax(140px,1fr))}.analyticsKpis{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:980px){.layout{grid-template-columns:1fr}.sideColumn{position:static;grid-template-columns:repeat(2,1fr)}.sideColumn .sideCard:first-child{grid-row:span 2}.header{flex-direction:column}.header>div:last-child{justify-content:flex-start}.postGrid{grid-template-columns:repeat(2,1fr)}.usage article{grid-template-columns:1fr 1fr}.assetGrid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.attention{align-items:flex-start;flex-wrap:wrap}.attentionItems{grid-template-columns:1fr;width:100%}.attentionItem{border-left:0;border-top:1px solid var(--cc-line);padding:8px 0}.attentionItems .attentionItem:nth-child(n+3){display:none}.sideColumn{grid-template-columns:1fr}.filters{display:grid;grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.viewToggle{margin-left:0}.postGrid{grid-template-columns:1fr}.previewRail{display:flex}.previewRail article{min-width:160px}.analyticsKpis{grid-template-columns:repeat(2,1fr)}.chartGrid{grid-template-columns:1fr}.assetGrid{grid-template-columns:repeat(2,1fr)}.composer{grid-template-columns:1fr}.previews{border-left:0;border-top:1px solid var(--cc-line)}.row2{grid-template-columns:1fr}.platformPicker{grid-template-columns:repeat(2,1fr)}.agendaDay{grid-template-columns:48px 1fr}.agendaDay li{grid-template-columns:55px 40px 1fr}.agendaDay li>.platforms,.agendaDay li>.badge{display:none}.usage article{grid-template-columns:1fr}.header>div:last-child{display:grid;grid-template-columns:1fr 1fr;width:100%}.header>div:last-child>a{grid-column:1/-1}.engagementList article{grid-template-columns:28px 1fr}.engagementList article>form,.needsReply{grid-column:2}.modalBackdrop{padding:8px}.modal{max-height:calc(100vh - 16px)}}
+
+/* ── Accounts gallery ───────────────────────────────────────────── */
+.headActions{display:flex;gap:7px;align-items:center}
+.headActions form{margin:0}
+.avatar{border-radius:50%;object-fit:cover;flex:none;background:#0d1a26;border:1px solid var(--cc-line)}
+.avatarFallback{display:inline-grid;place-items:center;color:#9fdcff;font-weight:750;background:linear-gradient(145deg,#123146,#0b1724)}
+.avatarStack{display:flex;align-items:center;margin-top:4px}
+.avatarStack>*{margin-left:-6px;box-shadow:0 0 0 2px var(--cc-panel)}
+.avatarStack>*:first-child{margin-left:0}
+.avatarMore{display:inline-grid;place-items:center;height:22px;min-width:22px;padding:0 5px;border-radius:11px;background:#123146;color:#9fdcff;font-size:.56rem;font-weight:700}
+.accountRowLink{color:inherit;text-decoration:none;border-radius:7px;transition:background .15s}
+.accountRowLink:hover{background:#0e1b28}
+.brandGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.brandCard{background:linear-gradient(160deg,var(--cc-panel),#0a131c);border:1px solid var(--cc-line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
+.brandCard:hover{border-color:#1f6d99;transform:translateY(-1px)}
+.brandCover{position:relative;height:92px;background:radial-gradient(120% 140% at 0% 0%,#0f4a6b 0%,#0b2233 45%,#081119 100%);background-size:cover;background-position:center}
+.brandCover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,12,18,0) 35%,rgba(6,12,18,.85))}
+.brandFollowers{position:absolute;right:9px;top:8px;z-index:1;background:rgba(5,12,19,.72);border:1px solid rgba(64,170,230,.35);color:#cdeeff;font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:20px;backdrop-filter:blur(4px)}
+.brandBody{position:relative;padding:0 12px 12px;display:grid;gap:10px;flex:1}
+.brandAvatar{margin-top:-28px;position:relative;z-index:1;border:3px solid #0b1520;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.brandTitle{margin-top:-4px}
+.brandTitle b{display:block;font-size:.84rem;letter-spacing:-.01em}
+.brandTitle small{color:var(--cc-faint);font-size:.62rem}
+.brandLinks{display:flex;flex-wrap:wrap;gap:6px}
+.brandLinks a,.brandLinks span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--cc-line);background:#0b1620;border-radius:20px;padding:3px 9px 3px 3px;font-size:.64rem;color:var(--cc-text);text-decoration:none;max-width:100%}
+.brandLinks a:hover{border-color:#2782b7;background:#0f2232}
+.brandLinks span span{border:0;padding:0;background:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brandLinks em{font-style:normal;color:#4addaa;font-weight:700}
+.brandLinks i{font-style:normal;color:#37b8fa}
+.thumbStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.thumb{position:relative;display:block;aspect-ratio:1;border-radius:7px;overflow:hidden;background:#0d1a26;border:1px solid var(--cc-line-soft)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+.thumb:hover img{transform:scale(1.05)}
+.thumbBadge{position:absolute;left:4px;bottom:4px;transform:scale(.8);transform-origin:left bottom}
+.thumbPlay{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.9rem;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.thumbEmpty{border:1px dashed var(--cc-line);border-radius:8px;padding:16px 10px;text-align:center;color:var(--cc-faint);font-size:.64rem}
+.brandBody>button{margin-top:auto;width:100%}
+
+/* ── Composer account picker ───────────────────────────────────── */
+.composerLabel{font-size:.72rem;font-weight:650;color:var(--cc-text)}
+.composerLabel small{color:var(--cc-faint);font-weight:500;margin-left:6px}
+.accountPicker{display:grid;gap:7px;max-height:260px;overflow:auto;padding-right:3px}
+.pickerBrand{border:1px solid var(--cc-line);border-radius:9px;padding:7px;background:#0a141e}
+.pickerBrandHead{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.pickerBrandHead b{font-size:.7rem}
+.pickerAccounts{display:flex;flex-wrap:wrap;gap:6px}
+.pickerAccounts label{display:flex;align-items:center;gap:6px;border:1px solid var(--cc-line);padding:5px 8px;border-radius:7px;cursor:pointer;font-size:.66rem}
+.pickerAccounts input{width:auto;min-height:0}
+.draftPlatforms summary{font-size:.66rem;color:var(--cc-muted);cursor:pointer;margin-bottom:6px}
+@media(max-width:720px){.brandGrid{grid-template-columns:1fr}.headActions{flex-wrap:wrap}}

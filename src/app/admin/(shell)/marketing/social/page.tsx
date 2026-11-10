@@ -6,7 +6,7 @@ import SocialCenter from "@/components/admin/cc/social/SocialCenter";
 
 export const dynamic = "force-dynamic";
 
-const tabs: SocialFilters["tab"][] = ["queue", "calendar", "analytics", "engagement", "media", "automations"];
+const tabs: SocialFilters["tab"][] = ["queue", "accounts", "calendar", "analytics", "engagement", "media", "automations"];
 
 function scalar(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;

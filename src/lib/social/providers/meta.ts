@@ -73,6 +73,11 @@ async function graph<T>(path: string, init?: { method?: "GET" | "POST"; params?:
   return json;
 }
 
+/** Read-only Graph GET, used by the profile sync. */
+export function metaGet<T>(path: string, params: Record<string, string>): Promise<T> {
+  return graph<T>(path, { params });
+}
+
 type Page = {
   id: string;
   name: string;

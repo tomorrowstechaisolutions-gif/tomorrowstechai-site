@@ -4,8 +4,10 @@ import { getAdminUser } from "@/lib/supabase/server";
 import { isSocialProvider, socialRedirectUri } from "@/lib/social/oauth";
 import { connectLinkedIn } from "@/lib/social/providers/linkedin";
 import { connectMeta } from "@/lib/social/providers/meta";
+import { syncSocialProfiles } from "@/lib/social/sync";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * Where Meta / LinkedIn send the browser back. A token is stored only when the
@@ -44,6 +46,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const connected = provider === "meta"
       ? await connectMeta(code, redirectUri, customerId || null, actor)
       : await connectLinkedIn(code, redirectUri, customerId || null, actor);
+    // Pull avatars, covers and recent posts right away so the Accounts tab
+    // isn't empty on first look. Never fails the connection.
+    if (provider === "meta") await syncSocialProfiles({ staleHours: 0, limit: 40 }).catch(() => null);
     revalidatePath("/admin/marketing/social");
     return back("notice", `Connected ${connected.join(" · ")}`);
   } catch (error) {

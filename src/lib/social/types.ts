@@ -13,8 +13,18 @@ export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   youtube: "YouTube",
 };
 
+/** One recent post, as synced from the platform for the Accounts gallery. */
+export type SocialMediaItem = {
+  id: string;
+  image: string | null;
+  url: string | null;
+  caption: string | null;
+  at: string | null;
+  type: "image" | "video" | "carousel" | "text";
+};
+
 export type SocialFilters = {
-  tab: "queue" | "calendar" | "analytics" | "engagement" | "media" | "automations";
+  tab: "queue" | "accounts" | "calendar" | "analytics" | "engagement" | "media" | "automations";
   q?: string;
   client?: string;
   platform?: string;
@@ -49,6 +59,14 @@ export type SocialAccountRow = {
   engagements: number | null;
   clicks: number | null;
   connectionError: string | null;
+  externalId: string | null;
+  /** For Instagram: the Facebook Page it is linked to. */
+  externalPageId: string | null;
+  profileImageUrl: string | null;
+  coverImageUrl: string | null;
+  profileUrl: string | null;
+  mediaCount: number | null;
+  recentMedia: SocialMediaItem[];
 };
 
 export type SocialPostRow = {

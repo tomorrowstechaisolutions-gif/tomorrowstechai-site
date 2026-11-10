@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { publishDueSocialPosts } from "@/lib/social/publisher";
+import { syncSocialProfiles } from "@/lib/social/sync";
 import { SOCIAL_PLATFORMS, type SocialPlatform } from "@/lib/social/types";
 
 const SOCIAL = "/admin/marketing/social";
@@ -54,8 +55,12 @@ export async function createSocialPostAction(fd: FormData) {
   const customerId = str(fd, "customer_id", 40) || null;
   const title = str(fd, "title", 180);
   const body = str(fd, "body", 10000);
-  const platforms = values(fd, "platforms").filter((value): value is SocialPlatform => SOCIAL_PLATFORMS.includes(value as SocialPlatform));
-  if (!title || !body || platforms.length === 0) go("A title, caption, and at least one platform are required.", true);
+  // Destinations are chosen as specific accounts ("Held" Page, "@myheldapp").
+  // A client can own several Pages, so a bare platform is never enough to know
+  // where a post goes. Platforms without a connected account may still be
+  // picked for a draft.
+  const accountIds = values(fd, "account_ids").slice(0, 20);
+  const draftPlatforms = values(fd, "platforms").filter((value): value is SocialPlatform => SOCIAL_PLATFORMS.includes(value as SocialPlatform));
 
   const intent = str(fd, "publish_intent", 20);
   const approvalType = ["internal", "client"].includes(str(fd, "approval_type", 20)) ? str(fd, "approval_type", 20) : "none";
@@ -63,15 +68,23 @@ export async function createSocialPostAction(fd: FormData) {
   const scheduledAt = scheduledRaw ? new Date(scheduledRaw) : null;
   if (scheduledAt && Number.isNaN(scheduledAt.getTime())) go("Choose a valid publishing date and time.", true);
 
-  let accountQuery = supabase
-    .from("social_accounts")
-    .select("id, platform, connected, status, posting_enabled")
-    .in("platform", platforms);
-  accountQuery = customerId ? accountQuery.eq("customer_id", customerId) : accountQuery.is("customer_id", null);
-  const { data: accountRows, error: accountError } = await accountQuery;
-  if (accountError) go(accountError.message, true);
-
-  const accountByPlatform = new Map((accountRows ?? []).map((row) => [row.platform, row]));
+  let accountRows: Array<{ id: string; platform: string; connected: boolean; status: string; posting_enabled: boolean }> = [];
+  if (accountIds.length) {
+    const { data, error: accountError } = await supabase
+      .from("social_accounts")
+      .select("id, platform, connected, status, posting_enabled, customer_id")
+      .in("id", accountIds);
+    if (accountError) go(accountError.message, true);
+    accountRows = data ?? [];
+  }
+  const seen = new Set<string>();
+  for (const row of accountRows) {
+    if (seen.has(row.platform)) go(`Pick one ${row.platform} account per post. Create a second post for the other one.`, true);
+    seen.add(row.platform);
+  }
+  const accountByPlatform = new Map(accountRows.map((row) => [row.platform, row]));
+  const platforms = [...new Set([...accountRows.map((row) => row.platform as SocialPlatform), ...draftPlatforms.filter((p) => !accountByPlatform.has(p))])];
+  if (!title || !body || platforms.length === 0) go("A title, caption, and at least one account or platform are required.", true);
   const wantsDelivery = intent === "schedule" || intent === "publish_now";
   if (wantsDelivery) {
     const unavailable = platforms.filter((platform) => {
@@ -170,6 +183,23 @@ export async function registerSocialAccountAction(fd: FormData) {
   if (error || !data) go(error?.message || "The account could not be registered.", true);
   await activity(supabase, { event_type: "account_registered", actor, customer_id: customerId, account_id: data.id, platform, detail: `${platform} account registered; OAuth not configured.` });
   go("Account registered. OAuth connection is not configured yet.");
+}
+
+export async function refreshSocialProfilesAction() {
+  await requireAdmin();
+  let message: string;
+  let failed = false;
+  try {
+    const result = await syncSocialProfiles({ staleHours: 0, limit: 60 });
+    failed = result.failed > 0;
+    message = failed
+      ? `Refreshed ${result.synced} accounts; ${result.failed} failed: ${result.errors.slice(0, 2).join(" · ")}`.slice(0, 500)
+      : `Refreshed ${result.synced} accounts.`;
+  } catch (cause) {
+    failed = true;
+    message = `Refresh failed: ${cause instanceof Error ? cause.message : "unknown error"}`;
+  }
+  go(message, failed);
 }
 
 export async function reviewSocialPostAction(fd: FormData) {

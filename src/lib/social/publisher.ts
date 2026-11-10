@@ -57,7 +57,11 @@ async function mediaUrlFor(post: PostRow): Promise<string | null> {
   return data.signedUrl;
 }
 
-/** Finds the connected account for a destination that was saved before the account was connected. */
+/**
+ * Finds the account for a destination saved before an account was chosen.
+ * Only when exactly ONE connected account exists for that client + platform:
+ * with several Pages, guessing could post to the wrong brand.
+ */
 async function fallbackAccount(platform: SocialPlatform, customerId: string | null): Promise<AccountRow | null> {
   let query = supabaseAdmin()
     .from("social_accounts")
@@ -67,8 +71,8 @@ async function fallbackAccount(platform: SocialPlatform, customerId: string | nu
     .eq("status", "connected")
     .eq("posting_enabled", true);
   query = customerId ? query.eq("customer_id", customerId) : query.is("customer_id", null);
-  const { data } = await query.order("updated_at", { ascending: false }).limit(1).maybeSingle();
-  return (data as AccountRow | null) ?? null;
+  const { data } = await query.limit(2);
+  return data?.length === 1 ? (data[0] as AccountRow) : null;
 }
 
 /**
@@ -128,7 +132,7 @@ export async function publishDueSocialPosts(limit = 20, options: { postId?: stri
     try {
       const adapter = publishers[platform];
       if (!adapter) throw new Error(`${platform.replace("_", " ")} publishing isn't available yet. Facebook, Instagram, and LinkedIn are live.`);
-      if (!account?.external_id) throw new Error(`No connected ${platform} account. Connect it in Social Center, then retry.`);
+      if (!account?.external_id) throw new Error(`No ${platform} account chosen for this post. Edit it, pick which account to post as, then retry.`);
 
       const stored = await readAccountToken(account.id);
       const accessToken = platform === "linkedin" ? await linkedinToken(account.id, stored) : stored.accessToken;
