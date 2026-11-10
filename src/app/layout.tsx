@@ -11,6 +11,7 @@ import { ChromeGate, MarketingWidgetGate } from "@/components/ChromeGate";
 import { MetaPixel } from "@/components/MetaPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -277,6 +278,7 @@ export default function RootLayout({
           />
         </MarketingWidgetGate>
         <SpeedInsights />
+        <SiteAnalytics />
       </body>
       <GoogleAnalytics gaId="G-1N0MZPDTF5" />
     </html>

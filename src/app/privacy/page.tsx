@@ -24,7 +24,7 @@ export default function PrivacyPage() {
           Plain-English privacy.
         </h1>
         <p className="text-xl text-[color:var(--color-text-secondary)] leading-relaxed">
-          Last updated: May 20, 2026. We keep this short, specific, and honest.
+          Last updated: November 9, 2026. We keep this short, specific, and honest.
         </p>
       </section>
 
@@ -104,7 +104,10 @@ export default function PrivacyPage() {
           <ul>
             <li>
               <strong>Vercel</strong> — hosts the website and handles
-              encrypted-in-transit (HTTPS) delivery.
+              encrypted-in-transit (HTTPS) delivery. Vercel Web Analytics and
+              Speed Insights count page views and measure page speed without
+              cookies: they don&apos;t store anything on your device, don&apos;t
+              build a profile of you, and don&apos;t follow you to other sites.
             </li>
             <li>
               <strong>Resend</strong> — delivers email from our contact form

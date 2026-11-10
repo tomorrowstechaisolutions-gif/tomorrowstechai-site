@@ -147,7 +147,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     head: "Intelligence",
     links: [
-      { href: "/admin/intelligence", label: "Analytics", icon: IconChart, soon: true },
+      { href: "/admin/intelligence", label: "Analytics", icon: IconChart },
       { href: "/admin/intelligence/leads", label: "Lead analytics", icon: IconFunnel, soon: true },
       { href: "/admin/ai/insights", label: "AI insights", icon: IconSpark, soon: true },
     ],
@@ -232,12 +232,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Everything the business pays for. Ad spend is tracked separately and added on top so it is never double-counted.",
     nearest: { href: "/admin/marketing/spend", label: "Open ad spend" },
-  },
-  "/admin/intelligence": {
-    title: "Analytics",
-    blurb:
-      "Website, lead, social and advertising analytics in one place. Website visitor counts need a server-side analytics connection first.",
-    nearest: { href: "/admin", label: "See what is measured today" },
   },
   "/admin/intelligence/leads": {
     title: "Lead analytics",
