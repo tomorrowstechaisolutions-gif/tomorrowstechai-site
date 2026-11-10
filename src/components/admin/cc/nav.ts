@@ -139,7 +139,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     head: "Finance",
     links: [
-      { href: "/admin/finance", label: "Overview", icon: IconDollar, soon: true },
+      { href: "/admin/finance", label: "Overview", icon: IconDollar },
       { href: "/admin/finance/subscriptions", label: "Subscriptions", icon: IconRepeat, soon: true },
       { href: "/admin/finance/expenses", label: "Expenses", icon: IconCart, soon: true },
     ],

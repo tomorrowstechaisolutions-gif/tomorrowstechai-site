@@ -1,0 +1,55 @@
+/* Finance overview. Series colours validated on the dark panel #111823:
+   revenue #0891D1, expenses #E84D8A (CVD ΔE 12.2, normal ΔE 29.5). */
+.chartWrap { position: relative; }
+.legend { display: flex; gap: 16px; font-size: .72rem; color: var(--cc-muted); margin: 0 0 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; }
+.swRevenue { background: #0891D1; }
+.swExpenses { background: #E84D8A; }
+.swNet { height: 2px !important; background: var(--cc-text); }
+
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.grid { stroke: var(--cc-line-soft); stroke-width: 1; }
+.zero { stroke: var(--cc-line); stroke-width: 1; }
+.axisText { fill: var(--cc-faint); font-size: 10px; font-variant-numeric: tabular-nums; }
+.barRevenue { fill: #0891D1; }
+.barExpenses { fill: #E84D8A; }
+.netLine { fill: none; stroke: var(--cc-text); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.netDot { fill: var(--cc-text); stroke: #111823; stroke-width: 2; }
+
+.hit { outline: none; cursor: default; }
+.hitRect { fill: transparent; }
+.crosshair { stroke: var(--cc-accent); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; }
+.tip { opacity: 0; pointer-events: none; transition: opacity .12s; }
+.hit:hover .tip, .hit:focus .tip, .hit:hover .crosshair, .hit:focus .crosshair { opacity: 1; }
+.tipBox { fill: #0B1622; stroke: var(--cc-line); }
+.tipHead { fill: var(--cc-text); font-size: 11px; font-weight: 700; }
+.tipText { fill: var(--cc-muted); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.tipRev { fill: #0891D1; }
+.tipExp { fill: #E84D8A; }
+
+.chartEmpty { margin: 8px 0 0; font-size: .74rem; color: var(--cc-faint); text-align: center; }
+.table { margin-top: 10px; font-size: .72rem; }
+.table summary { cursor: pointer; color: var(--cc-muted); }
+.table table { width: 100%; border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.table th, .table td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--cc-line-soft); }
+.table th:first-child, .table td:first-child { text-align: left; }
+.table th { color: var(--cc-faint); font-weight: 600; }
+.neg { color: #FB7185; }
+
+/* Lists */
+.rows { display: grid; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--cc-line-soft); color: inherit; text-decoration: none; }
+.row:last-child { border-bottom: 0; }
+a.row:hover { background: rgba(56, 189, 248, .04); }
+.row b { display: block; font-size: .8rem; font-weight: 600; }
+.row small { display: block; font-size: .7rem; color: var(--cc-faint); margin-top: 2px; }
+.amount { font-variant-numeric: tabular-nums; font-weight: 700; font-size: .82rem; text-align: right; }
+.in { color: #4ADDAA; }
+.out { color: var(--cc-text); }
+.flag { display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; font-size: .68rem; color: #FBBF24; }
+.flag::before { content: "▲"; font-size: .55rem; }
+.late { color: #FB7185; }
+.note { font-size: .7rem; color: var(--cc-faint); line-height: 1.6; margin: 14px 0 0; }
+.note b { color: var(--cc-muted); font-weight: 600; }
+.amount small { display: inline; font-size: .66rem; color: var(--cc-faint); font-weight: 500; margin: 0 0 0 1px; }
