@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { LeadForm } from "@/components/business-launch/LeadForm";
 import { CampaignTracking } from "@/components/business-launch/CampaignTracking";
 import { ContactAction } from "@/components/business-launch/ContactAction";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import {
   FAQ,
   HOSTING_FROM,
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "A professional 5-page website plus the tools to capture leads, book customers and take payments — $399 one-time. Hosting from $29/month.",
   alternates: { canonical: "/business-launch" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "Launch Your Business Online for $399 · Tomorrow’s Tech AI",
     description:
       "More than a website. It's your business command center. $399 one-time, hosting from $29/month.",

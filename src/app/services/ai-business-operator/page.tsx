@@ -22,6 +22,7 @@ import {
 } from "@/components/Icons";
 import styles from "./operator.module.css";
 import { loadPublicPackages } from "@/lib/catalog/public";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata: Metadata = {
   title: "AI Business Operator | Business Automation",
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
     "AI business systems",
   ],
   alternates: { canonical: "/services/ai-business-operator" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "AI Business Operator | Tomorrow’s Tech AI",
     description:
       "A managed AI operating system that captures leads, follows up, books appointments and keeps your service business moving.",

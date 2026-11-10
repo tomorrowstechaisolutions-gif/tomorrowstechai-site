@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata = {
   title:
@@ -16,7 +17,7 @@ export const metadata = {
     "Google review automation contractors",
   ],
   alternates: { canonical: "/job-catcher" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "Job Catcher — Never Lose Another Job to a Missed Call",
     description:
       "Custom missed-call text responses, lead alerts, follow-up, and review workflows for Central Texas contractors. Fully configured and managed for $350/month.",

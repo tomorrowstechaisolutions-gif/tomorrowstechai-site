@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getArticlesInCategory, getListedArticles } from "@/lib/blog/repository";
 import { jsonLd } from "@/lib/blog/structured-data";
-import { CATEGORIES, PUBLICATION_NAME, SITE_URL, categoryPath, getCategory, isCategorySlug } from "@/lib/blog/taxonomy";
+import { CATEGORIES, PUBLICATION_NAME, PUBLISHER_NAME, SITE_URL, categoryPath, getCategory, isCategorySlug } from "@/lib/blog/taxonomy";
 import type { CategorySlug } from "@/lib/blog/types";
 import {
   CategoryBar,
@@ -16,6 +16,7 @@ import {
 import { FieldNotesTracking } from "@/components/blog/FieldNotesTracking";
 import "../../field-notes-article.css";
 import "../../field-notes-front.css";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const dynamicParams = false;
 
@@ -31,14 +32,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const url = `${SITE_URL}${categoryPath(slug)}`;
   return {
     title: `${c.name} · ${PUBLICATION_NAME}`,
-    description: c.description,
+    // Search snippets want roughly 120–160 characters; the section dek alone is short.
+    description: `${c.description} ${PUBLICATION_NAME} articles from ${PUBLISHER_NAME}.`,
     alternates: {
       canonical: url,
       types: { "application/rss+xml": [{ url: "/blog/feed.xml", title: "Field Notes" }] },
     },
     // An empty section is thin content; keep it out of search until it has articles.
     ...(count === 0 ? { robots: { index: false, follow: true } } : {}),
-    openGraph: {
+    openGraph: { images: [DEFAULT_OG_IMAGE],
       title: `${c.name} · Field Notes · Tomorrow’s Tech AI`,
       description: c.description,
       url,

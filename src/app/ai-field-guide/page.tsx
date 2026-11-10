@@ -1,13 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata = {
   title: "Your Best Next Hire Is AI · Free Field Guide",
   description:
     "Free 6-page field guide for business owners — a plain-English playbook for using AI to grow your business. What to hand off first, how to start in a week, and the prompts that actually move the needle. No hype. No code.",
   alternates: { canonical: "/ai-field-guide" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "Your Best Next Hire Is AI · Tomorrow’s Tech AI",
     description:
       "Free 6-page field guide. Plain English. No code. By Friday you can have a real AI workflow running for your business.",

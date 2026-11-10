@@ -10,7 +10,7 @@ const PUBLISHER = {
   "@type": "Organization",
   name: PUBLISHER_NAME,
   url: SITE_URL,
-  logo: { "@type": "ImageObject", url: `${SITE_URL}/icon.svg` },
+  logo: { "@type": "ImageObject", url: `${SITE_URL}/icon-512.png`, width: 512, height: 512 },
 };
 
 const BLOG_URL = `${SITE_URL}/blog`;

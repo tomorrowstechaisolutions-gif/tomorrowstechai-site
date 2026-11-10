@@ -29,6 +29,8 @@ export async function generateStaticParams() {
   return (await getReachableArticles()).map((a) => ({ slug: a.slug }));
 }
 
+const TITLE_SUFFIX = " · Tomorrow’s Tech AI";
+
 export async function generateMetadata({
   params,
 }: {
@@ -37,7 +39,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = await getArticle(slug);
   if (!article) return { title: "Not found" };
-  const title = article.seo?.title ?? article.title;
+  // Search results show about 60 characters. Keep the site suffix only when it
+  // fits; social cards get the full headline, which reads better there.
+  const searchTitle = article.seo?.title ?? article.title;
+  const title = `${searchTitle}${TITLE_SUFFIX}`.length <= 60 ? searchTitle : { absolute: searchTitle };
+  const socialTitle = article.title;
   const description = article.seo?.description ?? article.summary;
   const image = article.hero
     ? article.hero.src.startsWith("http")
@@ -56,7 +62,7 @@ export async function generateMetadata({
     // Only set when needed: an explicit undefined replaces the site-wide robots tags.
     ...(hidden ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       type: "article",
       url: article.url,
@@ -70,7 +76,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: socialTitle,
       description,
       images: image ? [image] : undefined,
     },

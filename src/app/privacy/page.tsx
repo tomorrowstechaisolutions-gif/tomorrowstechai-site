@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata = {
   title: "Privacy Policy",
   description:
     "How Tomorrow’s Tech AI collects, uses, and protects your information. Plain-English privacy practices.",
   alternates: { canonical: "/privacy" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "Privacy Policy · Tomorrow’s Tech AI",
     description:
       "How Tomorrow’s Tech AI collects, uses, and protects your information.",

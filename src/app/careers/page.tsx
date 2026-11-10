@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata = {
   title: "Careers",
   description:
     "Join Tomorrow’s Tech AI. Explore openings in sales and customer service or full-stack development.",
   alternates: { canonical: "/careers" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "Careers · Tomorrow’s Tech AI",
     description:
       "Help build and support the systems modern businesses run on. See current openings at Tomorrow’s Tech AI.",

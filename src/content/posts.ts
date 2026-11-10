@@ -40,9 +40,9 @@ export const fileArticles: FileArticle[] = [
     category: "ai-news",
     secondaryCategories: ["hardware"],
     seo: {
-      title: "Nvidia's CEO Investigation: What It Means for AI Hardware Buyers",
+      title: "Nvidia's CEO Probe: What It Means for AI Hardware Buyers",
       description:
-        "Nvidia's board is investigating whether CEO Jensen Huang was targeted by foreign intelligence. What's confirmed, what's alleged, and what it means for businesses.",
+        "Nvidia's board is investigating whether CEO Jensen Huang was targeted by foreign intelligence. What's confirmed, what's alleged, and what it means for buyers.",
     },
     summary:
       "Nvidia's board has opened an independent investigation into reports that CEO Jensen Huang was the target of a foreign intelligence effort. Here's what's confirmed, what's only alleged, and the lessons for businesses that depend on one supplier, or one leader.",
@@ -252,7 +252,7 @@ The story will keep moving. We'll update this article when the investigation, Nv
     category: "ai-news",
     secondaryCategories: ["business-automation"],
     seo: {
-      title: "Smartsheet vsActual: AI Agents That Watch for Execution Drift",
+      title: "Smartsheet vsActual: AI Agents That Catch Execution Drift",
       description:
         "Smartsheet's new vsActual uses AI agents to flag when work drifts from the plan. What was announced, what's still unclear, and what operators should ask first.",
     },
@@ -668,9 +668,9 @@ Tomorrow's Tech AI builds software, workflow automation and AI tools for telecom
     secondaryCategories: ["hardware"],
     featured: true,
     seo: {
-      title: "A Lawyer Built His Own Private AI Server: What It Means for Business",
+      title: "A Lawyer Built His Own Private AI Server. Why It Matters",
       description:
-        "A South Carolina trial lawyer runs a large open AI model on eight used NVIDIA V100 GPUs so case files stay in his office. What it cost, how it performs, and what it means for any business with data it can't share.",
+        "A trial lawyer runs a large open AI model on eight used NVIDIA V100 GPUs so case files never leave his office. What it cost, and what it means for business.",
     },
     summary:
       "A South Carolina trial lawyer turned eight used data-center GPUs into an AI server that reads his case files without sending them anywhere. The build is rough around the edges. The idea behind it applies to any business with information it can't afford to share.",
@@ -864,6 +864,11 @@ Tomorrow's Tech AI designs and builds private AI systems for businesses that nee
     status: "published",
     publishedAt: "2026-05-20",
     category: "industry-insights",
+    seo: {
+      title: "3 Numbers Every EMS Fleet Director Should Know",
+      description:
+        "Most fleet software was built for trucking, not ambulances. The operational reality of running an EMS service, and what changes with software built for it.",
+    },
     authorId: "john-hockinson",
     legacy: true,
     summary:
@@ -971,6 +976,11 @@ Built by operators who carried the radio.`,
     status: "published",
     publishedAt: "2026-05-19",
     category: "business-automation",
+    seo: {
+      title: "Claude MCP for Smartsheet: The Tool I Wish I'd Had",
+      description:
+        "For two decades my job was finding the answer hidden in the spreadsheet. Claude's MCP integration changes what's possible for teams running on Smartsheet.",
+    },
     authorId: "john-hockinson",
     legacy: true,
     summary:
@@ -1160,6 +1170,11 @@ That is why broken workflows should not be treated like minor annoyances. In man
     status: "published",
     publishedAt: "2026-03-12",
     category: "industry-insights",
+    seo: {
+      title: "Why Companies Need a Command Center, Not More Software",
+      description:
+        "Most companies assume the fix for operational problems is another tool. Usually the real issue is a business too scattered to see clearly.",
+    },
     authorId: "john-hockinson",
     legacy: true,
     summary:
@@ -1204,6 +1219,10 @@ In a lot of cases, what the business really needs is a command center built arou
     status: "published",
     publishedAt: "2025-02-04",
     category: "technology-guides",
+    seo: {
+      description:
+        "Too many companies dive into AI without a clear strategy. The biggest mistake is adopting AI without a business-driven plan. AI should solve real problems.",
+    },
     authorId: "john-hockinson",
     legacy: true,
     summary:
@@ -1273,6 +1292,11 @@ If you're looking to future-proof your business with AI, let's talk.`,
     status: "published",
     publishedAt: "2025-02-03",
     category: "industry-insights",
+    seo: {
+      title: "Why AI in Business and Project Management Isn't Optional",
+      description:
+        "AI is changing project management and how startups compete. Companies slow to adopt will be outpaced by competitors who embrace it early.",
+    },
     authorId: "john-hockinson",
     legacy: true,
     summary:

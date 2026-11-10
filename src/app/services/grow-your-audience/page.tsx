@@ -5,6 +5,7 @@ import { MarketingProcess } from "@/components/grow-audience/MarketingProcess";
 import { MarketingPricing } from "@/components/grow-audience/MarketingPricing";
 import { MarketingCTA } from "@/components/grow-audience/MarketingCTA";
 import styles from "@/components/grow-audience/growAudience.module.css";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 const TITLE = "Social Media & Business Growth Services | Tomorrow’s Tech AI";
 const DESCRIPTION =
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: "/services/grow-your-audience" },
-  openGraph: {
+  openGraph: { images: [DEFAULT_OG_IMAGE],
     title: TITLE,
     description:
       "Social media, content, campaigns, lead generation and reputation — managed from one platform.",
