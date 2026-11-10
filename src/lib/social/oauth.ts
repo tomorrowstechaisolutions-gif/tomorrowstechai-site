@@ -14,8 +14,11 @@ export function isSocialProvider(value: string): value is SocialProvider {
 export function socialRedirectUri(provider: SocialProvider, origin: string): string {
   const explicit = provider === "meta" ? process.env.META_REDIRECT_URI : process.env.LINKEDIN_REDIRECT_URI;
   if (explicit) return explicit;
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || origin).replace(/\/+$/, "");
-  return `${base}/api/social/oauth/${provider}/callback`;
+  // Use the host this request was actually served on (www in production), not
+  // NEXT_PUBLIC_SITE_URL: that is the apex, which 308s to www and would not
+  // match the URL registered with the provider. Start and callback both run on
+  // the same host, so the value sent in both legs of the exchange is identical.
+  return `${origin.replace(/\/+$/, "")}/api/social/oauth/${provider}/callback`;
 }
 
 export function providerConfigured(provider: SocialProvider): boolean {
