@@ -52,3 +52,7 @@
 .pickerAccounts input{width:auto;min-height:0}
 .draftPlatforms summary{font-size:.66rem;color:var(--cc-muted);cursor:pointer;margin-bottom:6px}
 @media(max-width:720px){.brandGrid{grid-template-columns:1fr}.headActions{flex-wrap:wrap}}
+/* Sidebar rows force spans to display:block; keep the avatar stack inline. */
+.accountRow .avatarStack{display:flex;flex-wrap:nowrap;margin-top:5px}
+.accountRow .avatarStack>.avatar,.accountRow .avatarStack>.avatarMore{display:inline-grid;margin-top:0;flex:none}
+.accountRow .avatarMore{width:auto;color:#9fdcff;font-size:.56rem}
