@@ -5,7 +5,7 @@ import { LazyYouTube } from "@/components/LazyYouTube";
 export const metadata = {
   title: "Work",
   description:
-    "Storyborn, business operating platforms, fiber construction software, command centers, storefronts, contractor automation, websites, and client systems built by Tomorrow’s Tech AI.",
+    "Storyborn, SplicePoint, business operating platforms, command centers, storefronts, contractor automation and client systems built by Tomorrow’s Tech AI.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Work · Tomorrow’s Tech AI",

@@ -29,9 +29,9 @@ import { InitiativeForms } from "./InitiativeForms";
 import styles from "./initiative.module.css";
 
 export const metadata: Metadata = {
-  title: { absolute: "Central Texas AI Business Modernization Initiative | Tomorrow’s Tech AI" },
+  title: { absolute: "Central Texas AI Business Modernization Initiative" },
   description:
-    "The Central Texas AI Business Modernization Initiative helps small and rural businesses explore practical AI, automation, digital modernization, and workforce training opportunities.",
+    "Helping small and rural Central Texas businesses explore practical AI, automation, digital modernization and workforce training opportunities.",
   alternates: { canonical: "/central-texas-ai" },
   openGraph: {
     title: "Central Texas AI Business Modernization Initiative",

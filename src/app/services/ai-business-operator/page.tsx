@@ -25,9 +25,9 @@ import { loadPublicPackages } from "@/lib/catalog/public";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata: Metadata = {
-  title: "AI Business Operator | Business Automation",
+  title: { absolute: "AI Business Operator | AI Business Automation" },
   description:
-    "Tomorrow’s Tech AI installs and manages AI-powered systems for service businesses, including lead capture, automated follow-up, appointment booking, CRM, reviews, customer communication and business automation.",
+    "We install and manage AI systems for service businesses: lead capture, automated follow-up, appointment booking, CRM, reviews and customer communication.",
   keywords: [
     "AI business automation",
     "AI for small business",

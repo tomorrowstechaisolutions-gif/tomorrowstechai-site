@@ -9,7 +9,7 @@ import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 const TITLE = "Social Media & Business Growth Services | Tomorrow’s Tech AI";
 const DESCRIPTION =
-  "Grow your audience with managed social media, professional content, campaigns, lead generation, reputation management, automation and AI-powered marketing from Tomorrow’s Tech AI.";
+  "Grow your audience with managed social media, content, campaigns, lead generation, reputation management and AI-powered marketing from Tomorrow’s Tech AI.";
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },

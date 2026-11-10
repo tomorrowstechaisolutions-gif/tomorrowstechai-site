@@ -17,9 +17,9 @@ import {
 import { StudioPreview } from "@/components/logo-studio/StudioPreview";
 
 export const metadata: Metadata = {
-  title: "Logo Studio — AI logo maker, professionally refined",
+  title: { absolute: "Logo Studio — AI logo maker, professionally refined" },
   description:
-    "Create a logo in minutes with our AI, then let our designers perfect it. Vector files, brand colours, typography and a full brand kit — plus the option to grow it into a complete business system.",
+    "Create a logo in minutes with our AI, then let our designers perfect it. Vector files, brand colours, typography and a full brand kit.",
   alternates: { canonical: "/logo-studio" },
   openGraph: {
     title: "Tomorrow’s Tech Logo Studio — AI logo maker, professionally refined",

@@ -4,7 +4,7 @@ import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 export const metadata = {
   title: "Terms of Service",
   description:
-    "The terms under which you may use the Tomorrow’s Tech AI website and our services.",
+    "The terms under which you may use the Tomorrow’s Tech AI website and our services. Please read them before using the site or buying a service.",
   alternates: { canonical: "/terms" },
   openGraph: { images: [DEFAULT_OG_IMAGE],
     title: "Terms of Service · Tomorrow’s Tech AI",

@@ -8,7 +8,7 @@ import { catalogPrice } from "@/lib/catalog/types";
 
 export const metadata: Metadata = {
   title: { absolute: "Business Technology Services | Tomorrow’s Tech AI" },
-  description: "Explore Tomorrow’s Tech AI services including AI business automation, business operating platforms, command centers, workflow automation, professional websites, e-commerce, and custom business systems.",
+  description: "Tomorrow’s Tech AI services: AI business automation, operating platforms, command centers, workflow automation, websites, e-commerce and custom systems.",
   alternates: { canonical: "/services" },
   openGraph: { title: "Business Technology Services | Tomorrow’s Tech AI", description: "Websites, AI automation, command centers and custom operating platforms built around your business.", url: "https://www.tomorrowstechai.com/services", type: "website" },
 };

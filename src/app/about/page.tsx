@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata = {
   title: "About",
   description:
-    "Meet John Hockinson, founder of Tomorrow’s Tech AI—an operations veteran with 18 years inside telecom, construction, and infrastructure programs, now building the systems he wished existed.",
+    "Meet John Hockinson, founder of Tomorrow’s Tech AI: 18 years inside telecom, construction and infrastructure programs, building the systems he wished existed.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About · Tomorrow’s Tech AI",

@@ -3,10 +3,9 @@ import Image from "next/image";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata = {
-  title:
-    "Job Catcher — Missed Call Text Back for Contractors | Temple, Belton & Killeen TX",
+  title: { absolute: "Job Catcher: Missed Call Text Back for Temple TX Contractors" },
   description:
-    "Job Catcher connects to a contractor's business line and sends custom missed-call responses while the crew is busy. Built and managed for roofers, HVAC, plumbers, fence and concrete crews in Central Texas. $350/month. Free 2-week pilot.",
+    "Job Catcher texts back missed callers for roofers, HVAC, plumbers, fence and concrete crews in Central Texas. Managed for $350/month. Free 2-week pilot.",
   keywords: [
     "missed call text back",
     "contractor answering service Temple TX",

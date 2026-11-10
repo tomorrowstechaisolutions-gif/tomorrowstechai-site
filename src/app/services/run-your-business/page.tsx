@@ -6,7 +6,7 @@ import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
 export const metadata: Metadata = {
   title: { absolute: "Custom Business Management Software | Tomorrow’s Tech AI" },
-  description: "Run your business from one custom platform. Tomorrow’s Tech AI builds AI-powered dashboards, CRM, scheduling, projects, automation and business management systems designed around your operation.",
+  description: "Run your business from one custom platform: AI-powered dashboards, CRM, scheduling, projects and automation, designed around how your operation works.",
   alternates: { canonical: "/services/run-your-business" },
   openGraph: { images: [DEFAULT_OG_IMAGE], title: "Custom Business Management Software | Tomorrow’s Tech AI", description: "One custom platform for your dashboard, CRM, scheduling, projects, automation and AI.", url: "https://www.tomorrowstechai.com/services/run-your-business", type: "website" },
 };
