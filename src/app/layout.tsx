@@ -145,8 +145,10 @@ const organizationJsonLd = {
     sameAs: "https://www.linkedin.com/in/johnhockinson/",
   },
   priceRange: "$$$",
+  telephone: "+1-254-563-2130",
   address: {
     "@type": "PostalAddress",
+    addressLocality: "Temple",
     addressRegion: "TX",
     addressCountry: "US",
   },
@@ -157,10 +159,14 @@ const organizationJsonLd = {
     url: "https://www.tomorrowstechai.com/contact",
     availableLanguage: "English",
   },
-  areaServed: {
-    "@type": "Country",
-    name: "United States",
-  },
+  // Local cities first: they back the Central Texas service pages (Job
+  // Catcher, the Central Texas AI initiative). Remote work covers the rest.
+  areaServed: [
+    { "@type": "City", name: "Temple, TX" },
+    { "@type": "City", name: "Belton, TX" },
+    { "@type": "City", name: "Killeen, TX" },
+    { "@type": "Country", name: "United States" },
+  ],
   serviceType: [
     "Custom Business Operating Platforms",
     "Custom CRM and Business Admin Systems",
@@ -264,7 +270,10 @@ export default function RootLayout({
             data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
             data-widget-id="6a68bd33b0ee6ed3ac662935"
             data-source="WEB_USER"
-            strategy="afterInteractive"
+            // After the page has fully loaded: the chat bubble is never part
+            // of the first screen, and loading it earlier delayed the
+            // headline paint on phones.
+            strategy="lazyOnload"
           />
         </MarketingWidgetGate>
         <SpeedInsights />

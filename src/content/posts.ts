@@ -876,7 +876,7 @@ Tomorrow's Tech AI designs and builds private AI systems for businesses that nee
     readTime: "6 min read",
     tags: ["Fleet operations", "EMS", "Compliance", "Aegis Fleet AI", "Operations"],
     hero: {
-      src: "/blog/ems-fleet-three-numbers.png",
+      src: "/blog/ems-fleet-three-numbers.webp",
       alt: "A curved monitor in a dark room showing three large status numbers: 12 dispatchable, 4 PM due and 2 expiring, with the time 02:47 in the corner.",
       // Provenance: embedded C2PA record (OpenAI gpt-image, IPTC trainedAlgorithmicMedia).
       credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
@@ -988,7 +988,7 @@ Built by operators who carried the radio.`,
     readTime: "6 min read",
     tags: ["Smartsheet", "Claude AI", "MCP", "Operations"],
     hero: {
-      src: "/blog/smartsheet-claude-mcp.png",
+      src: "/blog/smartsheet-claude-mcp.webp",
       alt: "Streams of blue data lines flowing into a project dashboard with a Gantt schedule, a contractor master sheet, a status feed and project health scores.",
       // Provenance: embedded C2PA record (OpenAI gpt-image, IPTC trainedAlgorithmicMedia).
       credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",
@@ -1075,7 +1075,7 @@ That's where we work. If your team is running operations through Smartsheet and 
     readTime: "4 min read",
     tags: ["Business AI", "Internal Tools", "Nexus One", "Private AI Business Unit"],
     hero: {
-      src: "/blog/what-a-private-ai-business-unit-actually-does.png",
+      src: "/blog/what-a-private-ai-business-unit-actually-does.webp",
       alt: "Illustration of two business people facing a glowing server tower labeled Nexus One, under the headline Private AI Business Unit for Companies, with icons for custom AI agents, internal tools, smarter workflows and better control.",
     },
     body: `A lot of people hear the term AI and immediately think of chatbots, public tools, or content generation.
@@ -1123,7 +1123,7 @@ For companies that want to move beyond surface-level AI use, that is where the r
     readTime: "5 min read",
     tags: ["Approvals", "Broken Workflows", "Business Operations", "Process Improvement", "Workflow Automation"],
     hero: {
-      src: "/blog/hidden-cost-of-broken-workflows.png",
+      src: "/blog/hidden-cost-of-broken-workflows.webp",
       alt: "Illustration of a shattered gear with a warning sign next to a dashboard and a workflow report, under the headline The Hidden Cost of Broken Workflows, with labels for delayed approvals, rework and errors, wasted payroll and reporting delays.",
     },
     body: `Broken workflows do not always look dramatic. They often look like delays, rework, confusion, and wasted payroll. That is where businesses quietly lose money.
@@ -1182,7 +1182,7 @@ That is why broken workflows should not be treated like minor annoyances. In man
     readTime: "5 min read",
     tags: ["Business Systems", "Command Center", "Leadership", "Operations", "Visibility"],
     hero: {
-      src: "/blog/why-companies-need-a-command-center.png",
+      src: "/blog/why-companies-need-a-command-center.webp",
       alt: "Illustration of a team in suits standing in a server corridor framed by a command center dashboard, under the headline Why Most Companies Don't Need More Software, They Need a Command Center.",
     },
     body: `Most companies assume the answer to operational problems is adding another tool.
@@ -1230,7 +1230,7 @@ In a lot of cases, what the business really needs is a command center built arou
     readTime: "6 min read",
     tags: ["AI Adoption", "AI Strategy", "Business AI", "AI Implementation"],
     hero: {
-      src: "/blog/1-ai-mistake-businesses-make.png",
+      src: "/blog/1-ai-mistake-businesses-make.webp",
       alt: "Split image: on the left, a desk covered in sticky notes reading No Clear Strategy, Budget Overrun and Use Cases Unclear; on the right, the same work organized into a project timeline, contractor sheet and status dashboard.",
       // Provenance: embedded C2PA record (OpenAI gpt-image, IPTC trainedAlgorithmicMedia).
       credit: "AI-generated illustration: Tomorrow’s Tech AI Solutions",

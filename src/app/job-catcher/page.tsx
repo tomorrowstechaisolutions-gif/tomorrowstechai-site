@@ -436,7 +436,7 @@ export default function JobCatcherPage() {
             </p>
             <p className="mt-3 text-sm text-[color:var(--color-text-secondary)]">
               John Hockinson · Founder, Tomorrows Tech AI LLC · Belton, TX ·{" "}
-              <a href="tel:+12545632130" className="text-[color:var(--color-cyan)] hover:underline">
+              <a href="tel:+12545632130" className="text-[color:var(--color-cyan)] underline underline-offset-2 hover:no-underline">
                 (254) 563-2130
               </a>
             </p>

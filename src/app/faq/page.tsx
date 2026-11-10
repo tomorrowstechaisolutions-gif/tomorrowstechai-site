@@ -100,7 +100,7 @@ export default function FAQPage() {
               className="card group [&[open]_.faq-icon]:rotate-45 transition-all"
             >
               <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
-                <h3 className="text-lg font-medium pr-4">{f.q}</h3>
+                <h2 className="text-lg font-medium pr-4">{f.q}</h2>
                 <span className="faq-icon font-mono text-[color:var(--color-cyan)] text-xl leading-none mt-0.5 transition-transform">
                   +
                 </span>
@@ -116,9 +116,9 @@ export default function FAQPage() {
       <section className="max-w-3xl mx-auto px-6 py-16">
         <div className="card card-accent p-10">
           <div className="eyebrow mb-3">● Still have questions?</div>
-          <h3 className="text-2xl font-medium tracking-tight mb-3">
+          <h2 className="text-2xl font-medium tracking-tight mb-3">
             Get them answered on a discovery call.
-          </h3>
+          </h2>
           <p className="text-[color:var(--color-text-secondary)] mb-6 max-w-xl">
             30 minutes. No pitch, just notes. We&apos;ll walk through your
             operations and tell you whether what we do is a fit.

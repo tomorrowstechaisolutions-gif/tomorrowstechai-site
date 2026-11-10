@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     description:
       "A proposed regional pilot helping Central Texas businesses explore practical AI, modernization, and workforce training.",
     url: "https://www.tomorrowstechai.com/central-texas-ai",
-    images: ["/central-texas-ai/central-texas-initiative-hero.png"],
+    images: ["/central-texas-ai/central-texas-initiative-hero.webp"],
   },
 };
 
@@ -151,7 +151,7 @@ export default function CentralTexasAiPage() {
     <div className={styles.page}>
       <section className={styles.hero} aria-labelledby="initiative-title">
         <Image
-          src="/central-texas-ai/central-texas-initiative-hero.png"
+          src="/central-texas-ai/central-texas-initiative-hero.webp"
           alt="Central Texas skyline at sunset with the initiative identity and a Texas map"
           fill
           priority

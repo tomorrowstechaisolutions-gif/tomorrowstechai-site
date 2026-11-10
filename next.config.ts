@@ -23,7 +23,24 @@ const supabaseHost = (() => {
   }
 })();
 
+/**
+ * Baseline browser-protection headers for every route. Deliberately no
+ * Content-Security-Policy yet: the site loads GA, the Meta Pixel, the
+ * LeadConnector chat widget, Cal.com and Stripe, and a strict policy needs
+ * its own tested pass. Camera and microphone are not restricted because the
+ * admin Conference Center may use them.
+ */
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Permissions-Policy", value: "browsing-topics=()" },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   turbopack: {
     root: process.cwd(),
   },
