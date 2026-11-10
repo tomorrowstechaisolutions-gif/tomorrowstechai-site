@@ -19,7 +19,7 @@ export const runtime = "nodejs";
  * attribution Meta hands over.
  */
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = `https://graph.facebook.com/${process.env.META_GRAPH_VERSION || "v24.0"}`;
 
 /** GET — Meta's subscription handshake. */
 export async function GET(req: Request) {

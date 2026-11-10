@@ -12,7 +12,7 @@ import crypto from "node:crypto";
  * The access token is server-side only and is never sent to the browser.
  */
 
-const GRAPH_VERSION = "v21.0";
+const GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v24.0";
 
 export type CapiEventName =
   | "PageView"
