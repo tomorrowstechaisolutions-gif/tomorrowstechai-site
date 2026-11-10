@@ -86,6 +86,7 @@ const STAGE_PROBABILITY: Record<string, number> = { new: 10, qualified: 25, disc
 // invoices.status is draft|sent|partial|paid|expired|void|refunded; "overdue"
 // is derived from due_date, never stored.
 const OPEN_INVOICE = ["sent", "partial"];
+const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 const titleCase = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -150,7 +151,7 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
       date: e.occurred_at,
       cents: e.amount_cents,
       label: e.vendor || e.description || titleCase(e.category),
-      sub: e.vendor && e.description ? e.description : titleCase(e.category),
+      sub: e.vendor && e.description ? e.description : null,
       href: null,
       category: titleCase(e.category),
     })),
@@ -192,8 +193,8 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
     const service = one(s.catalog_items as unknown as { name: string } | null)?.name ?? "Service";
     const overdue = s.next_billing_date && s.next_billing_date < today;
     const problem = s.billing_status === "not_connected"
-      ? overdue ? `Billing not connected · was due ${s.next_billing_date}` : "Billing not connected"
-      : overdue ? `Billing date passed (${s.next_billing_date})` : null;
+      ? overdue ? `Billing not connected · was due ${fmtDay(s.next_billing_date!)}` : "Billing not connected"
+      : overdue ? `Billing date passed (${fmtDay(s.next_billing_date!)})` : null;
     return { id: s.id, client: clientOf(s), service, monthlyCents: monthly, nextBilling: s.next_billing_date, billingStatus: s.billing_status, problem, href: `/admin/clients/${s.customer_id}` };
   }).sort((a, b) => Number(Boolean(b.problem)) - Number(Boolean(a.problem)) || (a.nextBilling ?? "9").localeCompare(b.nextBilling ?? "9"));
   const mrrCents = recurring.reduce((t, r) => t + r.monthlyCents, 0);

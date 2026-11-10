@@ -5,7 +5,7 @@ import { loadFinanceOverview, RANGE_LABELS, type FinanceOverview, type RangeKey 
 import { Panel, EmptyState, ErrorState } from "@/components/admin/cc/Panel";
 import { BarList } from "@/components/admin/cc/Viz";
 import MonthlyChart from "@/components/admin/cc/finance/MonthlyChart";
-import { deltaParts, money, moneyCompact, pct, shortDate } from "@/components/admin/cc/format";
+import { deltaParts, money, moneyCompact, pct } from "@/components/admin/cc/format";
 import { IconAlert, IconCart, IconChart, IconDollar, IconFile, IconFunnel, IconRepeat } from "@/components/admin/cc/Icons";
 import styles from "@/components/admin/cc/finance/finance.module.css";
 
@@ -19,6 +19,9 @@ export const metadata: Metadata = { title: "Finance" };
  */
 
 const RANGES = Object.keys(RANGE_LABELS) as RangeKey[];
+
+/** Date-only (YYYY-MM-DD) values are calendar days, not instants: read at noon UTC so no timezone shifts them a day. */
+const day = (d: string | null) => d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "";
 
 function delta(now: number, prev: number) {
   if (!prev) return null;
@@ -99,7 +102,7 @@ function Overview({ d }: { d: FinanceOverview }) {
                 <Link key={r.id} href={r.href} className={styles.row}>
                   <div>
                     <b>{r.client}</b>
-                    <small>{r.service}{r.nextBilling && !r.problem ? ` · next bill ${shortDate(r.nextBilling)}` : ""}</small>
+                    <small>{r.service}{r.nextBilling && !r.problem ? ` · next bill ${day(r.nextBilling)}` : ""}</small>
                     {r.problem ? <span className={styles.flag}>{r.problem}</span> : null}
                   </div>
                   <span className={styles.amount}>{money(r.monthlyCents, { cents: true })}<small>/mo</small></span>
@@ -129,7 +132,7 @@ function Overview({ d }: { d: FinanceOverview }) {
                 <Link key={r.id} href={r.href} className={styles.row}>
                   <div>
                     <b>{r.client}</b>
-                    <small>{r.number ?? "Invoice"} · {r.daysOverdue && r.daysOverdue > 0 ? <span className={styles.late}>{r.daysOverdue} day{r.daysOverdue === 1 ? "" : "s"} overdue</span> : r.dueDate ? `due ${shortDate(r.dueDate)}` : "no due date"}</small>
+                    <small>{r.number ?? "Invoice"} · {r.daysOverdue && r.daysOverdue > 0 ? <span className={styles.late}>{r.daysOverdue} day{r.daysOverdue === 1 ? "" : "s"} overdue</span> : r.dueDate ? `due ${day(r.dueDate)}` : "no due date"}</small>
                   </div>
                   <span className={styles.amount}>{money(r.balanceCents, { cents: true })}</span>
                 </Link>
@@ -143,7 +146,7 @@ function Overview({ d }: { d: FinanceOverview }) {
             <div className={styles.rows}>
               {d.ledger.map((m, i) => {
                 const body = <>
-                  <div><b>{m.label}</b><small>{shortDate(m.date)}{m.sub ? ` · ${m.sub}` : ""} · {m.category}</small></div>
+                  <div><b>{m.label}</b><small>{day(m.date)}{m.sub ? ` · ${m.sub}` : ""} · {m.category}</small></div>
                   <span className={`${styles.amount} ${m.direction === "in" ? styles.in : styles.out}`}>{m.direction === "in" ? "+" : "−"}{money(m.cents, { cents: true })}</span>
                 </>;
                 return m.href ? <Link key={i} href={m.href} className={styles.row}>{body}</Link> : <div key={i} className={styles.row}>{body}</div>;
