@@ -53,3 +53,33 @@ a.row:hover { background: rgba(56, 189, 248, .04); }
 .note { font-size: .7rem; color: var(--cc-faint); line-height: 1.6; margin: 14px 0 0; }
 .note b { color: var(--cc-muted); font-weight: 600; }
 .amount small { display: inline; font-size: .66rem; color: var(--cc-faint); font-weight: 500; margin: 0 0 0 1px; }
+
+/* Flash + bank feed */
+.flashOk, .flashErr { margin: 0 0 12px; padding: 9px 12px; border-radius: 8px; font-size: .78rem; border: 1px solid; }
+.flashOk { color: #4ADDAA; border-color: rgba(74, 221, 170, .35); background: rgba(74, 221, 170, .07); }
+.flashErr { color: #FB7185; border-color: rgba(251, 113, 133, .35); background: rgba(251, 113, 133, .07); }
+.btn { border: 1px solid var(--cc-line); background: var(--cc-panel); color: var(--cc-text); border-radius: 8px; padding: 7px 12px; font: inherit; font-size: .74rem; font-weight: 650; cursor: pointer; }
+.btn:hover { border-color: var(--cc-accent); }
+.btnSmall { border: 1px solid var(--cc-line); background: transparent; color: var(--cc-muted); border-radius: 6px; padding: 4px 8px; font: inherit; font-size: .68rem; cursor: pointer; }
+.btnSmall:hover { color: var(--cc-text); border-color: var(--cc-accent); }
+.muted { font-size: .72rem; color: var(--cc-faint); line-height: 1.5; }
+.steps { margin: 0; padding-left: 18px; font-size: .78rem; line-height: 1.8; color: var(--cc-muted); }
+.steps b { color: var(--cc-text); }
+.steps code { background: #0B1622; border: 1px solid var(--cc-line); border-radius: 4px; padding: 1px 5px; font-size: .72rem; }
+.bankHead { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.bankHead form { margin: 0; flex: none; }
+.bankTable { display: grid; }
+.bankRow { display: grid; grid-template-columns: 64px minmax(0, 1fr) 110px auto 22px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--cc-line-soft); }
+.bankRow:last-child { border-bottom: 0; }
+.bankDate { font-size: .72rem; color: var(--cc-faint); font-variant-numeric: tabular-nums; }
+.bankWho b { display: block; font-size: .8rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bankWho small { display: block; font-size: .68rem; color: var(--cc-faint); margin-top: 2px; }
+.pending { font-style: normal; color: #FBBF24; }
+.classForm { display: flex; gap: 6px; align-items: center; margin: 0; }
+.classForm select { background: #0B1622; color: var(--cc-text); border: 1px solid var(--cc-line); border-radius: 6px; padding: 4px 6px; font: inherit; font-size: .7rem; }
+.bankLink { color: var(--cc-accent); text-decoration: none; font-size: .85rem; text-align: center; }
+@media (max-width: 720px) {
+  .bankRow { grid-template-columns: 1fr auto; }
+  .bankDate, .bankLink { display: none; }
+  .classForm { grid-column: 1 / -1; }
+}

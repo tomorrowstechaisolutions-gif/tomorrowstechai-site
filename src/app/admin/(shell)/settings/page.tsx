@@ -54,6 +54,13 @@ const GROUPS: { title: string; note: string; vars: { key: string; why: string }[
     ],
   },
   {
+    title: "Mercury bank feed",
+    note: "Finance uses your Mercury transactions as the source of truth for money in and out. Create a READ-ONLY token in Mercury (Settings → API tokens). It syncs every 3 hours, or press Sync now on Finance.",
+    vars: [
+      { key: "MERCURY_API_TOKEN", why: "Read-only Mercury API token. Server-only; cannot move money." },
+    ],
+  },
+  {
     title: "Social Center publishing",
     note: "Connect accounts from Social Center → Connect Account. Tokens are encrypted with INTEGRATION_ENCRYPTION_KEY and readable only server-side. Redirect URLs to register: /api/social/oauth/meta/callback and /api/social/oauth/linkedin/callback.",
     vars: [

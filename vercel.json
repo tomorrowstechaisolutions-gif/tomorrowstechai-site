@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/social-publish",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/bank-sync",
+      "schedule": "17 */3 * * *"
     }
   ]
 }

@@ -53,11 +53,24 @@ export function windows(range: RangeKey, today = chicagoDate()): { current: Wind
   return { current: { fromDate, toDate: today, days }, previous: { fromDate: addDays(prevTo, -(days - 1)), toDate: prevTo, days } };
 }
 
-export type Money = { date: string; cents: number; label: string; sub: string | null; href: string | null; category: string };
+export type Money = { date: string; cents: number; label: string; sub: string | null; href: string | null; category: string; external?: boolean };
+
+export type BankTxn = {
+  id: string; date: string; amountCents: number; status: string; counterparty: string | null;
+  category: string | null; financeClass: string; overridden: boolean; link: string | null;
+};
 
 export type FinanceOverview = {
   range: RangeKey;
   window: Window;
+  /** "bank" once Mercury has synced: money in/out comes from the bank feed. */
+  source: "bank" | "admin";
+  cashCents: number | null;
+  creditOwedCents: number | null;
+  bankAccounts: Array<{ name: string; kind: string | null; last4: string | null; currentCents: number | null }>;
+  bankSyncedAt: string | null;
+  pendingIn: Array<{ date: string; cents: number; label: string }>;
+  bankTxns: BankTxn[];
   revenueCents: number;
   revenuePrevCents: number;
   expensesCents: number;
@@ -124,8 +137,40 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
     return row.client_business_name || c?.business_name || c?.name || "Unassigned";
   };
 
+  // ── Bank feed (Mercury). Optional: absent until the token is added. ───────
+  const [bankAcc, bankTx] = await Promise.all([
+    sb.from("bank_accounts").select("name, kind, last4, current_cents, synced_at"),
+    sb.from("bank_transactions").select("id, amount_cents, status, counterparty, bank_category, posted_at, bank_created_at, dashboard_link, finance_class, class_override").order("bank_created_at", { ascending: false }).limit(2000),
+  ]);
+  const bankAccounts = bankAcc.error ? [] : (bankAcc.data ?? []);
+  const bankRows = bankTx.error ? [] : (bankTx.data ?? []);
+  const source: "bank" | "admin" = bankAccounts.length ? "bank" : "admin";
+  const isCredit = (kind: string | null) => /credit/i.test(kind ?? "");
+  const bankTxns: BankTxn[] = bankRows.map((t) => ({
+    id: t.id,
+    date: chicagoDate(new Date(t.posted_at ?? t.bank_created_at)),
+    amountCents: Number(t.amount_cents),
+    status: t.status,
+    counterparty: t.counterparty,
+    category: t.bank_category,
+    financeClass: t.finance_class,
+    overridden: Boolean(t.class_override),
+    link: t.dashboard_link,
+  }));
+  // Cash basis: a deposit counts when it clears; until then it is "incoming".
+  const settled = (t: BankTxn) => t.status === "sent" || t.status === "posted" || t.status === "completed";
+  const bankMoney = (t: BankTxn): Money => ({
+    date: t.date,
+    cents: Math.abs(t.amountCents),
+    label: t.counterparty ?? "Bank transaction",
+    sub: t.category && t.category !== t.counterparty ? t.category : null,
+    href: t.link,
+    external: true,
+    category: t.category ?? t.counterparty ?? (t.amountCents > 0 ? "Other income" : "Other"),
+  });
+
   // ── Normalise every money movement to { date (Chicago), cents } ──────────
-  const inflows: Money[] = [
+  let inflows: Money[] = [
     ...(rev.data ?? []).map((r) => ({
       date: chicagoDate(new Date(r.occurred_at)),
       cents: r.amount_cents,
@@ -146,7 +191,7 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
       };
     }),
   ];
-  const outflows: Money[] = [
+  let outflows: Money[] = [
     ...(exp.data ?? []).map((e) => ({
       date: e.occurred_at,
       cents: e.amount_cents,
@@ -164,6 +209,14 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
       category: "Ad spend",
     })),
   ];
+
+  // With a bank feed, the bank IS the money record: the admin's own ledgers
+  // (Stripe webhook rows, manual expenses) describe the same cash and would
+  // double it. Invoices, MRR, receivables and pipeline still come from the admin.
+  if (source === "bank") {
+    inflows = bankTxns.filter((t) => t.financeClass === "revenue" && settled(t) && t.amountCents > 0).map(bankMoney);
+    outflows = bankTxns.filter((t) => t.financeClass === "expense" && settled(t) && t.amountCents < 0).map(bankMoney);
+  }
 
   const within = (w: Window) => (m: Money) => m.date >= w.fromDate && m.date <= w.toDate;
   const sum = (rows: Money[]) => rows.reduce((t, r) => t + r.cents, 0);
@@ -216,9 +269,19 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
     ...outNow.map((m) => ({ ...m, direction: "out" as const })),
   ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 12);
 
+  const depository = bankAccounts.filter((a) => !isCredit(a.kind));
+  const creditAccounts = bankAccounts.filter((a) => isCredit(a.kind));
+
   return {
     range,
     window: current,
+    source,
+    cashCents: depository.length ? depository.reduce((t, a) => t + Number(a.current_cents ?? 0), 0) : null,
+    creditOwedCents: creditAccounts.length ? creditAccounts.reduce((t, a) => t + Math.abs(Number(a.current_cents ?? 0)), 0) : null,
+    bankAccounts: bankAccounts.map((a) => ({ name: a.name, kind: a.kind, last4: a.last4, currentCents: a.current_cents === null ? null : Number(a.current_cents) })),
+    bankSyncedAt: bankAccounts.map((a) => a.synced_at as string).sort().at(-1) ?? null,
+    pendingIn: bankTxns.filter((t) => t.status === "pending" && t.amountCents > 0 && t.financeClass !== "transfer").map((t) => ({ date: t.date, cents: t.amountCents, label: t.counterparty ?? "Incoming deposit" })),
+    bankTxns: bankTxns.slice(0, 25),
     revenueCents,
     revenuePrevCents: sum(inflows.filter(within(previous))),
     expensesCents,
