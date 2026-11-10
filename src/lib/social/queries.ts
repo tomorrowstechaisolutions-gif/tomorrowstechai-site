@@ -19,7 +19,7 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
 
   const [accountsResult, postsResult, platformResult, metricsResult, clientsResult, assignmentsResult, inclusionsResult, assetsResult, engagementResult, automationsResult, activityResult] = await Promise.all([
     sb.from("social_accounts").select("id, customer_id, platform, handle, display_name, connected, status, posting_enabled, engagement_enabled, analytics_enabled, token_expires_at, last_synced_at, stats_updated_at, followers, reach_30d, engagement_30d, clicks_30d, connection_error, customers(business_name,name)").order("updated_at", { ascending: false }),
-    sb.from("social_posts").select("id, customer_id, account_id, platform, title, body, media_url, scheduled_at, published_at, status, external_url, campaign, error, approval_status, approval_type, timezone, assigned_to, media_asset_id, media_type, created_at, customers(business_name,name), social_post_platforms(platform), social_analytics_snapshots(reach,engagements,clicks,captured_for)").is("deleted_at", null).order("scheduled_at", { ascending: true, nullsFirst: false }).limit(500),
+    sb.from("social_posts").select("id, customer_id, account_id, platform, title, body, link_url, cta, media_url, scheduled_at, published_at, status, external_url, campaign, error, approval_status, approval_type, timezone, assigned_to, media_asset_id, media_type, created_at, customers(business_name,name), social_post_platforms(platform), social_analytics_snapshots(reach,engagements,clicks,captured_for)").is("deleted_at", null).order("scheduled_at", { ascending: true, nullsFirst: false }).limit(500),
     sb.from("social_post_platforms").select("post_id, platform"),
     sb.from("social_analytics_snapshots").select("post_id, reach, engagements, clicks, followers_gained, captured_for").gte("captured_for", monthStart.slice(0, 10)),
     sb.from("customers").select("id, business_name, name").order("business_name"),
@@ -90,6 +90,8 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
     timezone: row.timezone,
     assignedTo: row.assigned_to,
     mediaUrl: row.media_url,
+    linkUrl: row.link_url ?? null,
+    cta: row.cta ?? null,
     mediaAssetId: row.media_asset_id,
     mediaType: row.media_type,
     campaign: row.campaign,

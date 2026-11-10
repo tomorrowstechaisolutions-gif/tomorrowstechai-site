@@ -66,6 +66,8 @@ export type SocialPostRow = {
   timezone: string;
   assignedTo: string | null;
   mediaUrl: string | null;
+  linkUrl: string | null;
+  cta: string | null;
   mediaAssetId: string | null;
   mediaType: string;
   campaign: string | null;

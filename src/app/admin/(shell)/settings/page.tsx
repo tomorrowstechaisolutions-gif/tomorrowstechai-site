@@ -54,6 +54,18 @@ const GROUPS: { title: string; note: string; vars: { key: string; why: string }[
     ],
   },
   {
+    title: "Social Center publishing",
+    note: "Connect accounts from Social Center → Connect Account. Tokens are encrypted with INTEGRATION_ENCRYPTION_KEY and readable only server-side. Redirect URLs to register: /api/social/oauth/meta/callback and /api/social/oauth/linkedin/callback.",
+    vars: [
+      { key: "META_APP_ID", why: "Meta app id (Facebook Pages + Instagram)" },
+      { key: "META_APP_SECRET", why: "Server-only. Also verifies lead webhooks." },
+      { key: "META_LOGIN_CONFIG_ID", why: "Optional — Facebook Login for Business configuration" },
+      { key: "LINKEDIN_CLIENT_ID", why: "LinkedIn app client id" },
+      { key: "LINKEDIN_CLIENT_SECRET", why: "Server-only. Never reaches the browser." },
+      { key: "INTEGRATION_ENCRYPTION_KEY", why: "Encrypts stored social tokens (32+ chars)" },
+    ],
+  },
+  {
     title: "Meta Instant Forms",
     note: "The webhook stays dormant until all three are set.",
     vars: [

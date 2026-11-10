@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadSocialCenter } from "@/lib/social/queries";
+import { socialProviderStatus } from "@/lib/social/oauth";
 import type { SocialFilters } from "@/lib/social/types";
 import SocialCenter from "@/components/admin/cc/social/SocialCenter";
 
@@ -33,5 +34,5 @@ export default async function SocialCenterPage({
   };
   const supabase = await createSupabaseServerClient();
   const board = await loadSocialCenter(supabase, filters);
-  return <SocialCenter board={board} filters={filters} notice={scalar(params.notice)} error={scalar(params.error)} />;
+  return <SocialCenter board={board} filters={filters} providers={socialProviderStatus()} notice={scalar(params.notice)} error={scalar(params.error)} />;
 }

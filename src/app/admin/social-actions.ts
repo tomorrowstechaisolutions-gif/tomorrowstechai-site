@@ -3,9 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
+import { publishDueSocialPosts } from "@/lib/social/publisher";
 import { SOCIAL_PLATFORMS, type SocialPlatform } from "@/lib/social/types";
 
 const SOCIAL = "/admin/marketing/social";
+
+/** Publishes one post right now and says, in a sentence, how it went. */
+async function publishNow(postId: string): Promise<{ message: string; error: boolean }> {
+  try {
+    const result = await publishDueSocialPosts(10, { postId });
+    if (result.failed) return { message: `Published to ${result.published}, failed on ${result.failed}. ${result.errors.join(" · ")}`.slice(0, 600), error: true };
+    if (!result.published) return { message: "Queued. The publisher will pick it up within five minutes.", error: false };
+    return { message: `Published to ${result.published} platform${result.published === 1 ? "" : "s"}.`, error: false };
+  } catch (cause) {
+    return { message: `Queued, but the immediate publish hit an error: ${cause instanceof Error ? cause.message : "unknown"}. The scheduled job will retry.`, error: true };
+  }
+}
 
 async function requireAdmin() {
   const session = await getAdminUser();
@@ -124,6 +137,10 @@ export async function createSocialPostAction(fd: FormData) {
 
   if (approvalType !== "none") await supabase.from("social_post_approvals").insert({ post_id: post.id, decision: "requested", approval_type: approvalType, actor });
   await activity(supabase, { event_type: status === "scheduled" ? "post_scheduled" : "post_created", actor, detail: title, customer_id: customerId, post_id: post.id, platform: platforms.join(",") });
+  if (status === "scheduled" && intent === "publish_now") {
+    const result = await publishNow(post.id);
+    go(result.message, result.error);
+  }
   go(status === "scheduled" ? "Post scheduled." : approvalType !== "none" ? "Post sent for approval." : "Draft saved.");
 }
 
@@ -209,9 +226,10 @@ export async function updateSocialPostAction(fd: FormData) {
     if (!destinations?.length || unavailable) go("Every destination needs a publishing-enabled account before publishing.", true);
     const when = new Date().toISOString();
     await supabase.from("social_posts").update({ status: "scheduled", scheduled_at: when }).eq("id", id);
-    await supabase.from("social_post_platforms").update({ platform_status: "scheduled" }).eq("post_id", id);
+    await supabase.from("social_post_platforms").update({ platform_status: "scheduled" }).eq("post_id", id).in("platform_status", ["draft", "scheduled", "canceled"]);
     await activity(supabase, { event_type: "publish_queued", actor, customer_id: post.customer_id, post_id: id, detail: post.title });
-    go("Post queued for immediate publishing.");
+    const result = await publishNow(id);
+    go(result.message, result.error);
   }
   if (action === "cancel" && ["scheduled", "needs_approval", "approved"].includes(post.status)) {
     await supabase.from("social_posts").update({ status: "canceled", canceled_at: new Date().toISOString() }).eq("id", id);
@@ -234,11 +252,14 @@ export async function updateSocialPostAction(fd: FormData) {
     go("Post rescheduled.");
   }
   if (action === "retry" && post.status === "failed") {
+    // Only the destinations that failed go back in the queue; ones that already
+    // published are left alone so a retry never double-posts.
     const attempt = (post.publish_attempts ?? 0) + 1;
-    await supabase.from("social_publish_attempts").insert({ post_id: id, social_account_id: post.account_id, platform: post.platform, idempotency_key: `${id}:${attempt}`, attempt_number: attempt, status: "queued" });
+    await supabase.from("social_post_platforms").update({ platform_status: "scheduled", error_message: null }).eq("post_id", id).eq("platform_status", "failed");
     await supabase.from("social_posts").update({ status: "scheduled", error: null, error_details: null, publish_attempts: attempt, scheduled_at: new Date().toISOString() }).eq("id", id);
     await activity(supabase, { event_type: "publish_retry_queued", actor, customer_id: post.customer_id, post_id: id, detail: post.title });
-    go("Publish retry queued.");
+    const result = await publishNow(id);
+    go(result.message, result.error);
   }
   go("That action is not available for this post.", true);
 }
