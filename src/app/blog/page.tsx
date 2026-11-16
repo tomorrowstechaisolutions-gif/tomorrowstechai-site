@@ -17,6 +17,10 @@ import {
 import "./field-notes-article.css";
 import "./field-notes-front.css";
 
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: "Blog",
   description:

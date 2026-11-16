@@ -18,6 +18,10 @@ import "../../field-notes-article.css";
 import "../../field-notes-front.css";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
+
 export const dynamicParams = false;
 
 export function generateStaticParams() {

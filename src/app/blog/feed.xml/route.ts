@@ -6,7 +6,9 @@ import { PUBLICATION_NAME, PUBLISHER_NAME, SITE_URL } from "@/lib/blog/taxonomy"
  * Built at deploy time like the articles themselves, so it can never list a
  * draft or show a different set of posts than the site.
  */
-export const dynamic = "force-static";
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
 
 function esc(s: string): string {
   return s

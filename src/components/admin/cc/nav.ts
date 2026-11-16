@@ -120,6 +120,7 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { href: "/admin/marketing/ads", label: "Ad Studio", icon: IconPen },
       { href: "/admin/marketing/spend", label: "Ad spend", icon: IconDollar },
+      { href: "/admin/blog", label: "Blog", icon: IconFile },
       { href: "/admin/marketing/content", label: "Content Studio", icon: IconImage },
       { href: "/admin/marketing/social", label: "Social Center", icon: IconShare },
       { href: "/admin/marketing/email", label: "Email Marketing", icon: IconMail },

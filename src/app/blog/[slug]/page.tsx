@@ -1,29 +1,13 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { extractHeadings, renderMarkdown } from "@/lib/blog/markdown";
 import { getArticle, getRelatedArticles, getReachableArticles } from "@/lib/blog/repository";
-import { articleJsonLd, breadcrumbJsonLd, jsonLd } from "@/lib/blog/structured-data";
 import { PUBLISHER_NAME, SITE_URL } from "@/lib/blog/taxonomy";
-import {
-  ArticleFooterMeta,
-  ArticleHeader,
-  ArticleHero,
-  AuthorCard,
-  Discrepancies,
-  EndCta,
-  InlineCta,
-  RailCta,
-  RelatedArticles,
-  SourcesList,
-  SpecsTable,
-} from "@/components/blog/ArticleParts";
-import { TableOfContents } from "@/components/blog/TableOfContents";
-import { FieldNotesTracking } from "@/components/blog/FieldNotesTracking";
-import "../field-notes-prose.css";
-import "../field-notes-article.css";
+import { ArticleView } from "@/components/blog/ArticleView";
 
-/** Articles with fewer H2 sections than this read fine without a contents list. */
-const TOC_MIN_SECTIONS = 4;
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
+
 
 export async function generateStaticParams() {
   return (await getReachableArticles()).map((a) => ({ slug: a.slug }));
@@ -91,60 +75,6 @@ export default async function BlogPostPage({
   const { slug } = await params;
   const post = await getArticle(slug);
   if (!post) notFound();
-
-  const draft = post.status === "draft" || post.status === "scheduled";
-  const sources = post.sources ?? [];
-  const sections = extractHeadings(post.body).filter((h) => h.level === 2);
-  const showToc = sections.length >= TOC_MIN_SECTIONS;
   const related = await getRelatedArticles(post, 3);
-
-  return (
-    <article className="fn-article">
-      <FieldNotesTracking slug={post.slug} category={post.category} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(articleJsonLd(post)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd(post)) }}
-      />
-
-      <div className="fn-wrap">
-        <ArticleHeader article={post} draft={draft} />
-        <ArticleHero article={post} />
-
-        <div className="fn-grid">
-          <div className="fn-main">
-            {showToc && <TableOfContents headings={sections} variant="inline" />}
-
-            <div className="prose-blog fn-prose">
-              {renderMarkdown(post.body, {
-                sourceIds: sources.map((s) => s.id),
-                midSlot: <InlineCta article={post} />,
-              })}
-            </div>
-
-            <SpecsTable article={post} />
-            <Discrepancies article={post} />
-            <SourcesList article={post} />
-            <ArticleFooterMeta article={post} />
-            <AuthorCard article={post} />
-          </div>
-
-          <aside className="fn-rail" aria-label="Article tools">
-            <div className="fn-rail-sticky">
-              {showToc && <TableOfContents headings={sections} variant="rail" />}
-              <RailCta article={post} />
-            </div>
-          </aside>
-        </div>
-      </div>
-
-      <div className="fn-wrap">
-        <EndCta article={post} />
-        <RelatedArticles items={related} category={post.categoryInfo.name} />
-      </div>
-    </article>
-  );
+  return <ArticleView post={post} related={related} />;
 }

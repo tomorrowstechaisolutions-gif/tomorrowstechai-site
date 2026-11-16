@@ -120,8 +120,8 @@ export type ArticleRecord = {
    * sources are reported as warnings instead of failing the build.
    */
   legacy?: boolean;
-  /** Where the record came from. */
-  origin: "file" | "content-studio";
+  /** Where the record came from. "database" = the Admin Center's Blog tab. */
+  origin: "file" | "database" | "content-studio";
 };
 
 export type Author = {

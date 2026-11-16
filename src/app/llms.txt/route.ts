@@ -6,7 +6,9 @@ import { CATEGORIES, SITE_URL, categoryPath } from "@/lib/blog/taxonomy";
  * (https://llmstxt.org). Built at deploy time from the same article data as
  * the blog, sitemap and RSS feed, so it never lists a draft.
  */
-export const dynamic = "force-static";
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
 
 const PAGES: [string, string, string][] = [
   ["Home", "/", "What Tomorrow's Tech AI builds and for whom"],

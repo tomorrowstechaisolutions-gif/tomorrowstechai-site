@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import { getListedArticles } from "@/lib/blog/repository";
 import { CATEGORIES, categoryPath } from "@/lib/blog/taxonomy";
 
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
+
 const BASE_URL = "https://www.tomorrowstechai.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

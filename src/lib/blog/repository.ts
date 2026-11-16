@@ -1,4 +1,8 @@
+import { unstable_cache } from "next/cache";
+import { cache as requestCache } from "react";
 import { fileArticles } from "@/content/posts";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { ARTICLE_COLUMNS, ARTICLES_TABLE, FIELD_NOTES_TAG, rowToRecord, type ArticleRow } from "./db-articles";
 import { countWords } from "./markdown";
 import { getAuthor, getCategory, SITE_URL } from "./taxonomy";
 import type { Article, ArticleRecord, CategorySlug } from "./types";
@@ -7,20 +11,53 @@ import { enforce, validateArticles } from "./validate";
 /**
  * The only way pages, the feed and the sitemap read articles.
  *
- * Providers return ArticleRecords. Today there is one: the TypeScript file.
- * When the Admin Center publishes, a Content Studio provider is added to
- * PROVIDERS and nothing downstream changes. The API is async now so that
- * switch doesn't ripple into every page.
+ * Two sources:
+ * - The TypeScript file (src/content/posts.ts): checked strictly at build, so
+ *   an error there still stops the build, as before.
+ * - The database (Admin Center Blog tab): each article is checked on its own.
+ *   One that fails is skipped and logged, never rendered, so a bad save can't
+ *   take the blog down. A database article replaces a file article with the
+ *   same slug, which is how imported articles take over.
+ *
+ * Database reads are cached under the "field-notes" tag for five minutes;
+ * publishing revalidates the tag so changes show at once. If the database is
+ * unreachable, the file articles still render.
  */
 
-type Provider = { name: ArticleRecord["origin"]; load: () => Promise<ArticleRecord[]> };
+const fileRecords = (): ArticleRecord[] => fileArticles.map((a) => ({ ...a, origin: "file" as const }));
 
-const fileProvider: Provider = {
-  name: "file",
-  load: async () => fileArticles.map((a) => ({ ...a, origin: "file" as const })),
-};
+const loadDbRecords = unstable_cache(
+  async (): Promise<ArticleRecord[]> => {
+    if (!supabaseConfigured()) return [];
+    const { data, error } = await supabaseAdmin()
+      .from(ARTICLES_TABLE)
+      .select(ARTICLE_COLUMNS)
+      .in("status", ["published", "scheduled", "archived"]);
+    if (error) {
+      // A missing table (migration not applied yet) or an outage: serve the
+      // file articles rather than failing the page.
+      console.warn(`[field-notes] database articles unavailable: ${error.message}`);
+      return [];
+    }
+    return ((data ?? []) as ArticleRow[]).map(rowToRecord);
+  },
+  ["field-notes-db-articles"],
+  { tags: [FIELD_NOTES_TAG], revalidate: 300 }
+);
 
-const PROVIDERS: Provider[] = [fileProvider];
+/** Database records that pass the editorial checks; failures are reported and dropped. */
+function vetted(records: ArticleRecord[]): ArticleRecord[] {
+  return records.filter((r) => {
+    const errors = validateArticles([r]).filter((i) => i.level === "error");
+    if (errors.length) {
+      console.warn(
+        `[field-notes] skipping "${r.slug}": ${errors.map((e) => e.message).join("; ")}`
+      );
+      return false;
+    }
+    return true;
+  });
+}
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -51,26 +88,29 @@ function resolve(r: ArticleRecord): Article {
   };
 }
 
-let cache: Promise<Article[]> | null = null;
-
-async function loadAll(): Promise<Article[]> {
-  if (!cache) {
-    cache = (async () => {
-      const records = (await Promise.all(PROVIDERS.map((p) => p.load()))).flat();
-      enforce(validateArticles(records));
-      // Newest first. Array.sort is stable, so same-day articles keep file order.
-      return records
-        .map(resolve)
-        .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
-    })();
-    cache.catch(() => {
-      cache = null;
-    });
+const loadAll = requestCache(async (): Promise<Article[]> => {
+  const files = fileRecords();
+  enforce(validateArticles(files));
+  let db: ArticleRecord[] = [];
+  try {
+    db = vetted(await loadDbRecords());
+  } catch (err) {
+    console.warn(`[field-notes] database articles unavailable: ${err instanceof Error ? err.message : err}`);
   }
-  return cache;
+  const dbSlugs = new Set(db.map((r) => r.slug));
+  const records = [...db, ...files.filter((r) => !dbSlugs.has(r.slug))];
+  // Newest first. Array.sort is stable, so same-day articles keep their order.
+  return records
+    .map(resolve)
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+});
+
+/** Resolve one record for the admin preview (any status, checks reported not enforced). */
+export function resolveForPreview(r: ArticleRecord): Article {
+  return resolve(r);
 }
 
-/** In lists, the feed and the sitemap. Future-dated articles wait for a rebuild. */
+/** In lists, the feed and the sitemap. Future-dated articles appear once their time passes (within the 5-minute refresh). */
 export function isListed(a: ArticleRecord, now = new Date()): boolean {
   return (a.status === "published" || a.status === "scheduled") && Date.parse(a.publishedAt) <= now.getTime();
 }

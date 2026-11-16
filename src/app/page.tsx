@@ -28,6 +28,10 @@ import {
   IconUsers,
 } from "@/components/Icons";
 
+// Refreshed every 5 minutes, and immediately when an article is published
+// from the Admin Center (which revalidates these paths).
+export const revalidate = 300;
+
 /* ── Hero connector labels ──────────────────────────────────────────────── */
 
 /** `\n` forces the two-line breaks from the mockup; rendered with whitespace-pre-line. */

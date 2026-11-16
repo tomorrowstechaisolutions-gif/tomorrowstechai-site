@@ -31,35 +31,40 @@ deploy per article.
 - `src/lib/blog/taxonomy.ts` — categories (with CTA → `/contact?service=`) and
   authors. Bios stay `null` until their wording is approved.
 
-## Phase 6: publishing from the Admin Center (not built)
+## Phase 6: the Admin Center Blog tab (in progress)
 
-Content Studio already stores blog drafts in `content_items`
-(`content_type = 'blog'`, statuses draft → needs_review → approved → scheduled →
-published, `scheduled_at`, `published_at`, `source_content_id` for repurposing).
-That table stays the editorial system of record. The plan:
+Decided 2026-11-16: articles get their own table instead of extra columns on
+`content_items`. An article's structure (sources, specs, discrepancies, hero,
+SEO, CTA) and life cycle (draft → scheduled → published → archived) are the
+public site's, not Content Studio's review queue.
 
-1. **Migration (on a Supabase branch first):** add the publication fields
-   `content_items` lacks — `slug` (unique where content_type = 'blog'),
-   `summary`, `category`, `secondary_categories`, `tags`, `author_id`, `hero`
-   (jsonb), `sources` (jsonb), `specs` (jsonb), `discrepancies` (jsonb), `seo`
-   (jsonb), `featured`, `updated_at` already exists. Add a
-   `content_item_revisions` table written on every edit of a published item.
-2. **Provider:** `contentStudioProvider` in `repository.ts` selects
-   `content_type = 'blog'` rows with status `published` or `scheduled` and maps
-   them to `ArticleRecord` with `origin: "content-studio"`. The validator runs on
-   them exactly as on file articles; a row that fails is skipped and reported,
-   never rendered.
-3. **Publish action:** "Publish to Field Notes" on an approved item runs the
-   validator first, sets `status`/`published_at`, then calls `revalidatePath`
-   for `/blog`, `/blog/<slug>`, `/blog/feed.xml` and `/sitemap.xml`. Scheduled
-   items are picked up by the existing cron route at their `scheduled_at`.
-4. **Images:** hero and in-body images need a **public** bucket (the current
-   `brand-assets` bucket is private and its signed URLs expire). Add a
-   `field-notes` public bucket and allow it in `next.config.ts` images.
-5. **Resilience:** pages switch from build-time-only to ISR. If the database is
-   unreachable, the last good render is served; file articles always build.
-6. **Slugs are permanent.** The repository rejects a slug that already exists in
-   the other provider. Changing a published slug requires a redirect entry.
+**Phase 1 (built):**
+- Migration `20261116120000_field_notes_articles.sql`: `field_notes_articles`
+  (columns mirror `ArticleRecord`; jsonb for hero, sources, specs,
+  discrepancies, seo, cta), `field_notes_revisions` (a snapshot per save), and
+  a public `field-notes` storage bucket for images (admin-only writes). RLS is
+  admin-only; the public site reads through the service role on the server.
+- `src/lib/blog/db-articles.ts` maps rows ↔ records (lossless round trip,
+  tested on all file articles).
+- `repository.ts` reads both sources. File articles are still enforced
+  strictly at build. Database articles are validated one by one; a failing
+  article is skipped and logged, never rendered. A database article replaces
+  a file article with the same slug. Database reads are cached under the
+  `field-notes` tag (5 minutes) and fall back to file articles if the database
+  is unreachable.
+- Blog pages, feed, sitemap, llms.txt and the homepage use ISR
+  (`revalidate = 300`); publishing will revalidate the tag and paths.
+- `scripts/import-field-notes.mts` copies file articles into the table
+  (insert-only; dry run without `--apply`).
+- Admin: `/admin/blog` lists every article with status, checks, 30-day views
+  and leads; `/admin/blog/[ref]/preview` renders any article with the live
+  `ArticleView` component.
 
-Until then: draft in Content Studio if useful, then copy the approved text into
-`src/content/posts.ts` with the checklist at the top of that file.
+**Phase 2:** editor (Markdown with live preview), sources/specs/discrepancies,
+hero upload, SEO and CTA, publish checklist, publish/unpublish/archive/delete,
+revision history.
+
+**Phase 3:** scheduled publishing via cron, search and social previews,
+"Send to Blog" from Content Studio.
+
+**Slugs are permanent** once published; changing one needs a redirect entry.
