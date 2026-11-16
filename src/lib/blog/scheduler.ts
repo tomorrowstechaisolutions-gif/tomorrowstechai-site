@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ARTICLE_COLUMNS, ARTICLES_TABLE, FIELD_NOTES_TAG, REVISIONS_TABLE, rowToRecord, type ArticleRow } from "./db-articles";
 import { validateArticles } from "./validate";
+import { createArticleSocialDraft } from "./social-draft";
 
 /**
  * Turns scheduled Field Notes articles into published ones once their time
@@ -50,6 +51,9 @@ export async function publishDueArticles(now = new Date()) {
     delete snap.created_at;
     await db.from(REVISIONS_TABLE).insert({ article_id: row.id, snapshot: snap, note: "Published on schedule", actor: "scheduler" });
     published.push(row.slug);
+    // Propose the social post (a draft; never sent automatically).
+    const draft = await createArticleSocialDraft(db, rec, "scheduler");
+    if (draft.state === "failed") console.warn(`[blog-publish] social draft for "${row.slug}" failed: ${draft.message}`);
   }
 
   if (published.length) {

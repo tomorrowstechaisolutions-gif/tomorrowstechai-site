@@ -156,3 +156,28 @@
 .be-share-fb .be-share-text { background: #f0f2f5; }
 .be-share-domain { font-size: 11px; color: #65676b; letter-spacing: 0.02em; }
 .be-share-desc { font-size: 12px; color: #65676b; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* AI review tab: suggestions only. */
+.be-reviewbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.be-review { margin-top: 6px; }
+.be-review-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; counter-reset: claim; }
+.be-review-list li { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--cc-line, #1e2937); background: rgba(4, 8, 13, 0.35); }
+.be-review-list blockquote { margin: 0 0 6px; padding-left: 10px; border-left: 3px solid var(--cc-warn, #fbbf24); font-size: 0.84rem; color: var(--cc-text, #e8eff8); }
+.be-review-list p { margin: 0 0 8px; font-size: 0.8rem; line-height: 1.5; color: var(--cc-dim, #93a2b8); }
+.be-suggest { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; margin-bottom: 8px; border-radius: 10px; border: 1px dashed var(--cc-line, #1e2937); }
+.be-suggest p { margin: 0; font-size: 0.84rem; line-height: 1.5; min-width: 0; }
+.be-suggest .cc-btn { flex: none; }
+.be-review-notes { margin: 0 0 12px 18px; list-style: disc; font-size: 0.82rem; line-height: 1.55; color: var(--cc-dim, #93a2b8); }
+@media (max-width: 720px) { .be-suggest { flex-direction: column; align-items: stretch; } }
+
+/* Performance tab. */
+.be-perf .cc-stats { margin-bottom: 12px; }
+.be-spark { display: flex; align-items: flex-end; gap: 3px; height: 84px; padding: 8px 0 2px; border-bottom: 1px solid var(--cc-line, #1e2937); }
+.be-spark span { flex: 1 1 0; min-width: 2px; border-radius: 3px 3px 0 0; background: var(--cc-accent, #38bdf8); opacity: 0.85; }
+.be-spark span.is-zero { background: var(--cc-line, #1e2937); opacity: 1; }
+.be-perf-table { width: 100%; font-size: 0.82rem; }
+.be-social { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; }
+.be-social li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--cc-line-soft, #161e2a); }
+.be-social li div { display: flex; flex-direction: column; gap: 2px; font-size: 0.84rem; min-width: 0; }
+.be-social .cc-faint { font-size: 0.74rem; }
+.be-err-text { color: #fecaca; font-size: 0.82rem; }

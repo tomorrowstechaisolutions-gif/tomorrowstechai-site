@@ -114,12 +114,13 @@ export async function byDimension(
     .sort((a, b) => b.pageviews - a.pageviews);
 }
 
-export async function perDay(since: Date, until: Date): Promise<{ day: string; pageviews: number; visitors: number }[]> {
+export async function perDay(since: Date, until: Date, filter?: string): Promise<{ day: string; pageviews: number; visitors: number }[]> {
   const body = await call("aggregate", {
     by: "day",
     since: since.toISOString(),
     until: until.toISOString(),
     limit: "100",
+    ...(filter ? { filter } : {}),
   });
   const items = Array.isArray(body.data) ? (body.data as Record<string, unknown>[]) : [];
   return items

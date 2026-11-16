@@ -6,6 +6,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { ARTICLE_COLUMNS, ARTICLES_TABLE, FIELD_NOTES_TAG, REVISIONS_TABLE, recordToRow, rowToRecord, type ArticleRow } from "@/lib/blog/db-articles";
 import { blankArticle, checkArticle, contentToDraft, isLive, normalize, saveBlocker, slugify, slugLocked, todayCentral, type EditableArticle } from "@/lib/blog/editor-model";
 import type { ArticleStatus } from "@/lib/blog/types";
+import { createArticleSocialDraft, type SocialDraftResult } from "@/lib/blog/social-draft";
 
 /**
  * Blog tab writes. Every action re-checks the admin (server actions are public
@@ -182,13 +183,42 @@ export async function setArticleStatusAction(
   await writeRevision(supabase, id, actor, note);
   refreshPublic([rec.slug]);
 
+  // Going live proposes a social post (a draft in Social Center, never sent).
+  // A failure here never undoes the publish; it is just reported.
+  let social = "";
+  if (status === "published") {
+    const draft = await createArticleSocialDraft(supabase, next, actor);
+    social = socialNote(draft);
+  }
+
   const messages = {
     publish: "Published. It's live now.",
     schedule: `${note}. It goes live on its own (within five minutes of that time).`,
     unpublish: "Unpublished. The article is a draft again and its URL no longer works.",
     archive: "Archived. It's off the lists and feed; the URL still works for old links.",
   };
-  return { ok: true, message: messages[action], id, status, publishedAt: next.publishedAt };
+  return { ok: true, message: `${messages[action]}${social}`, id, status, publishedAt: next.publishedAt };
+}
+
+function socialNote(draft: SocialDraftResult) {
+  if (draft.state === "created") return " A social post draft is waiting for you in Social Center.";
+  if (draft.state === "failed") return ` (The social post draft could not be created: ${draft.message})`;
+  return "";
+}
+
+/** "Create social post" in the editor: the same draft, on demand. */
+export async function createSocialDraftAction(id: string): Promise<BlogActionResult & { postId?: string }> {
+  const s = await session();
+  if (!s) return fail("Your admin session expired. Sign in again.");
+  const row = await loadRow(s.supabase, id);
+  if (!row) return fail("That article no longer exists.");
+  if (row.status !== "published" && row.status !== "scheduled") return fail("Publish or schedule the article first; the post links to it.");
+  const draft = await createArticleSocialDraft(s.supabase, rowToRecord(row), s.actor);
+  revalidatePath(`/admin/blog/${id}/edit`);
+  revalidatePath("/admin/marketing/social");
+  if (draft.state === "failed") return fail(`The social post draft could not be created: ${draft.message}`);
+  if (draft.state === "exists") return { ok: true, message: "This article already has a social post. Open it in Social Center.", postId: draft.postId };
+  return { ok: true, message: "Social post draft created. Review it in Social Center before it goes anywhere.", postId: draft.postId };
 }
 
 /** Permanently delete a draft or archived article and its history. Live articles must be unpublished first. */

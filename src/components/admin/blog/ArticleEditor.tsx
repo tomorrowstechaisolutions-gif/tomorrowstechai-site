@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import {
   deleteArticleAction,
   restoreRevisionAction,
@@ -24,6 +24,7 @@ import { CALLOUT_TYPES, countWords, renderMarkdown } from "@/lib/blog/markdown";
 import { uploadArticleImage } from "@/lib/blog/upload-image";
 import type { ArticleStatus, CategorySlug } from "@/lib/blog/types";
 import { DiscrepanciesEditor, SourcesEditor, SpecsEditor } from "./FactEditors";
+import type { BlogReview } from "@/lib/blog/review";
 
 export type EditorRevision = { id: string; created_at: string; note: string | null; actor: string | null };
 export type EditorCategory = { slug: CategorySlug; name: string; cta: { service: string; label: string; blurb: string } };
@@ -35,6 +36,8 @@ type Props = {
   categories: EditorCategory[];
   authors: { id: string; name: string }[];
   siteUrl: string;
+  /** Server-rendered Performance tab (saved articles only). */
+  performance?: ReactNode;
 };
 
 const TABS = [
@@ -43,6 +46,8 @@ const TABS = [
   { key: "image", label: "Image" },
   { key: "seo", label: "SEO & call to action" },
   { key: "settings", label: "Settings" },
+  { key: "review", label: "AI review" },
+  { key: "performance", label: "Performance" },
   { key: "history", label: "History" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
@@ -73,7 +78,7 @@ function fromParts(date: string, time: string): string {
   return Number.isNaN(d.getTime()) ? date : d.toISOString();
 }
 
-export function ArticleEditor({ id: initialId, initial, revisions, categories, authors, siteUrl }: Props) {
+export function ArticleEditor({ id: initialId, initial, revisions, categories, authors, siteUrl, performance }: Props) {
   const router = useRouter();
   const [id, setId] = useState(initialId);
   const [a, setA] = useState<EditableArticle>(initial);
@@ -88,6 +93,12 @@ export function ArticleEditor({ id: initialId, initial, revisions, categories, a
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   // "Future" is judged against when the editor opened; precise enough for choosing Publish vs Schedule.
   const [openedAt] = useState(() => Date.now());
+  // AI review: suggestions only; nothing is applied unless John clicks "Use".
+  const [review, setReview] = useState<BlogReview | null>(null);
+  const [reviewedBody, setReviewedBody] = useState("");
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState<Set<number>>(() => new Set());
   const today = todayCentral();
 
   const status = a.status;
@@ -217,6 +228,46 @@ export function ArticleEditor({ id: initialId, initial, revisions, categories, a
         setSaved(JSON.stringify(normalize(a)));
         router.push("/admin/blog");
       }
+    });
+  };
+
+  const runReview = async () => {
+    setReviewing(true);
+    setReviewError(null);
+    try {
+      const res = await fetch("/api/admin/blog/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ article: a }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { review?: BlogReview; error?: string };
+      if (!res.ok || !data.review) throw new Error(data.error || "The review is unavailable right now.");
+      setReview(data.review);
+      setReviewedBody(a.body);
+      setNotFound(new Set());
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "The review failed.");
+    } finally {
+      setReviewing(false);
+    }
+  };
+
+  /** Jump to a quoted passage in the body and select it. */
+  const findInBody = (quote: string, index: number) => {
+    const at = a.body.indexOf(quote);
+    if (at < 0) {
+      setNotFound((prev) => new Set(prev).add(index));
+      return;
+    }
+    setTab("write");
+    requestAnimationFrame(() => {
+      const el = bodyRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(at, at + quote.length);
+      const line = a.body.slice(0, at).split("\n").length;
+      const lh = parseFloat(getComputedStyle(el).lineHeight) || 20;
+      el.scrollTop = Math.max(0, (line - 3) * lh);
     });
   };
 
@@ -744,6 +795,98 @@ export function ArticleEditor({ id: initialId, initial, revisions, categories, a
                   ) : null}
                 </>
               ) : null}
+            </div>
+          ) : null}
+
+          {tab === "review" ? (
+            <div className="be-pane">
+              <h3 className="be-h">Second read</h3>
+              <p className="be-help">
+                Claude reads the draft like an editor: claims that need a source, whether the summary is clear, and search titles.
+                It only suggests. Nothing changes unless you click Use, and the checks on the right still decide what can be published.
+              </p>
+              <div className="be-reviewbar">
+                <button type="button" className="cc-btn primary" disabled={reviewing || a.body.trim().length < 200} onClick={runReview}>
+                  {reviewing ? "Reading…" : review ? "Review again" : "Review with AI"}
+                </button>
+                {a.body.trim().length < 200 ? <span className="cc-faint">Write a few paragraphs first.</span> : null}
+                {reviewing ? <span className="cc-faint">Usually 20 to 60 seconds.</span> : null}
+                {review && reviewedBody !== a.body && !reviewing ? <span className="cc-faint">The body changed since this review.</span> : null}
+              </div>
+              {reviewError ? (
+                <p className="be-result is-err" role="alert" style={{ marginTop: 12 }}>
+                  {reviewError}
+                </p>
+              ) : null}
+
+              {review ? (
+                <div className="be-review">
+                  <h3 className="be-h">Claims to check ({review.claims.length})</h3>
+                  {review.claims.length ? (
+                    <ol className="be-review-list">
+                      {review.claims.map((c, i) => (
+                        <li key={`${i}-${c.quote}`}>
+                          <blockquote>{c.quote}</blockquote>
+                          <p>{c.why}</p>
+                          <button type="button" className="cc-btn ghost is-sm" disabled={notFound.has(i)} onClick={() => findInBody(c.quote, i)}>
+                            {notFound.has(i) ? "Not found (edited since?)" : "Find in body"}
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="be-help">Every checkable claim has a citation.</p>
+                  )}
+
+                  <h3 className="be-h">Summary</h3>
+                  <p className="be-help" style={{ marginBottom: 6 }}>
+                    <span className={`cc-chip ${review.summary.verdict === "clear" ? "t-ok" : "t-warn"}`}>{review.summary.verdict}</span> {review.summary.note}
+                  </p>
+                  {review.summary.suggestion ? (
+                    <div className="be-suggest">
+                      <p>{review.summary.suggestion}</p>
+                      <button
+                        type="button"
+                        className="cc-btn is-sm"
+                        disabled={a.summary === review.summary.suggestion}
+                        onClick={() => set({ summary: review.summary.suggestion ?? a.summary })}
+                      >
+                        {a.summary === review.summary.suggestion ? "In use" : "Use this summary"}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <h3 className="be-h">Search titles</h3>
+                  {review.seoTitles.map((t) => (
+                    <div className="be-suggest" key={t}>
+                      <p>
+                        {t} <span className="cc-faint">({t.length} characters)</span>
+                      </p>
+                      <button type="button" className="cc-btn is-sm" disabled={a.seo?.title === t} onClick={() => set({ seo: { ...(a.seo ?? {}), title: t } })}>
+                        {a.seo?.title === t ? "In use" : "Use"}
+                      </button>
+                    </div>
+                  ))}
+
+                  {review.other.length ? (
+                    <>
+                      <h3 className="be-h">Other notes</h3>
+                      <ul className="be-review-notes">
+                        {review.other.map((o) => (
+                          <li key={o}>{o}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : null}
+                  <p className="be-help">Reviewed by {review.model}. Anything you use is kept only when you save the article.</p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {tab === "performance" ? (
+            <div className="be-pane">
+              {id && performance ? performance : <p className="be-help">Performance shows once the article is saved and published.</p>}
             </div>
           ) : null}
 

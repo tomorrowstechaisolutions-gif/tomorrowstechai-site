@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ARTICLE_COLUMNS, ARTICLES_TABLE, REVISIONS_TABLE, rowToRecord, type ArticleRow } from "@/lib/blog/db-articles";
 import { ArticleEditor, type EditorRevision } from "@/components/admin/blog/ArticleEditor";
 import { editorChoices } from "@/components/admin/blog/editor-props";
+import { ArticlePerformance } from "@/components/admin/blog/ArticlePerformance";
 import type { EditableArticle } from "@/lib/blog/editor-model";
 import "@/components/admin/blog/blog-editor.css";
 import "@/app/blog/field-notes-prose.css";
@@ -51,6 +53,11 @@ export default async function EditArticlePage({ params }: { params: Promise<{ re
       initial={record}
       revisions={(revs ?? []) as EditorRevision[]}
       {...editorChoices()}
+      performance={
+        <Suspense fallback={<p className="be-help">Loading traffic, leads and social posts…</p>}>
+          <ArticlePerformance id={r.id} slug={r.slug} status={r.status} publishedAt={r.published_at} />
+        </Suspense>
+      }
     />
   );
 }

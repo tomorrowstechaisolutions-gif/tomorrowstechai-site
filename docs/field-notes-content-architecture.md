@@ -96,3 +96,27 @@ preview; per-article call to action; a live checklist running the same
   per item) and open in the editor. Nothing is published by sending.
 
 **Slugs are permanent** once published; changing one needs a redirect entry.
+
+### 6.4 Phase 4: social drafts, performance, AI review
+
+- **Publish to Social** (`src/lib/blog/social-draft.ts`). When an article goes
+  live (Publish in the editor, or the scheduler), a *draft* post is created in
+  Social Center: title, summary, link (tagged `utm_source=social`), hero image
+  and alt text, for John's LinkedIn, the Tomorrows Tech AI Facebook Page and
+  @tomorrowstechai on Instagram (Instagram only when there is a hero image).
+  Nothing is posted; John reviews and sends it from Social Center. One draft per
+  article: an existing post linking to the article blocks a second one. A
+  failure never undoes the publish; it is reported in the result message.
+  Performance → "Create social post draft" makes one on demand.
+- **Performance tab** (`src/lib/blog/performance.ts`,
+  `ArticlePerformance.tsx`). Views and visitors (30 days and since published),
+  daily views, referrers and UTM sources from Vercel Web Analytics
+  (`requestPath eq '/blog/<slug>'`), leads whose landing page is the article,
+  and the social posts made from it. Streamed in with Suspense, so the editor
+  never waits on the analytics API.
+- **AI review tab** (`/api/admin/blog/review`, `src/lib/blog/review.ts`).
+  Claude (`claude-opus-5-5`, override with `BLOG_REVIEW_MODEL`) lists claims
+  that need a source, judges the summary and suggests search titles. Suggest
+  only: nothing changes unless John clicks Use, and `validate.ts` still gates
+  publishing. Usage is recorded under the content-generator AI solution with
+  `surface: blog-review`.
