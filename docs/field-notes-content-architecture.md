@@ -80,7 +80,19 @@ preview; per-article call to action; a live checklist running the same
   changes.
 - The slug is locked once an article has been public.
 
-**Phase 3:** scheduled publishing via cron, search and social previews,
-"Send to Blog" from Content Studio.
+**Phase 3 (built):**
+- Scheduled publishing: `/api/cron/blog-publish` (every 5 minutes, CRON_SECRET)
+  runs `publishDueArticles` (`src/lib/blog/scheduler.ts`): due scheduled
+  articles that pass the checks become `published`, get a revision
+  ("Published on schedule") and the public pages refresh at once. Ones that
+  fail stay scheduled, hidden, and are logged.
+- Scheduled-and-due articles are indexable (the article page only marks
+  drafts and archived articles noindex).
+- Articles without a hero share the Field Notes card instead of no image.
+- The editor's SEO tab previews the search result and the LinkedIn and
+  Facebook link cards.
+- "Send to Blog" in Content Studio's review queue: approved items of type
+  Blog become a Field Notes draft (`source_content_id` links them, one draft
+  per item) and open in the editor. Nothing is published by sending.
 
 **Slugs are permanent** once published; changing one needs a redirect entry.

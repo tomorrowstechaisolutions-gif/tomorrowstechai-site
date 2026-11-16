@@ -8,6 +8,7 @@ import {
 } from "@/lib/content/queries";
 import { PLATFORM_LABELS, TYPE_LABELS } from "@/lib/content/formats";
 import { setContentStatusAction } from "@/app/admin/content-actions";
+import { sendContentToBlogAction } from "@/app/admin/blog-actions";
 import { EmptyState, Panel, PanelSkeleton } from "../Panel";
 import ContentAssistant from "../ContentAssistant";
 import ContentFiltersBar from "../ContentFilters";
@@ -190,7 +191,10 @@ function Calendar({ board }: { board: Board }) {
 
 /* ── 4. Drafts and review queue ────────────────────────────────────── */
 
-function QueueRow({ item }: { item: ContentRow }) {
+/** Content Studio item id -> the Field Notes draft it was sent to. */
+type SentToBlog = Map<string, string>;
+
+function QueueRow({ item, blogId }: { item: ContentRow; blogId?: string }) {
   // Approve is the gate. It is a form with a named actor behind it, never a
   // link, so nothing can approve by being navigated to.
   const next =
@@ -232,6 +236,19 @@ function QueueRow({ item }: { item: ContentRow }) {
             <input type="hidden" name="status" value={next.status} />
             <button type="submit" className="cc-btn">{next.label}</button>
           </form>
+        ) : blogId ? (
+          <Link href={`/admin/blog/${blogId}/edit`} className="cc-btn" title="Already sent to the Blog tab">
+            Open in Blog
+          </Link>
+        ) : item.status === "approved" && item.contentType === "blog" ? (
+          // Same gate as Send to Social: only approved items leave the studio.
+          // It becomes a Blog draft; publishing is still a separate step there.
+          <form action={sendContentToBlogAction} className="cc-inline-form">
+            <input type="hidden" name="content_id" value={item.id} />
+            <button type="submit" className="cc-btn" title="Creates a Field Notes draft and opens it in the Blog editor">
+              Send to Blog
+            </button>
+          </form>
         ) : (
           <span className="cc-faint">{item.status === "approved" ? "Ready to schedule" : DASH}</span>
         )}
@@ -240,7 +257,7 @@ function QueueRow({ item }: { item: ContentRow }) {
   );
 }
 
-function Queue({ board, filters }: { board: Board; filters: ContentFilters }) {
+function Queue({ board, filters, sent }: { board: Board; filters: ContentFilters; sent: SentToBlog }) {
   const tabs: { key: ContentFilters["tab"]; label: string }[] = [
     { key: "all", label: "All" },
     { key: "draft", label: "Draft" },
@@ -302,7 +319,7 @@ function Queue({ board, filters }: { board: Board; filters: ContentFilters }) {
             </thead>
             <tbody>
               {board.queue.map((c) => (
-                <QueueRow item={c} key={c.id} />
+                <QueueRow item={c} key={c.id} blogId={sent.get(c.id)} />
               ))}
             </tbody>
           </table>
@@ -520,7 +537,14 @@ function QuickActions({ board }: { board: Board }) {
 
 export default async function ContentBoard({ filters }: { filters: ContentFilters }) {
   const supabase = await createSupabaseServerClient();
-  const board = await loadContentBoard(supabase, filters);
+  const [board, sentRows] = await Promise.all([
+    loadContentBoard(supabase, filters),
+    // Which items already became Blog drafts. Missing table/column: just no links.
+    supabase.from("field_notes_articles").select("id, source_content_id").not("source_content_id", "is", null),
+  ]);
+  const sent: SentToBlog = new Map(
+    ((sentRows.data ?? []) as { id: string; source_content_id: string }[]).map((r) => [r.source_content_id, r.id])
+  );
 
   const platforms = Object.entries(PLATFORM_LABELS).map(([key, label]) => ({ key, label }));
   const types = Object.entries(TYPE_LABELS).map(([key, label]) => ({ key, label }));
@@ -549,7 +573,7 @@ export default async function ContentBoard({ filters }: { filters: ContentFilter
           <Assistant board={board} />
         </div>
         <Calendar board={board} />
-        <Queue board={board} filters={filters} />
+        <Queue board={board} filters={filters} sent={sent} />
         {/* The asset grid earns full width — more tiles per row, fewer
             orphaned ones on the last line. */}
         <div id="assets" className="cc-s12">

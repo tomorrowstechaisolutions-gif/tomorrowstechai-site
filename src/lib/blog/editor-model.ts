@@ -1,5 +1,6 @@
 import { DEFAULT_AUTHOR_ID, isCategorySlug } from "./taxonomy";
 import type { ArticleRecord, ArticleStatus } from "./types";
+import { plainText } from "./markdown";
 import { validateArticles, type Issue } from "./validate";
 
 /**
@@ -184,3 +185,21 @@ export function saveBlocker(a: EditableArticle): string | null {
 /** Character budgets search engines show. */
 export const SEO_TITLE_MAX = 60;
 export const SEO_DESC_MAX = 160;
+
+/**
+ * A Content Studio Blog item as a Field Notes draft: drops a leading
+ * "# Title" line (the headline is separate), turns other H1s into H2s
+ * (Field Notes sections start at H2), takes the first prose paragraph as the
+ * summary, and hashtags as tags.
+ */
+export function contentToDraft(item: { title?: string | null; body?: string | null; hashtags?: string[] | null }) {
+  const title = String(item.title ?? "").trim().slice(0, 200) || "Untitled article";
+  const lines = String(item.body ?? "").replace(/\r\n/g, "\n").split("\n");
+  if (lines[0]?.replace(/^#\s+/, "").trim().toLowerCase() === title.toLowerCase()) lines.shift();
+  const body = lines.map((l) => (/^#\s/.test(l) ? `#${l}` : l)).join("\n").trim();
+  const firstPara = body.split(/\n\s*\n/).find((p) => p.trim() && !/^(#|>|-|\*|\d+\.|\||!\[)/.test(p.trim())) ?? "";
+  const flat = plainText(firstPara.replace(/\s+/g, " "));
+  const summary = flat.length <= 240 ? flat : `${flat.slice(0, 240).replace(/\s+\S*$/, "")}…`;
+  const tags = (item.hashtags ?? []).map((t) => t.replace(/^#/, "").trim()).filter(Boolean).slice(0, 12);
+  return { title, body, summary, tags };
+}

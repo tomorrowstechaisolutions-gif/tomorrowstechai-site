@@ -532,6 +532,41 @@ export function ArticleEditor({ id: initialId, initial, revisions, categories, a
                 <input className="cc-input" value={a.seo?.canonical ?? ""} onChange={(e) => set({ seo: { ...a.seo, canonical: e.target.value } })} placeholder={`${siteUrl}${livePath}`} />
               </label>
 
+              <h3 className="be-h">When shared</h3>
+              <p className="be-help">
+                LinkedIn, Facebook and X show the full headline, the search description and the hero image.
+                {a.hero?.src ? "" : " With no hero image the post gets the generic Field Notes card; add one under Image."}
+              </p>
+              <div className="be-shares">
+                <figure className="be-share be-share-li" aria-label="LinkedIn preview">
+                  <figcaption>LinkedIn</figcaption>
+                  {a.hero?.src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.hero.src} alt="" />
+                  ) : (
+                    <div className="be-share-noimg">Field Notes default card</div>
+                  )}
+                  <div className="be-share-text">
+                    <strong>{a.title || "Headline"}</strong>
+                    <span>{siteUrl.replace(/^https:\/\/(www\.)?/, "")}</span>
+                  </div>
+                </figure>
+                <figure className="be-share be-share-fb" aria-label="Facebook preview">
+                  <figcaption>Facebook</figcaption>
+                  {a.hero?.src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.hero.src} alt="" />
+                  ) : (
+                    <div className="be-share-noimg">Field Notes default card</div>
+                  )}
+                  <div className="be-share-text">
+                    <span className="be-share-domain">{siteUrl.replace(/^https:\/\/(www\.)?/, "").toUpperCase()}</span>
+                    <strong>{a.title || "Headline"}</strong>
+                    <span className="be-share-desc">{seoDesc || "Summary"}</span>
+                  </div>
+                </figure>
+              </div>
+
               <h3 className="be-h">Call to action</h3>
               <p className="be-help">
                 By default the article uses the {category?.name} section&apos;s call to action: <strong>{category?.cta.label}</strong>. Override it when

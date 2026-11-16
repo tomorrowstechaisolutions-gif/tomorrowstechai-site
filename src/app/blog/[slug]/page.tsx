@@ -4,6 +4,9 @@ import { getArticle, getRelatedArticles, getReachableArticles } from "@/lib/blog
 import { PUBLISHER_NAME, SITE_URL } from "@/lib/blog/taxonomy";
 import { ArticleView } from "@/components/blog/ArticleView";
 
+/** Share image for an article without a hero (the Field Notes card). */
+const FIELD_NOTES_CARD = { url: `${SITE_URL}/blog/opengraph-image`, width: 1200, height: 630, alt: "Field Notes · Tomorrow’s Tech AI" };
+
 // Refreshed every 5 minutes, and immediately when an article is published
 // from the Admin Center (which revalidates these paths).
 export const revalidate = 300;
@@ -34,7 +37,8 @@ export async function generateMetadata({
       ? article.hero.src
       : `${SITE_URL}${article.hero.src}`
     : undefined;
-  const hidden = article.status !== "published";
+  // Scheduled articles are only reachable once their time has passed, so they are live too.
+  const hidden = article.status === "draft" || article.status === "archived";
   return {
     title,
     description,
@@ -56,13 +60,14 @@ export async function generateMetadata({
       section: article.categoryInfo.name,
       tags: article.tags,
       siteName: PUBLISHER_NAME,
-      images: image ? [{ url: image, alt: article.hero!.alt }] : undefined,
+      // Without a hero, fall back to the Field Notes card; an openGraph object without images would drop it.
+      images: image ? [{ url: image, alt: article.hero!.alt }] : [FIELD_NOTES_CARD],
     },
     twitter: {
       card: "summary_large_image",
       title: socialTitle,
       description,
-      images: image ? [image] : undefined,
+      images: image ? [image] : [FIELD_NOTES_CARD.url],
     },
   };
 }

@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { ARTICLE_COLUMNS, ARTICLES_TABLE, FIELD_NOTES_TAG, REVISIONS_TABLE, recordToRow, rowToRecord, type ArticleRow } from "@/lib/blog/db-articles";
-import { checkArticle, isLive, normalize, saveBlocker, slugLocked, todayCentral, type EditableArticle } from "@/lib/blog/editor-model";
+import { blankArticle, checkArticle, contentToDraft, isLive, normalize, saveBlocker, slugify, slugLocked, todayCentral, type EditableArticle } from "@/lib/blog/editor-model";
 import type { ArticleStatus } from "@/lib/blog/types";
 
 /**
@@ -248,4 +249,58 @@ export async function restoreRevisionAction(articleId: string, revisionId: strin
   if (row.status !== "draft") refreshPublic([row.slug]);
   revalidatePath(`/admin/blog/${articleId}/edit`);
   return { ok: true, message: `Restored the version from ${when} CT.`, id: articleId, status: row.status };
+}
+
+/**
+ * "Send to Blog" from Content Studio: turn an approved Blog item into a Field
+ * Notes draft and open it in the editor. Only approved items leave the studio
+ * (the same gate as Send to Social). Nothing is published; the draft still
+ * has to pass the editorial checks and be published by hand. An item that was
+ * already sent opens its existing draft instead of making a second one.
+ */
+export async function sendContentToBlogAction(formData: FormData): Promise<void> {
+  const s = await session();
+  if (!s) redirect("/admin/login");
+  const { supabase, actor } = s;
+  const contentId = String(formData.get("content_id") ?? "").slice(0, 40);
+  if (!/^[0-9a-f-]{36}$/i.test(contentId)) return;
+
+  const { data: already } = await supabase.from(ARTICLES_TABLE).select("id").eq("source_content_id", contentId).maybeSingle();
+  if (already) redirect(`/admin/blog/${already.id}/edit`);
+
+  const { data: item } = await supabase
+    .from("content_items")
+    .select("id, title, body, content_type, status, hashtags, ai_generated, owner")
+    .eq("id", contentId)
+    .maybeSingle();
+  if (!item || item.content_type !== "blog" || item.status !== "approved") return;
+
+  const { title, body, summary, tags } = contentToDraft(item);
+
+  // A free slug: the headline's, or the headline's with -2, -3…
+  const base = slugify(title) || "article";
+  const { data: taken } = await supabase.from(ARTICLES_TABLE).select("slug").like("slug", `${base}%`);
+  const used = new Set((taken ?? []).map((r: { slug: string }) => r.slug));
+  let slug = base;
+  for (let n = 2; used.has(slug); n++) slug = `${base}-${n}`;
+
+  const record: EditableArticle = { ...blankArticle(), title, slug, summary, body, tags, category: "business-automation" };
+  const { data, error } = await supabase
+    .from(ARTICLES_TABLE)
+    .insert({ ...recordToRow(normalize(record)), source_content_id: contentId, created_by: actor, updated_by: actor })
+    .select("id")
+    .single();
+  if (error) {
+    console.error("[blog] send to blog failed:", error.message);
+    return;
+  }
+  await writeRevision(
+    supabase,
+    data.id,
+    actor,
+    `Sent from Content Studio${item.ai_generated ? " (AI-drafted; approved in the studio)" : ""}`
+  );
+  revalidatePath("/admin/blog");
+  revalidatePath("/admin/marketing/content");
+  redirect(`/admin/blog/${data.id}/edit`);
 }
