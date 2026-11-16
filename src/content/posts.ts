@@ -3,6 +3,11 @@ import type { ArticleRecord } from "@/lib/blog/types";
 /**
  * Field Notes articles that live in code.
  *
+ * Since 2026-11-16 every article here is also in the database and is edited
+ * in the Admin Center (Blog tab). The database copy wins, so changing an
+ * article below no longer changes the live site; this file is the backup and
+ * the fallback if the database is unreachable.
+ *
  * Read through src/lib/blog/repository.ts — never import this array directly
  * into a page. The repository validates every entry against the editorial
  * standards (src/lib/blog/validate.ts) and fails the build on errors.

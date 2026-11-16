@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Blog" };
 /**
  * Field Notes in the Admin Center: every article, its status, whether it
  * passes the editorial checks, and how it is doing (views, leads).
- * Phase 1 is the catalog and preview; editing and publishing arrive in Phase 2.
+ * Click an article to edit it; New article starts a draft.
  */
 
 const TABS = [
@@ -88,9 +88,7 @@ export default async function BlogAdminPage({
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           <Link href="/blog" target="_blank" className="cc-btn">View Field Notes</Link>
-          <span className="cc-btn" aria-disabled="true" title="Arrives in Phase 2" style={{ opacity: 0.55, cursor: "not-allowed" }}>
-            New article
-          </span>
+          <Link href="/admin/blog/new" className="cc-btn primary">New article</Link>
         </div>
       </div>
 
@@ -185,7 +183,7 @@ function ArticleRow({ a, views, leads, viewsKnown }: { a: AdminArticle; views?: 
   return (
     <tr>
       <td style={{ maxWidth: 460 }}>
-        <Link href={`/admin/blog/${encodeURIComponent(a.ref)}/preview`} className="cc-strong">{a.title}</Link>
+        <Link href={`/admin/blog/${encodeURIComponent(a.ref)}/${a.source === "database" ? "edit" : "preview"}`} className="cc-strong">{a.title}</Link>
         <div className="cc-faint" style={{ fontSize: "0.78rem" }}>
           /blog/{a.slug}
           {a.featured ? " · Featured" : ""}
@@ -207,6 +205,12 @@ function ArticleRow({ a, views, leads, viewsKnown }: { a: AdminArticle; views?: 
         )}
       </td>
       <td style={{ whiteSpace: "nowrap" }}>
+        {a.source === "database" ? (
+          <>
+            <Link href={`/admin/blog/${encodeURIComponent(a.ref)}/edit`} className="cc-more">Edit</Link>
+            {" · "}
+          </>
+        ) : null}
         <Link href={`/admin/blog/${encodeURIComponent(a.ref)}/preview`} className="cc-more">Preview</Link>
         {live ? (
           <>

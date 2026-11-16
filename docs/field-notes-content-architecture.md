@@ -31,7 +31,7 @@ deploy per article.
 - `src/lib/blog/taxonomy.ts` — categories (with CTA → `/contact?service=`) and
   authors. Bios stay `null` until their wording is approved.
 
-## Phase 6: the Admin Center Blog tab (in progress)
+## Phase 6: the Admin Center Blog tab
 
 Decided 2026-11-16: articles get their own table instead of extra columns on
 `content_items`. An article's structure (sources, specs, discrepancies, hero,
@@ -60,9 +60,25 @@ public site's, not Content Studio's review queue.
   and leads; `/admin/blog/[ref]/preview` renders any article with the live
   `ArticleView` component.
 
-**Phase 2:** editor (Markdown with live preview), sources/specs/discrepancies,
-hero upload, SEO and CTA, publish checklist, publish/unpublish/archive/delete,
-revision history.
+**Phase 2 (built):** `/admin/blog/new` and `/admin/blog/[id]/edit`
+(`src/components/admin/blog/ArticleEditor.tsx`). Markdown body with a
+formatting toolbar and a live preview; sources, specs and disagreements;
+hero and in-body images uploaded from the browser straight to the
+`field-notes` bucket (admin-only storage policies); SEO with a search-result
+preview; per-article call to action; a live checklist running the same
+`validateArticles` rules as the site. Server actions in
+`src/app/admin/blog-actions.ts`:
+- Save never changes status. A live article's edits must pass every check.
+- Publish (today's date unless a past one is set), Schedule (future
+  date/time; goes live within the 5-minute refresh), Unpublish (back to
+  draft, URL stops working), Archive (off lists/feed, URL keeps working).
+- Delete only for drafts and archived articles, confirmed by typing the slug.
+- Every save, status change and restore writes a revision; Restore puts back
+  an earlier version's content but keeps status, date and a locked slug.
+- Public pages refresh immediately (`updateTag` on `field-notes` plus
+  `revalidatePath`) whenever a published, scheduled or archived article
+  changes.
+- The slug is locked once an article has been public.
 
 **Phase 3:** scheduled publishing via cron, search and social previews,
 "Send to Blog" from Content Studio.
