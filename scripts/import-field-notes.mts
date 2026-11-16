@@ -2,8 +2,8 @@
  * One-time import: copy the articles in src/content/posts.ts into
  * public.field_notes_articles so they can be managed from the Admin Center.
  *
- *   npx tsx --conditions=react-server --env-file=.env.local scripts/import-field-notes.mts           (dry run)
- *   npx tsx --conditions=react-server --env-file=.env.local scripts/import-field-notes.mts --apply   (writes)
+ *   npx tsx --require ./scripts/shims/allow-server-only.cjs --env-file=.env.local scripts/import-field-notes.mts           (dry run)
+ *   npx tsx --require ./scripts/shims/allow-server-only.cjs --env-file=.env.local scripts/import-field-notes.mts --apply   (writes)
  *
  * Only ever inserts. An article whose slug already exists in the database is
  * skipped, so re-running can never overwrite edits made in the admin. Each
