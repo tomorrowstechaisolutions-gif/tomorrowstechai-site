@@ -141,7 +141,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Finance",
     links: [
       { href: "/admin/finance", label: "Overview", icon: IconDollar },
-      { href: "/admin/finance/subscriptions", label: "Subscriptions", icon: IconRepeat, soon: true },
+      { href: "/admin/finance/subscriptions", label: "Subscriptions", icon: IconRepeat },
       { href: "/admin/finance/expenses", label: "Expenses", icon: IconCart, soon: true },
     ],
   },
@@ -222,11 +222,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard, and every invoice is under Sales.",
     nearest: { href: "/admin/invoices", label: "Open invoices" },
-  },
-  "/admin/finance/subscriptions": {
-    title: "Subscriptions",
-    blurb: "Hosting and retainer subscriptions, and what each client contributes to MRR.",
-    nearest: { href: "/admin", label: "See MRR" },
   },
   "/admin/finance/expenses": {
     title: "Expenses",
