@@ -99,7 +99,7 @@ export async function sendPortalRequestAlert(opts: {
 }) {
   const to = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
   const adminUrl = `${(process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "")}/admin/clients/${opts.customerId}`;
-  const label = { question: "Question", change: "Change request", problem: "Problem", billing: "Billing", cancel: "Cancellation request" }[opts.category] ?? "Request";
+  const label = { question: "Question", change: "Change request", problem: "Problem", billing: "Billing", cancel: "Cancellation request", new_service: "New service request" }[opts.category] ?? "Request";
   const html = renderEmail({
     preheader: `${label} from ${opts.businessName}: ${opts.subject}`,
     blocks: [

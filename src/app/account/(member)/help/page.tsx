@@ -5,7 +5,7 @@ import { HelpForm } from "../MemberForms";
 
 export const metadata: Metadata = { title: "Get help" };
 
-const CAT: Record<string, string> = { question: "Question", change: "Change", problem: "Problem", billing: "Billing", cancel: "Cancellation" };
+const CAT: Record<string, string> = { question: "Question", change: "Change", problem: "Problem", billing: "Billing", cancel: "Cancellation", new_service: "New service" };
 
 export default async function HelpPage({ searchParams }: { searchParams: Promise<{ about?: string; category?: string }> }) {
   const member = (await getPortalMember())!;

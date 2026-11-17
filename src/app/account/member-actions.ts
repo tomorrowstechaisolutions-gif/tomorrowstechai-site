@@ -95,3 +95,57 @@ export async function openBillingPortalAction(fd: FormData) {
   }
   redirect(url);
 }
+
+/**
+ * "I'm interested" on a catalog item. Opens a request for John (he follows up
+ * with a proposal or an invoice); nothing is charged here. The item is looked
+ * up server-side and must be public and active. A second click while the
+ * first request is still open does nothing.
+ */
+export async function requestServiceAction(fd: FormData) {
+  const member = await getPortalMember();
+  if (!member) redirect("/account/login");
+  const itemId = str(fd, "item_id", 40);
+  const note = str(fd, "note", 1000);
+  if (!rateLimit(`portal-request:${member.id}`, { max: 6, windowMs: 60 * 60 * 1000 }).ok) redirect("/account/more?requested=busy");
+
+  const db = supabaseAdmin();
+  const { data: item } = await db
+    .from("catalog_items")
+    .select("id, name, from_cents, billing_type, pricing_mode")
+    .eq("id", itemId)
+    .eq("public_enabled", true)
+    .eq("active", true)
+    .maybeSingle();
+  if (!item) redirect("/account/more?requested=missing");
+
+  const { data: open } = await db
+    .from("portal_requests")
+    .select("id")
+    .eq("customer_id", member.customerId)
+    .eq("catalog_item_id", item.id)
+    .eq("status", "open")
+    .limit(1);
+  if (open?.length) redirect("/account/more?requested=already");
+
+  const subject = `Interested in: ${item.name}`.slice(0, 160);
+  const price =
+    item.pricing_mode === "custom_quote" || !item.from_cents
+      ? "custom quote"
+      : `${item.pricing_mode === "starting_at" ? "from " : ""}$${(item.from_cents / 100).toFixed(0)}${item.billing_type === "recurring" ? "/mo" : ""}`;
+  const message = `${member.businessName} would like ${item.name} (${price}).${note ? `\n\nTheir note: ${note}` : ""}`;
+
+  const { error } = await db.from("portal_requests").insert({
+    customer_id: member.customerId,
+    member_id: member.id,
+    category: "new_service",
+    subject,
+    message,
+    catalog_item_id: item.id,
+  });
+  if (error) redirect("/account/more?requested=error");
+
+  await sendPortalRequestAlert({ businessName: member.businessName, from: member.email, category: "new_service", subject, message, customerId: member.customerId });
+  revalidatePath("/account/more");
+  redirect("/account/more?requested=ok");
+}
