@@ -56,17 +56,29 @@ export function moneyRows(inv: Invoice, items: InvoiceItem[]): MoneyRow[] {
     rows.push({ label: "Already paid", value: `− ${money(inv.amount_paid_cents)}` });
   }
 
-  rows.push({
-    label: "Amount due",
-    value: money(outstandingCents(inv)),
-    strong: true,
-    note: inv.due_date ? `by ${formatDate(inv.due_date)}` : "on receipt",
-  });
+  // A monthly-only invoice has nothing due up front. Showing "Amount due: $0"
+  // there reads like a mistake, so the monthly total takes its place.
+  const recurringOnly = isRecurringOnly(inv);
+  if (!recurringOnly) {
+    rows.push({
+      label: "Amount due",
+      value: money(outstandingCents(inv)),
+      strong: true,
+      note: inv.due_date ? `by ${formatDate(inv.due_date)}` : "on receipt",
+    });
+  }
 
   if (inv.recurring_cents > 0) {
+    const per = `/${inv.recurring_interval}`;
+    const recurringItems = items.filter((i) => i.item_kind === "recurring");
+    // Each recurring service by name, so nothing is folded into one label.
+    for (const item of recurringItems) {
+      rows.push({ label: item.title, value: `${money(item.total_price_cents)}${per}` });
+    }
     rows.push({
-      label: "Hosting & management",
-      value: `${money(inv.recurring_cents)}/${inv.recurring_interval}`,
+      label: recurringItems.length ? `Total per ${inv.recurring_interval}` : "Hosting & management",
+      value: `${money(inv.recurring_cents)}${per}`,
+      strong: recurringOnly,
       note: inv.recurring_starts_on
         ? `starts ${formatDate(inv.recurring_starts_on)}`
         : "billed separately",
@@ -74,6 +86,11 @@ export function moneyRows(inv: Invoice, items: InvoiceItem[]): MoneyRow[] {
   }
 
   return rows;
+}
+
+/** Nothing due up front, only a recurring charge (hosting, management, and the like). */
+function isRecurringOnly(inv: Invoice): boolean {
+  return outstandingCents(inv) <= 0 && inv.amount_paid_cents <= 0 && inv.recurring_cents > 0;
 }
 
 function rowsAsText(rows: MoneyRow[]): string {
@@ -126,10 +143,12 @@ export function buildInvoiceEmail(
       eyebrow("Invoice"),
       heading(inv.title),
       paragraph(
-        `${esc(greeting)} the work is done and here is the invoice for it — every line itemised, and a button to pay it by card if that is easiest.`
+        isRecurringOnly(inv)
+          ? `${esc(greeting)} here is the invoice for your monthly services — every line itemised, and a button to set up payment by card if that is easiest.`
+          : `${esc(greeting)} the work is done and here is the invoice for it — every line itemised, and a button to pay it by card if that is easiest.`
       ),
       factPanel(rows),
-      button(due > 0 ? "View and pay your invoice" : "View your invoice", url),
+      button(due > 0 || inv.recurring_cents > 0 ? "View and pay your invoice" : "View your invoice", url),
       linkFallback(url),
       trimmedNote ? quote(trimmedNote) : "",
       divider(),
@@ -170,7 +189,9 @@ ${SIGNOFF_TEXT}`;
     subject:
       due > 0
         ? `Invoice ${inv.invoice_number} — ${formatMoney(due, inv.currency)} due`
-        : `Invoice ${inv.invoice_number} — ${inv.title}`,
+        : inv.recurring_cents > 0
+          ? `Invoice ${inv.invoice_number} — ${formatMoney(inv.recurring_cents, inv.currency)}/${inv.recurring_interval}`
+          : `Invoice ${inv.invoice_number} — ${inv.title}`,
     html,
     text,
   };
