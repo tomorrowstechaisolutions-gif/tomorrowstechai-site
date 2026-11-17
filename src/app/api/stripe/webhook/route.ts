@@ -5,6 +5,7 @@ import { cancelPendingFollowups } from "@/lib/campaign/intake";
 import { sendCapiEvent } from "@/lib/meta/capi";
 import { OFFER_PRICE_CENTS, HOSTING_FROM_CENTS, CAMPAIGN_NAME } from "@/lib/campaign/config";
 import { DEFAULT_JOB_TASKS, dueDateFrom, PROMISED_DAYS } from "@/lib/jobs/config";
+import { sendBillingChangeAlert } from "@/lib/portal/emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export const dynamic = "force-dynamic";
 type StripeEvent = {
   id: string;
   type: string;
-  data: { object: Record<string, unknown> };
+  data: { object: Record<string, unknown>; previous_attributes?: Record<string, unknown> };
 };
 
 function str(o: Record<string, unknown>, key: string): string | null {
@@ -532,6 +533,16 @@ async function handleSubscriptionSynced(event: StripeEvent) {
   const subscriptionId = str(subscription, "id");
   if (!subscriptionId) return;
 
+  // A subscription started from an invoice page carries the invoice id in its
+  // metadata. If it arrives before checkout.session.completed has linked it,
+  // link it here so the client record and the service don't miss this event.
+  const subMeta = meta(subscription);
+  if (subMeta.kind === "invoice" && subMeta.invoice_id) {
+    await linkInvoiceSubscription(subMeta.invoice_id, str(subscription, "customer"), subscriptionId);
+  }
+
+  await syncLinkedServices(event);
+
   const { data: customer } = await db
     .from("customers")
     .select("id, status")
@@ -594,17 +605,190 @@ async function handleSubscriptionSynced(event: StripeEvent) {
 async function handleSubscriptionCancelled(event: StripeEvent) {
   const db = supabaseAdmin();
   const subscription = event.data.object;
+  const subscriptionId = str(subscription, "id");
   const stripeCustomerId = str(subscription, "customer");
   if (!stripeCustomerId) return;
 
-  await db
+  // The services this subscription paid for are over.
+  let endedFor: { customerId: string; names: string[] } | null = null;
+  if (subscriptionId) {
+    const { data: ended } = await db
+      .from("client_services")
+      .update({ status: "ended", billing_status: "cancelled", end_date: chicagoDay(new Date()), next_billing_date: null })
+      .eq("subscription_id", subscriptionId)
+      .neq("status", "ended")
+      .select("customer_id, catalog_items(name)");
+    if (ended?.length) endedFor = { customerId: ended[0].customer_id as string, names: serviceNames(ended) };
+  }
+
+  // Churn the client only when nothing else is still running for them. A
+  // client can cancel one add-on and keep their hosting, and a client whose
+  // record points at a different subscription is not affected by this one.
+  const { data: customers } = await db
     .from("customers")
-    .update({
-      status: "churned",
-      churned_at: new Date().toISOString(),
-      mrr_cents: 0,
-    })
+    .select("id, business_name, name, stripe_subscription_id")
     .eq("stripe_customer_id", stripeCustomerId);
+  for (const c of customers ?? []) {
+    if (c.stripe_subscription_id && subscriptionId && c.stripe_subscription_id !== subscriptionId) continue;
+    const { count } = await db
+      .from("client_services")
+      .select("id", { count: "exact", head: true })
+      .eq("customer_id", c.id)
+      .eq("status", "active")
+      .eq("billing_type", "recurring");
+    if ((count ?? 0) > 0) continue;
+    await db
+      .from("customers")
+      .update({ status: "churned", churned_at: new Date().toISOString(), mrr_cents: 0 })
+      .eq("id", c.id);
+  }
+
+  if (endedFor) {
+    const owner = endedFor.customerId;
+    const { data: c } = await db.from("customers").select("business_name, name").eq("id", owner).maybeSingle();
+    await sendBillingChangeAlert({
+      kind: "ended",
+      businessName: c?.business_name || c?.name || "A client",
+      services: endedFor.names,
+      endsOn: null,
+      reason: cancellationReason(subscription),
+      customerId: owner,
+    });
+  }
+}
+
+// ── Member portal billing ───────────────────────────────────────────────────
+
+function chicagoDay(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+}
+
+function serviceNames(rows: { catalog_items?: unknown }[]): string[] {
+  return rows
+    .map((r) => {
+      const c = Array.isArray(r.catalog_items) ? r.catalog_items[0] : r.catalog_items;
+      return (c as { name?: string } | null)?.name ?? null;
+    })
+    .filter((n): n is string => Boolean(n));
+}
+
+function cancellationReason(subscription: Record<string, unknown>): string | null {
+  const d = subscription.cancellation_details as { feedback?: string | null; comment?: string | null } | undefined;
+  const parts = [d?.feedback?.replace(/_/g, " "), d?.comment].filter(Boolean);
+  return parts.length ? parts.join(": ").slice(0, 500) : null;
+}
+
+/**
+ * Ties a Stripe subscription, started by paying an invoice, back to the
+ * client record and the service it pays for. Without this the client could
+ * never manage billing from the member portal, and a cancellation in Stripe
+ * would never reach the service. Safe to run more than once.
+ *
+ * Only fills empty fields: an existing Stripe id on the client is never
+ * overwritten, and a service already tied to a subscription is left alone.
+ * The service is linked only when it can be identified without guessing:
+ * the client's one active, unlinked recurring service, or the one whose price
+ * matches the invoice's recurring amount.
+ */
+async function linkInvoiceSubscription(invoiceId: string, stripeCustomerId: string | null, subscriptionId: string | null) {
+  const db = supabaseAdmin();
+  const { data: inv } = await db.from("invoices").select("customer_id, recurring_cents").eq("id", invoiceId).maybeSingle();
+  const customerId = (inv?.customer_id as string | null) ?? null;
+  if (!customerId) return;
+
+  const { data: c } = await db.from("customers").select("stripe_customer_id, stripe_subscription_id").eq("id", customerId).maybeSingle();
+  if (!c) return;
+  const sameStripeCustomer = !c.stripe_customer_id || c.stripe_customer_id === stripeCustomerId;
+  const patch: Record<string, unknown> = {};
+  if (!c.stripe_customer_id && stripeCustomerId) patch.stripe_customer_id = stripeCustomerId;
+  if (!c.stripe_subscription_id && subscriptionId && sameStripeCustomer) patch.stripe_subscription_id = subscriptionId;
+  if (Object.keys(patch).length) await db.from("customers").update(patch).eq("id", customerId);
+
+  if (!subscriptionId) return;
+  const { data: already } = await db.from("client_services").select("id").eq("subscription_id", subscriptionId).limit(1);
+  if (already?.length) return;
+
+  const { data: candidates } = await db
+    .from("client_services")
+    .select("id, sale_price_cents")
+    .eq("customer_id", customerId)
+    .eq("status", "active")
+    .eq("billing_type", "recurring")
+    .is("subscription_id", null);
+  const list = candidates ?? [];
+  const priceMatches = list.filter((s) => Number(s.sale_price_cents ?? -1) === Number(inv?.recurring_cents ?? -2));
+  const pick = list.length === 1 ? list[0] : priceMatches.length === 1 ? priceMatches[0] : null;
+  if (pick) {
+    await db.from("client_services").update({ subscription_id: subscriptionId, billing_status: "active" }).eq("id", pick.id);
+  }
+}
+
+/**
+ * Mirrors a subscription's state onto the services it pays for: billing
+ * status, the next billing date, and a scheduled cancellation as an end
+ * date (the service stays active until then). Emails John when a client
+ * schedules or undoes a cancellation from the billing page.
+ */
+async function syncLinkedServices(event: StripeEvent) {
+  const db = supabaseAdmin();
+  const subscription = event.data.object;
+  const subscriptionId = str(subscription, "id");
+  if (!subscriptionId) return;
+
+  const { data: linked } = await db
+    .from("client_services")
+    .select("id, customer_id, status, catalog_items(name)")
+    .eq("subscription_id", subscriptionId);
+  if (!linked?.length) return;
+
+  const items = (subscription.items as { data?: Record<string, unknown>[] } | undefined)?.data ?? [];
+  let periodEnd = num(subscription, "current_period_end");
+  for (const item of items) periodEnd = Math.max(periodEnd, num(item, "current_period_end"));
+
+  const stripeStatus = str(subscription, "status") ?? "";
+  const billingStatus =
+    stripeStatus === "past_due" || stripeStatus === "unpaid" || stripeStatus === "incomplete"
+      ? "past_due"
+      : stripeStatus === "paused"
+        ? "paused"
+        : stripeStatus === "canceled" || stripeStatus === "incomplete_expired"
+          ? "cancelled"
+          : "active";
+
+  const cancelAt = num(subscription, "cancel_at");
+  const cancelling = subscription.cancel_at_period_end === true || cancelAt > 0;
+  const endsAt = cancelling ? cancelAt || periodEnd : 0;
+
+  const patch: Record<string, unknown> = { billing_status: billingStatus };
+  if (billingStatus !== "cancelled") {
+    patch.end_date = endsAt > 0 ? chicagoDay(new Date(endsAt * 1000)) : null;
+    patch.next_billing_date = !cancelling && periodEnd > 0 ? chicagoDay(new Date(periodEnd * 1000)) : null;
+  }
+  await db.from("client_services").update(patch).eq("subscription_id", subscriptionId).neq("status", "ended");
+
+  // Did this event schedule or undo a cancellation? Stripe lists the fields
+  // that changed, with their old values, in previous_attributes.
+  const prev = event.data.previous_attributes ?? {};
+  const touched = "cancel_at_period_end" in prev || "cancel_at" in prev;
+  if (event.type !== "customer.subscription.updated" || !touched) return;
+  const prevAtEnd = "cancel_at_period_end" in prev ? prev.cancel_at_period_end === true : subscription.cancel_at_period_end === true;
+  const prevCancelAt = "cancel_at" in prev ? (typeof prev.cancel_at === "number" ? prev.cancel_at : 0) : cancelAt;
+  const wasCancelling = prevAtEnd || prevCancelAt > 0;
+  if (wasCancelling === cancelling) return;
+
+  const customerId = linked[0].customer_id as string;
+  const { data: c } = await db.from("customers").select("business_name, name").eq("id", customerId).maybeSingle();
+  await sendBillingChangeAlert({
+    kind: cancelling ? "scheduled" : "resumed",
+    businessName: c?.business_name || c?.name || "A client",
+    services: serviceNames(linked),
+    endsOn:
+      endsAt > 0
+        ? new Date(endsAt * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Chicago" })
+        : null,
+    reason: cancelling ? cancellationReason(subscription) : null,
+    customerId,
+  });
 }
 
 // ── Invoice payment ─────────────────────────────────────────────────────────
@@ -644,6 +828,10 @@ async function handleInvoiceDocumentPaid(event: StripeEvent) {
     .eq("id", invoiceId)
     .maybeSingle();
   if (!invoiceRow) return;
+
+  // Paying a recurring invoice starts a Stripe subscription. Tie it to the
+  // client and their service (idempotent, so it also runs on a replay).
+  await linkInvoiceSubscription(invoiceId, str(session, "customer"), str(session, "subscription"));
 
   // A replay Stripe has already delivered.
   const { data: already } = await db

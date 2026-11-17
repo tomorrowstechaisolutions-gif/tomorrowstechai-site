@@ -36,20 +36,22 @@ const CATS = [
   ["cancel", "Cancel a service"],
 ] as const;
 
-export function HelpForm({ about }: { about?: string }) {
+export function HelpForm({ about, category }: { about?: string; category?: string }) {
   const [state, action, pending] = useActionState(submitMemberRequestAction, {});
+  const initial = CATS.some(([v]) => v === category) ? category : about ? "change" : "question";
+  const subject = about ? (initial === "cancel" ? `Cancel: ${about}` : `About: ${about}`) : "";
   return (
     <form action={action} className="acct-form" key={state.notice ?? "form"}>
       <Msg state={state} />
       <div className="acct-field">
         <label htmlFor="category">What do you need?</label>
-        <select id="category" name="category" defaultValue={about ? "change" : "question"}>
+        <select id="category" name="category" defaultValue={initial}>
           {CATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </div>
       <div className="acct-field">
         <label htmlFor="subject">Subject</label>
-        <input id="subject" name="subject" maxLength={160} defaultValue={about ? `About: ${about}` : ""} required />
+        <input id="subject" name="subject" maxLength={160} defaultValue={subject} required />
       </div>
       <div className="acct-field">
         <label htmlFor="message">Details</label>

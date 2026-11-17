@@ -479,3 +479,64 @@ export async function createInvoiceCheckoutSession(opts: {
     `invoice:${opts.invoiceId}`
   );
 }
+
+// ── Member portal billing (Stripe Customer Portal) ───────────────────────────
+
+type PortalConfiguration = { id: string; active: boolean; metadata?: Record<string, string> };
+
+const PORTAL_CONFIG_APP = "ttai-member-portal";
+
+/**
+ * The Stripe Customer Portal settings our members get. This Stripe account is
+ * shared with the shops, so instead of changing the account's default portal
+ * we keep our own configuration, found by metadata and created once:
+ * update card, see invoices, cancel at the END of the paid period (never
+ * immediately, no prorated refunds), with a reason. No plan switching.
+ */
+export async function ensureMemberPortalConfiguration(): Promise<string> {
+  const list = await stripeRequest<StripeList<PortalConfiguration>>("GET", "/billing_portal/configurations", { limit: 100, active: true });
+  const found = list.data.find((c) => c.active && c.metadata?.app === PORTAL_CONFIG_APP);
+  if (found) return found.id;
+
+  const origin = siteOrigin();
+  const created = await stripeRequest<PortalConfiguration>(
+    "POST",
+    "/billing_portal/configurations",
+    {
+      business_profile: {
+        headline: "Tomorrow's Tech AI: manage your billing",
+        privacy_policy_url: `${origin}/privacy`,
+        terms_of_service_url: `${origin}/terms`,
+      },
+      default_return_url: `${origin}/account/services`,
+      features: {
+        customer_update: { enabled: true, allowed_updates: ["email", "address"] },
+        invoice_history: { enabled: true },
+        payment_method_update: { enabled: true },
+        subscription_cancel: {
+          enabled: true,
+          mode: "at_period_end",
+          proration_behavior: "none",
+          cancellation_reason: {
+            enabled: true,
+            options: ["too_expensive", "unused", "switched_service", "missing_features", "customer_service", "other"],
+          },
+        },
+      },
+      metadata: { app: PORTAL_CONFIG_APP },
+    },
+    `portal-config:${PORTAL_CONFIG_APP}:v1`
+  );
+  return created.id;
+}
+
+/** A one-time link into the Stripe Customer Portal for one Stripe customer. */
+export async function createMemberBillingSession(stripeCustomerId: string, returnPath = "/account/services"): Promise<string> {
+  const configuration = await ensureMemberPortalConfiguration();
+  const session = await stripeRequest<{ url: string }>("POST", "/billing_portal/sessions", {
+    customer: stripeCustomerId,
+    configuration,
+    return_url: `${siteOrigin()}${returnPath}`,
+  });
+  return session.url;
+}

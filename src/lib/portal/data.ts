@@ -20,6 +20,9 @@ export type MemberService = {
   startDate: string | null;
   nextBillingDate: string | null;
   endDate: string | null;
+  billingStatus: string;
+  /** Billed through a Stripe subscription, so the member can manage or cancel it themselves. */
+  selfServe: boolean;
 };
 
 export type MemberInvoice = {
@@ -58,7 +61,7 @@ const LINKABLE = new Set(["sent", "partial", "paid"]);
 export async function memberServices(customerId: string): Promise<MemberService[]> {
   const { data } = await supabaseAdmin()
     .from("client_services")
-    .select("id, status, sale_price_cents, billing_type, interval_months, start_date, next_billing_date, end_date, catalog_items(name, short_description, subtitle)")
+    .select("id, status, billing_status, subscription_id, sale_price_cents, billing_type, interval_months, start_date, next_billing_date, end_date, catalog_items(name, short_description, subtitle)")
     .eq("customer_id", customerId)
     .order("start_date", { ascending: false });
   return (data ?? []).map((r) => {
@@ -74,8 +77,16 @@ export async function memberServices(customerId: string): Promise<MemberService[
       startDate: r.start_date,
       nextBillingDate: r.next_billing_date,
       endDate: r.end_date,
+      billingStatus: r.billing_status ?? "not_connected",
+      selfServe: Boolean(r.subscription_id),
     };
   });
+}
+
+/** True when this client has a Stripe customer, so "Manage billing" can open. The id itself never leaves the server. */
+export async function memberHasStripeBilling(customerId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin().from("customers").select("stripe_customer_id").eq("id", customerId).maybeSingle();
+  return Boolean(data?.stripe_customer_id);
 }
 
 export async function memberInvoices(customerId: string): Promise<MemberInvoice[]> {

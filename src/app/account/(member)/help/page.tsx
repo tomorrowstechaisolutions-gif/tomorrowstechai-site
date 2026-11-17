@@ -7,15 +7,15 @@ export const metadata: Metadata = { title: "Get help" };
 
 const CAT: Record<string, string> = { question: "Question", change: "Change", problem: "Problem", billing: "Billing", cancel: "Cancellation" };
 
-export default async function HelpPage({ searchParams }: { searchParams: Promise<{ about?: string }> }) {
+export default async function HelpPage({ searchParams }: { searchParams: Promise<{ about?: string; category?: string }> }) {
   const member = (await getPortalMember())!;
-  const [{ about }, requests] = await Promise.all([searchParams, memberRequests(member.customerId)]);
+  const [{ about, category }, requests] = await Promise.all([searchParams, memberRequests(member.customerId)]);
   return (
     <>
       <section className="acct-section">
         <h2>Send us a request</h2>
         <p className="acct-faint">Questions, changes, problems, billing or cancellations. It comes straight to us, and we reply by email, usually within one business day. For anything urgent, call (254) 563-2130.</p>
-        <HelpForm about={about?.slice(0, 120)} />
+        <HelpForm about={about?.slice(0, 120)} category={category} />
       </section>
       {requests.length ? (
         <section className="acct-section">

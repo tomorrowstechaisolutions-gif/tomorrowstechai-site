@@ -114,3 +114,46 @@ export async function sendPortalRequestAlert(opts: {
   const text = [`${label} from ${opts.businessName} (${opts.from})`, "", opts.subject, "", opts.message, "", adminUrl].join("\n");
   return deliver(to, `[Portal] ${label}: ${opts.subject}`.slice(0, 180), html, text, "Portal request alert");
 }
+
+/**
+ * Alerts John when a client's Stripe subscription changes on its own: a
+ * cancellation scheduled (or undone) from the billing page, or a subscription
+ * that has actually ended. Sent from the Stripe webhook.
+ */
+export async function sendBillingChangeAlert(opts: {
+  kind: "scheduled" | "resumed" | "ended";
+  businessName: string;
+  services: string[];
+  endsOn: string | null;
+  reason: string | null;
+  customerId: string;
+}) {
+  const to = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
+  const adminUrl = `${(process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "")}/admin/clients/${opts.customerId}`;
+  const what = opts.services.length ? opts.services.join(", ") : "their subscription";
+  const subject =
+    opts.kind === "scheduled"
+      ? `${opts.businessName} cancelled ${what}${opts.endsOn ? ` (ends ${opts.endsOn})` : ""}`
+      : opts.kind === "resumed"
+        ? `${opts.businessName} kept ${what} (cancellation undone)`
+        : `${opts.businessName}: ${what} has ended`;
+  const body =
+    opts.kind === "scheduled"
+      ? `They cancelled from the billing page. Nothing more will be charged, and the service stays on until ${opts.endsOn ?? "the end of the paid period"}.`
+      : opts.kind === "resumed"
+        ? "They undid a scheduled cancellation, so billing carries on as before."
+        : "The subscription has ended in Stripe. The service is now marked ended on their client record.";
+  const html = renderEmail({
+    preheader: subject,
+    blocks: [
+      eyebrow("Billing change"),
+      heading(subject),
+      paragraph(esc(body)),
+      ...(opts.reason ? [paragraph(`<strong>Reason given:</strong> ${esc(opts.reason)}`)] : []),
+      button("Open the client", adminUrl),
+    ],
+    tone: opts.kind === "resumed" ? "default" : "alert",
+  });
+  const text = [subject, "", body, ...(opts.reason ? ["", `Reason given: ${opts.reason}`] : []), "", adminUrl].join("\n");
+  return deliver(to, `[Billing] ${subject}`.slice(0, 180), html, text, "Billing change alert");
+}

@@ -11,7 +11,7 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
   const [{ welcome }, services, invoices] = await Promise.all([searchParams, memberServices(member.customerId), memberInvoices(member.customerId)]);
 
   const active = services.filter((s) => s.status === "active");
-  const monthly = active.filter((s) => s.billingType === "recurring").reduce((sum, s) => sum + s.priceCents / Math.max(1, s.intervalMonths ?? 1), 0);
+  const monthly = active.filter((s) => s.billingType === "recurring" && !s.endDate).reduce((sum, s) => sum + s.priceCents / Math.max(1, s.intervalMonths ?? 1), 0);
   const due = invoices.filter((i) => balanceCents(i) > 0);
   const dueTotal = due.reduce((sum, i) => sum + balanceCents(i), 0);
   const nextBill = active.map((s) => s.nextBillingDate).filter((d): d is string => Boolean(d)).sort()[0] ?? null;
@@ -68,7 +68,7 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
               <li key={s.id}>
                 <div>
                   <strong>{s.name}</strong>
-                  <span className="acct-faint">Since {shortDate(s.startDate)}</span>
+                  <span className="acct-faint">{s.endDate ? `Ends ${shortDate(s.endDate)}` : `Since ${shortDate(s.startDate)}`}</span>
                 </div>
                 <span className="acct-amount">{money(s.priceCents)}<small>{cadence(s.billingType, s.intervalMonths)}</small></span>
               </li>

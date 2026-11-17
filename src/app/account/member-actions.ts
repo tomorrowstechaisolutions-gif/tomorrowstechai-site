@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createMemberBillingSession, stripeConfigured } from "@/lib/stripe/client";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { getPortalMember } from "@/lib/portal/session";
@@ -64,4 +66,32 @@ export async function submitMemberRequestAction(_prev: FormState, fd: FormData):
   await sendPortalRequestAlert({ businessName: member.businessName, from: member.email, category, subject, message, customerId: member.customerId });
   revalidatePath("/account/help");
   return { notice: "Sent. We'll reply by email, usually within one business day." };
+}
+
+/**
+ * Opens the Stripe billing page for the signed-in member's own Stripe
+ * customer: update the card, download receipts, cancel a subscription at the
+ * end of the paid period. The Stripe id is read server-side from the
+ * member's client record, never taken from the form.
+ */
+export async function openBillingPortalAction(fd: FormData) {
+  const member = await getPortalMember();
+  if (!member) redirect("/account/login");
+  const back = str(fd, "back", 40);
+  const returnPath = ["/account", "/account/services", "/account/invoices"].includes(back) ? back : "/account/services";
+
+  if (!rateLimit(`portal-billing:${member.id}`, { max: 10, windowMs: 10 * 60 * 1000 }).ok) redirect(`${returnPath}?billing=busy`);
+
+  const { data } = await supabaseAdmin().from("customers").select("stripe_customer_id").eq("id", member.customerId).maybeSingle();
+  const stripeCustomerId = data?.stripe_customer_id ?? null;
+  if (!stripeCustomerId || !stripeConfigured()) redirect(`${returnPath}?billing=unavailable`);
+
+  let url: string;
+  try {
+    url = await createMemberBillingSession(stripeCustomerId, returnPath);
+  } catch (err) {
+    console.error("Billing portal session failed:", err);
+    redirect(`${returnPath}?billing=unavailable`);
+  }
+  redirect(url);
 }

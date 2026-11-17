@@ -1,17 +1,25 @@
 import type { Metadata } from "next";
 import { getPortalMember } from "@/lib/portal/session";
-import { balanceCents, memberInvoices, money, shortDate } from "@/lib/portal/data";
-import { InvoiceStatus } from "../parts";
+import { balanceCents, memberHasStripeBilling, memberInvoices, money, shortDate } from "@/lib/portal/data";
+import { BillingButton, BillingNotice, InvoiceStatus } from "../parts";
 
 export const metadata: Metadata = { title: "Invoices" };
 
-export default async function InvoicesPage() {
+export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ billing?: string }> }) {
   const member = (await getPortalMember())!;
-  const invoices = await memberInvoices(member.customerId);
+  const [{ billing }, invoices, hasBilling] = await Promise.all([
+    searchParams,
+    memberInvoices(member.customerId),
+    memberHasStripeBilling(member.customerId),
+  ]);
 
   return (
     <section className="acct-section">
-      <h2>Invoices</h2>
+      <BillingNotice code={billing} />
+      <div className="acct-section-head">
+        <h2>Invoices</h2>
+        {hasBilling ? <BillingButton back="/account/invoices" label="Card & receipts" /> : null}
+      </div>
       {invoices.length ? (
         <div className="acct-table-wrap">
           <table className="acct-table">
