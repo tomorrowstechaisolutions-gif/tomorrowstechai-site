@@ -118,8 +118,9 @@ export default async function InvoiceDetailPage({
 
             <form action={sendInvoiceAction} className="pr-sendform">
               <input type="hidden" name="invoice_id" value={inv.id} />
-              <input
-                className="cc-input" name="note" maxLength={2000}
+              {/* A textarea, not an input: Enter must add a line, never send. */}
+              <textarea
+                className="cc-input pr-sendnote" name="note" maxLength={2000} rows={2}
                 placeholder="Optional note to include in the email"
               />
               <button type="submit" className="cc-btn primary">
