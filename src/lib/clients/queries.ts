@@ -5,7 +5,8 @@ import { deltaPct, monthToDate } from "@/lib/dashboard/period";
 import { SERVICE_LABELS } from "@/lib/dashboard/services";
 import { scoreClient, type ClientHealth } from "./health";
 import { getFinanceOverview } from "@/lib/finance/overview";
-import type { RevenueCategory } from "@/lib/supabase/types";
+import { bankClientRevenue } from "./bank-match";
+import { REVENUE_CATEGORIES, type RevenueCategory } from "@/lib/supabase/types";
 
 /**
  * Everything the Clients screen shows, from six queries.
@@ -125,7 +126,7 @@ export async function loadClientsBoard(
   const { current, previous } = monthToDate();
   const now = Date.now();
 
-  const [customers, revenue, invoices, jobs, ratings, jobEvents] = await Promise.all([
+  const [customers, revenue, invoices, jobs, ratings, jobEvents, services, money12m] = await Promise.all([
     sb
       .from("customers")
       .select(
@@ -159,6 +160,12 @@ export async function loadClientsBoard(
       .order("created_at", { ascending: false })
       .limit(120)
       .then((r) => unwrap(r, "job events")),
+    sb
+      .from("client_services")
+      .select("customer_id, status, catalog_items(category)")
+      .then((r) => unwrap(r, "client services")),
+    // Bank feed + headline revenue, shared (cached) with the dashboard and Finance.
+    getFinanceOverview("12m"),
   ]);
 
   type CustomerRaw = {
@@ -187,6 +194,11 @@ export async function loadClientsBoard(
     amount_cents: number;
     occurred_at: string;
     description: string | null;
+  };
+  type ServiceRaw = {
+    customer_id: string;
+    status: string;
+    catalog_items: { category: string | null } | { category: string | null }[] | null;
   };
   type InvoiceRaw = {
     id: string;
@@ -217,7 +229,15 @@ export async function loadClientsBoard(
   };
 
   const customerRows = customers as CustomerRaw[];
-  const revenueRows = revenue as RevenueRaw[];
+  // With the bank feed connected, Finance counts money from Mercury and ignores
+  // revenue_events, so client revenue does too: each settled revenue deposit is
+  // matched to a client by name (counterparty or Mercury category) and filed
+  // under that client's service line. Unmatched deposits (store sales, interest)
+  // aren't client revenue and stay out of these cards.
+  const revenueRows: RevenueRaw[] =
+    money12m.source === "bank"
+      ? bankClientRevenue(money12m.bankTxns, customers as CustomerRaw[], services as ServiceRaw[], REVENUE_CATEGORIES)
+      : (revenue as RevenueRaw[]);
   const invoiceRows = invoices as InvoiceRaw[];
   const jobRows = jobs as JobRaw[];
   const ratingRows = ratings as RatingRaw[];
@@ -341,11 +361,10 @@ export async function loadClientsBoard(
   // Revenue and MRR are the Finance overview's numbers (bank feed first), the
   // same figures the dashboard and /admin/finance show. revenue_events alone
   // misses money that only the bank recorded.
-  const [money12m, moneyMtd] = await Promise.all([
-    getFinanceOverview("12m"),
-    getFinanceOverview("mtd"),
-  ]);
+  const moneyMtd = await getFinanceOverview("mtd");
   const lifetimeTotal = money12m.revenueCents;
+  // Client-attributed revenue, all time: the base for the rail's shares.
+  const clientRevenueTotal = revenueRows.reduce((t, r) => t + r.amount_cents, 0);
   const mrrTotal = moneyMtd.mrrCents;
   const payingCount = moneyMtd.recurringClients;
   const projectsInProgress = all.reduce((t, c) => t + c.activeProjectCount, 0);
@@ -445,7 +464,7 @@ export async function loadClientsBoard(
     .map(([key, value]) => ({
       label: SERVICE_LABELS[key] ?? key,
       value,
-      share: lifetimeTotal > 0 ? value / lifetimeTotal : 0,
+      share: clientRevenueTotal > 0 ? value / clientRevenueTotal : 0,
     }));
 
   /* ── Rail: locations ───────────────────────────────────────────── */
@@ -511,7 +530,7 @@ export async function loadClientsBoard(
       id: c.id,
       name: c.businessName,
       cents: c.lifetimeCents,
-      share: lifetimeTotal > 0 ? c.lifetimeCents / lifetimeTotal : 0,
+      share: clientRevenueTotal > 0 ? c.lifetimeCents / clientRevenueTotal : 0,
       href: c.href,
     }));
 
@@ -620,7 +639,7 @@ export async function loadClientsBoard(
     page,
     pageCount,
     revenueByService,
-    revenueTotalCents: lifetimeTotal,
+    revenueTotalCents: clientRevenueTotal,
     locations,
     healthBreakdown,
     renewals,
