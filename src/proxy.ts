@@ -5,9 +5,11 @@ import { createServerClient } from "@supabase/ssr";
  * Next 16 renamed middleware.ts to proxy.ts. The build confirms it with
  * "ƒ Proxy (Middleware)".
  *
- * Two jobs:
- *  1. Keep the Supabase auth cookie fresh on every /admin request.
- *  2. Bounce anyone without a session away from /admin before a page renders.
+ * Two jobs, for /admin and the member portal /account:
+ *  1. Keep the Supabase auth cookie fresh.
+ *  2. Bounce anyone without a session to the right sign-in page before a page
+ *     renders. Whether the session is an admin or a member is decided by the
+ *     layouts/pages (admin_users, portal_members) and enforced by RLS.
  *
  * This is a convenience gate, not the security boundary. The real boundary is
  * RLS plus the admin_users check in the layout — a forged cookie gets past
@@ -38,6 +40,20 @@ export default async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // Member portal: sign-in, reset and the emailed-link landing are public.
+  if (path === "/account" || path.startsWith("/account/")) {
+    const open = ["/account/login", "/account/forgot", "/account/confirm"].some((p) => path === p || path.startsWith(`${p}/`));
+    if (!user && !open) {
+      const redirect = request.nextUrl.clone();
+      redirect.pathname = "/account/login";
+      redirect.search = "";
+      redirect.searchParams.set("next", path);
+      return NextResponse.redirect(redirect);
+    }
+    return response;
+  }
+
   const isLogin = path === "/admin/login";
 
   if (!user && path.startsWith("/admin") && !isLogin) {
@@ -47,7 +63,9 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirect);
   }
 
-  if (user && isLogin) {
+  // A signed-in member (not an admin) is sent here with ?denied=1; bouncing
+  // them back to /admin would loop.
+  if (user && isLogin && !request.nextUrl.searchParams.has("denied")) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/admin";
     redirect.search = "";
@@ -58,5 +76,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/account", "/account/:path*"],
 };

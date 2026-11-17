@@ -18,6 +18,7 @@ const BARE_PREFIXES = [
   "/intake",
   "/action",
   "/proposal",
+  "/account",
 ];
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {

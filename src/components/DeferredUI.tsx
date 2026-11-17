@@ -27,7 +27,7 @@ const CookieConsent = dynamic(
   { ssr: false }
 );
 
-const NO_CHAT_PREFIXES = ["/business-launch", "/admin"];
+const NO_CHAT_PREFIXES = ["/business-launch", "/admin", "/account"];
 
 export function DeferredUI() {
   const pathname = usePathname() ?? "";

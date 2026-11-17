@@ -9,6 +9,7 @@ import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetin
 import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleConferenceLink";
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import RequestsPanel from "@/components/admin/cc/requests/RequestsPanel";
+import { PortalPanel, type PortalMemberRow } from "@/components/admin/cc/portal/PortalPanel";
 import { loadClientRequests } from "@/lib/requests/queries";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
 import { chicagoDate } from "@/lib/time/chicago";
@@ -69,10 +70,13 @@ const STATUS_CHIP: Record<string, { label: string; tone: string }> = {
  */
 export default async function ClientPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ portal_notice?: string; portal_error?: string }>;
 }) {
   const { id } = await params;
+  const portalMsg = await searchParams;
   const supabase = await createSupabaseServerClient();
   const client = await loadClient(supabase, id);
 
@@ -84,12 +88,20 @@ export default async function ClientPage({
     (p) => p.completedAt === null && p.stage !== "Complete"
   );
 
-  const [meetings, meetingContact, providers, requests] = await Promise.all([
+  const [meetings, meetingContact, providers, requests, portalRes] = await Promise.all([
     meetingsForRecord(supabase, "customer_id", client.id),
     resolveContact(supabase, { customerId: client.id }),
     providerStatuses(),
     loadClientRequests(supabase, client.id),
+    supabase
+      .from("portal_members")
+      .select("id, email, status, invited_at, invite_count, activated_at, last_login_at")
+      .eq("customer_id", client.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+  const portalMember = (portalRes.data as PortalMemberRow | null) ?? null;
 
   const scheduleButton = meetingContact ? (
     <>
@@ -354,6 +366,15 @@ export default async function ClientPage({
             </div>
           )}
         </Panel>
+
+        {/* ── Member portal ────────────────────────────────────────── */}
+        <PortalPanel
+          customerId={client.id}
+          email={client.email ?? null}
+          member={portalMember}
+          notice={portalMsg.portal_notice}
+          error={portalMsg.portal_error}
+        />
 
         {/* ── Details ──────────────────────────────────────────────── */}
         <Panel

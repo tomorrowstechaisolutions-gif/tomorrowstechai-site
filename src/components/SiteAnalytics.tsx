@@ -20,6 +20,7 @@ function scrub(event: BeforeSendEvent): BeforeSendEvent | null {
     return event;
   }
   if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) return null;
+  if (url.pathname === "/account" || url.pathname.startsWith("/account/")) return null;
   const tokenRoute = TOKEN_ROUTES.find((p) => url.pathname.startsWith(p));
   if (tokenRoute) {
     url.pathname = `${tokenRoute}[token]`;
