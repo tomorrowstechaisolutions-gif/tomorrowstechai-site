@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unwrap } from "@/lib/dashboard/panel";
 import { lastNDays } from "@/lib/dashboard/period";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 import {
   comparableCents,
   DEAL_STAGES,
@@ -152,6 +153,8 @@ export async function loadCrmBoard(
       .select(
         "id, first_name, last_name, email, phone, business_name, business_type, lead_status, lead_score, assigned_to, services_interested, last_contacted_at, next_followup_at, source, created_at, company_id, companies(id, name)"
       )
+      // Spam and test records are not relationships.
+      .not("lead_status", "in", JUNK_FILTER)
       .order("created_at", { ascending: false })
       .limit(500)
       .then((r) => unwrap(r, "leads")),

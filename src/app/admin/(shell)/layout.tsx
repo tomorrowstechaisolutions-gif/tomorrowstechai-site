@@ -8,6 +8,7 @@ import AdminShell from "@/components/admin/cc/AdminShell";
 import { loadAlerts } from "@/lib/dashboard/alerts";
 import { panel } from "@/lib/dashboard/panel";
 import { CLOSED_STATUSES } from "@/lib/supabase/types";
+import { leadAttention, type AttentionLead } from "@/lib/leads/attention";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,6 @@ export const dynamic = "force-dynamic";
 async function loadBadges() {
   const supabase = await createSupabaseServerClient();
   const now = new Date();
-  const dayAgo = new Date(now.getTime() - 24 * 3600_000).toISOString();
   const nowIso = now.toISOString();
   // Today, Chicago — so "due today" counts all of today and nothing else.
   const chicagoToday = new Intl.DateTimeFormat("en-CA", {
@@ -31,23 +31,18 @@ async function loadBadges() {
   const endOfToday = new Date(`${chicagoToday}T23:59:59-05:00`).toISOString();
   const openFilter = `(${CLOSED_STATUSES.join(",")})`;
 
-  const [followupsDue, uncontacted, atRisk, proposals, tasksDue, eventsToday, meetingsToday] =
+  const [leadsNeedingAttention, atRisk, proposals, tasksDue, eventsToday, meetingsToday] =
     await Promise.all([
+    // Rows, not two counts: a lead that is both uncontacted and past its
+    // follow-up date is one lead, and the badge has to match the Alerts bell
+    // and the insights card, which share this rule (lib/leads/attention).
+    // Open, real leads only — a handful of rows.
     supabase
       .from("leads")
-      .select("id", { count: "exact", head: true })
+      .select("id, created_at, last_contacted_at, next_followup_at")
       .not("lead_status", "in", openFilter)
       .eq("do_not_contact", false)
-      .lt("next_followup_at", nowIso)
-      .then((r) => r.count ?? 0),
-    supabase
-      .from("leads")
-      .select("id", { count: "exact", head: true })
-      .not("lead_status", "in", openFilter)
-      .eq("do_not_contact", false)
-      .is("last_contacted_at", null)
-      .lt("created_at", dayAgo)
-      .then((r) => r.count ?? 0),
+      .then((r) => leadAttention((r.data ?? []) as AttentionLead[], now.getTime()).total),
     supabase
       .from("jobs")
       .select("id", { count: "exact", head: true })
@@ -91,7 +86,7 @@ async function loadBadges() {
   ]);
 
   return {
-    leadsNeedingAttention: followupsDue + uncontacted,
+    leadsNeedingAttention,
     projectsAtRisk: atRisk,
     aiProposals: proposals,
     tasksNeedingAttention: tasksDue,

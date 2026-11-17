@@ -3,12 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { unwrap } from "./panel";
 import { lastNDays, monthToDate } from "./period";
 import { SERVICE_LABELS } from "./services";
+import { leadAttention, type AttentionLead } from "@/lib/leads/attention";
 import {
   CLOSED_STATUSES,
   type AiInsight,
   type InsightKind,
   type Priority,
   type RevenueCategory,
+  JUNK_FILTER
 } from "@/lib/supabase/types";
 
 /**
@@ -59,11 +61,12 @@ export async function loadInsights(
     sb
       .from("leads")
       .select("id, source, utm_source, lead_status, services_interested, created_at")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", ninety.fromIso)
       .then((r) => unwrap(r, "leads (90d)")),
     sb
       .from("leads")
-      .select("id, created_at, last_contacted_at")
+      .select("id, created_at, last_contacted_at, next_followup_at")
       .not("lead_status", "in", `(${CLOSED_STATUSES.join(",")})`)
       .eq("do_not_contact", false)
       .then((r) => unwrap(r, "open leads")),
@@ -151,22 +154,21 @@ export async function loadInsights(
     }
   }
 
-  /* ── ACTION — leads going cold ─────────────────────────────────── */
+  /* ── ACTION — leads waiting on us ──────────────────────────────── */
   {
-    const stale = (openLeads as { created_at: string; last_contacted_at: string | null }[]).filter(
-      (l) => {
-        const ref = l.last_contacted_at ?? l.created_at;
-        return now - new Date(ref).getTime() > 48 * HOUR;
-      }
-    );
-
-    if (stale.length > 0) {
+    // Same rule and same number as the sidebar badge (lib/leads/attention).
+    const a = leadAttention(openLeads as AttentionLead[], now);
+    if (a.total > 0) {
+      const parts = [
+        a.uncontacted.length ? `${a.uncontacted.length} never contacted` : null,
+        a.followupsDue.length ? `${a.followupsDue.length} with a follow-up past due` : null,
+      ].filter(Boolean).join(", ");
       add(
         "rule:stale-leads",
         "action",
-        stale.length >= 3 ? "high" : "medium",
-        `${stale.length} lead${stale.length === 1 ? " has" : "s have"} had no contact in over 48 hours`,
-        "Speed to contact is the single biggest lever on close rate for this kind of work. These are the ones to call first.",
+        a.total >= 3 ? "high" : "medium",
+        `${a.total} lead${a.total === 1 ? " needs" : "s need"} contact`,
+        `${parts}. Speed to contact is the single biggest lever on close rate for this kind of work. These are the ones to call first.`,
         "/admin/leads"
       );
     }

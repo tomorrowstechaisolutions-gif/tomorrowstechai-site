@@ -4,6 +4,7 @@ import { unwrap } from "@/lib/dashboard/panel";
 import { deltaPct, monthToDate } from "@/lib/dashboard/period";
 import { SERVICE_LABELS } from "@/lib/dashboard/services";
 import { scoreClient, type ClientHealth } from "./health";
+import { getFinanceOverview } from "@/lib/finance/overview";
 import type { RevenueCategory } from "@/lib/supabase/types";
 
 /**
@@ -337,15 +338,16 @@ export async function loadClientsBoard(
   // real timestamp, so this is a fact rather than a reconstruction.
   const clientsAtPrevEnd = all.filter((c) => c.wonAt < previous.toIso).length;
 
-  const revenueThisMonth = revenueRows
-    .filter((r) => r.occurred_at >= current.fromIso && r.occurred_at < current.toIso)
-    .reduce((t, r) => t + r.amount_cents, 0);
-  const revenuePrevMonth = revenueRows
-    .filter((r) => r.occurred_at >= previous.fromIso && r.occurred_at < previous.toIso)
-    .reduce((t, r) => t + r.amount_cents, 0);
-
-  const lifetimeTotal = revenueRows.reduce((t, r) => t + r.amount_cents, 0);
-  const mrrTotal = active.reduce((t, c) => t + c.mrrCents, 0);
+  // Revenue and MRR are the Finance overview's numbers (bank feed first), the
+  // same figures the dashboard and /admin/finance show. revenue_events alone
+  // misses money that only the bank recorded.
+  const [money12m, moneyMtd] = await Promise.all([
+    getFinanceOverview("12m"),
+    getFinanceOverview("mtd"),
+  ]);
+  const lifetimeTotal = money12m.revenueCents;
+  const mrrTotal = moneyMtd.mrrCents;
+  const payingCount = moneyMtd.recurringClients;
   const projectsInProgress = all.reduce((t, c) => t + c.activeProjectCount, 0);
 
   const wonThisMonth = all.filter(
@@ -391,15 +393,15 @@ export async function loadClientsBoard(
           ? `${paused.length} payment${paused.length === 1 ? "" : "s"} failing`
           : churned.length > 0
             ? `${churned.length} churned all time`
-            : "All paying",
+            : `${payingCount} of ${active.length} on a paid plan`,
     },
     {
       key: "revenue",
       label: "Total revenue",
       value: lifetimeTotal,
       format: "money",
-      delta: deltaPct(revenueThisMonth, revenuePrevMonth),
-      hint: "All time",
+      delta: deltaPct(moneyMtd.revenueCents, moneyMtd.revenuePrevCents),
+      hint: "Last 12 months",
     },
     {
       key: "mrr",
@@ -407,7 +409,7 @@ export async function loadClientsBoard(
       value: mrrTotal,
       format: "money",
       delta: null,
-      hint: `${active.length} subscription${active.length === 1 ? "" : "s"}`,
+      hint: `${payingCount} subscription${payingCount === 1 ? "" : "s"}`,
     },
     {
       key: "projects",

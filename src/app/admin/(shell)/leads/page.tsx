@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { LEAD_STATUSES, type Lead } from "@/lib/supabase/types";
+import { JUNK_FILTER, LEAD_STATUSES, type Lead } from "@/lib/supabase/types";
 import { scoreBand } from "@/lib/campaign/scoring";
 import {
   BUSINESS_TAG, INITIATIVE_SOURCES, INITIATIVE_TAG, PARTNER_TAG,
@@ -31,6 +31,9 @@ export default async function LeadsPage({
 
   if (sp.status && LEAD_STATUSES.includes(sp.status as (typeof LEAD_STATUSES)[number])) {
     query = query.eq("lead_status", sp.status);
+  } else {
+    // Spam and test records only show when asked for by status.
+    query = query.not("lead_status", "in", JUNK_FILTER);
   }
   if (sp.source) query = query.eq("source", sp.source);
   if (sp.tag && TAG_FILTERS.includes(sp.tag)) query = query.contains("tags", [sp.tag]);

@@ -1,6 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
 import { chicagoDate, zonedMidnightUtc } from "@/lib/time/chicago";
+import { comparableCents } from "@/lib/crm/stages";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * Finance Overview: one honest picture of the money, over a chosen range.
@@ -17,7 +20,12 @@ import { chicagoDate, zonedMidnightUtc } from "@/lib/time/chicago";
  *  MRR      = active recurring client_services, normalised to one month
  *             (price ÷ interval_months).
  *  OUTSTANDING = sent/partial invoices: total − amount paid (overdue = past due_date).
- *  PIPELINE = open deals' value × probability (stage default when unset).
+ *  PIPELINE = open deals (not won/lost/on hold), recurring deals annualised the
+ *             same way the CRM does; weighted = × probability (stage default).
+ *
+ * THIS IS THE ONLY DEFINITION. The dashboard, Clients and Finance pages all
+ * read revenue, MRR and pipeline from here (via getFinanceOverview) so the
+ * same question never has two answers on two screens.
  */
 
 export type RangeKey = "mtd" | "90d" | "ytd" | "12m";
@@ -87,6 +95,8 @@ export type FinanceOverview = {
   pipelineWeightedCents: number;
   pipelineCount: number;
   months: Array<{ key: string; label: string; revenue: number; expenses: number; net: number }>;
+  /** Money in per day over the current window, zero-filled. */
+  dailyIn: Array<{ date: string; cents: number }>;
   revenueByCategory: Array<{ label: string; cents: number }>;
   expensesByCategory: Array<{ label: string; cents: number }>;
   receivables: Array<{ id: string; number: string | null; client: string; balanceCents: number; dueDate: string | null; daysOverdue: number | null; status: string; href: string }>;
@@ -127,7 +137,7 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
     sb.from("campaign_spend").select("spend_cents, date, campaign").gte("date", earliest),
     sb.from("client_services").select("id, customer_id, status, billing_type, sale_price_cents, interval_months, next_billing_date, billing_status, customers(business_name,name), catalog_items(name)").eq("status", "active"),
     sb.from("invoices").select("id, invoice_number, title, status, total_cents, amount_paid_cents, due_date, client_business_name, customers(business_name,name)").in("status", OPEN_INVOICE),
-    sb.from("deals").select("id, stage, value_cents, probability").not("stage", "in", "(won,lost,on_hold)"),
+    sb.from("deals").select("id, stage, value_cents, billing, probability").not("stage", "in", "(won,lost,on_hold)"),
   ]);
   const failed = [rev, pays, exp, spend, services, invoices, deals].find((r) => r.error);
   if (failed?.error) throw new Error(failed.error.message);
@@ -260,9 +270,18 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
   }).filter((r) => r.balanceCents > 0).sort((a, b) => (b.daysOverdue ?? -1) - (a.daysOverdue ?? -1) || b.balanceCents - a.balanceCents);
 
   // ── Pipeline ────────────────────────────────────────────────────────────
-  const openDeals = (deals.data ?? []).filter((d) => (d.value_cents ?? 0) > 0);
-  const pipelineCents = openDeals.reduce((t, d) => t + (d.value_cents ?? 0), 0);
-  const pipelineWeightedCents = Math.round(openDeals.reduce((t, d) => t + (d.value_cents ?? 0) * ((d.probability ?? STAGE_PROBABILITY[d.stage] ?? 20) / 100), 0));
+  // Same convention as the CRM: recurring deals are annualised so a $29/mo
+  // deal and a $399 build are compared like for like (crm/stages).
+  const openDeals = deals.data ?? [];
+  const dealCents = (d: { value_cents: number | null; billing: string | null }) => comparableCents(d.value_cents, d.billing ?? "one_time");
+  const pipelineCents = openDeals.reduce((t, d) => t + dealCents(d), 0);
+  const pipelineWeightedCents = Math.round(openDeals.reduce((t, d) => t + dealCents(d) * ((d.probability ?? STAGE_PROBABILITY[d.stage] ?? 20) / 100), 0));
+
+  // Money in per day across the current window, zero-filled, for sparklines.
+  const dailyIn: { date: string; cents: number }[] = [];
+  for (let d = current.fromDate; d <= current.toDate; d = addDays(d, 1)) {
+    dailyIn.push({ date: d, cents: sum(inNow.filter((m) => m.date === d)) });
+  }
 
   const ledger = [
     ...inNow.map((m) => ({ ...m, direction: "in" as const })),
@@ -298,6 +317,7 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
     pipelineWeightedCents,
     pipelineCount: openDeals.length,
     months,
+    dailyIn,
     revenueByCategory: groupBy(inNow),
     expensesByCategory: groupBy(outNow),
     receivables,
@@ -305,3 +325,11 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
     ledger,
   };
 }
+
+/**
+ * The cached entry point every screen uses. One load per range per request,
+ * so the dashboard's KPI row and its finance card share a single read.
+ */
+export const getFinanceOverview = cache(async (range: RangeKey): Promise<FinanceOverview> =>
+  loadFinanceOverview(await createSupabaseServerClient(), range)
+);

@@ -155,3 +155,73 @@ export function cadence(billingType: string, months: number | null, interval?: s
   if (billingType === "recurring" || interval === "month") return months && months > 1 ? ` every ${months} months` : "/mo";
   return " one-time";
 }
+
+// ── More services (catalog) ──────────────────────────────────────────────────
+
+export type MemberOffer = {
+  id: string;
+  name: string;
+  category: string;
+  blurb: string | null;
+  priceCents: number;
+  setupCents: number;
+  billingType: string;
+  pricingMode: string;
+  badge: string | null;
+  featured: boolean;
+  detailsUrl: string | null;
+  requested: boolean;
+};
+
+const OFFER_CATEGORY: Record<string, string> = {
+  websites: "Websites",
+  hosting: "Hosting & support",
+  support: "Hosting & support",
+  ai: "AI & automation",
+  automation: "AI & automation",
+  integrations: "AI & automation",
+  "business-systems": "Business systems",
+  marketing: "Marketing & growth",
+  branding: "Branding",
+};
+export const OFFER_ORDER = ["Websites", "AI & automation", "Business systems", "Marketing & growth", "Branding", "Hosting & support"];
+
+/**
+ * The public catalog, as a signed-in member sees it: only items marked
+ * public and active, without anything this client already has running, and
+ * flagged where they already have an open request. Only display fields are
+ * selected (no notes, margins or internal pricing rules).
+ */
+export async function memberCatalog(customerId: string): Promise<MemberOffer[]> {
+  const db = supabaseAdmin();
+  const [{ data: items }, { data: owned }, { data: open }] = await Promise.all([
+    db
+      .from("catalog_items")
+      .select("id, name, catalog_category, short_description, subtitle, from_cents, setup_fee_cents, billing_type, pricing_mode, badge, featured, most_popular, public_route, position")
+      .eq("public_enabled", true)
+      .eq("active", true)
+      .eq("status", "active")
+      .is("archived_at", null)
+      .order("position", { ascending: true }),
+    db.from("client_services").select("service_id").eq("customer_id", customerId).in("status", ["active", "paused"]),
+    db.from("portal_requests").select("catalog_item_id").eq("customer_id", customerId).eq("status", "open").not("catalog_item_id", "is", null),
+  ]);
+  const have = new Set((owned ?? []).map((r) => r.service_id as string));
+  const asked = new Set((open ?? []).map((r) => r.catalog_item_id as string));
+  return (items ?? [])
+    .filter((i) => !have.has(i.id) && OFFER_CATEGORY[i.catalog_category ?? ""])
+    .map((i) => ({
+      id: i.id,
+      name: i.name,
+      category: OFFER_CATEGORY[i.catalog_category as string],
+      blurb: i.short_description || i.subtitle || null,
+      priceCents: i.from_cents ?? 0,
+      setupCents: i.setup_fee_cents ?? 0,
+      billingType: i.billing_type ?? "one_time",
+      pricingMode: i.pricing_mode ?? "custom_quote",
+      badge: i.badge || (i.most_popular ? "Most popular" : null),
+      featured: Boolean(i.featured),
+      detailsUrl: i.public_route && i.public_route.startsWith("/") && i.public_route !== "/services" ? i.public_route : null,
+      requested: asked.has(i.id),
+    }));
+}

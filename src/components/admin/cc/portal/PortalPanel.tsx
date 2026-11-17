@@ -79,7 +79,7 @@ export function PortalPanel({
             <div key={r.id} style={{ borderTop: "1px solid var(--cc-line-soft, #161e2a)", padding: "8px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
                 <strong style={{ fontSize: "0.85rem" }}>{r.subject}</strong>
-                <span className={`cc-chip ${r.status === "open" ? (r.category === "cancel" ? "t-risk" : "t-warn") : "t-muted"}`}>{r.status === "open" ? r.category : "closed"}</span>
+                <span className={`cc-chip ${r.status === "open" ? (r.category === "cancel" ? "t-risk" : "t-warn") : "t-muted"}`}>{r.status === "open" ? (r.category === "new_service" ? "new service" : r.category) : "closed"}</span>
               </div>
               <div className="cc-faint" style={{ fontSize: "0.8rem", whiteSpace: "pre-wrap", margin: "4px 0" }}>{r.message.slice(0, 600)}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

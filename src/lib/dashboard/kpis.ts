@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deltaPct, monthToDate, type Period } from "./period";
 import { unwrap, unwrapCount } from "./panel";
-import { CLOSED_STATUSES } from "@/lib/supabase/types";
+import { CLOSED_STATUSES, JUNK_FILTER } from "@/lib/supabase/types";
+import { getFinanceOverview } from "@/lib/finance/overview";
 
 /**
  * Section 1 — Business Health.
@@ -26,29 +27,13 @@ export type Kpi = {
   href: string;
 };
 
-const sum = <T,>(rows: T[], pick: (r: T) => number) =>
-  rows.reduce((t, r) => t + (pick(r) || 0), 0);
-
-/** Invoice states that still represent money we expect to receive. */
-const OPEN_INVOICE_STATUSES = ["draft", "sent"];
-
-async function revenueIn(sb: SupabaseClient, p: Period): Promise<number> {
-  const rows = unwrap(
-    await sb
-      .from("revenue_events")
-      .select("amount_cents")
-      .gte("occurred_at", p.fromIso)
-      .lt("occurred_at", p.toIso),
-    "revenue_events"
-  ) as { amount_cents: number }[];
-  return sum(rows, (r) => r.amount_cents);
-}
 
 async function leadsIn(sb: SupabaseClient, p: Period): Promise<number> {
   return unwrapCount(
     await sb
       .from("leads")
       .select("id", { count: "exact", head: true })
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", p.fromIso)
       .lt("created_at", p.toIso),
     "leads count"
@@ -58,25 +43,19 @@ async function leadsIn(sb: SupabaseClient, p: Period): Promise<number> {
 export async function loadKpis(sb: SupabaseClient): Promise<Kpi[]> {
   const { current, previous } = monthToDate();
 
+  // Revenue, MRR and pipeline come from the Finance overview, the one
+  // definition of each, so this row can never disagree with /admin/finance.
   const [
-    revenueNow,
-    revenuePrev,
+    money,
     leadsNow,
     leadsPrev,
-    openInvoices,
     openLeadCount,
     customers,
     projects,
   ] = await Promise.all([
-    revenueIn(sb, current),
-    revenueIn(sb, previous),
+    getFinanceOverview("mtd"),
     leadsIn(sb, current),
     leadsIn(sb, previous),
-    sb
-      .from("invoices")
-      .select("amount_cents, launch_cents, hosting_cents, kind")
-      .in("status", OPEN_INVOICE_STATUSES)
-      .then((r) => unwrap(r, "open invoices")),
     sb
       .from("leads")
       .select("id", { count: "exact", head: true })
@@ -84,7 +63,7 @@ export async function loadKpis(sb: SupabaseClient): Promise<Kpi[]> {
       .then((r) => unwrapCount(r, "open leads")),
     sb
       .from("customers")
-      .select("mrr_cents, won_at, status")
+      .select("won_at, status")
       .eq("status", "active")
       .then((r) => unwrap(r, "customers")),
     sb
@@ -95,25 +74,11 @@ export async function loadKpis(sb: SupabaseClient): Promise<Kpi[]> {
       .then((r) => unwrap(r, "jobs")),
   ]);
 
-  type InvoiceLite = {
-    amount_cents: number;
-    launch_cents: number;
-    hosting_cents: number;
-    kind: "launch" | "upsell";
-  };
-  const pipelineValue = sum(openInvoices as InvoiceLite[], (i) =>
-    // A launch invoice prices the build; the $29 hosting is recurring and is
-    // counted in MRR instead, so adding it here would book it twice.
-    i.kind === "launch" ? i.launch_cents : i.amount_cents
-  );
-
-  type CustomerLite = { mrr_cents: number; won_at: string };
+  type CustomerLite = { won_at: string };
   const clientRows = customers as CustomerLite[];
-  const mrr = sum(clientRows, (c) => c.mrr_cents);
   const newClients = clientRows.filter(
     (c) => c.won_at >= current.fromIso && c.won_at < current.toIso
   );
-  const mrrAdded = sum(newClients, (c) => c.mrr_cents);
 
   type JobLite = { value_cents: number; due_at: string | null };
   const jobRows = projects as JobLite[];
@@ -128,9 +93,9 @@ export async function loadKpis(sb: SupabaseClient): Promise<Kpi[]> {
     {
       key: "revenue",
       label: "Revenue",
-      value: revenueNow,
+      value: money.revenueCents,
       format: "money",
-      delta: deltaPct(revenueNow, revenuePrev),
+      delta: deltaPct(money.revenueCents, money.revenuePrevCents),
       deltaLabel: cmp,
       hint: current.label,
       href: "/admin/finance",
@@ -148,15 +113,14 @@ export async function loadKpis(sb: SupabaseClient): Promise<Kpi[]> {
     {
       key: "pipeline",
       label: "Sales pipeline",
-      value: pipelineValue,
+      value: money.pipelineCents,
       format: "money",
       delta: null,
       deltaLabel: null,
       hint:
-        openLeadCount > 0
-          ? `${openLeadCount} open ${openLeadCount === 1 ? "lead" : "leads"}`
-          : "No open leads",
-      href: "/admin/leads",
+        `${money.pipelineCount} open ${money.pipelineCount === 1 ? "deal" : "deals"} · ` +
+        `${openLeadCount} open ${openLeadCount === 1 ? "lead" : "leads"}`,
+      href: "/admin/crm",
     },
     {
       key: "clients",
@@ -184,15 +148,13 @@ export async function loadKpis(sb: SupabaseClient): Promise<Kpi[]> {
     {
       key: "mrr",
       label: "Recurring revenue",
-      value: mrr,
+      value: money.mrrCents,
       format: "money",
       delta: null,
       deltaLabel: null,
-      hint:
-        mrrAdded > 0
-          ? `+$${(mrrAdded / 100).toLocaleString("en-US")}/mo added this month`
-          : `${clientRows.length} paying ${clientRows.length === 1 ? "client" : "clients"}`,
-      href: "/admin/finance/subscriptions",
+      // Paying = has an active recurring service, not merely "active".
+      hint: `${money.recurringClients} paying ${money.recurringClients === 1 ? "client" : "clients"}`,
+      href: "/admin/finance",
     },
   ];
 }

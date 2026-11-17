@@ -202,7 +202,7 @@ const STRIPE: RequestTemplate = {
       key: "statement_descriptor",
       label: "What appears on your customer's card statement",
       type: "text",
-      placeholder: "KEY KONNECT",
+      placeholder: "TEMPLE OUTDOOR",
       help: "Up to 22 characters. Leave blank and we will suggest one.",
       max: 22,
     },

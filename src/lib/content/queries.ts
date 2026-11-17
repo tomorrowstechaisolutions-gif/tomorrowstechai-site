@@ -4,6 +4,7 @@ import { unwrap } from "@/lib/dashboard/panel";
 import { lastNDays } from "@/lib/dashboard/period";
 import { listBrands, type BrandProfile } from "./brand";
 import { PLATFORM_LABELS, STATUS_LABELS, TYPE_LABELS, type ContentType, type Platform } from "./formats";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * Everything the Content Studio shows.
@@ -198,6 +199,7 @@ export async function loadContentBoard(
     sb
       .from("leads")
       .select("id, campaign, utm_campaign, created_at")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", month.fromIso)
       .then((r) => (r.error ? [] : (r.data ?? []))),
   ]);

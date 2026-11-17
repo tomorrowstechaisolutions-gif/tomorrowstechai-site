@@ -5,6 +5,7 @@ import { monthToDate } from "./period";
 import {
   REVENUE_CATEGORIES,
   type RevenueCategory,
+  JUNK_FILTER
 } from "@/lib/supabase/types";
 
 /**
@@ -72,6 +73,7 @@ export async function loadServicePerformance(
     sb
       .from("leads")
       .select("services_interested")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", current.fromIso)
       .lt("created_at", current.toIso)
       .then((r) => unwrap(r, "lead interest")),

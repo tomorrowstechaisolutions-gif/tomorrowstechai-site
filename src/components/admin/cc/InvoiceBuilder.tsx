@@ -234,7 +234,7 @@ export default function InvoiceBuilder({
               <input id="client_business_name" name="client_business_name" className="cc-input"
                 value={form.clientBusinessName}
                 onChange={(e) => field("clientBusinessName", e.target.value)}
-                placeholder="The Key Konnect" />
+                placeholder="Temple Outdoor Living" />
             </span>
             <span>
               <label className="cc-label" htmlFor="client_contact_name">Contact</label>
@@ -282,7 +282,7 @@ export default function InvoiceBuilder({
             <input id="title" name="title" className="cc-input"
               value={form.title}
               onChange={(e) => field("title", e.target.value)}
-              placeholder="The Key Konnect website launch" />
+              placeholder="Temple Outdoor Living website launch" />
           </div>
 
           <div className="cc-field row2">

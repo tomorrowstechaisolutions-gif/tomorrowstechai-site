@@ -108,3 +108,7 @@
 .acct-svc-actions a.acct-link-btn { text-decoration: none; color: var(--color-text-secondary, #94a3b8); }
 .acct-svc-actions a.acct-link-btn:hover { color: var(--color-text, #e9eff7); }
 .acct-note { margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; font-size: 0.84rem; line-height: 1.5; background: rgba(245, 166, 35, 0.08); border: 1px solid rgba(245, 166, 35, 0.35); color: #fde68a; }
+.acct-svc.is-featured { border-color: rgba(59, 130, 246, 0.45); }
+.acct-addon-group { margin-top: 16px; }
+.acct-addon-group h3 { margin: 0 0 8px; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary, #94a3b8); text-transform: uppercase; letter-spacing: 0.08em; }
+.acct-list li .acct-faint { max-width: 60ch; }

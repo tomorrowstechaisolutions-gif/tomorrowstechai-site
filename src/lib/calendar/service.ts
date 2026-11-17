@@ -13,7 +13,7 @@ import type {
  * Nine tables already know when things happen. This reads them where they
  * live, inside one date window, and normalises them into a single shape.
  * Nothing is copied: there is exactly one row anywhere in the database that
- * says when the Key Konnect site launches, and it is the one on `jobs`.
+ * says when a client site launches, and it is the one on `jobs`.
  *
  * Every query is bounded by the window, so a week view costs a week however
  * many years of history exist.

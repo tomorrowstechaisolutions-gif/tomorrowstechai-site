@@ -6,6 +6,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { cancelPendingFollowups } from "@/lib/campaign/intake";
 import {
   LEAD_STATUSES,
+  EXCLUDED_STATUSES,
   REVENUE_CATEGORIES,
   BILLING_PERIODS,
   type LeadStatus,
@@ -67,9 +68,11 @@ export async function updateLeadStatus(formData: FormData) {
   if (status === "Contacted" || status === "Contact Attempted") {
     patch.last_contacted_at = new Date().toISOString();
   }
-  if (status === "Won" || status === "Lost") {
+  if (status === "Won" || status === "Lost" || EXCLUDED_STATUSES.includes(status)) {
     patch.closed_at = new Date().toISOString();
   }
+  // Spam never gets another email from us — campaigns, sequences, follow-ups.
+  if (status === "Spam") patch.do_not_contact = true;
   const lostReason = str(formData, "lost_reason", 300);
   if (status === "Lost" && lostReason) patch.lost_reason = lostReason;
 
@@ -85,7 +88,7 @@ export async function updateLeadStatus(formData: FormData) {
 
   // Automated sales follow-up stops the moment a human takes over the
   // outcome — booked, sold, lost, or parked.
-  if (["Contacted", "Demo Scheduled", "Won", "Lost", "Follow Up Later"].includes(status)) {
+  if (["Contacted", "Demo Scheduled", "Won", "Lost", "Follow Up Later", "Spam", "Test"].includes(status)) {
     await cancelPendingFollowups(leadId, `status:${status}`);
   }
 
