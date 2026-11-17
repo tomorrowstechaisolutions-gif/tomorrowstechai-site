@@ -4,6 +4,7 @@ import { unwrap } from "@/lib/dashboard/panel";
 import { lastNDays } from "@/lib/dashboard/period";
 import { attributionOf } from "@/lib/seo/organic";
 import { needsAttention, scoreWebsite, type HealthState, type WebsiteHealth } from "./health";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * Everything the Websites screen shows.
@@ -191,6 +192,7 @@ export async function loadWebsiteBoard(
     sb
       .from("leads")
       .select("id, created_at, landing_page, referrer, utm_source, utm_medium, fbclid, gclid, source")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", month.fromIso)
       .then((r) => unwrap(r, "leads")),
     // Only our own site is audited today, but the join is by path host so this

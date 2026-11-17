@@ -23,12 +23,24 @@ export const LEAD_STATUSES = [
   "Won",
   "Lost",
   "Follow Up Later",
+  "Spam",
+  "Test",
 ] as const;
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
-/** Statuses that stop automated sales follow-up. */
-export const CLOSED_STATUSES: LeadStatus[] = ["Won", "Lost"];
+/**
+ * Not real leads: vendor pitches and bots that got past the trap ("Spam"),
+ * and records we made ourselves ("Test"). They stay in the table so the
+ * history is honest, but no count, rate, funnel or badge may include them.
+ */
+export const EXCLUDED_STATUSES: LeadStatus[] = ["Spam", "Test"];
+
+/** PostgREST `in` list for `.not("lead_status", "in", JUNK_FILTER)`. */
+export const JUNK_FILTER = `(${EXCLUDED_STATUSES.join(",")})`;
+
+/** Statuses that stop automated sales follow-up. Excluded leads never get any. */
+export const CLOSED_STATUSES: LeadStatus[] = ["Won", "Lost", ...EXCLUDED_STATUSES];
 
 export type ScoreReason = { label: string; points: number };
 

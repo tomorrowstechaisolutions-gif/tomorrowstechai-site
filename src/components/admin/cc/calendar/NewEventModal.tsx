@@ -68,7 +68,7 @@ export default function NewEventModal({
               <label className="tk-stack">
                 <span>Event title <i>required</i></span>
                 <input name="title" className="cc-input" required autoFocus
-                  placeholder="Homepage review — The Key Konnect" />
+                  placeholder="Homepage review — Temple Outdoor Living" />
               </label>
 
               <label className="tk-stack">

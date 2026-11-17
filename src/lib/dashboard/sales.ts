@@ -5,6 +5,7 @@ import {
   CLOSED_STATUSES,
   type Lead,
   type LeadStatus,
+  JUNK_FILTER
 } from "@/lib/supabase/types";
 
 /**
@@ -57,6 +58,7 @@ export async function loadPipeline(sb: SupabaseClient): Promise<Pipeline> {
     sb
       .from("leads")
       .select("id, lead_status")
+      .not("lead_status", "in", JUNK_FILTER)
       .then((r) => unwrap(r, "lead statuses")),
     sb
       .from("invoices")

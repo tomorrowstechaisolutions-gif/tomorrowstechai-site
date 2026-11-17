@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { analyticsConfigured, byDimension, perDay, statusFrom, totals, type Counts, type Row, type TrafficStatus } from "@/lib/analytics/vercel-web";
 import { articleUrl } from "./social-draft";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * How one Field Notes article is doing, for the editor's Performance tab:
@@ -59,6 +60,7 @@ export async function getArticlePerformance(
     supabase
       .from("leads")
       .select("id, first_name, last_name, business_name, lead_status, created_at, utm_source, utm_campaign")
+      .not("lead_status", "in", JUNK_FILTER)
       .eq("landing_page", path)
       .order("created_at", { ascending: false })
       .limit(50),

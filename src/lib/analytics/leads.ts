@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * Lead-side numbers for the admin Analytics page, from the leads table.
@@ -47,6 +48,7 @@ export async function leadStats(supabase: SupabaseClient, since: Date, until: Da
   const { data, error } = await supabase
     .from("leads")
     .select("created_at, source, utm_source, utm_campaign, landing_page, lead_status")
+    .not("lead_status", "in", JUNK_FILTER)
     .gte("created_at", since.toISOString())
     .lte("created_at", until.toISOString())
     .order("created_at", { ascending: true })

@@ -9,6 +9,7 @@ import type {
   Lead,
   RevenueEvent,
 } from "@/lib/supabase/types";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * Section 8 — Marketing performance.
@@ -48,6 +49,7 @@ export async function loadMarketing(sb: SupabaseClient): Promise<MarketingSnapsh
     sb
       .from("leads")
       .select("id, campaign, lead_status, created_at")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", current.fromIso)
       .lt("created_at", current.toIso)
       .then((r) => unwrap(r, "campaign leads")),

@@ -14,6 +14,7 @@ import {
   resolveRange,
 } from "@/lib/campaign/range";
 import { CAMPAIGN_NAME } from "@/lib/campaign/config";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 import type {
   Appointment,
   CampaignSpend,
@@ -54,6 +55,7 @@ export default async function BusinessLaunchDashboard({
       supabase
         .from("leads")
         .select("*")
+        .not("lead_status", "in", JUNK_FILTER)
         .gte("created_at", range.fromTs)
         .lt("created_at", range.toTs),
       supabase

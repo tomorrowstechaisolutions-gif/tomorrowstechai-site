@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unwrap } from "./panel";
 import { lastNDays, monthToDate } from "./period";
-import { CLOSED_STATUSES } from "@/lib/supabase/types";
+import { CLOSED_STATUSES, JUNK_FILTER } from "@/lib/supabase/types";
+import { FIRST_CONTACT_HOURS, leadAttention } from "@/lib/leads/attention";
 
 /**
  * Section 12 — Alert centre.
@@ -112,6 +113,7 @@ export async function loadAlerts(sb: SupabaseClient, limit = 8): Promise<Alert[]
     sb
       .from("leads")
       .select("id", { count: "exact", head: true })
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", week.fromIso)
       .then((r) => r.count ?? 0),
   ]);
@@ -127,23 +129,21 @@ export async function loadAlerts(sb: SupabaseClient, limit = 8): Promise<Alert[]
   };
   const leads = openLeads as LeadRow[];
 
-  const uncontacted = leads.filter(
-    (l) => !l.last_contacted_at && now - new Date(l.created_at).getTime() > 24 * HOUR
-  );
+  // Same rule as the sidebar badge and the insights card (lib/leads/attention).
+  const attention = leadAttention(leads, now);
+  const uncontacted = attention.uncontacted;
   if (uncontacted.length > 0) {
     alerts.push({
       id: "sales:uncontacted",
       category: "sales",
       priority: "high",
       title: `${plural(uncontacted.length, "lead")} awaiting first contact`,
-      detail: "No one has reached out in over 24 hours.",
+      detail: `No one has reached out in over ${FIRST_CONTACT_HOURS} hours.`,
       href: "/admin/leads?status=New",
     });
   }
 
-  const overdueFollowups = leads.filter(
-    (l) => l.next_followup_at && new Date(l.next_followup_at).getTime() < now
-  );
+  const overdueFollowups = attention.followupsDue;
   if (overdueFollowups.length > 0) {
     alerts.push({
       id: "sales:followups",

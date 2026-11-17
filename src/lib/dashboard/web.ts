@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unwrap } from "./panel";
 import { chicagoDate, monthToDate, todayPeriod } from "./period";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * Section 7 — Website performance.
@@ -86,6 +87,7 @@ export async function loadWeb(sb: SupabaseClient): Promise<WebSnapshot> {
     sb
       .from("leads")
       .select("created_at, landing_page, referrer, utm_source, source, services_interested")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", current.fromIso)
       .lt("created_at", current.toIso)
       .then((r) => unwrap(r, "leads (web)")),

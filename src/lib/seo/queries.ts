@@ -6,6 +6,7 @@ import { auditTargets } from "./audit";
 import { attributionOf } from "./organic";
 import { healthBand, healthScore, RULES, SEVERITY_ORDER, SLOW_RESPONSE_MS, type RuleCode, type Severity } from "./rules";
 import { loadSearch, localConnection, type SearchSnapshot } from "./search-console";
+import { JUNK_FILTER } from "@/lib/supabase/types";
 
 /**
  * Everything the SEO screen shows.
@@ -147,6 +148,7 @@ export async function loadSeoBoard(sb: SupabaseClient, days = 28): Promise<SeoBo
     sb
       .from("leads")
       .select("id, created_at, landing_page, referrer, utm_source, utm_medium, fbclid, gclid, source, services_interested")
+      .not("lead_status", "in", JUNK_FILTER)
       .gte("created_at", previous.fromIso)
       .then((r) => unwrap(r, "leads")),
     sb
