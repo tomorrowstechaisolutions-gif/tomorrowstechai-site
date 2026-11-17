@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SITE_URL } from "./taxonomy";
 import type { ArticleRecord } from "./types";
+import { publishDueSocialPosts } from "@/lib/social/publisher";
 
 /**
  * "Publish to Social": when a Field Notes article goes live, a DRAFT post is
@@ -12,7 +13,25 @@ import type { ArticleRecord } from "./types";
  * One draft per article: an existing (non-deleted) post linking to the article
  * means it was already proposed, so going live again (republish, schedule
  * firing) does not pile up duplicates.
+ *
+ * Auto-post (John's choice, 2026-11-17): Field Notes articles are reviewed
+ * before they're scheduled, so with the Social Center automation
+ * "blog_autopost" switched on, the post goes out at once on every connected,
+ * publishing-enabled account instead of waiting as a draft. Switched off, or
+ * with no account able to post, it stays a draft for approval.
  */
+
+export const BLOG_AUTOPOST_KEY = "blog_autopost";
+
+async function autopostEnabled(db: SupabaseClient): Promise<boolean> {
+  const { data } = await db
+    .from("social_automation_settings")
+    .select("enabled")
+    .eq("automation_key", BLOG_AUTOPOST_KEY)
+    .is("customer_id", null)
+    .maybeSingle();
+  return Boolean(data?.enabled);
+}
 
 /** Tomorrow's Tech AI's own accounts, matched by display name or handle. */
 const DESTINATIONS: { platform: "linkedin" | "facebook" | "instagram"; match: RegExp; needsImage?: boolean }[] = [
@@ -48,6 +67,7 @@ export function socialCaption(a: Pick<ArticleRecord, "title" | "summary" | "slug
 
 export type SocialDraftResult =
   | { state: "created"; postId: string; platforms: string[] }
+  | { state: "posted"; postId: string; platforms: string[]; published: number; failed: number; errors: string[] }
   | { state: "exists"; postId: string }
   | { state: "failed"; message: string };
 
@@ -75,12 +95,17 @@ export async function createArticleSocialDraft(
       .in("platform", DESTINATIONS.map((d) => d.platform));
 
     const image = a.hero?.src ? absolute(a.hero.src) : null;
-    const targets = DESTINATIONS.filter((d) => !d.needsImage || image).map((d) => {
+    const candidates = DESTINATIONS.filter((d) => !d.needsImage || image).map((d) => {
       const account = (accounts ?? []).find(
         (x) => x.platform === d.platform && (d.match.test(x.display_name ?? "") || d.match.test(x.handle ?? ""))
       );
-      return { platform: d.platform, accountId: account?.id ?? null };
+      const ready = Boolean(account?.connected && account.status === "connected" && account.posting_enabled);
+      return { platform: d.platform, accountId: account?.id ?? null, ready };
     });
+    // Auto-post only to accounts that can actually publish; otherwise propose a draft.
+    const live = candidates.filter((t) => t.ready);
+    const autopost = live.length > 0 && (await autopostEnabled(db));
+    const targets = autopost ? live : candidates;
 
     const caption = socialCaption(a);
     const { data: post, error } = await db
@@ -98,7 +123,8 @@ export async function createArticleSocialDraft(
         media_url: image,
         media_type: image ? "image" : "none",
         alt_text: a.hero?.alt?.slice(0, 1000) || null,
-        status: "draft",
+        status: autopost ? "scheduled" : "draft",
+        scheduled_at: autopost ? new Date().toISOString() : null,
         approval_type: "none",
         approval_status: "not_required",
         timezone: "America/Chicago",
@@ -111,18 +137,28 @@ export async function createArticleSocialDraft(
     if (error || !post) return { state: "failed", message: error?.message ?? "The draft could not be saved." };
 
     const { error: platErr } = await db.from("social_post_platforms").insert(
-      targets.map((t) => ({ post_id: post.id, social_account_id: t.accountId, platform: t.platform, platform_status: "draft" }))
+      targets.map((t) => ({ post_id: post.id, social_account_id: t.accountId, platform: t.platform, platform_status: autopost ? "scheduled" : "draft" }))
     );
     if (platErr) return { state: "failed", message: platErr.message };
 
     await db.from("social_activity_events").insert({
-      event_type: "post_created",
+      event_type: autopost ? "post_scheduled" : "post_created",
       actor,
-      detail: `Draft from Field Notes article "${a.title}"`.slice(0, 500),
+      detail: (autopost ? `Auto-posted from Field Notes article "${a.title}"` : `Draft from Field Notes article "${a.title}"`).slice(0, 500),
       post_id: post.id,
       platform: targets.map((t) => t.platform).join(","),
     });
-    return { state: "created", postId: post.id, platforms: targets.map((t) => t.platform) };
+    const platforms = targets.map((t) => t.platform);
+    if (!autopost) return { state: "created", postId: post.id, platforms };
+
+    // Publish now rather than waiting for the next social-publish run (which
+    // still picks it up if this attempt can't run).
+    try {
+      const r = await publishDueSocialPosts(10, { postId: post.id });
+      return { state: "posted", postId: post.id, platforms, published: r.published, failed: r.failed, errors: r.errors };
+    } catch (cause) {
+      return { state: "posted", postId: post.id, platforms, published: 0, failed: 0, errors: [cause instanceof Error ? cause.message : "Publish deferred to the next run"] };
+    }
   } catch (cause) {
     return { state: "failed", message: cause instanceof Error ? cause.message : "Unknown error" };
   }

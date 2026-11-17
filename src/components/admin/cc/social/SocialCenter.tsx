@@ -34,6 +34,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const AUTOMATIONS = [
+  ["blog_autopost", "Auto-Post New Blog Articles", "When a Field Notes article goes live, post it to LinkedIn, Facebook and Instagram right away, without approval. Off: it waits as a draft."],
   ["auto_publish_approved", "Auto Publish Approved Posts", "Queues approved posts at their scheduled time."],
   ["approval_reminder", "Send Approval Reminder", "Flags client approvals that are blocking scheduled content."],
   ["failed_publish_alert", "Notify Admin on Failed Publish", "Creates an alert and follow-up when delivery fails."],

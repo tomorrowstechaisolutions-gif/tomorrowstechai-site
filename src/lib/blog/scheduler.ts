@@ -54,6 +54,7 @@ export async function publishDueArticles(now = new Date()) {
     // Propose the social post (a draft; never sent automatically).
     const draft = await createArticleSocialDraft(db, rec, "scheduler");
     if (draft.state === "failed") console.warn(`[blog-publish] social draft for "${row.slug}" failed: ${draft.message}`);
+    if (draft.state === "posted" && draft.failed) console.warn(`[blog-publish] auto-post for "${row.slug}": ${draft.failed} platform(s) failed: ${draft.errors.join(" · ")}`);
   }
 
   if (published.length) {

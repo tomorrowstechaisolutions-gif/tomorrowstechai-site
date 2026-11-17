@@ -202,6 +202,11 @@ export async function setArticleStatusAction(
 
 function socialNote(draft: SocialDraftResult) {
   if (draft.state === "created") return " A social post draft is waiting for you in Social Center.";
+  if (draft.state === "posted") {
+    if (draft.failed) return ` Auto-posted to ${draft.published} of ${draft.platforms.length} social accounts; ${draft.failed} failed (see Social Center).`;
+    if (draft.published) return ` Auto-posted to ${draft.published} social account${draft.published === 1 ? "" : "s"}.`;
+    return " The social post is queued and goes out within five minutes.";
+  }
   if (draft.state === "failed") return ` (The social post draft could not be created: ${draft.message})`;
   return "";
 }
@@ -218,6 +223,7 @@ export async function createSocialDraftAction(id: string): Promise<BlogActionRes
   revalidatePath("/admin/marketing/social");
   if (draft.state === "failed") return fail(`The social post draft could not be created: ${draft.message}`);
   if (draft.state === "exists") return { ok: true, message: "This article already has a social post. Open it in Social Center.", postId: draft.postId };
+  if (draft.state === "posted") return { ok: draft.failed === 0, message: draft.failed ? `Posted to ${draft.published} account(s); ${draft.failed} failed. Check Social Center.` : "Social post published (auto-post is on).", postId: draft.postId };
   return { ok: true, message: "Social post draft created. Review it in Social Center before it goes anywhere.", postId: draft.postId };
 }
 
