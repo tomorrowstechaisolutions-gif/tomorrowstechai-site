@@ -87,3 +87,30 @@ export async function sendPortalReset(opts: { to: string; name: string | null; u
   ].join("\n");
   return deliver(opts.to, "Reset your member account password", html, text, "Portal reset email");
 }
+
+/** Alerts John when a member sends a request from the portal. */
+export async function sendPortalRequestAlert(opts: {
+  businessName: string;
+  from: string;
+  category: string;
+  subject: string;
+  message: string;
+  customerId: string;
+}) {
+  const to = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
+  const adminUrl = `${(process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "")}/admin/clients/${opts.customerId}`;
+  const label = { question: "Question", change: "Change request", problem: "Problem", billing: "Billing", cancel: "Cancellation request" }[opts.category] ?? "Request";
+  const html = renderEmail({
+    preheader: `${label} from ${opts.businessName}: ${opts.subject}`,
+    blocks: [
+      eyebrow(`Member portal · ${label}`),
+      heading(opts.subject),
+      paragraph(`<strong>${esc(opts.businessName)}</strong> (${esc(opts.from)}) wrote:`),
+      paragraph(esc(opts.message).replace(/\n/g, "<br />")),
+      button("Open the client", adminUrl),
+    ],
+    tone: opts.category === "cancel" || opts.category === "problem" ? "alert" : "default",
+  });
+  const text = [`${label} from ${opts.businessName} (${opts.from})`, "", opts.subject, "", opts.message, "", adminUrl].join("\n");
+  return deliver(to, `[Portal] ${label}: ${opts.subject}`.slice(0, 180), html, text, "Portal request alert");
+}

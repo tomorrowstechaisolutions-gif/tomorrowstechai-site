@@ -1,11 +1,14 @@
 import "server-only";
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /**
  * The member portal (/account). A Supabase Auth login is only a member when
  * John invited it: a portal_members row, not disabled. Everything a member
- * reads is filtered by RLS through public.portal_customer_id(), so this
- * check is for routing; the database is the boundary.
+ * reads is fetched server-side for the verified member's customer id only,
+ * with explicit column lists (see data.ts). Members get no direct table
+ * access beyond their own portal_members row.
  */
 
 export const PORTAL_ORIGIN = (process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "");
@@ -22,7 +25,7 @@ export type PortalMember = {
 };
 
 /** The signed-in member, or null (not signed in, or a login that isn't a member). */
-export async function getPortalMember(): Promise<PortalMember | null> {
+export const getPortalMember = cache(async function getPortalMember(): Promise<PortalMember | null> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   const supabase = await createSupabaseServerClient();
   const {
@@ -37,7 +40,9 @@ export async function getPortalMember(): Promise<PortalMember | null> {
     .maybeSingle();
   if (!m || m.status === "disabled") return null;
 
-  const { data: c } = await supabase.from("customers").select("business_name, name").eq("id", m.customer_id).maybeSingle();
+  // Server-side read with an explicit column list: members never get direct
+  // table access to customers (RLS can't hide columns like notes_internal).
+  const { data: c } = await supabaseAdmin().from("customers").select("business_name, name").eq("id", m.customer_id).maybeSingle();
   return {
     id: m.id,
     customerId: m.customer_id,
@@ -47,7 +52,7 @@ export async function getPortalMember(): Promise<PortalMember | null> {
     businessName: c?.business_name || c?.name || "Your business",
     contactName: c?.name ?? null,
   };
-}
+});
 
 export function passwordProblem(pw: string, confirm: string): string | null {
   if (pw.length < PASSWORD_MIN) return `Use at least ${PASSWORD_MIN} characters.`;

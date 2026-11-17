@@ -1,6 +1,15 @@
 import { Panel } from "@/components/admin/cc/Panel";
 import { IconUsers } from "@/components/admin/cc/Icons";
-import { invitePortalMemberAction, setPortalMemberStatusAction } from "@/app/admin/portal-actions";
+import { closePortalRequestAction, invitePortalMemberAction, setPortalMemberStatusAction } from "@/app/admin/portal-actions";
+
+export type PortalRequestRow = {
+  id: string;
+  category: string;
+  subject: string;
+  message: string;
+  status: string;
+  created_at: string;
+};
 
 export type PortalMemberRow = {
   id: string;
@@ -19,8 +28,9 @@ const CHIP = { invited: ["Invited", "t-info"], active: ["Active", "t-ok"], disab
 
 /** Member portal access for one client: invite, re-send, turn off. */
 export function PortalPanel({
-  customerId, email, member, notice, error,
+  customerId, email, member, requests = [], notice, error,
 }: {
+  requests?: PortalRequestRow[];
   customerId: string;
   email: string | null;
   member: PortalMemberRow | null;
@@ -62,6 +72,30 @@ export function PortalPanel({
           </form>
         ) : null}
       </div>
+      {requests.length ? (
+        <div style={{ marginTop: 14 }}>
+          <div className="cc-faint" style={{ fontSize: "0.78rem", marginBottom: 6 }}>Requests from the portal</div>
+          {requests.map((r) => (
+            <div key={r.id} style={{ borderTop: "1px solid var(--cc-line-soft, #161e2a)", padding: "8px 0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                <strong style={{ fontSize: "0.85rem" }}>{r.subject}</strong>
+                <span className={`cc-chip ${r.status === "open" ? (r.category === "cancel" ? "t-risk" : "t-warn") : "t-muted"}`}>{r.status === "open" ? r.category : "closed"}</span>
+              </div>
+              <div className="cc-faint" style={{ fontSize: "0.8rem", whiteSpace: "pre-wrap", margin: "4px 0" }}>{r.message.slice(0, 600)}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="cc-faint" style={{ fontSize: "0.74rem" }}>{when(r.created_at)}</span>
+                {r.status === "open" ? (
+                  <form action={closePortalRequestAction}>
+                    <input type="hidden" name="customer_id" value={customerId} />
+                    <input type="hidden" name="request_id" value={r.id} />
+                    <button className="cc-btn is-sm">Mark done</button>
+                  </form>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </Panel>
   );
 }

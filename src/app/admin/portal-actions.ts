@@ -86,3 +86,17 @@ export async function setPortalMemberStatusAction(fd: FormData) {
   if (error) back(customerId, { portal_error: error.message });
   back(customerId, { portal_notice: disable ? "Member access turned off. They can no longer sign in." : "Member access turned back on." });
 }
+
+export async function closePortalRequestAction(fd: FormData) {
+  const session = await getAdminUser();
+  if (!session) redirect("/admin/login");
+  const customerId = str(fd, "customer_id", 40);
+  const requestId = str(fd, "request_id", 40);
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("portal_requests")
+    .update({ status: "closed", closed_at: new Date().toISOString(), closed_by: session.admin.email })
+    .eq("id", requestId)
+    .eq("customer_id", customerId);
+  back(customerId, error ? { portal_error: error.message } : { portal_notice: "Request closed." });
+}
