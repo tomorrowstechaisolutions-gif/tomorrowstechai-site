@@ -12,7 +12,9 @@ import type { SocialPlatform } from "./types";
  * publish, and nothing else.
  */
 
-export type SocialProvider = "meta" | "linkedin";
+export type SocialProvider = "meta" | "linkedin" | "x";
+
+export const PROVIDER_LABEL: Record<SocialProvider, string> = { meta: "Meta", linkedin: "LinkedIn", x: "X" };
 
 /** Thrown when the provider says the token is dead, so the account can be flagged for reconnect. */
 export class SocialAuthError extends Error {}
@@ -70,7 +72,7 @@ export async function saveConnectedAccount(input: ConnectedAccountInput): Promis
     token_expires_at: input.tokenExpiresAt ?? null,
     connection_error: null,
     last_synced_at: new Date().toISOString(),
-    notes: `Connected via ${input.provider === "meta" ? "Meta" : "LinkedIn"} OAuth${input.actor ? ` by ${input.actor}` : ""}.`,
+    notes: `Connected via ${PROVIDER_LABEL[input.provider]} OAuth${input.actor ? ` by ${input.actor}` : ""}.`,
   };
 
   if (id) {

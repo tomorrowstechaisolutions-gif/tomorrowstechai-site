@@ -1,5 +1,5 @@
 export const SOCIAL_PLATFORMS = [
-  "facebook", "instagram", "linkedin", "google_business", "tiktok", "youtube",
+  "facebook", "instagram", "linkedin", "x", "google_business", "tiktok", "youtube",
 ] as const;
 
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
@@ -8,6 +8,7 @@ export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   facebook: "Facebook",
   instagram: "Instagram",
   linkedin: "LinkedIn",
+  x: "X",
   google_business: "Google Business",
   tiktok: "TikTok",
   youtube: "YouTube",

@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { SocialAuthError, markAccountExpired, readAccountToken } from "./accounts";
 import { linkedinToken, publishLinkedIn } from "./providers/linkedin";
 import { publishFacebook, publishInstagram } from "./providers/meta";
+import { publishX, xToken } from "./providers/x";
 import type { PublishInput, PublishResult } from "./providers/shared";
 import type { SocialPlatform } from "./types";
 
@@ -14,6 +15,7 @@ const publishers: Partial<Record<SocialPlatform, Publisher>> = {
   facebook: publishFacebook,
   instagram: publishInstagram,
   linkedin: publishLinkedIn,
+  x: publishX,
 };
 
 export const PUBLISHABLE_PLATFORMS = Object.keys(publishers) as SocialPlatform[];
@@ -131,11 +133,13 @@ export async function publishDueSocialPosts(limit = 20, options: { postId?: stri
 
     try {
       const adapter = publishers[platform];
-      if (!adapter) throw new Error(`${platform.replace("_", " ")} publishing isn't available yet. Facebook, Instagram, and LinkedIn are live.`);
+      if (!adapter) throw new Error(`${platform.replace("_", " ")} publishing isn't available yet. Facebook, Instagram, LinkedIn and X are live.`);
       if (!account?.external_id) throw new Error(`No ${platform} account chosen for this post. Edit it, pick which account to post as, then retry.`);
 
       const stored = await readAccountToken(account.id);
-      const accessToken = platform === "linkedin" ? await linkedinToken(account.id, stored) : stored.accessToken;
+      const accessToken = platform === "linkedin"
+        ? await linkedinToken(account.id, stored)
+        : platform === "x" ? await xToken(account.id, stored) : stored.accessToken;
       const mediaType = (["image", "video", "carousel"].includes(post.media_type ?? "") ? post.media_type : "none") as PublishInput["mediaType"];
       const mediaUrl = await mediaUrlFor(post);
 

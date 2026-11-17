@@ -4,13 +4,15 @@ import { getAdminUser } from "@/lib/supabase/server";
 import { isSocialProvider, socialRedirectUri } from "@/lib/social/oauth";
 import { connectLinkedIn } from "@/lib/social/providers/linkedin";
 import { connectMeta } from "@/lib/social/providers/meta";
+import { connectX } from "@/lib/social/providers/x";
+import { PROVIDER_LABEL } from "@/lib/social/accounts";
 import { syncSocialProfiles } from "@/lib/social/sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Where Meta / LinkedIn send the browser back. A token is stored only when the
+ * Where Meta / LinkedIn / X send the browser back. A token is stored only when the
  * visitor is an admin, `state` matches the cookie set by /start, and the
  * provider returned a code. Every other outcome lands in Social Center with a
  * message and nothing stored.
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { provider } = await params;
   if (!isSocialProvider(provider)) return NextResponse.json({ error: "Unknown provider" }, { status: 404 });
-  const label = provider === "meta" ? "Meta" : "LinkedIn";
+  const label = PROVIDER_LABEL[provider];
 
   const back = (kind: "notice" | "error", message: string) => {
     const response = NextResponse.redirect(new URL(`/admin/marketing/social?${new URLSearchParams({ [kind]: message })}`, base));
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  const [expected, customerId] = (request.cookies.get(`social_oauth_${provider}`)?.value ?? "").split(".");
+  const [expected, customerId, verifier] = (request.cookies.get(`social_oauth_${provider}`)?.value ?? "").split(".");
   if (!code) return back("error", `${label} did not return an authorization code.`);
   if (!state || !expected || state !== expected) return back("error", `${label} connection expired or didn't match. Start it again.`);
 
@@ -45,7 +47,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const actor = session.admin.email;
     const connected = provider === "meta"
       ? await connectMeta(code, redirectUri, customerId || null, actor)
-      : await connectLinkedIn(code, redirectUri, customerId || null, actor);
+      : provider === "x"
+        ? await connectX(code, redirectUri, verifier ?? "", customerId || null, actor)
+        : await connectLinkedIn(code, redirectUri, customerId || null, actor);
     // Pull avatars, covers and recent posts right away so the Accounts tab
     // isn't empty on first look. Never fails the connection.
     if (provider === "meta") await syncSocialProfiles({ staleHours: 0, limit: 40 }).catch(() => null);

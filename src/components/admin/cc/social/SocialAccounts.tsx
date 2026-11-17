@@ -51,7 +51,7 @@ export function groupBrands(accounts: SocialAccountRow[]): Brand[] {
   }
 
   for (const brand of brands.values()) {
-    const order: SocialPlatform[] = ["facebook", "instagram", "linkedin", "google_business", "youtube", "tiktok"];
+    const order: SocialPlatform[] = ["facebook", "instagram", "linkedin", "x", "google_business", "youtube", "tiktok"];
     brand.accounts.sort((a, b) => order.indexOf(a.platform) - order.indexOf(b.platform));
     brand.avatar = brand.accounts.find((a) => a.profileImageUrl)?.profileImageUrl ?? null;
     brand.cover = brand.accounts.find((a) => a.coverImageUrl)?.coverImageUrl ?? null;
@@ -78,7 +78,7 @@ export function AccountAvatar({ src, name, size = 40, className = "" }: { src: s
 }
 
 function PlatformDot({ platform }: { platform: SocialPlatform }) {
-  const letters: Record<SocialPlatform, string> = { facebook: "f", instagram: "◎", linkedin: "in", google_business: "G", tiktok: "♪", youtube: "▶" };
+  const letters: Record<SocialPlatform, string> = { facebook: "f", instagram: "◎", linkedin: "in", x: "𝕏", google_business: "G", tiktok: "♪", youtube: "▶" };
   return <span className={`${styles.platformIcon} ${styles[platform]}`}>{letters[platform]}</span>;
 }
 
@@ -118,7 +118,7 @@ function BrandCard({ brand, onCreatePost }: { brand: Brand; onCreatePost: (accou
         </div>
         {brand.media.length
           ? <div className={styles.thumbStrip}>{brand.media.map((m) => <Thumb key={`${m.platform}-${m.id}`} item={m} />)}</div>
-          : <div className={styles.thumbEmpty}>{brand.accounts.some((a) => a.platform !== "linkedin") ? "No recent posts synced yet" : "LinkedIn doesn’t share your recent posts with apps"}</div>}
+          : <div className={styles.thumbEmpty}>{brand.accounts.some((a) => !["linkedin", "x"].includes(a.platform)) ? "No recent posts synced yet" : "LinkedIn and X don’t share recent posts here"}</div>}
         <button type="button" className={styles.secondaryButton} onClick={() => onCreatePost(brand.accounts.filter((a) => a.postingEnabled).map((a) => a.id))}>＋ Post as {brand.name}</button>
       </div>
     </article>
@@ -142,7 +142,7 @@ export function AccountsTab({ accounts, onCreatePost, onConnect }: { accounts: S
       </div>
       {brands.length
         ? <div className={styles.brandGrid}>{brands.map((b) => <BrandCard key={b.key} brand={b} onCreatePost={onCreatePost} />)}</div>
-        : <div className={styles.empty}><h3>No connected accounts</h3><p>Connect Meta or LinkedIn to see your brands here.</p></div>}
+        : <div className={styles.empty}><h3>No connected accounts</h3><p>Connect Meta, LinkedIn or X to see your brands here.</p></div>}
     </section>
   );
 }

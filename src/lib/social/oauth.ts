@@ -2,17 +2,18 @@ import "server-only";
 import { encryptionConfigured } from "@/lib/security/secrets";
 import { linkedinAuthUrl, linkedinConfigured } from "./providers/linkedin";
 import { metaAuthUrl, metaConfigured } from "./providers/meta";
+import { xAuthUrl, xConfigured } from "./providers/x";
 import type { SocialProvider } from "./accounts";
 
-export const SOCIAL_PROVIDERS: SocialProvider[] = ["meta", "linkedin"];
+export const SOCIAL_PROVIDERS: SocialProvider[] = ["meta", "linkedin", "x"];
 
 export function isSocialProvider(value: string): value is SocialProvider {
   return (SOCIAL_PROVIDERS as string[]).includes(value);
 }
 
-/** Must match the redirect URL registered in the Meta / LinkedIn developer app exactly. */
+/** Must match the redirect URL registered in the Meta / LinkedIn / X developer app exactly. */
 export function socialRedirectUri(provider: SocialProvider, origin: string): string {
-  const explicit = provider === "meta" ? process.env.META_REDIRECT_URI : process.env.LINKEDIN_REDIRECT_URI;
+  const explicit = { meta: process.env.META_REDIRECT_URI, linkedin: process.env.LINKEDIN_REDIRECT_URI, x: process.env.X_REDIRECT_URI }[provider];
   if (explicit) return explicit;
   // Use the host this request was actually served on (www in production), not
   // NEXT_PUBLIC_SITE_URL: that is the apex, which 308s to www and would not
@@ -22,10 +23,12 @@ export function socialRedirectUri(provider: SocialProvider, origin: string): str
 }
 
 export function providerConfigured(provider: SocialProvider): boolean {
-  return provider === "meta" ? metaConfigured() : linkedinConfigured();
+  return provider === "meta" ? metaConfigured() : provider === "x" ? xConfigured() : linkedinConfigured();
 }
 
-export function providerAuthUrl(provider: SocialProvider, state: string, redirectUri: string): string {
+/** `challenge` is the PKCE code challenge; only X uses it. */
+export function providerAuthUrl(provider: SocialProvider, state: string, redirectUri: string, challenge = ""): string {
+  if (provider === "x") return xAuthUrl(state, redirectUri, challenge);
   return provider === "meta" ? metaAuthUrl(state, redirectUri) : linkedinAuthUrl(state, redirectUri);
 }
 
@@ -38,5 +41,6 @@ export function socialProviderStatus(): SocialProviderStatus[] {
   return [
     { provider: "meta", configured: metaConfigured() && !encryption.length, missing: [...need(["META_APP_ID", "META_APP_SECRET"]), ...encryption] },
     { provider: "linkedin", configured: linkedinConfigured() && !encryption.length, missing: [...need(["LINKEDIN_CLIENT_ID", "LINKEDIN_CLIENT_SECRET"]), ...encryption] },
+    { provider: "x", configured: xConfigured() && !encryption.length, missing: [...need(["X_CLIENT_ID", "X_CLIENT_SECRET"]), ...encryption] },
   ];
 }

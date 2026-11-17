@@ -62,7 +62,7 @@ const GROUPS: { title: string; note: string; vars: { key: string; why: string }[
   },
   {
     title: "Social Center publishing",
-    note: "Connect accounts from Social Center → Connect Account. Tokens are encrypted with INTEGRATION_ENCRYPTION_KEY and readable only server-side. Redirect URLs to register: /api/social/oauth/meta/callback and /api/social/oauth/linkedin/callback.",
+    note: "Connect accounts from Social Center → Connect Account. Tokens are encrypted with INTEGRATION_ENCRYPTION_KEY and readable only server-side. Redirect URLs to register: /api/social/oauth/meta/callback, /api/social/oauth/linkedin/callback and /api/social/oauth/x/callback.",
     vars: [
       { key: "META_APP_ID", why: "Meta app id (Facebook Pages + Instagram)" },
       { key: "META_APP_SECRET", why: "Server-only. Also verifies lead webhooks." },
