@@ -133,7 +133,9 @@ export async function loadSocialCenter(sb: SupabaseClient, filters: SocialFilter
   const attentions: SocialBoard["attentions"] = [];
   for (const account of accounts) {
     if (account.status !== "connected" || !account.connected) attentions.push({ id: `account-${account.id}`, href: `?tab=queue&client=${account.customerId ?? ""}`, client: account.clientName, detail: `${PLATFORM_LABELS[account.platform]} ${account.status}${account.connectionError ? ` — ${account.connectionError}` : ""}`, severity: "error" });
-    else if (account.tokenExpiresAt && new Date(account.tokenExpiresAt).getTime() < now.getTime() + 7 * 86_400_000) attentions.push({ id: `expires-${account.id}`, href: `?tab=queue&client=${account.customerId ?? ""}`, client: account.clientName, detail: `${PLATFORM_LABELS[account.platform]} credentials expire soon`, severity: "warning" });
+    // X access tokens last two hours by design and are refreshed automatically
+    // before each publish (providers/x.ts xToken), so a near expiry isn't a problem.
+    else if (account.platform !== "x" && account.tokenExpiresAt && new Date(account.tokenExpiresAt).getTime() < now.getTime() + 7 * 86_400_000) attentions.push({ id: `expires-${account.id}`, href: `?tab=queue&client=${account.customerId ?? ""}`, client: account.clientName, detail: `${PLATFORM_LABELS[account.platform]} credentials expire soon`, severity: "warning" });
   }
   for (const post of allPosts.filter((item) => item.status === "failed")) attentions.push({ id: `post-${post.id}`, href: `?tab=queue&status=failed`, client: post.clientName, detail: post.error || "A post failed to publish", severity: "error" });
   const waitingByClient = new Map<string, { name: string; count: number }>();
