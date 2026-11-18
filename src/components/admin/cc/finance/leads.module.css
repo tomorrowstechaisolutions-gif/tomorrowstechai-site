@@ -1,0 +1,31 @@
+/* Lead analytics: funnel bars, trend columns, dimension tabs. */
+
+.funnel { display: grid; gap: 8px; }
+.stage { display: grid; grid-template-columns: 120px minmax(0, 1fr) 90px; gap: 10px; align-items: center; font-size: .78rem; }
+.stage b { font-weight: 600; }
+.track { height: 26px; background: #0B1622; border: 1px solid var(--cc-line-soft); border-radius: 6px; overflow: hidden; }
+.fill { height: 100%; background: linear-gradient(90deg, #0891D1, #38BDF8); border-radius: 5px; min-width: 2px; }
+.fillWon { background: linear-gradient(90deg, #10B981, #4ADDAA); }
+.stageNum { text-align: right; font-variant-numeric: tabular-nums; }
+.stageNum b { font-size: .86rem; }
+.stageNum small { display: block; font-size: .66rem; color: var(--cc-faint); }
+
+.trend { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding-top: 8px; }
+.col { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+.bar { width: 100%; max-width: 34px; background: #0891D1; border-radius: 4px 4px 0 0; min-height: 2px; }
+.barZero { background: var(--cc-line-soft); }
+.colNum { font-size: .64rem; color: var(--cc-muted); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+.colLabel { font-size: .6rem; color: var(--cc-faint); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+.dims { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.dim { font-size: .72rem; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--cc-line); color: var(--cc-muted); text-decoration: none; }
+.dim:hover { color: var(--cc-text); border-color: var(--cc-accent); }
+.dimOn { color: #04121D; background: var(--cc-accent); border-color: var(--cc-accent); font-weight: 700; }
+
+.thin { font-size: .7rem; color: var(--cc-faint); }
+.pctCell { color: var(--cc-muted); font-size: .7rem; margin-left: 4px; }
+
+@media (max-width: 760px) {
+  .stage { grid-template-columns: 90px minmax(0, 1fr) 70px; }
+  .colLabel { font-size: .52rem; }
+}

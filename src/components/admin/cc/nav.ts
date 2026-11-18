@@ -149,7 +149,7 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Intelligence",
     links: [
       { href: "/admin/intelligence", label: "Analytics", icon: IconChart },
-      { href: "/admin/intelligence/leads", label: "Lead analytics", icon: IconFunnel, soon: true },
+      { href: "/admin/intelligence/leads", label: "Lead analytics", icon: IconFunnel },
       { href: "/admin/ai/insights", label: "AI insights", icon: IconSpark, soon: true },
     ],
   },
@@ -222,12 +222,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard, and every invoice is under Sales.",
     nearest: { href: "/admin/invoices", label: "Open invoices" },
-  },
-  "/admin/intelligence/leads": {
-    title: "Lead analytics",
-    blurb:
-      "Source, campaign and service breakdowns over time, with conversion at each step.",
-    nearest: { href: "/admin/marketing/campaigns/business-launch", label: "Open the campaign dashboard" },
   },
   "/admin/system/integrations": {
     title: "Integrations",
