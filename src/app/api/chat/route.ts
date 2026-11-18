@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { WEBSITE_CHAT_PROMPT } from "@/lib/ai/prompts/website-chat";
 import { resolveSystemPrompt } from "@/lib/ai/prompt";
 import { recordAiUsageAsync } from "@/lib/ai/record";
+import { CLAUDE_FAST, effort, refused } from "@/lib/ai/claude";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ const SYSTEM_PROMPT = WEBSITE_CHAT_PROMPT;
 
 /** Its row in ai_solutions. Usage, cost and health all hang off this. */
 const SOLUTION_SLUG = "website-chat";
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = CLAUDE_FAST;
 
 function getClientIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
@@ -117,7 +118,9 @@ export async function POST(req: NextRequest) {
     try {
       response = await client.messages.create({
         model: MODEL,
-        max_tokens: 1024,
+        // Room for adaptive thinking plus the reply; low effort keeps chat fast.
+        max_tokens: 2048,
+        ...effort("low"),
         system,
         messages: recentMessages.map((m: { role: string; content: string }) => ({
           role: m.role as "user" | "assistant",
@@ -142,7 +145,11 @@ export async function POST(req: NextRequest) {
     }
 
     const textBlock = response.content.find((b) => b.type === "text");
-    const reply = textBlock && textBlock.type === "text" ? textBlock.text : "";
+    // A decline (stop_reason "refusal") or an empty reply gets a human answer, not a blank bubble.
+    const reply = (textBlock && textBlock.type === "text" ? textBlock.text : "").trim()
+      || (refused(response.stop_reason as string)
+        ? "That's not something I can help with here. For anything about your business systems, you can reach John directly through the contact page."
+        : "Sorry, I lost my train of thought. Could you ask that again?");
 
     // Fire and forget: bookkeeping must never add latency to a reply.
     recordAiUsageAsync({

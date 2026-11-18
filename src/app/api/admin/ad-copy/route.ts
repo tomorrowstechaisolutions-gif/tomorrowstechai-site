@@ -10,6 +10,7 @@ import {
   NOT_INCLUDED,
   OFFER_PRICE,
 } from "@/lib/campaign/config";
+import { CLAUDE_FAST, effort, refused } from "@/lib/ai/claude";
 
 export const runtime = "nodejs";
 
@@ -87,8 +88,9 @@ export async function POST(req: Request) {
     let response;
     try {
       response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2400,
+      model: CLAUDE_FAST,
+      max_tokens: 6000,
+      ...effort("low"),
       system: SYSTEM,
       messages: [
         {
@@ -105,7 +107,7 @@ Write ${count} distinct variants. Each one should lead with a genuinely differen
     } catch (aiError) {
       recordAiUsageAsync({
         slug: "ad-copy-writer",
-        model: "claude-haiku-4-5-20251001",
+        model: CLAUDE_FAST,
         status: "error",
         eventType: "run",
         latencyMs: Date.now() - aiStartedAt,
@@ -117,7 +119,7 @@ Write ${count} distinct variants. Each one should lead with a genuinely differen
 
     recordAiUsageAsync({
       slug: "ad-copy-writer",
-      model: response.model ?? "claude-haiku-4-5-20251001",
+      model: response.model ?? CLAUDE_FAST,
       inputTokens: response.usage?.input_tokens ?? null,
       outputTokens: response.usage?.output_tokens ?? null,
       latencyMs: Date.now() - aiStartedAt,
@@ -126,6 +128,10 @@ Write ${count} distinct variants. Each one should lead with a genuinely differen
       requestRef: response.id ?? null,
       metadata: { surface: "ads", stop_reason: response.stop_reason ?? null },
     });
+
+    if (refused(response.stop_reason as string)) {
+      return NextResponse.json({ error: "The model declined to write this ad. Try a different angle in the brief." }, { status: 422 });
+    }
 
     const text = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === "text")

@@ -4,6 +4,7 @@ import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server"
 import { brandSystemPrompt, getBrand } from "@/lib/content/brand";
 import { FORMAT_BY_KEY, FORMATS } from "@/lib/content/formats";
 import { recordAiUsageAsync } from "@/lib/ai/record";
+import { CLAUDE_SMART, effort, refused } from "@/lib/ai/claude";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -26,7 +27,7 @@ export const maxDuration = 60;
  * draft with status 'draft'; going further is a human pressing approve.
  */
 
-const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = CLAUDE_SMART;
 const MAX_FORMATS = 6;
 
 export async function POST(req: Request) {
@@ -121,7 +122,8 @@ Return ONLY valid JSON, no prose, no markdown fence:
     try {
       response = await client.messages.create({
       model: MODEL,
-      max_tokens: 4000,
+      max_tokens: 12000,
+      ...effort("medium"),
       system,
       messages: [{ role: "user", content: user }],
       });
@@ -149,6 +151,10 @@ Return ONLY valid JSON, no prose, no markdown fence:
       requestRef: response.id ?? null,
       metadata: { surface: "content", stop_reason: response.stop_reason ?? null },
     });
+
+    if (refused(response.stop_reason as string)) {
+      return NextResponse.json({ error: "The model declined to write this one. Try rewording the brief." }, { status: 422 });
+    }
 
     const text = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")

@@ -5,6 +5,7 @@ import { buildAdvisorContext } from "@/lib/dashboard/advisor-context";
 import { rateLimit } from "@/lib/rate-limit";
 import { AI_ACTION_KINDS, type AiActionKind } from "@/lib/supabase/types";
 import { recordAiUsageAsync } from "@/lib/ai/record";
+import { CLAUDE_SMART, effort, refused } from "@/lib/ai/claude";
 
 export const runtime = "nodejs";
 
@@ -27,7 +28,7 @@ export const runtime = "nodejs";
  *     filling those gaps in.
  */
 
-const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = CLAUDE_SMART;
 
 const SYSTEM = `You are the business advisor inside the Tomorrow's Tech AI admin. You are talking to John, who owns and runs the company.
 
@@ -116,7 +117,8 @@ export async function POST(req: Request) {
     try {
       response = await client.messages.create({
       model: MODEL,
-      max_tokens: 1600,
+      max_tokens: 6000,
+      ...effort("medium"),
       system: SYSTEM,
       messages: [
         {
@@ -149,6 +151,10 @@ export async function POST(req: Request) {
       requestRef: response.id ?? null,
       metadata: { surface: "advisor", stop_reason: response.stop_reason ?? null },
     });
+
+    if (refused(response.stop_reason as string)) {
+      return NextResponse.json({ error: "The advisor declined to answer that question." }, { status: 422 });
+    }
 
     const text = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")

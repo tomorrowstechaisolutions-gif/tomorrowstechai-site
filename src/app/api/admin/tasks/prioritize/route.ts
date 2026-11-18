@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import {
   PRIORITIZE_SYSTEM, buildPrioritySnapshot, snapshotToPrompt,
 } from "@/lib/tasks/prioritize";
+import { CLAUDE_SMART, effort, refused } from "@/lib/ai/claude";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export const dynamic = "force-dynamic";
  *     is dropped below, so a hallucinated task cannot reach the screen.
  */
 
-const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = CLAUDE_SMART;
 
 type ModelReply = { headline?: string; items?: { id?: string; reason?: string }[] };
 
@@ -78,7 +79,8 @@ export async function POST() {
     try {
       response = await client.messages.create({
       model: MODEL,
-      max_tokens: 900,
+      max_tokens: 3000,
+      ...effort("low"),
       system: PRIORITIZE_SYSTEM,
       messages: [{ role: "user", content: snapshotToPrompt(snapshot) }],
       });
@@ -106,6 +108,10 @@ export async function POST() {
       requestRef: response.id ?? null,
       metadata: { surface: "tasks", stop_reason: response.stop_reason ?? null },
     });
+
+    if (refused(response.stop_reason as string)) {
+      return NextResponse.json({ error: "The prioritiser declined this request." }, { status: 422 });
+    }
 
     const text = response.content
       .map((block) => (block.type === "text" ? block.text : ""))

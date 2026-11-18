@@ -11,6 +11,7 @@ import { estimateCostMicroUsd, recordAiUsage, scrub } from "@/lib/ai/record";
 import { composePrompt, invalidatePromptCache, resolveSystemPrompt } from "@/lib/ai/prompt";
 import { WEBSITE_CHAT_PROMPT } from "@/lib/ai/prompts/website-chat";
 import { MICRO_PER_DOLLAR, slugify } from "@/lib/ai/types";
+import { acceptsSampling } from "@/lib/ai/claude";
 
 /**
  * Writes for the AI Solutions screens.
@@ -609,9 +610,10 @@ export async function testPromptAction(
 
     const response = await client.messages.create({
       model: solution.model,
-      max_tokens: Math.min(2048, solution.max_output_tokens ?? 1024),
+      max_tokens: Math.min(4096, solution.max_output_tokens ?? 2048),
       system: composePrompt(system, override, brandVoice),
-      ...(solution.temperature !== null ? { temperature: Number(solution.temperature) } : {}),
+      // Claude 5-generation models reject temperature; it's ignored for them.
+      ...(solution.temperature !== null && acceptsSampling(solution.model) ? { temperature: Number(solution.temperature) } : {}),
       messages: [{ role: "user", content: message }],
     });
 

@@ -5,6 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { PLAN_SYSTEM, buildPlanSnapshot, planToPrompt } from "@/lib/calendar/plan";
 import { chicagoDay } from "@/lib/calendar/window";
 import { recordAiUsageAsync } from "@/lib/ai/record";
+import { CLAUDE_SMART, effort, refused } from "@/lib/ai/claude";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export const dynamic = "force-dynamic";
  * Any id the model invents is dropped before it reaches the screen.
  */
 
-const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = CLAUDE_SMART;
 
 type ModelReply = {
   headline?: string;
@@ -81,7 +82,8 @@ export async function POST(req: Request) {
     try {
       response = await client.messages.create({
       model: MODEL,
-      max_tokens: 1200,
+      max_tokens: 4000,
+      ...effort("low"),
       system: PLAN_SYSTEM,
       messages: [{ role: "user", content: planToPrompt(snapshot) }],
       });
@@ -109,6 +111,10 @@ export async function POST(req: Request) {
       requestRef: response.id ?? null,
       metadata: { surface: "calendar", stop_reason: response.stop_reason ?? null },
     });
+
+    if (refused(response.stop_reason as string)) {
+      return NextResponse.json({ error: "The planner declined this request." }, { status: 422 });
+    }
 
     const text = response.content
       .map((block) => (block.type === "text" ? block.text : ""))
