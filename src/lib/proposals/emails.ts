@@ -6,6 +6,7 @@ import {
   type AdminEventKind, type BuiltEmail,
 } from "./email-content";
 import { notifyOwner, type NotificationKey } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
 
 /**
  * Proposal email, through the Resend account the rest of the site already
@@ -67,7 +68,7 @@ export async function sendProposalEmail(
   note?: string | null
 ): Promise<boolean> {
   if (!p.client_email) return false;
-  return deliver(p.client_email, buildProposalEmail(p, url, note), "Proposal email");
+  return deliver(p.client_email, buildProposalEmail(p, url, note, await emailCopy("proposal.sent")), "Proposal email");
 }
 
 /** Their copy of what they just signed. */
@@ -76,7 +77,7 @@ export async function sendSignedConfirmation(
   signature: ProposalSignature,
   url: string
 ): Promise<boolean> {
-  return deliver(signature.signer_email, buildSignedEmail(p, signature, url), "Signed confirmation");
+  return deliver(signature.signer_email, buildSignedEmail(p, signature, url, await emailCopy("proposal.signed_confirmation")), "Signed confirmation");
 }
 
 /** Internal notification. Says what happened and what it is worth. */
@@ -85,7 +86,7 @@ async function notifyAdminNow(
   p: Proposal,
   detail?: string | null
 ): Promise<boolean> {
-  return deliver(adminEmail(), buildAdminEmail(kind, p, detail), "Admin notification");
+  return deliver(adminEmail(), buildAdminEmail(kind, p, detail, await emailCopy("proposal.owner")), "Admin notification");
 }
 
 /** Owner email, gated by its Notifications switch and logged. */

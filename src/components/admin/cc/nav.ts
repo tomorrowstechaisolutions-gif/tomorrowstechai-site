@@ -158,6 +158,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/system/integrations", label: "Integrations", icon: IconServer },
       { href: "/admin/system/notifications", label: "Notifications", icon: IconBell },
+      { href: "/admin/system/emails", label: "System emails", icon: IconMail },
       { href: "/admin/settings/agreements", label: "Agreements", icon: IconFile },
       { href: "/admin/settings", label: "Settings", icon: IconSettings },
     ],

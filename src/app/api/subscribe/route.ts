@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { notifyOwner } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
+import { buildOwnerNewsletterEmail } from "@/lib/forms/email-content";
 
 export const runtime = "nodejs";
 
@@ -98,12 +100,16 @@ export async function POST(req: NextRequest) {
     // 2. Notify John of the new subscriber (only for genuinely new ones).
     if (audienceResult === "added") {
       try {
-        await notifyOwner("newsletter.subscribe", email, async () => { const res = await resend.emails.send({
-          from: fromEmail,
-          to: toEmail,
-          subject: "New newsletter subscriber",
-          text: `New subscriber to Tomorrow’s Tech AI field notes:\n\n${email}\n\nFrom: ${ip}\n\nView the full list:\nhttps://resend.com/audiences/${audienceId}/contacts`,
-        }); return !res.error; });
+        await notifyOwner("newsletter.subscribe", email, async () => {
+          const mail = buildOwnerNewsletterEmail({ email, ip, audienceId }, await emailCopy("forms.owner_newsletter"));
+          const res = await resend.emails.send({
+            from: fromEmail,
+            to: toEmail,
+            subject: mail.subject,
+            text: mail.text,
+          });
+          return !res.error;
+        });
       } catch (err) {
         // Don't fail the user-facing request if notification email fails
         console.error("Notification email failed:", err);

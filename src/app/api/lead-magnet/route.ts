@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { notifyOwner } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
+import {
+  MAGNETS, SITE, buildMagnetDownloadEmail, buildOwnerMagnetEmail,
+} from "@/lib/forms/email-content";
 
 export const runtime = "nodejs";
 
@@ -10,73 +14,8 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_MAX = 5;
 
 const DEFAULT_AUDIENCE_ID = "47085ffe-414f-4530-a900-9d4ff86ad98d";
-const SITE = "https://tomorrowstechai.com";
 
-// Whitelist of lead magnets. Each entry maps a magnet ID to the asset,
-// email subject, and personalized email body.
-type Magnet = {
-  id: string;
-  title: string;
-  pdfPath: string;
-  subject: string;
-  emailBody: (firstName: string) => string;
-  notificationSubject: string;
-};
-
-const MAGNETS: Record<string, Magnet> = {
-  "operations-audit": {
-    id: "operations-audit",
-    title: "The Operations Audit Checklist",
-    pdfPath: "/downloads/operations-audit-checklist.pdf",
-    subject: "Your Operations Audit Checklist · Tomorrow’s Tech AI",
-    notificationSubject: "New lead magnet download (Operations Audit)",
-    emailBody: (firstName: string) => {
-      const greeting = firstName ? `Hi ${firstName},` : "Hey,";
-      return `${greeting}
-
-Here's the checklist you asked for:
-
-${SITE}/downloads/operations-audit-checklist.pdf
-
-12 questions. About 5 minutes to score. The third page tells you what to do with the result.
-
-If 8 or more of the questions land easily — your operation is genuinely ready for AI. If 3 or fewer — the foundation needs work first. Either way, the answers are useful.
-
-If you want a 30-minute walk-through of these questions against your specific operation, just reply to this email or book a slot directly: ${SITE}/contact
-
-— John
-Founder, Tomorrow’s Tech AI
-${SITE}`;
-    },
-  },
-  "ai-field-guide": {
-    id: "ai-field-guide",
-    title: "Your Best Next Hire Is AI",
-    pdfPath: "/downloads/your-best-next-hire-is-ai.pdf",
-    subject: "Your AI Field Guide is here · Tomorrow’s Tech AI",
-    notificationSubject: "New lead magnet download (AI Field Guide)",
-    emailBody: (firstName: string) => {
-      const greeting = firstName ? `Hey ${firstName},` : "Hey,";
-      return `${greeting}
-
-Here's the field guide:
-
-${SITE}/downloads/your-best-next-hire-is-ai.pdf
-
-6 pages. Plain English. No code. By Friday you can have a real workflow running.
-
-The fastest win for most owners is page 4 — the 7-day playbook. Pick one task that drains your week, give it 20 minutes a day, follow the steps. By Friday you'll have a workflow saved that pays back every week from then on.
-
-If you want a guide to walk the path with you — the right tools for your business, done-with-you workflows, and a short live training — that's exactly what we do. Just reply or grab a 30-minute slot: ${SITE}/contact
-
-Build smarter. Scale faster.
-
-— John
-Founder, Tomorrow’s Tech AI
-${SITE}`;
-    },
-  },
-};
+// Whitelist of lead magnets and their emails: src/lib/forms/email-content.ts.
 
 function getClientIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
@@ -169,11 +108,12 @@ export async function POST(req: NextRequest) {
     // 2. Email the user the PDF link
     let userEmailOk = false;
     try {
+      const userMail = buildMagnetDownloadEmail(magnet, firstName, await emailCopy("forms.magnet_download"));
       const userResp = await resend.emails.send({
         from: fromEmail,
         to: email,
-        subject: magnet.subject,
-        text: magnet.emailBody(firstName),
+        subject: userMail.subject,
+        text: userMail.text,
       });
       userEmailOk = !userResp.error;
       if (userResp.error) {
@@ -186,19 +126,16 @@ export async function POST(req: NextRequest) {
     // 3. Notify John of the new lead
     if (audienceResult === "added") {
       try {
-        await notifyOwner("lead.magnet_download", `${magnet.title}: ${email}`, async () => { const res = await resend.emails.send({
-          from: fromEmail,
-          to: toEmail,
-          subject: magnet.notificationSubject,
-          text: `New download of "${magnet.title}":
-
-Email: ${email}
-${firstName ? `Name: ${firstName}` : ""}
-From IP: ${ip}
-
-This contact has been added to your Resend audience:
-https://resend.com/audiences/${audienceId}/contacts`,
-        }); return !res.error; });
+        await notifyOwner("lead.magnet_download", `${magnet.title}: ${email}`, async () => {
+          const mail = buildOwnerMagnetEmail({ magnet, email, firstName, ip, audienceId }, await emailCopy("forms.owner_magnet"));
+          const res = await resend.emails.send({
+            from: fromEmail,
+            to: toEmail,
+            subject: mail.subject,
+            text: mail.text,
+          });
+          return !res.error;
+        });
       } catch (err) {
         console.error("Notification email failed:", err);
       }

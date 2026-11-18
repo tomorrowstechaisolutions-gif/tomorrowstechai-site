@@ -6,6 +6,7 @@ import {
   buildAdminInvoiceEmail, type AdminInvoiceEvent, type BuiltEmail,
 } from "./email-content";
 import { notifyOwner, type NotificationKey } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
 
 /**
  * Invoice email, through the Resend account the rest of the site already
@@ -65,7 +66,7 @@ export async function sendInvoiceEmail(
   note?: string | null
 ): Promise<boolean> {
   if (!inv.client_email) return false;
-  return deliver(inv.client_email, buildInvoiceEmail(inv, items, url, note), "Invoice email");
+  return deliver(inv.client_email, buildInvoiceEmail(inv, items, url, note, await emailCopy("invoice.sent")), "Invoice email");
 }
 
 /** Their receipt, after money lands by any route. */
@@ -78,7 +79,7 @@ export async function sendInvoiceReceipt(
   if (!inv.client_email) return false;
   return deliver(
     inv.client_email,
-    buildInvoiceReceiptEmail(inv, amountCents, url, receiptUrl),
+    buildInvoiceReceiptEmail(inv, amountCents, url, receiptUrl, await emailCopy("invoice.receipt")),
     "Invoice receipt"
   );
 }
@@ -93,7 +94,7 @@ export async function sendInvoiceReminder(
   if (!inv.client_email) return false;
   return deliver(
     inv.client_email,
-    buildInvoiceReminderEmail(inv, items, url, daysLate),
+    buildInvoiceReminderEmail(inv, items, url, daysLate, await emailCopy("invoice.reminder")),
     "Invoice reminder"
   );
 }
@@ -104,7 +105,7 @@ async function notifyAdminInvoiceNow(
   inv: Invoice,
   detail?: string | null
 ): Promise<boolean> {
-  return deliver(adminEmail(), buildAdminInvoiceEmail(kind, inv, detail), "Admin invoice notification");
+  return deliver(adminEmail(), buildAdminInvoiceEmail(kind, inv, detail, await emailCopy("invoice.owner")), "Admin invoice notification");
 }
 
 /** Owner email, gated by its Notifications switch and logged. */

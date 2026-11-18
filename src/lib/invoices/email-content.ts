@@ -21,6 +21,7 @@ import {
   factPanel, button, linkFallback, bullets, quote, divider, fineprint,
   signoff, esc,
 } from "@/lib/email/brand";
+import { fill, linesOf, paragraphsOf, resolveCopy, type CopySlot, type EmailCopy } from "@/lib/system-emails/copy";
 
 export type BuiltEmail = { subject: string; html: string; text: string };
 
@@ -97,12 +98,6 @@ function rowsAsText(rows: MoneyRow[]): string {
   return rows.map((r) => `${r.label}: ${r.value}${r.note ? ` (${r.note})` : ""}`).join("\n");
 }
 
-const HOW_TO_PAY = [
-  "Pay by card on the invoice page — it opens straight into Stripe",
-  "Or pay however we agreed; reply here and it will be marked off",
-  "The page updates the moment payment lands, so you always see the real balance",
-];
-
 const FOOTNOTE_CLIENT =
   "You are receiving this because Tomorrow's Tech AI raised an invoice for you. The link above is private to you — please don't forward it.";
 
@@ -112,6 +107,58 @@ ${BRAND.site}
 ${BRAND.phone}`;
 
 // ═══════════════════════════════════════════════════════════════════════
+// Editable wording (System emails page). Defaults are the shipped text.
+// ═══════════════════════════════════════════════════════════════════════
+
+export const INVOICE_SLOTS: Record<"sent" | "receipt" | "reminder" | "admin", CopySlot[]> = {
+  sent: [
+    { key: "subject_due", label: "Subject (something due now)", default: "Invoice {invoice_number} — {amount_due} due" },
+    { key: "subject_monthly", label: "Subject (monthly-only invoice)", default: "Invoice {invoice_number} — {monthly}" },
+    { key: "subject_settled", label: "Subject (nothing left to pay)", default: "Invoice {invoice_number} — {title}" },
+    { key: "intro", label: "Opening line", default: "{greeting} the work is done and here is the invoice for it — every line itemised, and a button to pay it by card if that is easiest.", multiline: true },
+    { key: "intro_monthly", label: "Opening line (monthly-only invoice)", default: "{greeting} here is the invoice for your monthly services — every line itemised, and a button to set up payment by card if that is easiest.", multiline: true },
+    { key: "button_pay", label: "Button (when there's something to pay)", default: "View and pay your invoice" },
+    { key: "button_view", label: "Button (nothing to pay)", default: "View your invoice" },
+    { key: "pay_heading", label: "How-to-pay heading", default: "Paying it" },
+    { key: "pay_steps", label: "How-to-pay points (one per line)", default: "Pay by card on the invoice page — it opens straight into Stripe\nOr pay however we agreed; reply here and it will be marked off\nThe page updates the moment payment lands, so you always see the real balance", multiline: true },
+    { key: "closing", label: "Closing line", default: "Anything on here that does not look right, reply to this email and we will fix it before you pay a penny.", multiline: true },
+    { key: "footnote", label: "Footer note", default: "You are receiving this because Tomorrow's Tech AI raised an invoice for you. The link above is private to you — please don't forward it.", multiline: true },
+  ],
+  receipt: [
+    { key: "subject", label: "Subject", default: "Payment received — invoice {invoice_number}" },
+    { key: "heading_full", label: "Heading (paid in full)", default: "Thank you — paid in full" },
+    { key: "heading_partial", label: "Heading (balance remains)", default: "Thank you — payment received" },
+    { key: "intro", label: "Opening line", default: "{greeting} that has come through. Here is your record of it.", multiline: true },
+    { key: "button", label: "Button", default: "View your invoice" },
+    { key: "closing", label: "Closing line", default: "It is a pleasure working with you.", multiline: true },
+  ],
+  reminder: [
+    { key: "subject", label: "Subject", default: "Reminder — invoice {invoice_number} ({amount_due})" },
+    { key: "heading", label: "Heading", default: "{amount_due} still outstanding" },
+    { key: "intro", label: "Opening line", default: "{greeting} a quick nudge about invoice {invoice_number}. {late_line}", multiline: true, help: "{late_line} says when it was due and how many days ago." },
+    { key: "button", label: "Button", default: "View and pay your invoice" },
+    { key: "closing", label: "Closing line", default: "If it has already been paid, or something on it needs changing, just reply and we will sort it out.", multiline: true },
+  ],
+  admin: [
+    { key: "line_sent", label: "Line: invoice sent", default: "Invoice {invoice_number} went out to {client}." },
+    { key: "line_viewed", label: "Line: invoice opened", default: "{client} opened invoice {invoice_number}." },
+    { key: "line_paid", label: "Line: paid in full", default: "{client} paid invoice {invoice_number} in full." },
+    { key: "line_partial", label: "Line: part-paid", default: "{client} part-paid invoice {invoice_number}." },
+  ],
+};
+
+function baseVars(inv: Invoice) {
+  const name = firstName(inv);
+  return {
+    first_name: name,
+    greeting: name ? `Hi ${name},` : "Hi,",
+    invoice_number: inv.invoice_number,
+    title: inv.title,
+    business_name: inv.client_business_name ?? "",
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // The invoice itself.
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -119,13 +166,23 @@ export function buildInvoiceEmail(
   inv: Invoice,
   items: InvoiceItem[],
   url: string,
-  note?: string | null
+  note?: string | null,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
-  const name = firstName(inv);
-  const greeting = name ? `Hi ${name},` : "Hi,";
+  const c = resolveCopy(INVOICE_SLOTS.sent, copy);
   const rows = moneyRows(inv, items);
   const due = outstandingCents(inv);
   const trimmedNote = note?.trim() || null;
+  const vars = {
+    ...baseVars(inv),
+    amount_due: formatMoney(due, inv.currency),
+    monthly: inv.recurring_cents > 0 ? `${formatMoney(inv.recurring_cents, inv.currency)}/${inv.recurring_interval}` : "",
+    due_date: inv.due_date ? formatDate(inv.due_date) : "on receipt",
+  };
+  const f = (t: string) => fill(t, vars);
+  const intro = paragraphsOf(f(isRecurringOnly(inv) ? c.intro_monthly : c.intro));
+  const steps = linesOf(f(c.pay_steps));
+  const closing = paragraphsOf(f(c.closing));
 
   const preheader = [
     inv.invoice_number,
@@ -142,30 +199,24 @@ export function buildInvoiceEmail(
     blocks: [
       eyebrow("Invoice"),
       heading(inv.title),
-      paragraph(
-        isRecurringOnly(inv)
-          ? `${esc(greeting)} here is the invoice for your monthly services — every line itemised, and a button to set up payment by card if that is easiest.`
-          : `${esc(greeting)} the work is done and here is the invoice for it — every line itemised, and a button to pay it by card if that is easiest.`
-      ),
+      ...intro.map((p) => paragraph(esc(p))),
       factPanel(rows),
-      button(due > 0 || inv.recurring_cents > 0 ? "View and pay your invoice" : "View your invoice", url),
+      button(f(due > 0 || inv.recurring_cents > 0 ? c.button_pay : c.button_view), url),
       linkFallback(url),
       trimmedNote ? quote(trimmedNote) : "",
       divider(),
-      subheading("Paying it"),
-      bullets(HOW_TO_PAY),
+      subheading(f(c.pay_heading)),
+      bullets(steps),
       inv.due_date
         ? fineprint(`This invoice is due by ${formatDate(inv.due_date)}.`)
         : fineprint("This invoice is due on receipt."),
-      paragraph("Anything on here that does not look right, reply to this email and we will fix it before you pay a penny."),
+      ...closing.map((p) => paragraph(esc(p))),
       signoff(),
     ].filter(Boolean),
-    footnote: FOOTNOTE_CLIENT,
+    footnote: f(c.footnote),
   });
 
-  const text = `${greeting}
-
-Your invoice is ready to view and pay online:
+  const text = `${intro.join("\n\n")}
 
 ${url}
 
@@ -176,22 +227,16 @@ ${inv.due_date ? `Due: ${formatDate(inv.due_date)}` : "Due: on receipt"}
 
 ${rowsAsText(rows)}
 ${trimmedNote ? `\n${trimmedNote}\n` : ""}
-Paying it:
+${f(c.pay_heading)}:
 
-${HOW_TO_PAY.map((line) => `  - ${line}`).join("\n")}
+${steps.map((line) => `  - ${line}`).join("\n")}
 
-Anything on here that does not look right, reply to this email and we will fix
-it before you pay a penny.
+${closing.join("\n\n")}
 
 ${SIGNOFF_TEXT}`;
 
   return {
-    subject:
-      due > 0
-        ? `Invoice ${inv.invoice_number} — ${formatMoney(due, inv.currency)} due`
-        : inv.recurring_cents > 0
-          ? `Invoice ${inv.invoice_number} — ${formatMoney(inv.recurring_cents, inv.currency)}/${inv.recurring_interval}`
-          : `Invoice ${inv.invoice_number} — ${inv.title}`,
+    subject: f(due > 0 ? c.subject_due : inv.recurring_cents > 0 ? c.subject_monthly : c.subject_settled),
     html,
     text,
   };
@@ -205,12 +250,16 @@ export function buildInvoiceReceiptEmail(
   inv: Invoice,
   amountCents: number,
   url: string,
-  receiptUrl?: string | null
+  receiptUrl?: string | null,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
-  const name = firstName(inv);
-  const greeting = name ? `Hi ${name},` : "Hi,";
+  const c = resolveCopy(INVOICE_SLOTS.receipt, copy);
   const money = (cents: number) => formatMoney(cents, inv.currency);
   const remaining = outstandingCents(inv);
+  const vars = { ...baseVars(inv), amount_paid: money(amountCents), amount_remaining: money(remaining) };
+  const f = (t: string) => fill(t, vars);
+  const intro = paragraphsOf(f(c.intro));
+  const closing = paragraphsOf(f(c.closing));
 
   const rows: MoneyRow[] = [
     { label: "Paid", value: money(amountCents), strong: true },
@@ -234,37 +283,35 @@ export function buildInvoiceReceiptEmail(
     tone: "success",
     blocks: [
       eyebrow("Payment received"),
-      heading(remaining > 0 ? "Thank you — payment received" : "Thank you — paid in full"),
-      paragraph(`${esc(greeting)} that has come through. Here is your record of it.`),
+      heading(f(remaining > 0 ? c.heading_partial : c.heading_full)),
+      ...intro.map((p) => paragraph(esc(p))),
       factPanel(rows),
-      button("View your invoice", url),
+      button(f(c.button), url),
       linkFallback(url),
       receiptUrl ? paragraph(`Stripe's own receipt is here: <a href="${esc(receiptUrl)}">${esc(receiptUrl)}</a>`, { dim: true }) : "",
       remaining > 0
         ? fineprint(`A balance of ${money(remaining)} remains on this invoice.`)
         : "",
-      paragraph("It is a pleasure working with you."),
+      ...closing.map((p) => paragraph(esc(p))),
       signoff(),
     ].filter(Boolean),
     footnote: FOOTNOTE_CLIENT,
   });
 
-  const text = `${greeting}
+  const text = `${intro.join("\n\n")}
 
-${money(amountCents)} received against invoice ${inv.invoice_number} — thank you.
+${money(amountCents)} received against invoice ${inv.invoice_number}.
 
 ${rowsAsText(rows)}
 
 Your invoice: ${url}
 ${receiptUrl ? `Stripe receipt: ${receiptUrl}` : ""}
 
+${closing.join("\n\n")}
+
 ${SIGNOFF_TEXT}`;
 
-  return {
-    subject: `Payment received — invoice ${inv.invoice_number}`,
-    html,
-    text,
-  };
+  return { subject: f(c.subject), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -275,10 +322,10 @@ export function buildInvoiceReminderEmail(
   inv: Invoice,
   items: InvoiceItem[],
   url: string,
-  daysLate: number
+  daysLate: number,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
-  const name = firstName(inv);
-  const greeting = name ? `Hi ${name},` : "Hi,";
+  const c = resolveCopy(INVOICE_SLOTS.reminder, copy);
   const due = outstandingCents(inv);
   const rows = moneyRows(inv, items);
 
@@ -286,6 +333,10 @@ export function buildInvoiceReminderEmail(
     daysLate > 0
       ? `It was due on ${formatDate(inv.due_date)}, which is ${daysLate} day${daysLate === 1 ? "" : "s"} ago.`
       : `It is due on ${formatDate(inv.due_date)}.`;
+  const vars = { ...baseVars(inv), amount_due: formatMoney(due, inv.currency), late_line: lateLine, days_late: daysLate, due_date: formatDate(inv.due_date) };
+  const f = (t: string) => fill(t, vars);
+  const intro = paragraphsOf(f(c.intro));
+  const closing = paragraphsOf(f(c.closing));
 
   const html = renderEmail({
     preheader: `${inv.invoice_number} — ${formatMoney(due, inv.currency)} still outstanding.`,
@@ -293,35 +344,28 @@ export function buildInvoiceReminderEmail(
     tone: "alert",
     blocks: [
       eyebrow("Reminder"),
-      heading(`${formatMoney(due, inv.currency)} still outstanding`),
-      paragraph(`${esc(greeting)} a quick nudge about invoice ${esc(inv.invoice_number)}. ${esc(lateLine)}`),
+      heading(f(c.heading)),
+      ...intro.map((p) => paragraph(esc(p))),
       factPanel(rows),
-      button("View and pay your invoice", url),
+      button(f(c.button), url),
       linkFallback(url),
-      paragraph("If it has already been paid, or something on it needs changing, just reply and we will sort it out.", { dim: true }),
+      ...closing.map((p) => paragraph(esc(p), { dim: true })),
       signoff(),
     ].filter(Boolean),
     footnote: FOOTNOTE_CLIENT,
   });
 
-  const text = `${greeting}
-
-A quick nudge about invoice ${inv.invoice_number}. ${lateLine}
+  const text = `${intro.join("\n\n")}
 
 ${rowsAsText(rows)}
 
-View and pay: ${url}
+${f(c.button)}: ${url}
 
-If it has already been paid, or something on it needs changing, just reply and
-we will sort it out.
+${closing.join("\n\n")}
 
 ${SIGNOFF_TEXT}`;
 
-  return {
-    subject: `Reminder — invoice ${inv.invoice_number} (${formatMoney(due, inv.currency)})`,
-    html,
-    text,
-  };
+  return { subject: f(c.subject), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -333,25 +377,21 @@ export type AdminInvoiceEvent = "sent" | "viewed" | "paid" | "partial";
 export function buildAdminInvoiceEmail(
   kind: AdminInvoiceEvent,
   inv: Invoice,
-  detail?: string | null
+  detail?: string | null,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
+  const c = resolveCopy(INVOICE_SLOTS.admin, copy);
   const money = (cents: number) => formatMoney(cents, inv.currency);
   const client = inv.client_business_name || inv.client_contact_name || inv.client_email || "a client";
-
-  const line: Record<AdminInvoiceEvent, string> = {
-    sent: `Invoice ${inv.invoice_number} went out to ${client}.`,
-    viewed: `${client} opened invoice ${inv.invoice_number}.`,
-    paid: `${client} paid invoice ${inv.invoice_number} in full.`,
-    partial: `${client} part-paid invoice ${inv.invoice_number}.`,
-  };
+  const line = fill(c[`line_${kind}`], { ...baseVars(inv), client });
 
   const html = renderEmail({
-    preheader: line[kind],
+    preheader: line,
     headerMeta: inv.invoice_number,
     tone: kind === "paid" ? "success" : "default",
     blocks: [
       eyebrow("Invoice"),
-      heading(line[kind]),
+      heading(line),
       factPanel([
         { label: "Client", value: client },
         { label: "Total", value: money(inv.total_cents) },
@@ -365,7 +405,7 @@ export function buildAdminInvoiceEmail(
     ].filter(Boolean),
   });
 
-  const text = `${line[kind]}
+  const text = `${line}
 
 Client: ${client}
 Total: ${money(inv.total_cents)}
@@ -373,5 +413,5 @@ Collected: ${money(inv.amount_paid_cents)}
 Outstanding: ${money(outstandingCents(inv))}
 ${detail ?? ""}`;
 
-  return { subject: `${line[kind]}`, html, text };
+  return { subject: line, html, text };
 }

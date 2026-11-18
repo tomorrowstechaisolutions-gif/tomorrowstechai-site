@@ -1,9 +1,10 @@
 import "server-only";
 import { Resend } from "resend";
-import {
-  BRAND, renderEmail, eyebrow, heading, paragraph, button, linkFallback, fineprint, signoff, bullets, esc,
-} from "@/lib/email/brand";
 import { notifyOwner } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
+import {
+  buildPortalInviteEmail, buildPortalResetEmail, buildPortalRequestAlertEmail, buildBillingChangeAlertEmail,
+} from "./email-content";
 
 /** Portal invite and password-reset emails, sent through the site's Resend account. */
 
@@ -23,70 +24,18 @@ async function deliver(to: string, subject: string, html: string, text: string, 
   }
 }
 
-function hello(name: string | null): string {
-  const first = (name ?? "").trim().split(/\s+/)[0];
-  return first ? `Hi ${first},` : "Hi,";
+function adminClientUrl(customerId: string): string {
+  return `${(process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "")}/admin/clients/${customerId}`;
 }
 
 export async function sendPortalInvite(opts: { to: string; name: string | null; businessName: string; url: string }) {
-  const html = renderEmail({
-    preheader: `Your ${BRAND.name} member account is ready. Set a password to sign in.`,
-    blocks: [
-      eyebrow("Member account"),
-      heading(`Your ${BRAND.name} account is ready`),
-      paragraph(esc(hello(opts.name))),
-      paragraph(
-        `We've set up a member account for <strong>${esc(opts.businessName)}</strong>. ` +
-          `It's where you'll see your services, invoices and billing in one place.`
-      ),
-      bullets(["Your username is this email address.", "Click below to choose your password.", "After that, sign in any time at tomorrowstechai.com/account."]),
-      button("Set your password", opts.url),
-      linkFallback(opts.url),
-      fineprint("This link works once and expires in 24 hours. If it has expired, use \"Forgot password\" on the sign-in page, or reply to this email."),
-      signoff(),
-    ],
-    footnote: `You're receiving this because ${BRAND.name} manages services for ${opts.businessName}.`,
-  });
-  const text = [
-    hello(opts.name),
-    "",
-    `We've set up a member account for ${opts.businessName}. It's where you'll see your services, invoices and billing in one place.`,
-    "",
-    "Your username is this email address. Choose your password here:",
-    opts.url,
-    "",
-    "After that, sign in any time at https://www.tomorrowstechai.com/account",
-    "",
-    "This link works once and expires in 24 hours.",
-    "",
-    `— ${BRAND.signer}`,
-  ].join("\n");
-  return deliver(opts.to, `Your ${BRAND.name} member account`, html, text, "Portal invite email");
+  const { subject, html, text } = buildPortalInviteEmail(opts, await emailCopy("portal.invite"));
+  return deliver(opts.to, subject, html, text, "Portal invite email");
 }
 
 export async function sendPortalReset(opts: { to: string; name: string | null; url: string }) {
-  const html = renderEmail({
-    preheader: "Reset your member account password.",
-    blocks: [
-      eyebrow("Password reset"),
-      heading("Reset your password"),
-      paragraph(esc(hello(opts.name))),
-      paragraph("Someone asked to reset the password for your member account. If that was you, choose a new one below."),
-      button("Choose a new password", opts.url),
-      linkFallback(opts.url),
-      fineprint("This link works once and expires in 24 hours. If you didn't ask for this, you can ignore this email; your password hasn't changed."),
-      signoff(),
-    ],
-  });
-  const text = [
-    hello(opts.name),
-    "",
-    "Someone asked to reset the password for your member account. If that was you, choose a new one here:",
-    opts.url,
-    "",
-    "This link works once and expires in 24 hours. If you didn't ask for this, ignore this email.",
-  ].join("\n");
-  return deliver(opts.to, "Reset your member account password", html, text, "Portal reset email");
+  const { subject, html, text } = buildPortalResetEmail(opts, await emailCopy("portal.reset"));
+  return deliver(opts.to, subject, html, text, "Portal reset email");
 }
 
 /** Alerts John when a member sends a request from the portal. */
@@ -99,21 +48,11 @@ async function sendPortalRequestAlertNow(opts: {
   customerId: string;
 }) {
   const to = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
-  const adminUrl = `${(process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "")}/admin/clients/${opts.customerId}`;
-  const label = { question: "Question", change: "Change request", problem: "Problem", billing: "Billing", cancel: "Cancellation request", new_service: "New service request" }[opts.category] ?? "Request";
-  const html = renderEmail({
-    preheader: `${label} from ${opts.businessName}: ${opts.subject}`,
-    blocks: [
-      eyebrow(`Member portal · ${label}`),
-      heading(opts.subject),
-      paragraph(`<strong>${esc(opts.businessName)}</strong> (${esc(opts.from)}) wrote:`),
-      paragraph(esc(opts.message).replace(/\n/g, "<br />")),
-      button("Open the client", adminUrl),
-    ],
-    tone: opts.category === "cancel" || opts.category === "problem" ? "alert" : "default",
-  });
-  const text = [`${label} from ${opts.businessName} (${opts.from})`, "", opts.subject, "", opts.message, "", adminUrl].join("\n");
-  return deliver(to, `[Portal] ${label}: ${opts.subject}`.slice(0, 180), html, text, "Portal request alert");
+  const { subject, html, text } = buildPortalRequestAlertEmail(
+    { ...opts, adminUrl: adminClientUrl(opts.customerId) },
+    await emailCopy("portal.owner_request")
+  );
+  return deliver(to, subject, html, text, "Portal request alert");
 }
 
 /**
@@ -130,33 +69,11 @@ async function sendBillingChangeAlertNow(opts: {
   customerId: string;
 }) {
   const to = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
-  const adminUrl = `${(process.env.PORTAL_ORIGIN || "https://www.tomorrowstechai.com").replace(/\/$/, "")}/admin/clients/${opts.customerId}`;
-  const what = opts.services.length ? opts.services.join(", ") : "their subscription";
-  const subject =
-    opts.kind === "scheduled"
-      ? `${opts.businessName} cancelled ${what}${opts.endsOn ? ` (ends ${opts.endsOn})` : ""}`
-      : opts.kind === "resumed"
-        ? `${opts.businessName} kept ${what} (cancellation undone)`
-        : `${opts.businessName}: ${what} has ended`;
-  const body =
-    opts.kind === "scheduled"
-      ? `They cancelled from the billing page. Nothing more will be charged, and the service stays on until ${opts.endsOn ?? "the end of the paid period"}.`
-      : opts.kind === "resumed"
-        ? "They undid a scheduled cancellation, so billing carries on as before."
-        : "The subscription has ended in Stripe. The service is now marked ended on their client record.";
-  const html = renderEmail({
-    preheader: subject,
-    blocks: [
-      eyebrow("Billing change"),
-      heading(subject),
-      paragraph(esc(body)),
-      ...(opts.reason ? [paragraph(`<strong>Reason given:</strong> ${esc(opts.reason)}`)] : []),
-      button("Open the client", adminUrl),
-    ],
-    tone: opts.kind === "resumed" ? "default" : "alert",
-  });
-  const text = [subject, "", body, ...(opts.reason ? ["", `Reason given: ${opts.reason}`] : []), "", adminUrl].join("\n");
-  return deliver(to, `[Billing] ${subject}`.slice(0, 180), html, text, "Billing change alert");
+  const { subject, html, text } = buildBillingChangeAlertEmail(
+    { ...opts, adminUrl: adminClientUrl(opts.customerId) },
+    await emailCopy("portal.owner_billing")
+  );
+  return deliver(to, subject, html, text, "Billing change alert");
 }
 
 /** Owner email, gated by its Notifications switch and logged. */

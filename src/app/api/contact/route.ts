@@ -3,6 +3,8 @@ import { Resend } from "resend";
 import { intakeLead } from "@/lib/campaign/intake";
 import { buildContactLeadFields } from "@/lib/blog/lead-attribution";
 import { notifyOwner } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
+import { buildOwnerContactEmail } from "@/lib/forms/email-content";
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
 const FROM_EMAIL =
@@ -40,23 +42,13 @@ export async function POST(request: Request) {
     // Gated by its Notifications switch; switched off counts as success for the visitor.
     let error: unknown = null;
     await notifyOwner("lead.contact_form", `${name}${company ? ` · ${company}` : ""}`, async () => {
+    const mail = buildOwnerContactEmail({ name, email, company, message }, await emailCopy("forms.owner_contact"));
     const res = await resend.emails.send({
       from: FROM_EMAIL,
       to: [TO_EMAIL],
       replyTo: email,
-      subject: `New inquiry from ${name}${company ? ` · ${company}` : ""}`,
-      text: [
-        `New contact form submission on tomorrowstechai.com`,
-        ``,
-        `Name: ${name}`,
-        `Email: ${email}`,
-        company ? `Company: ${company}` : null,
-        ``,
-        `Message:`,
-        message,
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      subject: mail.subject,
+      text: mail.text,
     });
     error = res.error;
     return !res.error;

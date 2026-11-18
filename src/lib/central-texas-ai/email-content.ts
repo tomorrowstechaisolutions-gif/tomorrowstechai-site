@@ -15,6 +15,7 @@ import {
   C, renderEmail, eyebrow, heading, paragraph, factPanel, divider, esc,
 } from "@/lib/email/brand";
 import { INITIATIVE_NAME, INITIATIVE_URL, DETAIL_LABELS, type InitiativeKind } from "./config";
+import { fill, paragraphsOf, resolveCopy, type CopySlot, type EmailCopy } from "@/lib/system-emails/copy";
 
 export type BuiltEmail = { subject: string; html: string; text: string };
 
@@ -36,12 +37,45 @@ function closingBlock(): string {
 
 const CLOSING_TEXT = `Tomorrow's Tech AI\n${INITIATIVE_NAME}\n${SITE_LABEL}`;
 
+// ═══════════════════════════════════════════════════════════════════════
+// Editable wording (System emails page). Defaults are the shipped text.
+// Keep any edit careful: a PROPOSED pilot, never acceptance or funding.
+// ═══════════════════════════════════════════════════════════════════════
+
+export const CTAI_SLOTS: Record<"business" | "partner" | "admin", CopySlot[]> = {
+  business: [
+    { key: "subject", label: "Subject", default: "We Received Your Central Texas AI Initiative Interest" },
+    { key: "eyebrow", label: "Label above the heading", default: "Expression of interest received" },
+    { key: "heading", label: "Heading", default: "Thank you for your interest" },
+    { key: "body", label: "Message", default: "{greeting}\n\nThank you for expressing interest in the {initiative_name}.\n\nWe are currently developing the proposed pilot program and identifying Central Texas businesses that may be interested in participating.\n\nSubmitting this form does not guarantee program acceptance or funding. It helps us better understand local business needs and demonstrate regional demand as we continue developing partnerships and funding opportunities.\n\nA member of the Tomorrow’s Tech AI team may contact you for additional information.\n\nThank you for helping us build a stronger Central Texas business community.", multiline: true },
+    { key: "footnote", label: "Footer note", default: "You received this because you submitted the business interest form at tomorrowstechai.com/central-texas-ai. This is a one-time confirmation, not a marketing subscription.", multiline: true },
+  ],
+  partner: [
+    { key: "subject", label: "Subject", default: "Central Texas AI Partnership Inquiry Received" },
+    { key: "eyebrow", label: "Label above the heading", default: "Partnership inquiry received" },
+    { key: "heading", label: "Heading", default: "Thank you for reaching out" },
+    { key: "body", label: "Message", default: "{greeting}\n\nThank you for reaching out regarding the {initiative_name}.\n\nTomorrow’s Tech AI is currently developing the proposed regional pilot and exploring partnerships with economic-development organizations, workforce groups, educational institutions, nonprofits, public-sector organizations, and other regional stakeholders.\n\nWe have received your partnership inquiry and will review the information you provided.\n\nA member of our team may contact you to discuss potential areas of collaboration.\n\nThank you,", multiline: true },
+    { key: "footnote", label: "Footer note", default: "You received this because you submitted the partnership inquiry form at tomorrowstechai.com/central-texas-ai. This is a one-time confirmation, not a marketing subscription.", multiline: true },
+  ],
+  admin: [
+    { key: "subject_business", label: "Subject (business form)", default: "Business interest · {who} · Central Texas AI{returning}", help: "{returning} adds \" [RETURNING]\" when the contact already existed." },
+    { key: "subject_partner", label: "Subject (partner form)", default: "Partner inquiry · {who} · Central Texas AI{returning}", help: "{returning} adds \" [RETURNING]\" when the contact already existed." },
+    { key: "eyebrow_business", label: "Label (business form)", default: "Central Texas AI · Business interest" },
+    { key: "eyebrow_partner", label: "Label (partner form)", default: "Central Texas AI · Partner inquiry" },
+    { key: "note_returning", label: "Note: contact already existed", default: "This contact already existed. Their original source was kept; the initiative tags were added." },
+    { key: "note_sent", label: "Note: confirmation sent", default: "The confirmation email was sent." },
+    { key: "note_not_sent", label: "Note: confirmation failed", default: "The confirmation email did NOT send — check Resend." },
+    { key: "admin_link", label: "Admin link text", default: "Open in the admin" },
+    { key: "not_saved", label: "When it was not saved", default: "Not saved to the database — this email is the only copy." },
+  ],
+};
+
 function build(input: {
   subject: string;
   preheader: string;
   eyebrowText: string;
   headingText: string;
-  greeting: string;
+  /** The greeting is the first paragraph. */
   paragraphs: string[];
   footnote: string;
 }): BuiltEmail {
@@ -52,51 +86,50 @@ function build(input: {
     blocks: [
       eyebrow(input.eyebrowText),
       heading(input.headingText),
-      paragraph(esc(input.greeting)),
       ...input.paragraphs.map((p) => paragraph(esc(p))),
       closingBlock(),
     ],
   });
-  const text = [input.greeting, ...input.paragraphs, CLOSING_TEXT].join("\n\n");
+  const text = [...input.paragraphs, CLOSING_TEXT].join("\n\n");
   return { subject: input.subject, html, text };
 }
 
-export function buildBusinessConfirmation(firstName: string): BuiltEmail {
+function confirmation(
+  slots: CopySlot[],
+  firstName: string,
+  preheader: string,
+  copy?: Partial<EmailCopy> | null
+): BuiltEmail {
+  const c = resolveCopy(slots, copy);
+  const first = firstName.trim().split(/\s+/)[0] ?? "";
+  const f = (t: string) =>
+    fill(t, { greeting: greetingName(firstName), first_name: first, initiative_name: INITIATIVE_NAME });
   return build({
-    subject: "We Received Your Central Texas AI Initiative Interest",
-    preheader: "Thank you for expressing interest in the proposed Central Texas AI pilot.",
-    eyebrowText: "Expression of interest received",
-    headingText: "Thank you for your interest",
-    greeting: greetingName(firstName),
-    paragraphs: [
-      `Thank you for expressing interest in the ${INITIATIVE_NAME}.`,
-      "We are currently developing the proposed pilot program and identifying Central Texas businesses that may be interested in participating.",
-      "Submitting this form does not guarantee program acceptance or funding. It helps us better understand local business needs and demonstrate regional demand as we continue developing partnerships and funding opportunities.",
-      "A member of the Tomorrow’s Tech AI team may contact you for additional information.",
-      "Thank you for helping us build a stronger Central Texas business community.",
-    ],
-    footnote:
-      "You received this because you submitted the business interest form at tomorrowstechai.com/central-texas-ai. This is a one-time confirmation, not a marketing subscription.",
+    subject: f(c.subject),
+    preheader,
+    eyebrowText: f(c.eyebrow),
+    headingText: f(c.heading),
+    paragraphs: paragraphsOf(f(c.body)),
+    footnote: f(c.footnote),
   });
 }
 
-export function buildPartnerConfirmation(firstName: string): BuiltEmail {
-  return build({
-    subject: "Central Texas AI Partnership Inquiry Received",
-    preheader: "We have received your partnership inquiry for the proposed Central Texas AI pilot.",
-    eyebrowText: "Partnership inquiry received",
-    headingText: "Thank you for reaching out",
-    greeting: greetingName(firstName),
-    paragraphs: [
-      `Thank you for reaching out regarding the ${INITIATIVE_NAME}.`,
-      "Tomorrow’s Tech AI is currently developing the proposed regional pilot and exploring partnerships with economic-development organizations, workforce groups, educational institutions, nonprofits, public-sector organizations, and other regional stakeholders.",
-      "We have received your partnership inquiry and will review the information you provided.",
-      "A member of our team may contact you to discuss potential areas of collaboration.",
-      "Thank you,",
-    ],
-    footnote:
-      "You received this because you submitted the partnership inquiry form at tomorrowstechai.com/central-texas-ai. This is a one-time confirmation, not a marketing subscription.",
-  });
+export function buildBusinessConfirmation(firstName: string, copy?: Partial<EmailCopy> | null): BuiltEmail {
+  return confirmation(
+    CTAI_SLOTS.business,
+    firstName,
+    "Thank you for expressing interest in the proposed Central Texas AI pilot.",
+    copy
+  );
+}
+
+export function buildPartnerConfirmation(firstName: string, copy?: Partial<EmailCopy> | null): BuiltEmail {
+  return confirmation(
+    CTAI_SLOTS.partner,
+    firstName,
+    "We have received your partnership inquiry for the proposed Central Texas AI pilot.",
+    copy
+  );
 }
 
 function detailValue(value: unknown): string {
@@ -106,19 +139,27 @@ function detailValue(value: unknown): string {
 }
 
 /** Internal notice to John. Every field the visitor typed, plus the admin link. */
-export function buildAdminNotice(input: {
-  kind: InitiativeKind;
-  details: Record<string, unknown>;
-  email: string;
-  phone: string;
-  leadId: string | null;
-  duplicate: boolean;
-  confirmationSent: boolean;
-}): BuiltEmail {
+export function buildAdminNotice(
+  input: {
+    kind: InitiativeKind;
+    details: Record<string, unknown>;
+    email: string;
+    phone: string;
+    leadId: string | null;
+    duplicate: boolean;
+    confirmationSent: boolean;
+  },
+  copy?: Partial<EmailCopy> | null
+): BuiltEmail {
+  const c = resolveCopy(CTAI_SLOTS.admin, copy);
   const isPartner = input.kind === "partner";
   const who = String(input.details[isPartner ? "organization_name" : "business_name"] ?? "Unknown");
-  const subject = `${isPartner ? "Partner inquiry" : "Business interest"} · ${who} · Central Texas AI${input.duplicate ? " [RETURNING]" : ""}`;
+  const f = (t: string) =>
+    fill(t, { who, returning: input.duplicate ? " [RETURNING]" : "", email: input.email, initiative_name: INITIATIVE_NAME });
+  const subject = f(isPartner ? c.subject_partner : c.subject_business);
   const adminUrl = input.leadId ? `https://tomorrowstechai.com/admin/leads/${input.leadId}` : null;
+  const adminLink = f(c.admin_link);
+  const notSaved = f(c.not_saved);
 
   const rows = [
     ...DETAIL_LABELS[input.kind].map(([key, label]) => ({ label, value: detailValue(input.details[key]) })),
@@ -132,8 +173,8 @@ export function buildAdminNotice(input: {
   const longRows = rows.filter((r) => !shortRows.includes(r));
 
   const notes = [
-    input.duplicate ? "This contact already existed. Their original source was kept; the initiative tags were added." : "",
-    input.confirmationSent ? "The confirmation email was sent." : "The confirmation email did NOT send — check Resend.",
+    input.duplicate ? f(c.note_returning) : "",
+    input.confirmationSent ? f(c.note_sent) : f(c.note_not_sent),
   ].filter(Boolean);
 
   const html = renderEmail({
@@ -141,15 +182,15 @@ export function buildAdminNotice(input: {
     tone: isPartner ? "success" : "default",
     headerMeta: "Internal",
     blocks: [
-      eyebrow(isPartner ? "Central Texas AI · Partner inquiry" : "Central Texas AI · Business interest"),
+      eyebrow(f(isPartner ? c.eyebrow_partner : c.eyebrow_business)),
       heading(who),
       factPanel(shortRows),
       ...longRows.map((r) => paragraph(`<strong style="color:${C.dim};">${esc(r.label)}</strong><br />${esc(r.value)}`)),
       divider(),
       ...notes.map((n) => paragraph(esc(n), { dim: true })),
       adminUrl
-        ? paragraph(`<a href="${esc(adminUrl)}" style="color:${C.blueBright};">Open in the admin</a>`)
-        : paragraph(esc("Not saved to the database — this email is the only copy."), { dim: true }),
+        ? paragraph(`<a href="${esc(adminUrl)}" style="color:${C.blueBright};">${esc(adminLink)}</a>`)
+        : paragraph(esc(notSaved), { dim: true }),
     ],
   });
 
@@ -159,7 +200,7 @@ export function buildAdminNotice(input: {
     ...rows.map((r) => `${r.label}: ${r.value}`),
     "",
     ...notes,
-    adminUrl ? `Open in the admin: ${adminUrl}` : "Not saved to the database — this email is the only copy.",
+    adminUrl ? `${adminLink}: ${adminUrl}` : notSaved,
   ].join("\n");
 
   return { subject, html, text };

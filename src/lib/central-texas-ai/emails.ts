@@ -5,6 +5,7 @@ import {
 } from "./email-content";
 import type { InitiativeKind } from "./config";
 import { notifyOwner } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
 
 /**
  * Sends the Central Texas AI Initiative emails through the same Resend
@@ -49,15 +50,17 @@ async function deliver(to: string, built: BuiltEmail, label: string, replyTo?: s
 }
 
 /** The receipt the visitor gets. Transactional — sent regardless of marketing consent. */
-export function sendInitiativeConfirmation(kind: InitiativeKind, to: string, firstName: string) {
-  const built = kind === "business" ? buildBusinessConfirmation(firstName) : buildPartnerConfirmation(firstName);
+export async function sendInitiativeConfirmation(kind: InitiativeKind, to: string, firstName: string) {
+  const built = kind === "business"
+    ? buildBusinessConfirmation(firstName, await emailCopy("ctai.business_confirmation"))
+    : buildPartnerConfirmation(firstName, await emailCopy("ctai.partner_confirmation"));
   return deliver(to, built, `Central Texas AI ${kind} confirmation`, adminEmail());
 }
 
 /** The internal notice to John, reply-to set to the visitor. */
 /** Ungated: for the one case where this email is the only copy of an unsaved lead. */
-export function sendInitiativeAdminNoticeNow(input: Parameters<typeof buildAdminNotice>[0]) {
-  return deliver(adminEmail(), buildAdminNotice(input), "Central Texas AI admin notice", input.email);
+export async function sendInitiativeAdminNoticeNow(input: Parameters<typeof buildAdminNotice>[0]) {
+  return deliver(adminEmail(), buildAdminNotice(input, await emailCopy("ctai.owner")), "Central Texas AI admin notice", input.email);
 }
 
 /** Owner email, gated by its Notifications switch and logged. */

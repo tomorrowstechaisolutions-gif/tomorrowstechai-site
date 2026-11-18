@@ -7,6 +7,7 @@ import {
 import { markReminded, markSent, requestUrl, type LoadedRequest } from "./service";
 import type { ClientRequest } from "./types";
 import { notifyOwner, type NotificationKey } from "@/lib/notifications/owner";
+import { emailCopy } from "@/lib/system-emails/store";
 
 /**
  * Sending client action requests, through the Resend account the rest of the
@@ -68,7 +69,7 @@ export async function sendRequestEmail(loaded: LoadedRequest): Promise<{
 
   const ok = await deliver(
     request.to_email,
-    buildRequestEmail(request, template, url),
+    buildRequestEmail(request, template, url, await emailCopy("request.sent")),
     "Client request email"
   );
 
@@ -82,7 +83,7 @@ export async function sendReminderEmail(loaded: LoadedRequest): Promise<boolean>
 
   const ok = await deliver(
     request.to_email,
-    buildReminderEmail(request, template, url),
+    buildReminderEmail(request, template, url, await emailCopy("request.reminder")),
     "Client request reminder"
   );
 
@@ -95,7 +96,7 @@ export async function sendCompletionReceipt(loaded: LoadedRequest): Promise<bool
   const { request, template } = loaded;
   return deliver(
     request.to_email,
-    buildRequestCompletedEmail(request, template, requestUrl(request.token)),
+    buildRequestCompletedEmail(request, template, requestUrl(request.token), await emailCopy("request.completed_confirmation")),
     "Client request receipt"
   );
 }
@@ -107,7 +108,7 @@ async function notifyAdminOfRequestNow(
 ): Promise<boolean> {
   return deliver(
     adminEmail(),
-    buildRequestAdminEmail(kind, loaded.request, loaded.template),
+    buildRequestAdminEmail(kind, loaded.request, loaded.template, await emailCopy("request.owner")),
     "Request admin notification"
   );
 }

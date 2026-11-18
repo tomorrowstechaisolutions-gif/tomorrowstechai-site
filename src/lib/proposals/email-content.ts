@@ -20,6 +20,7 @@ import {
   factPanel, button, linkFallback, bullets, quote, divider, fineprint,
   signoff, esc,
 } from "@/lib/email/brand";
+import { fill, linesOf, paragraphsOf, resolveCopy, type CopySlot, type EmailCopy } from "@/lib/system-emails/copy";
 
 export type BuiltEmail = { subject: string; html: string; text: string };
 
@@ -75,21 +76,61 @@ function rowsAsText(rows: MoneyRow[]): string {
   return rows.map((r) => `${r.label}: ${r.value}${r.note ? ` (${r.note})` : ""}`).join("\n");
 }
 
-const WHATS_ON_THE_PAGE = [
-  "The full scope of work, line by line, and what is deliberately not in it",
-  "The price, in full — and confirmation that nothing is due when you sign",
-  "Ownership and software license terms, in plain language before the legal wording",
-  "The complete Website Development, Hosting & Software License Agreement",
-  "A signature box. No printing, no scanning, nothing to post back",
-];
-
-const FOOTNOTE_CLIENT =
-  "You are receiving this because a proposal was prepared for you by Tomorrow's Tech AI. The link above is private to you — please don't forward it.";
-
 const SIGNOFF_TEXT = `— ${BRAND.signer}
 ${BRAND.signerRole}
 ${BRAND.site}
 ${BRAND.phone}`;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Editable wording (System emails page). Defaults are the shipped text.
+// ═══════════════════════════════════════════════════════════════════════
+
+export const PROPOSAL_SLOTS: Record<"sent" | "signed" | "admin", CopySlot[]> = {
+  sent: [
+    { key: "subject", label: "Subject", default: "Your proposal is ready — {title}" },
+    { key: "intro", label: "Opening line", default: "{greeting} everything we talked about is written down here — what gets built, what it costs, who owns what, and the agreement in full.", multiline: true },
+    { key: "intro_note", label: "Second line (dimmed)", default: "Read it at your own pace. If it looks right, you can sign it on the page.", multiline: true },
+    { key: "button", label: "Button", default: "Read and sign your proposal" },
+    { key: "page_heading", label: "What's-on-the-page heading", default: "What's on the page" },
+    { key: "page_points", label: "What's-on-the-page points (one per line)", default: "The full scope of work, line by line, and what is deliberately not in it\nThe price, in full — and confirmation that nothing is due when you sign\nOwnership and software license terms, in plain language before the legal wording\nThe complete Website Development, Hosting & Software License Agreement\nA signature box. No printing, no scanning, nothing to post back", multiline: true },
+    { key: "expiry", label: "Open-until line (only when it has an expiry date)", default: "This proposal is open for acceptance until {expires}." },
+    { key: "closing", label: "Closing line", default: "Anything you want changed before you sign, just reply to this email and we will sort it out.", multiline: true },
+    { key: "footnote", label: "Footer note", default: "You are receiving this because a proposal was prepared for you by Tomorrow's Tech AI. The link above is private to you — please don't forward it.", multiline: true },
+  ],
+  signed: [
+    { key: "subject", label: "Subject", default: "Signed — {title} ({proposal_number})" },
+    { key: "heading", label: "Heading", default: "Thank you — that's official" },
+    { key: "intro", label: "Opening line", default: "{greeting} your agreement for {title} is signed and on file. Nothing else is needed from you to make it binding.", multiline: true, help: "{title} shows in bold in the email." },
+    { key: "next", label: "What happens next", default: "We will be in touch shortly with what we need from you to get started. An invoice follows separately — nothing is owed at the moment you sign.", multiline: true },
+    { key: "button", label: "Button", default: "Open your signed copy" },
+    { key: "record_note", label: "Small print", default: "Your signed copy stays at that link permanently — readable and printable whenever you want it. Your name, email, the time, your IP address and the exact agreement version were recorded with the signature.", multiline: true },
+    { key: "footnote", label: "Footer note", default: "You are receiving this because a proposal was prepared for you by Tomorrow's Tech AI. The link above is private to you — please don't forward it.", multiline: true },
+  ],
+  admin: [
+    { key: "subject", label: "Subject", default: "{label} — {client} · {proposal_number} · {value}" },
+    { key: "label_viewed", label: "Status word: opened", default: "Opened" },
+    { key: "heading_viewed", label: "Heading: opened", default: "They are reading it" },
+    { key: "label_signed", label: "Status word: signed", default: "Signed" },
+    { key: "heading_signed", label: "Heading: signed", default: "Signed and locked" },
+    { key: "label_paid", label: "Status word: paid", default: "Paid" },
+    { key: "heading_paid", label: "Heading: paid", default: "Money landed" },
+    { key: "label_declined", label: "Status word: declined", default: "Declined" },
+    { key: "heading_declined", label: "Heading: declined", default: "They said no" },
+    { key: "admin_line", label: "Where to find it", default: "Open it in the admin under Proposals." },
+    { key: "footnote", label: "Footer note", default: "Internal notification from the Tomorrow's Tech AI Command Center." },
+  ],
+};
+
+function baseVars(p: Proposal) {
+  const name = firstName(p);
+  return {
+    first_name: name,
+    greeting: name ? `Hi ${name},` : "Hi,",
+    title: p.title,
+    proposal_number: p.proposal_number,
+    business_name: p.client_business_name ?? "",
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // The proposal itself.
@@ -98,13 +139,19 @@ ${BRAND.phone}`;
 export function buildProposalEmail(
   p: Proposal,
   url: string,
-  note?: string | null
+  note?: string | null,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
-  const name = firstName(p);
-  const greeting = name ? `Hi ${name},` : "Hi,";
+  const c = resolveCopy(PROPOSAL_SLOTS.sent, copy);
   const rows = moneyRows(p);
   const expires = expiryDate(p);
   const trimmedNote = note?.trim() || null;
+  const vars = { ...baseVars(p), expires: expires ?? "" };
+  const f = (t: string) => fill(t, vars);
+  const intro = paragraphsOf(f(c.intro));
+  const introNote = paragraphsOf(f(c.intro_note));
+  const points = linesOf(f(c.page_points));
+  const closing = paragraphsOf(f(c.closing));
 
   const preheader = [
     p.proposal_number,
@@ -121,25 +168,23 @@ export function buildProposalEmail(
     blocks: [
       eyebrow("Proposal"),
       heading(p.title),
-      paragraph(
-        `${esc(greeting)} everything we talked about is written down here — what gets built, what it costs, who owns what, and the agreement in full.`
-      ),
-      paragraph("Read it at your own pace. If it looks right, you can sign it on the page.", { dim: true }),
+      ...intro.map((x) => paragraph(esc(x))),
+      ...introNote.map((x) => paragraph(esc(x), { dim: true })),
       factPanel(rows),
-      button("Read and sign your proposal", url),
+      button(f(c.button), url),
       linkFallback(url),
       trimmedNote ? quote(trimmedNote) : "",
       divider(),
-      subheading("What's on the page"),
-      bullets(WHATS_ON_THE_PAGE),
-      expires ? fineprint(`This proposal is open for acceptance until ${expires}.`) : "",
-      paragraph("Anything you want changed before you sign, just reply to this email and we will sort it out."),
+      subheading(f(c.page_heading)),
+      bullets(points),
+      expires ? fineprint(f(c.expiry)) : "",
+      ...closing.map((x) => paragraph(esc(x))),
       signoff(),
     ].filter(Boolean),
-    footnote: FOOTNOTE_CLIENT,
+    footnote: f(c.footnote),
   });
 
-  const text = `${greeting}
+  const text = `${intro.join("\n\n")}
 
 Your proposal is ready to read and sign online:
 
@@ -149,17 +194,16 @@ Proposal: ${p.proposal_number}
 Project: ${p.title}
 
 ${rowsAsText(rows)}
-${expires ? `\nThis proposal is open for acceptance until ${expires}.\n` : ""}${trimmedNote ? `\n${trimmedNote}\n` : ""}
-What's on the page:
+${expires ? `\n${f(c.expiry)}\n` : ""}${trimmedNote ? `\n${trimmedNote}\n` : ""}
+${f(c.page_heading)}:
 
-${WHATS_ON_THE_PAGE.map((line) => `  - ${line}`).join("\n")}
+${points.map((line) => `  - ${line}`).join("\n")}
 
-Anything you want changed before you sign, just reply to this email and we
-will sort it out.
+${closing.join("\n\n")}
 
 ${SIGNOFF_TEXT}`;
 
-  return { subject: `Your proposal is ready — ${p.title}`, html, text };
+  return { subject: f(c.subject), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -169,8 +213,10 @@ ${SIGNOFF_TEXT}`;
 export function buildSignedEmail(
   p: Proposal,
   signature: ProposalSignature,
-  url: string
+  url: string,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
+  const c = resolveCopy(PROPOSAL_SLOTS.signed, copy);
   const name = signature.signer_name.split(/\s+/)[0];
   const signedAt = new Date(signature.signed_at).toLocaleString("en-US", {
     dateStyle: "long",
@@ -184,8 +230,22 @@ export function buildSignedEmail(
     ...moneyRows(p, "Due now"),
   ];
 
-  const next =
-    "We will be in touch shortly with what we need from you to get started. An invoice follows separately — nothing is owed at the moment you sign.";
+  const vars = {
+    ...baseVars(p),
+    first_name: name,
+    greeting: name ? `Hi ${name},` : "Hi,",
+    signed_at: signedAt,
+  };
+  const f = (t: string) => fill(t, vars);
+  // The opening line is escaped as typed, then filled with escaped values —
+  // except the title, which keeps its bold.
+  const htmlVars = {
+    ...Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, esc(v)])),
+    title: `<strong style="color:${C.text};">${esc(p.title)}</strong>`,
+  };
+  const introHtml = paragraphsOf(c.intro).map((x) => fill(esc(x), htmlVars));
+  const intro = paragraphsOf(f(c.intro));
+  const next = paragraphsOf(f(c.next));
 
   const html = renderEmail({
     preheader: `${p.proposal_number} signed on ${signedAt}. Your copy is kept at the same link.`,
@@ -193,26 +253,20 @@ export function buildSignedEmail(
     tone: "success",
     blocks: [
       eyebrow("Signed & recorded"),
-      heading("Thank you — that's official"),
-      paragraph(
-        `${esc(name ? `Hi ${name},` : "Hi,")} your agreement for <strong style="color:${C.text};">${esc(p.title)}</strong> is signed and on file. Nothing else is needed from you to make it binding.`
-      ),
+      heading(f(c.heading)),
+      ...introHtml.map((x) => paragraph(x)),
       factPanel(rows),
-      paragraph(esc(next), { dim: true }),
-      button("Open your signed copy", url),
+      ...next.map((x) => paragraph(esc(x), { dim: true })),
+      button(f(c.button), url),
       linkFallback(url),
       divider(),
-      fineprint(
-        "Your signed copy stays at that link permanently — readable and printable whenever you want it. Your name, email, the time, your IP address and the exact agreement version were recorded with the signature."
-      ),
+      fineprint(f(c.record_note)),
       signoff(),
     ],
-    footnote: FOOTNOTE_CLIENT,
+    footnote: f(c.footnote),
   });
 
-  const text = `Hi ${name},
-
-Thank you — your agreement is signed and recorded.
+  const text = `${intro.join("\n\n")}
 
 Proposal: ${p.proposal_number}
 Project: ${p.title}
@@ -221,7 +275,7 @@ Agreement version: ${signature.agreement_version}
 
 ${rowsAsText(moneyRows(p, "Due now"))}
 
-${next}
+${next.join("\n\n")}
 
 Your signed copy stays available at the same link, and you can read or print
 it at any time:
@@ -230,7 +284,7 @@ ${url}
 
 ${SIGNOFF_TEXT}`;
 
-  return { subject: `Signed — ${p.title} (${p.proposal_number})`, html, text };
+  return { subject: f(c.subject), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -247,25 +301,26 @@ ${SIGNOFF_TEXT}`;
 
 export type AdminEventKind = "viewed" | "signed" | "paid" | "declined";
 
-const ADMIN_COPY: Record<
-  AdminEventKind,
-  { label: string; title: string; tone: "default" | "success" | "alert" }
-> = {
-  viewed:   { label: "Opened",   title: "They are reading it", tone: "default" },
-  signed:   { label: "Signed",   title: "Signed and locked",   tone: "success" },
-  paid:     { label: "Paid",     title: "Money landed",        tone: "success" },
-  declined: { label: "Declined", title: "They said no",        tone: "alert"   },
+const ADMIN_TONE: Record<AdminEventKind, "default" | "success" | "alert"> = {
+  viewed: "default",
+  signed: "success",
+  paid: "success",
+  declined: "alert",
 };
 
 export function buildAdminEmail(
   kind: AdminEventKind,
   p: Proposal,
-  detail?: string | null
+  detail?: string | null,
+  copy?: Partial<EmailCopy> | null
 ): BuiltEmail {
-  const copy = ADMIN_COPY[kind];
+  const c = resolveCopy(PROPOSAL_SLOTS.admin, copy);
   const who = p.client_business_name || p.client_contact_name || "client";
   const trimmedDetail = detail?.trim() || null;
   const value = formatMoney(p.total_cents, p.currency);
+  const vars = { ...baseVars(p), client: who, value };
+  const label = fill(c[`label_${kind}`], vars);
+  const f = (t: string) => fill(t, { ...vars, label });
 
   const rows: MoneyRow[] = [
     { label: "Client", value: p.client_business_name || "—" },
@@ -280,21 +335,21 @@ export function buildAdminEmail(
   ];
 
   const html = renderEmail({
-    preheader: `${copy.label} · ${who} · ${p.proposal_number} · ${value}`,
+    preheader: `${label} · ${who} · ${p.proposal_number} · ${value}`,
     headerMeta: p.proposal_number,
-    tone: copy.tone,
+    tone: ADMIN_TONE[kind],
     blocks: [
-      eyebrow(`${copy.label} · ${p.proposal_number}`),
-      heading(copy.title),
+      eyebrow(`${label} · ${p.proposal_number}`),
+      heading(f(c[`heading_${kind}`])),
       paragraph(`<strong style="color:${C.text};">${esc(who)}</strong>`, { dim: true }),
       factPanel(rows),
       trimmedDetail ? quote(trimmedDetail) : "",
-      fineprint("Open it in the admin under Proposals."),
+      fineprint(f(c.admin_line)),
     ].filter(Boolean),
-    footnote: "Internal notification from the Tomorrow's Tech AI Command Center.",
+    footnote: f(c.footnote),
   });
 
-  const text = `${copy.label.toUpperCase()} — ${p.proposal_number}
+  const text = `${label.toUpperCase()} — ${p.proposal_number}
 
 Client:   ${p.client_business_name || "—"}
 Contact:  ${p.client_contact_name || "—"} ${p.client_email ? `<${p.client_email}>` : ""}
@@ -303,7 +358,7 @@ Package:  ${p.package_name || "—"}
 
 ${rowsAsText(moneyRows(p))}
 ${trimmedDetail ? `\n${trimmedDetail}\n` : ""}
-Open it in the admin under Proposals.`;
+${f(c.admin_line)}`;
 
-  return { subject: `${copy.label} — ${who} · ${p.proposal_number} · ${value}`, html, text };
+  return { subject: f(c.subject), html, text };
 }
