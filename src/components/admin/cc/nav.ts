@@ -156,7 +156,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     head: "System",
     links: [
-      { href: "/admin/system/integrations", label: "Integrations", icon: IconServer, soon: true },
+      { href: "/admin/system/integrations", label: "Integrations", icon: IconServer },
       { href: "/admin/system/notifications", label: "Notifications", icon: IconBell, soon: true },
       { href: "/admin/settings/agreements", label: "Agreements", icon: IconFile },
       { href: "/admin/settings", label: "Settings", icon: IconSettings },
@@ -216,12 +216,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard, and every invoice is under Sales.",
     nearest: { href: "/admin/invoices", label: "Open invoices" },
-  },
-  "/admin/system/integrations": {
-    title: "Integrations",
-    blurb:
-      "Connect Meta, Google, Stripe and the social platforms. What is configured today is listed in Settings.",
-    nearest: { href: "/admin/settings", label: "Open settings" },
   },
   "/admin/system/notifications": {
     title: "Notifications",
