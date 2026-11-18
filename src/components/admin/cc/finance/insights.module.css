@@ -1,0 +1,30 @@
+/* AI insights page: actions, evidence, filters. */
+
+.head { display: flex; gap: 10px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.gen { background: var(--cc-accent); color: #04121D; border: 0; border-radius: 9px; padding: 10px 16px; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.gen:hover { filter: brightness(1.08); }
+.when { font-size: .72rem; color: var(--cc-faint); }
+
+.card { position: relative; }
+.meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; font-size: .66rem; color: var(--cc-faint); }
+.sev { font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.critical { color: var(--cc-risk); }
+.high { color: var(--cc-warn); }
+.medium { color: var(--cc-accent); }
+.low { color: var(--cc-faint); }
+.evidence { margin: 6px 0 0; font-size: .68rem; color: var(--cc-faint); }
+.evidence summary { cursor: pointer; }
+.evidence ul { margin: 4px 0 0; padding-left: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .66rem; }
+.row { display: flex; gap: 6px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.row form { margin: 0; }
+.btn { border: 1px solid var(--cc-line); background: transparent; color: var(--cc-muted); border-radius: 6px; padding: 4px 9px; font: inherit; font-size: .68rem; cursor: pointer; }
+.btn:hover { color: var(--cc-text); border-color: var(--cc-accent); }
+.open { font-size: .7rem; color: var(--cc-accent); text-decoration: none; }
+.open:hover { text-decoration: underline; }
+.dim { opacity: .55; }
+
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { font-size: .7rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--cc-line); color: var(--cc-muted); text-decoration: none; }
+.chip:hover { color: var(--cc-text); border-color: var(--cc-accent); }
+.on { color: #04121D; background: var(--cc-accent); border-color: var(--cc-accent); font-weight: 700; }
+.ruleTag { font-size: .6rem; border: 1px solid var(--cc-line-soft); border-radius: 4px; padding: 0 5px; }

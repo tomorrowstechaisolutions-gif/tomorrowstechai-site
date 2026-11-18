@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { chicagoDate, zonedMidnightUtc } from "@/lib/time/chicago";
 import { EXCLUDED_STATUSES, JUNK_FILTER, REVENUE_CATEGORIES } from "@/lib/supabase/types";
-import { getFinanceOverview } from "@/lib/finance/overview";
+import { loadFinanceOverview } from "@/lib/finance/overview";
 import { bankClientRevenue } from "@/lib/clients/bank-match";
 
 /**
@@ -159,7 +159,8 @@ export async function loadLeadAnalytics(sb: SupabaseClient, range: LeadRange, di
   const customers = customersR.data ?? [];
   const revenueByLead = new Map<string, number>();
   if (customers.length) {
-    const fin = await getFinanceOverview("12m");
+    // Same client as the rest of this loader, so it also works from a cron (no cookies).
+    const fin = await loadFinanceOverview(sb, "12m");
     let rows: Array<{ customer_id: string; amount_cents: number }> = [];
     if (fin.source === "bank") {
       const { data: services } = await sb.from("client_services").select("customer_id, status, catalog_items(category)").in("customer_id", customers.map((c) => c.id));

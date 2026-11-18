@@ -150,7 +150,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/intelligence", label: "Analytics", icon: IconChart },
       { href: "/admin/intelligence/leads", label: "Lead analytics", icon: IconFunnel },
-      { href: "/admin/ai/insights", label: "AI insights", icon: IconSpark, soon: true },
+      { href: "/admin/ai/insights", label: "AI insights", icon: IconSpark },
     ],
   },
   {
@@ -176,12 +176,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     title: "AI Agents",
     blurb: "Standing agents that watch one thing each — lead response time, project risk, ad performance — and propose rather than act.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/ai/insights": {
-    title: "AI insights",
-    blurb:
-      "The full history of insights, including the ones dismissed. The five most important are already on the dashboard.",
-    nearest: { href: "/admin", label: "See current insights" },
   },
   "/admin/activity": {
     title: "Activity",
