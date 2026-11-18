@@ -7,7 +7,7 @@ import { describeRule } from "@/lib/calendar/recurrence";
 import type { CalendarEvent, CalendarItem } from "@/lib/calendar/types";
 import type { TaskDetail } from "@/lib/tasks/types";
 import {
-  completeItemAction, deleteCalendarEventAction,
+  completeItemAction, deleteCalendarEventAction, deleteGoogleEventAction,
   rescheduleItemAction, setEventStatusAction,
 } from "@/app/admin/calendar-actions";
 import { toggleChecklistItemAction } from "@/app/admin/task-actions";
@@ -307,7 +307,9 @@ export default function EventDrawer({
         {item.projectId ? (
           <Link href={`/admin/jobs/${item.projectId}`} className="cc-btn">Open Project</Link>
         ) : null}
-        {item.href && !item.projectId ? (
+        {item.source === "google" && item.href ? (
+          <a href={item.href} target="_blank" rel="noopener noreferrer" className="cc-btn">Open in Google Calendar</a>
+        ) : item.href && !item.projectId ? (
           <Link href={item.href} className="cc-btn">Open record</Link>
         ) : null}
 
@@ -334,6 +336,17 @@ export default function EventDrawer({
               <IconCheck size={13} /> {done ? "Reopen" : "Complete"}
             </button>
           </form>
+        ) : null}
+
+        {item.source === "google" ? (
+          <details className="tk-danger">
+            <summary>Delete</summary>
+            <p>This deletes the event from your Google Calendar. If other people were invited, Google does not notify them from here.</p>
+            <form action={deleteGoogleEventAction}>
+              <input type="hidden" name="google_event_id" value={item.sourceId} />
+              <button type="submit" className="cc-btn is-danger">Delete from Google Calendar</button>
+            </form>
+          </details>
         ) : null}
 
         {item.source === "event" ? (

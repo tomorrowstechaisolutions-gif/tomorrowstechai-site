@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { randomBytes } from "crypto";
 import { getAdminUser } from "@/lib/supabase/server";
 import { googleAuthUrl, googleConfigured } from "@/lib/google/oauth";
@@ -16,7 +17,7 @@ export const dynamic = "force-dynamic";
  * compared on the way back. Without it, a third party could hand the admin a
  * crafted callback URL and connect THEIR Google account to this system.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getAdminUser();
   if (!session) {
     return NextResponse.redirect(new URL("/admin/login", process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com"));
@@ -38,6 +39,19 @@ export async function GET() {
     path: "/",
     maxAge: 600,
   });
+
+  // Where to land afterwards. Only an admin path, so this can never be used
+  // to bounce someone to another site.
+  const next = request.nextUrl.searchParams.get("next") ?? "";
+  if (/^\/admin(\/[A-Za-z0-9/_-]*)?$/.test(next)) {
+    response.cookies.set("google_oauth_next", next, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 600,
+    });
+  }
 
   return response;
 }

@@ -18,8 +18,11 @@ export const dynamic = "force-dynamic";
  */
 function settings(request: NextRequest, params: string): NextResponse {
   const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
-  const response = NextResponse.redirect(new URL(`/admin/settings?${params}`, base));
+  const next = request.cookies.get("google_oauth_next")?.value;
+  const path = next && /^\/admin(\/[A-Za-z0-9/_-]*)?$/.test(next) ? next : "/admin/settings";
+  const response = NextResponse.redirect(new URL(`${path}?${params}`, base));
   response.cookies.delete("google_oauth_state");
+  response.cookies.delete("google_oauth_next");
   return response;
 }
 

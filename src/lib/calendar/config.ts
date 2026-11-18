@@ -13,7 +13,7 @@
 
 export const CALENDAR_CATEGORIES = [
   "task", "meeting", "project", "milestone", "proposal",
-  "sales_followup", "launch", "content", "hosting", "domain", "internal",
+  "sales_followup", "launch", "content", "hosting", "domain", "internal", "google",
 ] as const;
 
 export type CalendarCategory = (typeof CALENDAR_CATEGORIES)[number];
@@ -30,6 +30,7 @@ export const CATEGORY_LABELS: Record<CalendarCategory, string> = {
   hosting: "Hosting / Domains",
   domain: "Hosting / Domains",
   internal: "Internal",
+  google: "Google Calendar",
 };
 
 /** `.cal-c-*` classes, defined alongside the rest of the Calendar CSS. */
@@ -45,6 +46,7 @@ export const CATEGORY_TONE: Record<CalendarCategory, string> = {
   hosting: "cal-c-slate",
   domain: "cal-c-slate",
   internal: "cal-c-gray",
+  google: "cal-c-sky",
 };
 
 /**
@@ -69,6 +71,8 @@ export const CALENDAR_FILTERS: {
   { key: "content", label: "Content", categories: ["content"], tone: "cal-c-indigo" },
   { key: "hosting", label: "Hosting / Domains", categories: ["hosting", "domain"], tone: "cal-c-slate" },
   { key: "internal", label: "Internal", categories: ["internal"], tone: "cal-c-gray" },
+  // Events that live on Google Calendar, read live (two-way).
+  { key: "google", label: "Google Calendar", categories: ["google"], tone: "cal-c-sky" },
 ];
 
 /** The legend under the grid. One entry per colour, not per category. */
@@ -82,6 +86,7 @@ export const CALENDAR_LEGEND: { label: string; tone: string }[] = [
   { label: "Launches", tone: "cal-c-yellow" },
   { label: "Content", tone: "cal-c-indigo" },
   { label: "Internal", tone: "cal-c-gray" },
+  { label: "Google", tone: "cal-c-sky" },
 ];
 
 // ── Views ────────────────────────────────────────────────────────────

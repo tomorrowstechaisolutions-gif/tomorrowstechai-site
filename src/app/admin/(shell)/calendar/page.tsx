@@ -19,6 +19,7 @@ import EventDrawer from "@/components/admin/cc/calendar/EventDrawer";
 import NewEventModal from "@/components/admin/cc/calendar/NewEventModal";
 import PlanWeekButton from "@/components/admin/cc/calendar/PlanWeekButton";
 import { IconAlert } from "@/components/admin/cc/Icons";
+import { googleConnection } from "@/lib/google/oauth";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Calendar" };
@@ -57,7 +58,11 @@ export default async function CalendarPage({
   const supabase = await createSupabaseServerClient();
   const viewer = session.admin.email;
 
-  const people = await loadCalendarPeople(supabase);
+  const [people, google] = await Promise.all([
+    loadCalendarPeople(supabase),
+    googleConnection().catch(() => null),
+  ]);
+  const googleOn = Boolean(google?.connected);
 
   // Filters. An absent parameter means everything is on, so the default view
   // needs no query string at all.
@@ -88,6 +93,7 @@ export default async function CalendarPage({
       categories: mineOnly ? undefined : categories,
       owners: ownerKeys.length === allPeopleKeys.length ? undefined : ownerKeys,
       mineOnly,
+      includeGoogle: googleOn,
     });
   } catch (err) {
     return (
@@ -99,7 +105,7 @@ export default async function CalendarPage({
   }
 
   const [panels, options] = await Promise.all([
-    loadTodayAndUpcoming(supabase, today),
+    loadTodayAndUpcoming(supabase, today, { includeGoogle: googleOn }),
     loadTaskLinkOptions(supabase),
   ]);
 
@@ -143,6 +149,7 @@ export default async function CalendarPage({
             owner={viewer}
             people={people}
             defaultDate={view === "day" ? anchor : today}
+            googleConnected={googleOn}
             options={{
               clients: options.clients,
               projects: options.projects,
@@ -153,6 +160,18 @@ export default async function CalendarPage({
           />
         </div>
       </div>
+
+      {google?.configured && !googleOn ? (
+        <div className="cc-note" style={{ margin: "0 0 12px" }}>
+          Google Calendar is not connected, so only this site&apos;s own dates show here.{" "}
+          <a href="/api/google/oauth/start?next=/admin/calendar" className="cc-link">Connect Google</a>
+        </div>
+      ) : googleOn && google?.lastError ? (
+        <div className="cc-error" style={{ margin: "0 0 12px" }}>
+          <IconAlert size={15} />
+          <span>Google Calendar: {google.lastError}</span>
+        </div>
+      ) : null}
 
       <CalendarBoard
         view={view}

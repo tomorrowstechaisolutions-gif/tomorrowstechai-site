@@ -10,6 +10,10 @@ import {
 import { getMeetingRow } from "@/lib/meetings/queries";
 import { rescheduleMeeting } from "@/lib/meetings/service";
 import type { Priority } from "@/lib/supabase/types";
+import { googleConnection } from "@/lib/google/oauth";
+import {
+  createGoogleEvent, deleteGoogleEvent, getGoogleEvent, updateGoogleEvent,
+} from "@/lib/google/calendar";
 
 /**
  * Every write the Calendar makes.
@@ -52,7 +56,7 @@ function flag(fd: FormData, key: string): boolean {
 }
 
 function categoryOrDefault(raw: string): CalendarCategory {
-  return (CALENDAR_CATEGORIES as readonly string[]).includes(raw)
+  return (CALENDAR_CATEGORIES as readonly string[]).includes(raw) && raw !== "google"
     ? (raw as CalendarCategory)
     : "meeting";
 }
@@ -163,6 +167,29 @@ export async function createCalendarEventAction(formData: FormData) {
 
   if (error || !data) throw new Error(`Could not create the event: ${error?.message ?? "unknown"}`);
 
+  // Two-way: put it on Google Calendar too when asked, and remember the id.
+  if (flag(formData, "add_to_google")) {
+    try {
+      const conn = await googleConnection();
+      if (conn.connected) {
+        const created = await createGoogleEvent({
+          title,
+          description: str(formData, "description", 8000) || null,
+          location: str(formData, "location", 300) || null,
+          startIso: startAt,
+          endIso: endAt,
+          allDay,
+          day: date,
+          recurrence,
+          ttaiEventId: data.id as string,
+        });
+        await supabase.from("calendar_events").update({ google_event_id: created.id }).eq("id", data.id);
+      }
+    } catch (err) {
+      console.error("Could not add the event to Google Calendar:", err);
+    }
+  }
+
   // Activity goes to the record it is about, using the event tables that
   // already exist. No second activity system.
   await noteOnSource(supabase, {
@@ -213,6 +240,7 @@ export async function updateCalendarEventAction(formData: FormData) {
 
   if (error) throw new Error(`Could not save the event: ${error.message}`);
 
+  await mirrorToGoogle(supabase, id, "upsert");
   touch();
 }
 
@@ -221,6 +249,8 @@ export async function deleteCalendarEventAction(formData: FormData) {
   const id = str(formData, "event_id", 40);
   if (!id) return;
 
+  // Google first, while the row still says which Google event it is.
+  await mirrorToGoogle(supabase, id, "delete");
   const { error } = await supabase.from("calendar_events").delete().eq("id", id);
   if (error) throw new Error(`Could not delete the event: ${error.message}`);
 
@@ -245,6 +275,47 @@ async function noteOnSource(
     }
   } catch {
     // Activity is a courtesy on top of a change that already happened.
+  }
+}
+
+/**
+ * Keeps the Google copy of a calendar_event in step. A Google failure never
+ * undoes the change here; it is logged and shows on the Calendar as the
+ * connection's last error.
+ */
+async function mirrorToGoogle(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  eventId: string,
+  mode: "upsert" | "delete"
+) {
+  try {
+    const { data } = await supabase.from("calendar_events")
+      .select("id, title, description, location, start_at, end_at, all_day, recurrence_rule, google_event_id")
+      .eq("id", eventId).maybeSingle();
+    const row = data as {
+      id: string; title: string; description: string | null; location: string | null;
+      start_at: string; end_at: string | null; all_day: boolean;
+      recurrence_rule: string | null; google_event_id: string | null;
+    } | null;
+    if (!row?.google_event_id && mode === "delete") return;
+    if (!row) return;
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(new Date(row.start_at));
+    const input = {
+      title: row.title,
+      description: row.description,
+      location: row.location,
+      startIso: row.start_at,
+      endIso: row.end_at,
+      allDay: row.all_day,
+      day,
+    };
+    if (mode === "delete") {
+      await deleteGoogleEvent(row.google_event_id!);
+    } else if (row.google_event_id) {
+      await updateGoogleEvent(row.google_event_id, input);
+    }
+  } catch (err) {
+    console.error("Google Calendar sync failed:", err);
   }
 }
 
@@ -308,6 +379,21 @@ export async function rescheduleItemAction(formData: FormData) {
         .update({ start_at: startAt, end_at: endAt })
         .eq("id", parsed.sourceId);
       if (error) throw new Error(`Could not move the event: ${error.message}`);
+      await mirrorToGoogle(supabase, parsed.sourceId, "upsert");
+      break;
+    }
+
+    case "google": {
+      // Moves it on Google itself, keeping its length.
+      const current = await getGoogleEvent(parsed.sourceId);
+      const was = current.start?.dateTime && current.end?.dateTime
+        ? new Date(current.end.dateTime).getTime() - new Date(current.start.dateTime).getTime()
+        : 3600_000;
+      await updateGoogleEvent(parsed.sourceId, {
+        startIso: startAt,
+        endIso: endAt ?? new Date(new Date(startAt).getTime() + was).toISOString(),
+        allDay: false,
+      });
       break;
     }
 
@@ -499,4 +585,14 @@ export async function setEventStatusAction(formData: FormData) {
   if (error) throw new Error(`Could not change the status: ${error.message}`);
 
   touch();
+}
+
+/** Deletes an event that lives on Google Calendar, from Google. */
+export async function deleteGoogleEventAction(formData: FormData) {
+  await requireAdmin();
+  const id = str(formData, "google_event_id", 1100);
+  if (!id) return;
+  await deleteGoogleEvent(id);
+  touch();
+  redirect(CALENDAR);
 }

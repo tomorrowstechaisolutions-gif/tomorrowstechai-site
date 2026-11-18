@@ -172,10 +172,10 @@ export async function loadIntegrations(): Promise<Integration[]> {
 
   /* ── Google ───────────────────────────────────────────────────── */
   out.push({
-    key: "google", name: "Google Calendar & Meet", category: "Google",
-    purpose: "Puts meetings on your calendar with a Meet link and checks your free time for bookings.",
+    key: "google", name: "Gmail, Calendar & Meet", category: "Google",
+    purpose: "Your Gmail inbox on the Email page, Google Calendar events on the Calendar, and Meet links for meetings.",
     state: !google?.configured ? "not_set_up" : google.lastError ? "attention" : google.connected ? "connected" : "attention",
-    detail: !google?.configured ? "App keys not set." : google.lastError ? `Last error: ${google.lastError}` : google.connected ? `Connected as ${google.account ?? "your Google account"} · calendar ${google.calendarId}.` : "Keys set, but no Google account connected. Connect it in Settings.",
+    detail: !google?.configured ? "App keys not set." : google.lastError ? `Last error: ${google.lastError}` : google.connected ? `Connected as ${google.account ?? "your Google account"} · calendar ${google.calendarId}${google.gmail ? " · Gmail on" : " · Gmail not granted, reconnect in Settings"}.` : "Keys set, but no Google account connected. Connect it in Settings.",
     lastActivity: google?.connectedAt ?? null, lastActivityLabel: "Connected",
     envs: env(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"], ["GOOGLE_REDIRECT_URI"]),
     manage: { href: "/admin/settings", label: "Settings" },

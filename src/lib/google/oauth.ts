@@ -21,12 +21,15 @@ const USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 /**
  * calendar.events is the narrowest scope that can create an event with
- * conferencing on it. userinfo.email is only so the settings screen can say
- * WHICH account is connected — a connection you cannot identify is one you
- * cannot safely revoke.
+ * conferencing on it. gmail.modify covers the Email page: read, send, label,
+ * archive and move to trash, but NOT permanent deletion. userinfo.email is
+ * only so the settings screen can say WHICH account is connected — a
+ * connection you cannot identify is one you cannot safely revoke.
  */
+export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.modify";
 export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/calendar.events",
+  GMAIL_SCOPE,
   "https://www.googleapis.com/auth/userinfo.email",
 ];
 
@@ -38,6 +41,7 @@ export type GoogleCredentials = {
   calendar_id: string;
   last_error: string | null;
   connected_at: string | null;
+  scope: string | null;
 };
 
 export function googleConfigured(): boolean {
@@ -78,7 +82,7 @@ export async function readCredentials(): Promise<GoogleCredentials | null> {
   const db = supabaseAdmin();
   const { data } = await db
     .from("integration_credentials")
-    .select("access_token, refresh_token, token_expires_at, account_email, calendar_id, last_error, connected_at")
+    .select("access_token, refresh_token, token_expires_at, account_email, calendar_id, last_error, connected_at, scope")
     .eq("provider", "google")
     .maybeSingle();
   return (data as GoogleCredentials | null) ?? null;
@@ -92,17 +96,19 @@ export async function googleConnection(): Promise<{
   calendarId: string;
   lastError: string | null;
   connectedAt: string | null;
+  /** The connection was made with the Gmail permission (older ones were calendar-only). */
+  gmail: boolean;
 }> {
   const configured = googleConfigured();
   if (!configured) {
-    return { configured: false, connected: false, account: null, calendarId: "primary", lastError: null, connectedAt: null };
+    return { configured: false, connected: false, account: null, calendarId: "primary", lastError: null, connectedAt: null, gmail: false };
   }
   let row: GoogleCredentials | null = null;
   try {
     row = await readCredentials();
   } catch {
     // A missing service-role key must not take a settings page down.
-    return { configured: true, connected: false, account: null, calendarId: "primary", lastError: "Supabase service role is not configured.", connectedAt: null };
+    return { configured: true, connected: false, account: null, calendarId: "primary", lastError: "Supabase service role is not configured.", connectedAt: null, gmail: false };
   }
   return {
     configured: true,
@@ -111,6 +117,7 @@ export async function googleConnection(): Promise<{
     calendarId: row?.calendar_id ?? "primary",
     lastError: row?.last_error ?? null,
     connectedAt: row?.connected_at ?? null,
+    gmail: Boolean(row?.refresh_token && (row.scope ?? "").includes(GMAIL_SCOPE)),
   };
 }
 
@@ -221,7 +228,7 @@ export async function googleAccessToken(): Promise<{ token: string; calendarId: 
 
   const row = await readCredentials();
   if (!row?.refresh_token) {
-    throw new Error("Google Calendar is not connected. Connect it in Settings.");
+    throw new Error("Google is not connected. Connect it in Settings.");
   }
 
   const fresh = row.access_token
@@ -242,7 +249,7 @@ export async function googleAccessToken(): Promise<{ token: string; calendarId: 
   if (token.error || !token.access_token) {
     const message =
       token.error === "invalid_grant"
-        ? "Google access has expired or was revoked. Reconnect Google Calendar in Settings."
+        ? "Google access has expired or was revoked. Reconnect Google in Settings."
         : token.error_description || token.error || "Google would not refresh the access token.";
     await recordError(message);
     throw new Error(message);

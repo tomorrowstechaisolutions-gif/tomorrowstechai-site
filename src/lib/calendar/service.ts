@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Priority } from "@/lib/supabase/types";
 import type { CalendarCategory, EventStatus } from "./config";
 import { expandOccurrences } from "./recurrence";
+import { googleConnection } from "@/lib/google/oauth";
+import { listGoogleEvents } from "@/lib/google/calendar";
 import type {
   CalendarEvent, CalendarItem, CalendarSource, CalendarWindow,
 } from "./types";
@@ -641,6 +643,66 @@ async function loadRenewals(sb: SupabaseClient, win: CalendarWindow): Promise<Ra
   return out;
 }
 
+// ── 11 · Google Calendar (live, two-way) ─────────────────────────────
+
+/**
+ * Events on the connected Google Calendar.
+ *
+ * Read live from Google for the window, never copied into a table. Events
+ * this site already shows from its own records are skipped: a calendar_event
+ * mirrored to Google, and a meeting whose Google event the meetings service
+ * created. Everything else (things you booked straight in Google, invites
+ * from other people) shows as "Google Calendar".
+ */
+async function loadGoogle(sb: SupabaseClient, win: CalendarWindow): Promise<Raw[]> {
+  const conn = await googleConnection();
+  if (!conn.connected) return [];
+
+  const [events, mirrored, meetings] = await Promise.all([
+    listGoogleEvents(win.fromIso, win.toIso),
+    sb.from("calendar_events").select("google_event_id").not("google_event_id", "is", null).limit(2000),
+    sb.from("meetings").select("provider_event_id").not("provider_event_id", "is", null)
+      .gte("start_at", new Date(new Date(win.fromIso).getTime() - 86400_000).toISOString())
+      .lt("start_at", win.toIso).limit(500),
+  ]);
+
+  const known = new Set<string>([
+    ...((mirrored.data ?? []) as { google_event_id: string }[]).map((r) => r.google_event_id),
+    ...((meetings.data ?? []) as { provider_event_id: string }[]).map((r) => r.provider_event_id),
+  ]);
+
+  return events
+    .filter((e) => !e.extendedProperties?.private?.ttai_event_id)
+    .filter((e) => !known.has(e.id) && !(e.recurringEventId && known.has(e.recurringEventId)))
+    .map((e) => {
+      const allDay = Boolean(e.start?.date && !e.start?.dateTime);
+      const start = allDay ? fromDate(e.start!.date!) : e.start?.dateTime ?? win.fromIso;
+      const end = allDay ? null : e.end?.dateTime ?? null;
+      const others = (e.attendees ?? []).filter((a) => !a.self);
+      const mine = (e.attendees ?? []).find((a) => a.self);
+      return item({
+        source: "google",
+        sourceId: e.id,
+        title: e.summary || "(no title)",
+        subtitle: others.length
+          ? `With ${others.slice(0, 2).map((a) => a.displayName || a.email).join(", ")}${others.length > 2 ? ` +${others.length - 2}` : ""}`
+          : "Google Calendar",
+        start,
+        end,
+        allDay,
+        category: "google",
+        status: mine?.responseStatus === "declined" ? "canceled" : "scheduled",
+        location: e.location ?? null,
+        meetingUrl: e.hangoutLink ?? null,
+        notes: e.description ?? null,
+        href: e.htmlLink ?? null,
+        // Moving it moves it on Google. All-day events keep their dates in
+        // Google, where multi-day spans are edited properly.
+        reschedulable: !allDay,
+      });
+    });
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // The aggregator
 // ═══════════════════════════════════════════════════════════════════════
@@ -652,6 +714,11 @@ export type CalendarQuery = {
   owners?: string[];
   /** True when "My Schedule" is the only thing ticked. */
   mineOnly?: string | null;
+  /**
+   * Read Google Calendar too. Off by default because it is a live call to
+   * Google, and the sidebar badge counts events on every admin page.
+   */
+  includeGoogle?: boolean;
 };
 
 /**
@@ -677,6 +744,7 @@ export async function getCalendarItems(
     ["meetings", loadMeetings(sb, win)],
     ["content", loadContent(sb, win)],
     ["renewals", loadRenewals(sb, win)],
+    ...(query.includeGoogle ? [["google", loadGoogle(sb, win)] as [string, Promise<Raw[]>]] : []),
   ];
 
   const settled = await Promise.allSettled(loaders.map(([, promise]) => promise));
@@ -690,7 +758,8 @@ export async function getCalendarItems(
   const filtered = raw.filter((row) => {
     if (query.categories && query.categories.length > 0
         && !query.categories.includes(row.category)) return false;
-    if (query.mineOnly && row.assignedTo !== query.mineOnly) return false;
+    // Google events are on your own calendar, so they count as yours.
+    if (query.mineOnly && row.source !== "google" && row.assignedTo !== query.mineOnly) return false;
     if (query.owners && query.owners.length > 0) {
       // "Unassigned" is a real answer, not a missing one.
       const key = row.assignedTo ?? "__unassigned__";
@@ -754,7 +823,8 @@ export function findItem(items: CalendarItem[], id: string): CalendarItem | null
  */
 export async function loadTodayAndUpcoming(
   sb: SupabaseClient,
-  today: string
+  today: string,
+  options: { includeGoogle?: boolean } = {}
 ): Promise<{ today: CalendarItem[]; upcoming: CalendarItem[] }> {
   const { startOfDay, addDays } = await import("./window");
 
@@ -772,14 +842,14 @@ export async function loadTodayAndUpcoming(
   };
 
   const [todayItems, aheadItems] = await Promise.all([
-    getCalendarItems(sb, todayWindow),
-    getCalendarItems(sb, aheadWindow),
+    getCalendarItems(sb, todayWindow, { includeGoogle: options.includeGoogle }),
+    getCalendarItems(sb, aheadWindow, { includeGoogle: options.includeGoogle }),
   ]);
 
   // Coming Up is the things that matter, not everything with a date. A
   // fortnight of every routine task would bury the launch it sits next to.
   const IMPORTANT: CalendarCategory[] = [
-    "launch", "milestone", "meeting", "proposal", "sales_followup", "project",
+    "launch", "milestone", "meeting", "proposal", "sales_followup", "project", "google",
   ];
   const upcoming = aheadItems
     .filter((row) =>

@@ -39,6 +39,8 @@ export type CalendarEvent = {
   updated_at: string;
   completed_at: string | null;
   canceled_at: string | null;
+  /** Set when the event is mirrored to Google Calendar. */
+  google_event_id: string | null;
 };
 
 /**
@@ -60,7 +62,8 @@ export type CalendarSource =
   | "appointment"    // appointments.scheduled_at — the website booking log
   | "meeting"        // meetings.start_at — a scheduled call with a provider
   | "content"        // social_posts.scheduled_at / published_at
-  | "renewal";       // website_renewals.renews_at
+  | "renewal"        // website_renewals.renews_at
+  | "google";        // an event that lives on Google Calendar
 
 /**
  * One normalised thing on the calendar.

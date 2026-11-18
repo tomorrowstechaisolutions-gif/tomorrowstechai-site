@@ -64,6 +64,8 @@ export const NAV_GROUPS: NavGroup[] = [
     head: "Command",
     links: [
       { href: "/admin", label: "Dashboard", icon: IconGrid },
+      // Gmail for tomorrowstechaisolutions@gmail.com, matched against the CRM.
+      { href: "/admin/inbox", label: "Inbox", icon: IconMail },
       { href: "/admin/ai", label: "AI Command Center", icon: IconSpark, soon: true, badge: "aiProposals" },
       { href: "/admin/activity", label: "Activity Center", icon: IconPulse, soon: true },
       { href: "/admin/conference-center", label: "Conference Center", icon: IconVideo, badge: "meetingsToday" },

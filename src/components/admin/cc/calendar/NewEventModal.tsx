@@ -21,11 +21,14 @@ export default function NewEventModal({
   people,
   defaultDate,
   options,
+  googleConnected = false,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   owner: string;
   people: string[];
   defaultDate: string;
+  /** Shows "Also add to Google Calendar" (on by default) when Google is connected. */
+  googleConnected?: boolean;
   options: {
     clients: { id: string; name: string }[];
     projects: { id: string; name: string }[];
@@ -81,7 +84,7 @@ export default function NewEventModal({
                   <span>Calendar</span>
                   <select name="event_type" className="cc-select" defaultValue="meeting">
                     {CALENDAR_CATEGORIES
-                      .filter((category) => category !== "domain")
+                      .filter((category) => category !== "domain" && category !== "google")
                       .map((category) => (
                         <option key={category} value={category}>
                           {CATEGORY_LABELS[category]}
@@ -228,6 +231,13 @@ export default function NewEventModal({
                 <span>Tags</span>
                 <input name="tags" className="cc-input" placeholder="Comma separated" />
               </label>
+
+              {googleConnected ? (
+                <label className="cal-allday-toggle" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="checkbox" name="add_to_google" defaultChecked />
+                  <span>Also add to Google Calendar (moves, edits and deletes follow it there)</span>
+                </label>
+              ) : null}
 
               <p className="cc-note">
                 Reminders are stored with the event. Nothing sends them yet —

@@ -137,7 +137,7 @@ export default async function SettingsPage({
         </div>
 
         {result === "connected" ? (
-          <p className="ad-note ad-ok">Connected. New Google Meet meetings will be created on this calendar.</p>
+          <p className="ad-note ad-ok">Connected. Email, Calendar and Google Meet now use this account.</p>
         ) : result === "denied" ? (
           <p className="ad-note ad-missing">Google was not given permission, so nothing was connected.</p>
         ) : result === "badstate" ? (
@@ -160,6 +160,13 @@ export default async function SettingsPage({
               calendar <code>{google.calendarId}</code>.
               {google.lastError ? ` Last error: ${google.lastError}` : ""}
             </p>
+            {!google.gmail ? (
+              <p className="ad-note ad-missing">
+                This connection was made before Email existed, so it has calendar access only.
+                Reconnect to add Gmail.{" "}
+                <Link href="/api/google/oauth/start" className="ad-btn">Reconnect Google</Link>
+              </p>
+            ) : null}
             <form action={disconnectGoogleAction}>
               <button type="submit" className="ad-btn">Disconnect Google</button>
             </form>
@@ -167,11 +174,11 @@ export default async function SettingsPage({
         ) : (
           <>
             <p className="ad-note">
-              The credentials are set but no account is connected, so Google Meet cannot
-              be chosen when scheduling. Connecting asks only for permission to manage
-              calendar events.
+              The credentials are set but no account is connected. Connecting asks for
+              permission to manage calendar events and to read, send, label and archive
+              Gmail (it cannot permanently delete mail).
             </p>
-            <Link href="/api/google/oauth/start" className="ad-btn">Connect Google Calendar</Link>
+            <Link href="/api/google/oauth/start" className="ad-btn">Connect Google</Link>
           </>
         )}
       </section>

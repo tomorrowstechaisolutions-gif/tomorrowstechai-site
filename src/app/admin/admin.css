@@ -4915,6 +4915,7 @@
   .cc-root .cal-c-indigo { --cal-ink: #a5b4fc; --cal-edge: rgba(129,140,248,.42); --cal-fill: rgba(129,140,248,.14); }
   .cc-root .cal-c-slate  { --cal-ink: #cbd5e1; --cal-edge: rgba(148,163,184,.36); --cal-fill: rgba(148,163,184,.11); }
   .cc-root .cal-c-gray   { --cal-ink: #94a3b8; --cal-edge: rgba(148,163,184,.30); --cal-fill: rgba(148,163,184,.08); }
+  .cc-root .cal-c-sky    { --cal-ink: #7dd3fc; --cal-edge: rgba(56,189,248,.45);  --cal-fill: rgba(56,189,248,.12); }
 
   .cc-root .cal-swatch {
     display: inline-block; width: 9px; height: 9px; flex: 0 0 auto;
