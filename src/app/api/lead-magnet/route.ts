@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { notifyOwner } from "@/lib/notifications/owner";
 
 export const runtime = "nodejs";
 
@@ -185,7 +186,7 @@ export async function POST(req: NextRequest) {
     // 3. Notify John of the new lead
     if (audienceResult === "added") {
       try {
-        await resend.emails.send({
+        await notifyOwner("lead.magnet_download", `${magnet.title}: ${email}`, async () => { const res = await resend.emails.send({
           from: fromEmail,
           to: toEmail,
           subject: magnet.notificationSubject,
@@ -197,7 +198,7 @@ From IP: ${ip}
 
 This contact has been added to your Resend audience:
 https://resend.com/audiences/${audienceId}/contacts`,
-        });
+        }); return !res.error; });
       } catch (err) {
         console.error("Notification email failed:", err);
       }

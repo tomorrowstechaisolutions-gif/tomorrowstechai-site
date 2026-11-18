@@ -6,6 +6,8 @@ import { sendCapiEvent } from "@/lib/meta/capi";
 import { OFFER_PRICE_CENTS, HOSTING_FROM_CENTS, CAMPAIGN_NAME } from "@/lib/campaign/config";
 import { DEFAULT_JOB_TASKS, dueDateFrom, PROMISED_DAYS } from "@/lib/jobs/config";
 import { sendBillingChangeAlert } from "@/lib/portal/emails";
+import { notifyAdminInvoice } from "@/lib/invoices/emails";
+import type { Invoice } from "@/lib/invoices/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -692,7 +694,7 @@ function cancellationReason(subscription: Record<string, unknown>): string | nul
  */
 async function linkInvoiceSubscription(invoiceId: string, stripeCustomerId: string | null, subscriptionId: string | null) {
   const db = supabaseAdmin();
-  const { data: inv } = await db.from("invoices").select("customer_id, recurring_cents").eq("id", invoiceId).maybeSingle();
+  const { data: inv } = await db.from("invoices").select("customer_id, recurring_cents, recurring_interval, total_cents, amount_paid_cents, currency, invoice_number, client_business_name, client_contact_name, client_email").eq("id", invoiceId).maybeSingle();
   const customerId = (inv?.customer_id as string | null) ?? null;
   if (!customerId) return;
 
@@ -720,6 +722,16 @@ async function linkInvoiceSubscription(invoiceId: string, stripeCustomerId: stri
   const pick = list.length === 1 ? list[0] : priceMatches.length === 1 ? priceMatches[0] : null;
   if (pick) {
     await db.from("client_services").update({ subscription_id: subscriptionId, billing_status: "active" }).eq("id", pick.id);
+    // A monthly-only invoice has no one-off payment to report, so this is the
+    // moment John hears it was paid: the subscription is now charging.
+    if (Number(inv?.total_cents ?? 0) <= 0 && Number(inv?.recurring_cents ?? 0) > 0) {
+      try {
+        const per = inv?.recurring_interval ?? "month";
+        await notifyAdminInvoice("paid", inv as unknown as Invoice, `Subscription started: $${(Number(inv?.recurring_cents) / 100).toFixed(2)}/${per}, now charging automatically.`);
+      } catch (err) {
+        console.error("Subscription started notification failed:", err);
+      }
+    }
   }
 }
 
@@ -824,7 +836,7 @@ async function handleInvoiceDocumentPaid(event: StripeEvent) {
 
   const { data: invoiceRow } = await db
     .from("invoices")
-    .select("id, invoice_number, title, status, total_cents, amount_paid_cents, currency, lead_id, customer_id, client_business_name")
+    .select("id, invoice_number, title, status, total_cents, amount_paid_cents, currency, lead_id, customer_id, client_business_name, client_contact_name, client_email, recurring_cents, recurring_interval")
     .eq("id", invoiceId)
     .maybeSingle();
   if (!invoiceRow) return;
@@ -896,6 +908,19 @@ async function handleInvoiceDocumentPaid(event: StripeEvent) {
       actor: "stripe",
       meta: { invoice_id: invoiceId, session_id: sessionId },
     });
+  }
+
+  // Tell John the money landed (switchable on the Notifications page). Never
+  // let an email problem fail the webhook, or Stripe would retry the event.
+  try {
+    const paidSoFar = Number(invoiceRow.amount_paid_cents ?? 0) + amountTotal;
+    await notifyAdminInvoice(
+      settled ? "paid" : "partial",
+      { ...invoiceRow, amount_paid_cents: paidSoFar } as unknown as Invoice,
+      `Stripe collected ${(amountTotal / 100).toFixed(2)} USD.`
+    );
+  } catch (err) {
+    console.error("Invoice paid notification failed:", err);
   }
 }
 

@@ -1,0 +1,16 @@
+/* Notifications page. */
+
+.group { margin: 0 0 14px; }
+.groupHead { font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--cc-faint); margin: 0 0 4px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--cc-line-soft); }
+.row b { display: block; font-size: .82rem; font-weight: 600; }
+.row small { display: block; font-size: .72rem; color: var(--cc-faint); margin-top: 2px; line-height: 1.45; }
+.row form { margin: 0; }
+.meta { color: var(--cc-muted) !important; font-size: .68rem !important; }
+.offRow b { color: var(--cc-faint); }
+
+.toggle { display: inline-flex; align-items: center; gap: 8px; min-width: 74px; padding: 5px 10px 5px 5px; border-radius: 999px; border: 1px solid var(--cc-line); background: transparent; color: var(--cc-faint); font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
+.toggle:hover { border-color: var(--cc-accent); }
+.knob { width: 16px; height: 16px; border-radius: 50%; background: var(--cc-line); transition: background .15s; }
+.on { color: #04121D; background: var(--cc-accent); border-color: var(--cc-accent); }
+.on .knob { background: #04121D; }

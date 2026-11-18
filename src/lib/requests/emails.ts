@@ -6,6 +6,7 @@ import {
 } from "./email-content";
 import { markReminded, markSent, requestUrl, type LoadedRequest } from "./service";
 import type { ClientRequest } from "./types";
+import { notifyOwner, type NotificationKey } from "@/lib/notifications/owner";
 
 /**
  * Sending client action requests, through the Resend account the rest of the
@@ -100,7 +101,7 @@ export async function sendCompletionReceipt(loaded: LoadedRequest): Promise<bool
 }
 
 /** John's copy. Never sent to the client. */
-export async function notifyAdminOfRequest(
+async function notifyAdminOfRequestNow(
   kind: RequestAdminEventKind,
   loaded: LoadedRequest
 ): Promise<boolean> {
@@ -109,4 +110,9 @@ export async function notifyAdminOfRequest(
     buildRequestAdminEmail(kind, loaded.request, loaded.template),
     "Request admin notification"
   );
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function notifyAdminOfRequest(...args: Parameters<typeof notifyAdminOfRequestNow>): Promise<boolean> {
+  return notifyOwner(`request.${args[0]}` as NotificationKey, null, () => Promise.resolve(notifyAdminOfRequestNow(...args)));
 }

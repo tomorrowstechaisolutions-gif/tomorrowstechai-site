@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import {
   BRAND, renderEmail, eyebrow, heading, paragraph, button, linkFallback, fineprint, signoff, bullets, esc,
 } from "@/lib/email/brand";
+import { notifyOwner } from "@/lib/notifications/owner";
 
 /** Portal invite and password-reset emails, sent through the site's Resend account. */
 
@@ -89,7 +90,7 @@ export async function sendPortalReset(opts: { to: string; name: string | null; u
 }
 
 /** Alerts John when a member sends a request from the portal. */
-export async function sendPortalRequestAlert(opts: {
+async function sendPortalRequestAlertNow(opts: {
   businessName: string;
   from: string;
   category: string;
@@ -120,7 +121,7 @@ export async function sendPortalRequestAlert(opts: {
  * cancellation scheduled (or undone) from the billing page, or a subscription
  * that has actually ended. Sent from the Stripe webhook.
  */
-export async function sendBillingChangeAlert(opts: {
+async function sendBillingChangeAlertNow(opts: {
   kind: "scheduled" | "resumed" | "ended";
   businessName: string;
   services: string[];
@@ -156,4 +157,14 @@ export async function sendBillingChangeAlert(opts: {
   });
   const text = [subject, "", body, ...(opts.reason ? ["", `Reason given: ${opts.reason}`] : []), "", adminUrl].join("\n");
   return deliver(to, `[Billing] ${subject}`.slice(0, 180), html, text, "Billing change alert");
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function sendPortalRequestAlert(...args: Parameters<typeof sendPortalRequestAlertNow>): Promise<boolean> {
+  return notifyOwner(args[0].category === "new_service" ? "portal.new_service" : "portal.request", `${args[0].businessName}: ${args[0].subject}`, () => Promise.resolve(sendPortalRequestAlertNow(...args)));
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function sendBillingChangeAlert(...args: Parameters<typeof sendBillingChangeAlertNow>): Promise<boolean> {
+  return notifyOwner(({ scheduled: "billing.cancel_scheduled", resumed: "billing.cancel_undone", ended: "billing.subscription_ended" } as const)[args[0].kind], args[0].businessName, () => Promise.resolve(sendBillingChangeAlertNow(...args)));
 }

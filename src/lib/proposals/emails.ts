@@ -5,6 +5,7 @@ import {
   buildProposalEmail, buildSignedEmail, buildAdminEmail,
   type AdminEventKind, type BuiltEmail,
 } from "./email-content";
+import { notifyOwner, type NotificationKey } from "@/lib/notifications/owner";
 
 /**
  * Proposal email, through the Resend account the rest of the site already
@@ -79,10 +80,15 @@ export async function sendSignedConfirmation(
 }
 
 /** Internal notification. Says what happened and what it is worth. */
-export async function notifyAdmin(
+async function notifyAdminNow(
   kind: AdminEventKind,
   p: Proposal,
   detail?: string | null
 ): Promise<boolean> {
   return deliver(adminEmail(), buildAdminEmail(kind, p, detail), "Admin notification");
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function notifyAdmin(...args: Parameters<typeof notifyAdminNow>): Promise<boolean> {
+  return notifyOwner(`proposal.${args[0]}` as NotificationKey, args[1].client_business_name || args[1].proposal_number || null, () => Promise.resolve(notifyAdminNow(...args)));
 }

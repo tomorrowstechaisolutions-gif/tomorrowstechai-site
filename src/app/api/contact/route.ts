@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { intakeLead } from "@/lib/campaign/intake";
 import { buildContactLeadFields } from "@/lib/blog/lead-attribution";
+import { notifyOwner } from "@/lib/notifications/owner";
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
 const FROM_EMAIL =
@@ -36,7 +37,10 @@ export async function POST(request: Request) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const { error } = await resend.emails.send({
+    // Gated by its Notifications switch; switched off counts as success for the visitor.
+    let error: unknown = null;
+    await notifyOwner("lead.contact_form", `${name}${company ? ` · ${company}` : ""}`, async () => {
+    const res = await resend.emails.send({
       from: FROM_EMAIL,
       to: [TO_EMAIL],
       replyTo: email,
@@ -53,6 +57,9 @@ export async function POST(request: Request) {
       ]
         .filter(Boolean)
         .join("\n"),
+    });
+    error = res.error;
+    return !res.error;
     });
 
     if (error) {

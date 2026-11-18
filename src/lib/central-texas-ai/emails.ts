@@ -4,6 +4,7 @@ import {
   buildAdminNotice, buildBusinessConfirmation, buildPartnerConfirmation, type BuiltEmail,
 } from "./email-content";
 import type { InitiativeKind } from "./config";
+import { notifyOwner } from "@/lib/notifications/owner";
 
 /**
  * Sends the Central Texas AI Initiative emails through the same Resend
@@ -54,6 +55,12 @@ export function sendInitiativeConfirmation(kind: InitiativeKind, to: string, fir
 }
 
 /** The internal notice to John, reply-to set to the visitor. */
-export function sendInitiativeAdminNotice(input: Parameters<typeof buildAdminNotice>[0]) {
+/** Ungated: for the one case where this email is the only copy of an unsaved lead. */
+export function sendInitiativeAdminNoticeNow(input: Parameters<typeof buildAdminNotice>[0]) {
   return deliver(adminEmail(), buildAdminNotice(input), "Central Texas AI admin notice", input.email);
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function sendInitiativeAdminNotice(...args: Parameters<typeof sendInitiativeAdminNoticeNow>): Promise<boolean> {
+  return notifyOwner("lead.ctai", String((args[0] as { email?: string }).email ?? "Central Texas AI form"), () => Promise.resolve(sendInitiativeAdminNoticeNow(...args)));
 }

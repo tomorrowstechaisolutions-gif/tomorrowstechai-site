@@ -5,6 +5,7 @@ import {
   buildInvoiceEmail, buildInvoiceReceiptEmail, buildInvoiceReminderEmail,
   buildAdminInvoiceEmail, type AdminInvoiceEvent, type BuiltEmail,
 } from "./email-content";
+import { notifyOwner, type NotificationKey } from "@/lib/notifications/owner";
 
 /**
  * Invoice email, through the Resend account the rest of the site already
@@ -98,10 +99,15 @@ export async function sendInvoiceReminder(
 }
 
 /** Internal notification. Says what happened and what it is worth. */
-export async function notifyAdminInvoice(
+async function notifyAdminInvoiceNow(
   kind: AdminInvoiceEvent,
   inv: Invoice,
   detail?: string | null
 ): Promise<boolean> {
   return deliver(adminEmail(), buildAdminInvoiceEmail(kind, inv, detail), "Admin invoice notification");
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function notifyAdminInvoice(...args: Parameters<typeof notifyAdminInvoiceNow>): Promise<boolean> {
+  return notifyOwner(`invoice.${args[0]}` as NotificationKey, `${args[1].invoice_number ?? "Invoice"} · ${args[1].client_business_name ?? ""}`.trim(), () => Promise.resolve(notifyAdminInvoiceNow(...args)));
 }

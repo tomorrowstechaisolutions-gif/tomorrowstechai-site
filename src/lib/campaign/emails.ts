@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { BUSINESS_LAUNCH_OFFER, type Offer } from "./offers";
 import { unsubscribeUrl } from "./unsubscribe";
 import type { ScoreReason } from "@/lib/supabase/types";
+import { notifyOwner } from "@/lib/notifications/owner";
 
 const SITE = "https://tomorrowstechai.com";
 const BOOKING = "https://cal.com/tomorrowstechai/discovery";
@@ -107,7 +108,7 @@ ${SITE}
 }
 
 /** Internal notification. Everything needed to decide whether to call now. */
-export async function sendAdminNotification(lead: {
+async function sendAdminNotificationNow(lead: {
   leadId: string | null;
   firstName: string;
   lastName: string;
@@ -274,4 +275,9 @@ ${SITE}
     console.error("Follow-up email failed:", err);
     return false;
   }
+}
+
+/** Owner email, gated by its Notifications switch and logged. */
+export async function sendAdminNotification(...args: Parameters<typeof sendAdminNotificationNow>): Promise<boolean> {
+  return notifyOwner("lead.new", [args[0].firstName, args[0].lastName].filter(Boolean).join(" ") || args[0].email, () => Promise.resolve(sendAdminNotificationNow(...args)));
 }

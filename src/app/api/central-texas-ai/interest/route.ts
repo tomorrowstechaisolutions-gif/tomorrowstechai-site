@@ -15,7 +15,7 @@ import {
   PILOT_INTEREST_OPTIONS,
   type InitiativeKind,
 } from "@/lib/central-texas-ai/config";
-import { sendInitiativeAdminNotice, sendInitiativeConfirmation } from "@/lib/central-texas-ai/emails";
+import { sendInitiativeAdminNotice, sendInitiativeAdminNoticeNow, sendInitiativeConfirmation } from "@/lib/central-texas-ai/emails";
 
 export const runtime = "nodejs";
 
@@ -154,8 +154,8 @@ export async function POST(request: Request) {
     });
 
     if (!result.stored || !result.leadId) {
-      // Don't lose it: John still gets every field by email.
-      await sendInitiativeAdminNotice({ kind, details, email, phone, leadId: null, duplicate: false, confirmationSent: false });
+      // Don't lose it: John still gets every field by email, even with the switch off.
+      await sendInitiativeAdminNoticeNow({ kind, details, email, phone, leadId: null, duplicate: false, confirmationSent: false });
       return NextResponse.json({ error: "We could not save your inquiry. Please try again or contact john@tomorrowstechai.com." }, { status: 503 });
     }
 
