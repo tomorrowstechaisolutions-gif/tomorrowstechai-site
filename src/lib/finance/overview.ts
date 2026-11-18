@@ -133,7 +133,8 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
   const [rev, pays, exp, spend, services, invoices, deals] = await Promise.all([
     sb.from("revenue_events").select("id, category, description, amount_cents, occurred_at, lead_id, customer_id, customers(business_name,name)").gte("occurred_at", earliestIso),
     sb.from("invoice_payments").select("id, amount_cents, method, paid_on, invoice_id, invoices(invoice_number, title, client_business_name)").gte("paid_on", earliest).neq("method", "stripe"),
-    sb.from("expenses").select("id, category, vendor, description, amount_cents, occurred_at").gte("occurred_at", earliest),
+    // Only confirmed expenses: an unreviewed receipt is a guess until John confirms it.
+    sb.from("expenses").select("id, category, vendor, description, amount_cents, occurred_at, paid_with").eq("review_status", "confirmed").gte("occurred_at", earliest),
     sb.from("campaign_spend").select("spend_cents, date, campaign").gte("date", earliest),
     sb.from("client_services").select("id, customer_id, status, billing_type, sale_price_cents, interval_months, next_billing_date, billing_status, customers(business_name,name), catalog_items(name)").eq("status", "active"),
     sb.from("invoices").select("id, invoice_number, title, status, total_cents, amount_paid_cents, due_date, client_business_name, customers(business_name,name)").in("status", OPEN_INVOICE),
@@ -225,7 +226,17 @@ export async function loadFinanceOverview(sb: SupabaseClient, range: RangeKey): 
   // double it. Invoices, MRR, receivables and pipeline still come from the admin.
   if (source === "bank") {
     inflows = bankTxns.filter((t) => t.financeClass === "revenue" && settled(t) && t.amountCents > 0).map(bankMoney);
-    outflows = bankTxns.filter((t) => t.financeClass === "expense" && settled(t) && t.amountCents < 0).map(bankMoney);
+    // Out-of-pocket expenses (personal card) never touch Mercury, so they're
+    // added on top; Mercury-paid ones are already the bank lines.
+    const personal = (exp.data ?? []).filter((e) => e.paid_with === "personal").map((e) => ({
+      date: e.occurred_at,
+      cents: e.amount_cents,
+      label: e.vendor || e.description || titleCase(e.category),
+      sub: "Paid personally",
+      href: "/admin/finance/expenses",
+      category: titleCase(e.category),
+    }));
+    outflows = [...bankTxns.filter((t) => t.financeClass === "expense" && settled(t) && t.amountCents < 0).map(bankMoney), ...personal];
   }
 
   const within = (w: Window) => (m: Money) => m.date >= w.fromDate && m.date <= w.toDate;

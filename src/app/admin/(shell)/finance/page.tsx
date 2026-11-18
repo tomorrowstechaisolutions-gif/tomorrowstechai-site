@@ -168,7 +168,7 @@ function Overview({ d, bankReady }: { d: FinanceOverview; bankReady: boolean }) 
 
         <Panel title="How these numbers work" icon={<IconAlert size={15} />} className="cc-s4">
           <p className={styles.note} style={{ marginTop: 0 }}>
-            {d.source === "bank" ? <><b>Revenue &amp; expenses</b> come from your Mercury bank feed (cash basis): cleared money in and out, excluding transfers between your own accounts. Pending deposits show as incoming until they clear. Reclassify any row in the bank feed.<br /></> : <><b>Revenue</b> is cash collected: Stripe payments (via the Stripe webhook), partner revenue, and payments you record by hand on an invoice. Stripe invoice payments are counted once.<br />
+            {d.source === "bank" ? <><b>Revenue &amp; expenses</b> come from your Mercury bank feed (cash basis): cleared money in and out, excluding transfers between your own accounts, plus confirmed expenses you paid with a personal card. Pending deposits show as incoming until they clear. Reclassify any row in the bank feed.<br /></> : <><b>Revenue</b> is cash collected: Stripe payments (via the Stripe webhook), partner revenue, and payments you record by hand on an invoice. Stripe invoice payments are counted once.<br />
             <b>Expenses</b> are logged business expenses plus Meta ad spend. Connect Mercury to use your bank instead.<br /></>}
             <b>MRR</b> is every active recurring service, converted to a monthly amount.<br />
             <b>Outstanding</b> is sent invoices&apos; unpaid balance; overdue means past the due date.<br />

@@ -142,7 +142,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/finance", label: "Overview", icon: IconDollar },
       { href: "/admin/finance/subscriptions", label: "Subscriptions", icon: IconRepeat },
-      { href: "/admin/finance/expenses", label: "Expenses", icon: IconCart, soon: true },
+      { href: "/admin/finance/expenses", label: "Expenses", icon: IconCart },
     ],
   },
   {
@@ -222,12 +222,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb:
       "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard, and every invoice is under Sales.",
     nearest: { href: "/admin/invoices", label: "Open invoices" },
-  },
-  "/admin/finance/expenses": {
-    title: "Expenses",
-    blurb:
-      "Everything the business pays for. Ad spend is tracked separately and added on top so it is never double-counted.",
-    nearest: { href: "/admin/marketing/spend", label: "Open ad spend" },
   },
   "/admin/intelligence/leads": {
     title: "Lead analytics",
