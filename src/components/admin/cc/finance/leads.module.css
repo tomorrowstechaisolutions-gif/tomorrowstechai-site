@@ -4,7 +4,8 @@
 .stage { display: grid; grid-template-columns: 120px minmax(0, 1fr) 90px; gap: 10px; align-items: center; font-size: .78rem; }
 .stage b { font-weight: 600; }
 .track { height: 26px; background: #0B1622; border: 1px solid var(--cc-line-soft); border-radius: 6px; overflow: hidden; }
-.fill { height: 100%; background: linear-gradient(90deg, #0891D1, #38BDF8); border-radius: 5px; min-width: 2px; }
+.track { display: block; }
+.fill { display: block; height: 100%; background: linear-gradient(90deg, #0891D1, #38BDF8); border-radius: 5px; min-width: 2px; }
 .fillWon { background: linear-gradient(90deg, #10B981, #4ADDAA); }
 .stageNum { text-align: right; font-variant-numeric: tabular-nums; }
 .stageNum b { font-size: .86rem; }
