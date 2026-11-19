@@ -13,7 +13,7 @@ export type EmailAudience = "client" | "lead" | "owner" | "member";
 export type SystemEmailDef = {
   /** Stable id, e.g. "invoice.sent". Saved overrides are keyed by it. */
   key: string;
-  module: "Invoices" | "Proposals" | "Requests" | "Leads & campaigns" | "Member portal" | "Meetings" | "Central Texas AI" | "Website forms";
+  module: "Invoices" | "Proposals" | "Requests" | "Leads & campaigns" | "Member portal" | "Meetings" | "Central Texas AI" | "Website forms" | "Reviews";
   name: string;
   audience: EmailAudience;
   /** When it goes out, in plain words. */
