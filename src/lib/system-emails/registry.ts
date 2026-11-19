@@ -7,6 +7,7 @@ import { PORTAL_EMAILS } from "./templates/portal";
 import { MEETING_EMAILS } from "./templates/meetings";
 import { CTAI_EMAILS } from "./templates/central-texas-ai";
 import { FORM_EMAILS } from "./templates/forms";
+import { REVIEW_EMAILS } from "./templates/reviews";
 
 /**
  * Every automated email the site sends, for the System emails page.
@@ -21,6 +22,7 @@ export const SYSTEM_EMAILS: SystemEmailDef[] = [
   ...MEETING_EMAILS,
   ...CTAI_EMAILS,
   ...FORM_EMAILS,
+  ...REVIEW_EMAILS,
 ];
 
 export function systemEmail(key: string): SystemEmailDef | undefined {

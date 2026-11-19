@@ -10,6 +10,7 @@ import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleCon
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import RequestsPanel from "@/components/admin/cc/requests/RequestsPanel";
 import { PortalPanel, type PortalMemberRow, type PortalRequestRow } from "@/components/admin/cc/portal/PortalPanel";
+import { ReviewPanel } from "@/components/admin/cc/reviews/ReviewPanel";
 import { loadClientRequests } from "@/lib/requests/queries";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
 import { chicagoDate } from "@/lib/time/chicago";
@@ -73,7 +74,7 @@ export default async function ClientPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ portal_notice?: string; portal_error?: string }>;
+  searchParams: Promise<{ portal_notice?: string; portal_error?: string; review_notice?: string; review_error?: string }>;
 }) {
   const { id } = await params;
   const portalMsg = await searchParams;
@@ -88,7 +89,7 @@ export default async function ClientPage({
     (p) => p.completedAt === null && p.stage !== "Complete"
   );
 
-  const [meetings, meetingContact, providers, requests, portalRes, portalReqRes] = await Promise.all([
+  const [meetings, meetingContact, providers, requests, portalRes, portalReqRes, reviewRes] = await Promise.all([
     meetingsForRecord(supabase, "customer_id", client.id),
     resolveContact(supabase, { customerId: client.id }),
     providerStatuses(),
@@ -106,6 +107,11 @@ export default async function ClientPage({
       .eq("customer_id", client.id)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("customers")
+      .select("review_requested_at, review_request_count, review_received_at")
+      .eq("id", client.id)
+      .maybeSingle(),
   ]);
   const portalRequests = (portalReqRes.data as PortalRequestRow[] | null) ?? [];
   const portalMember = (portalRes.data as PortalMemberRow | null) ?? null;
@@ -382,6 +388,19 @@ export default async function ClientPage({
           requests={portalRequests}
           notice={portalMsg.portal_notice}
           error={portalMsg.portal_error}
+        />
+
+        {/* ── Google review ────────────────────────────────────────── */}
+        <ReviewPanel
+          customerId={client.id}
+          email={client.email ?? null}
+          state={{
+            requestedAt: (reviewRes.data?.review_requested_at as string | null) ?? null,
+            requestCount: Number(reviewRes.data?.review_request_count ?? 0),
+            receivedAt: (reviewRes.data?.review_received_at as string | null) ?? null,
+          }}
+          notice={portalMsg.review_notice}
+          error={portalMsg.review_error}
         />
 
         {/* ── Details ──────────────────────────────────────────────── */}
