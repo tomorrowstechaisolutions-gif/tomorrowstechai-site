@@ -26,32 +26,33 @@ revenue share (60% TTAI / 40% ROMAR of each sale after payment-processing fees) 
 | `ROMAR_API_KEY` | key issued in ROMAR Admin → Settings → Integrations, scopes `READ_MARKETING_ORDERS`, `UPDATE_MARKETING_STATUS`, `CREATE_TASKS` (+ `READ_PARTNER_SETTLEMENTS` when it exists) |
 | `ROMAR_API_BASE_URL` | optional; defaults to `https://www.romarpress.com` |
 
-## Needed on the ROMAR side (romarpress-site)
-1. **Campaign ids in the orders feed** — add `campaigns: [{ id, name, status }]` to each row of
-   `GET /api/v1/marketing/orders` (only campaigns of that order). Unlocks status push-back.
-2. **Stripe Connect split on sale** (ROMAR Stripe = platform; TTAI Stripe = connected account):
-   on `charge.succeeded` / `checkout.session.completed` for a marketing order with
-   `fulfillment_owner = tomorrows-tech-ai`: read the charge's `balance_transaction.fee`,
-   net = amount − fee, transfer `round(net × 0.60)` to the TTAI account with `source_transaction = charge`,
-   `transfer_group = order code`. On refund: reverse the same proportion of the refunded net.
-   Store each split in a `partner_settlements`-style table on ROMAR's side.
-3. **Settlement feed** — `GET /api/v1/partner/settlements?since=<iso>` behind a new scope
-   `READ_PARTNER_SETTLEMENTS`, returning ONLY the caller's share rows:
+## The ROMAR side (romarpress-site)
+1. **Stripe Connect split on sale — live.** ROMAR's Stripe webhook (`settlePayment`) transfers
+   `floor(net × 0.60)` to the TTAI connected account (`STRIPE_TT_ACCOUNT_ID`) for every marketing card
+   payment and records it in `marketing_payments`. A failed payout raises an urgent task in ROMAR's admin
+   and Stripe retries. **Refunds are reversed by hand** in Stripe (a task is raised); the reversed amount is
+   not recorded, so the feed below always reports `reversed_cents: 0`.
+2. **Campaign ids in the orders feed** — `campaigns: [{ id, name, status }]` on each row of
+   `GET /api/v1/marketing/orders`. Unlocks status push-back. (Branch `feat/partner-feed-campaigns-settlements`.)
+3. **Settlement feed** — `GET /api/v1/partner/settlements?since=<iso>` behind scope
+   `READ_PARTNER_SETTLEMENTS` (same branch; the scope row is `docs/sql/2026-11-19-partner-settlements-scope.sql`
+   in the ROMAR repo and must be run on ROMAR's database before a key can carry it):
 
 ```json
 { "data": [{
-  "settlement_id": "tr_…",              // Stripe transfer id
+  "settlement_id": "in_…",              // Stripe invoice / payment-intent id (stable across payout retries)
+  "transfer_id": "tr_…",                // null until the payout is sent
   "romar_service_order_id": "uuid",
   "description": "Launch campaign — <book title>",
   "currency": "usd",
   "sale_cents": 50000, "fee_cents": 1480,
   "share_pct": 60, "partner_share_cents": 29112,   // TTAI's share
   "sold_at": "2026-10-09T18:00:00Z",
-  "status": "pending | paid | reversed | partially_reversed",
+  "status": "pending | paid",           // paid = transfer sent
   "paid_at": "…", "reversed_cents": 0
 }] }
 ```
-   TTAI already polls this path; until it exists the sync reports "settlement feed not published yet".
+   TTAI already polls this path; until it is deployed the sync reports "settlement feed not published yet".
 
 ## Recommended
 A short written agreement covering the 60/40, "processing fees only", refunds/chargebacks (ROMAR as
