@@ -54,6 +54,10 @@ export type ReportHealth = {
 
 export const REPORT_EVENT_KINDS = [
   "signup", "upgrade", "downgrade", "cancel", "payment_failed", "feedback",
+  // A sales enquiry (demo request, early-access request, a rep's new lead)
+  // and a job or partner application. Products sold through reps and staffed
+  // through a careers page report these as they happen.
+  "lead", "application",
 ] as const;
 export type ReportEventKind = (typeof REPORT_EVENT_KINDS)[number];
 

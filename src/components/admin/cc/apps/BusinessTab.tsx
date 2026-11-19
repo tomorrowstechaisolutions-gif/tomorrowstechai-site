@@ -36,6 +36,8 @@ const KIND_LABEL: Record<ReportEventKind, string> = {
   cancel: "Cancellation",
   payment_failed: "Payment failed",
   feedback: "Feedback",
+  lead: "Lead",
+  application: "Application",
 };
 
 const KIND_TONE: Record<ReportEventKind, string> = {
@@ -45,6 +47,8 @@ const KIND_TONE: Record<ReportEventKind, string> = {
   cancel: "t-warn",
   payment_failed: "t-warn",
   feedback: "t-muted",
+  lead: "t-ok",
+  application: "t-info",
 };
 
 type Tile = { key: keyof ReportMetrics; label: string; cents?: boolean; hint?: string };

@@ -89,3 +89,16 @@ test("accepts a report built by Storyborn", async () => {
     expect(r.report.events.length).toBe(3);
   }
 });
+
+// Products that sell through reps and hire through a careers page report
+// two more things worth seeing the moment they happen.
+test("accepts lead and application events", () => {
+  const p = clone();
+  p.events = [
+    { ...p.events[0], id: "lead:1", kind: "lead", summary: "New demo request", plan: null, amount_cents: null, url: null },
+    { ...p.events[0], id: "application:1", kind: "application", summary: "New job application: splicer", plan: null, amount_cents: null, url: null },
+  ];
+  const r = parseReport(p);
+  expect(r.ok).toBe(true);
+  if (r.ok) expect(r.report.events.map((e) => e.kind)).toEqual(["lead", "application"]);
+});
