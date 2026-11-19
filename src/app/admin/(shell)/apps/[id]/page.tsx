@@ -32,6 +32,8 @@ import {
   type SslStatus,
 } from "@/lib/apps/types";
 import { EmptyState, Panel } from "@/components/admin/cc/Panel";
+import BusinessTab from "@/components/admin/cc/apps/BusinessTab";
+import { loadBusiness } from "@/lib/apps/report-queries";
 import { ago, count, DASH, money, shortDate } from "@/components/admin/cc/format";
 import {
   AddDomain,
@@ -70,7 +72,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const TABS = [
-  "Overview", "Deployments", "Health", "Environments", "Domains", "Database",
+  "Overview", "Business", "Deployments", "Health", "Environments", "Domains", "Database",
   "Integrations", "Users", "Revenue", "Tasks & Issues", "Activity", "Settings",
 ] as const;
 
@@ -95,7 +97,7 @@ export async function generateMetadata({
  * One app, everything about it.
  *
  * The order of the tabs is the order the questions get asked: what is it and
- * is it up, what shipped, is it healthy, where does it run, what answers on
+ * is it up, how is the business behind it doing, what shipped, is it healthy, where does it run, what answers on
  * it, what stores its data, what it depends on, who uses it, what it earns,
  * what is outstanding, what has happened, and finally how to change it.
  *
@@ -130,6 +132,9 @@ export default async function AppDetailPage({
 
   if (tab === "Overview") {
     content = <OverviewTab app={app} canManage={canManage} />;
+  } else if (tab === "Business") {
+    const business = await loadBusiness(supabase, app.id);
+    content = <BusinessTab appId={app.id} appName={app.name} business={business} />;
   } else if (tab === "Deployments") {
     const { rows, total } = await loadDeployments(supabase, app.id, page);
     content = <DeploymentsTab app={app} rows={rows} total={total} page={page} canManage={canManage} />;
@@ -1263,6 +1268,21 @@ function UsersTab({ app }: { app: AppDetail }) {
   const analytics = app.integrations.find((integration) =>
     ["google", "supabase"].includes(integration.provider) && integration.status === "connected"
   );
+
+  const reports = app.integrations.some((integration) => integration.provider === "report");
+
+  if (reports) {
+    return (
+      <Panel title="Users" icon={<IconUsers size={15} />} className="cc-s12">
+        <EmptyState
+          icon={<IconUsers size={17} />}
+          title="User totals are on the Business tab"
+          text="This app reports its own totals: users, new signups, active users and subscribers. They arrive as counts, never as a copy of its users."
+          cta={{ href: "?tab=business", label: "Open Business" }}
+        />
+      </Panel>
+    );
+  }
 
   return (
     <Panel title="Users" icon={<IconUsers size={15} />} className="cc-s12">
