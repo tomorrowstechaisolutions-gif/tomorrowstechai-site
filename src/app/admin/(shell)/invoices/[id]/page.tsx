@@ -16,6 +16,7 @@ import {
   sendInvoiceAction, sendInvoiceReminderAction, setInvoiceStatusAction,
 } from "@/app/admin/invoice-actions";
 import CopyLink from "@/components/admin/cc/CopyLink";
+import PendingButton from "@/components/admin/cc/PendingButton";
 import { DASH, ago } from "@/components/admin/cc/format";
 import {
   IconAlert, IconCheck, IconDollar, IconFile, IconLayers,
@@ -41,8 +42,10 @@ function stamp(iso: string | null): string {
 
 export default async function InvoiceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await getAdminUser();
   if (!session) redirect("/admin/login");
@@ -60,6 +63,26 @@ export default async function InvoiceDetailPage({
   const outstanding = outstandingCents(inv);
   const overdue = isOverdue(inv);
   const publicLink = invoiceUrl(inv.public_token);
+
+  // What the last button press did. Every send lands back here with one.
+  const query = await searchParams;
+  const noticeKey = typeof query.notice === "string" ? query.notice : "";
+  const to = inv.client_email ?? "the client";
+  const notices: Record<string, { tone: "ok" | "warn"; text: string }> = {
+    emailed: { tone: "ok", text: `Sent. The invoice was emailed to ${to}.` },
+    reminded: { tone: "ok", text: `Sent. A reminder was emailed to ${to}.` },
+    marked_sent: { tone: "ok", text: "Marked as sent. No email went out from here." },
+    email_repeat: { tone: "warn", text: `Not sent again. This invoice was already emailed to ${to} less than a minute ago.` },
+    reminder_repeat: { tone: "warn", text: `Not sent again. A reminder already went to ${to} less than a minute ago.` },
+    email_failed: { tone: "warn", text: "The email did NOT go out. Copy the client link and send it yourself." },
+  };
+  const notice = notices[noticeKey] ?? null;
+
+  const lastEmail = timeline.find(
+    (event) =>
+      (event.event_type === "sent" || event.event_type === "resent") &&
+      (event.metadata as { delivered?: boolean } | null)?.delivered === true
+  );
   const oneTimeLines = items.filter((item) => item.item_kind !== "recurring");
   const recurringLines = items.filter((item) => item.item_kind === "recurring");
 
@@ -105,6 +128,12 @@ export default async function InvoiceDetailPage({
         <Link href="/admin/invoices" className="cc-btn">All invoices</Link>
       </div>
 
+      {notice ? (
+        <p className={`cc-flash ${notice.tone === "ok" ? "is-ok" : "is-warn"}`} role="status">
+          {notice.text}
+        </p>
+      ) : null}
+
       {/* ── Actions ───────────────────────────────────────────────── */}
       <div className="cc-board">
         <section className="cc-panel cc-s12">
@@ -123,9 +152,12 @@ export default async function InvoiceDetailPage({
                 className="cc-input pr-sendnote" name="note" maxLength={2000} rows={2}
                 placeholder="Optional note to include in the email"
               />
-              <button type="submit" className="cc-btn primary">
+              <PendingButton className="cc-btn primary" busy="Sending…">
                 <IconSend size={13} /> {sentAtOf(inv) ? "Email again" : "Email to client"}
-              </button>
+              </PendingButton>
+              {lastEmail ? (
+                <span className="cc-note pr-lastsent">Last emailed {stamp(lastEmail.created_at)}</span>
+              ) : null}
             </form>
 
             <form action={markInvoiceSentAction} className="pr-sendform">
@@ -134,15 +166,15 @@ export default async function InvoiceDetailPage({
                 className="cc-input" name="how" maxLength={200}
                 placeholder="How you sent it — Messenger, text, in person"
               />
-              <button type="submit" className="cc-btn">
+              <PendingButton className="cc-btn" busy="Saving…">
                 Mark as sent — I&rsquo;ll send the link myself
-              </button>
+              </PendingButton>
             </form>
 
             {outstanding > 0 && sentAtOf(inv) ? (
               <form action={sendInvoiceReminderAction}>
                 <input type="hidden" name="invoice_id" value={inv.id} />
-                <button type="submit" className="cc-btn">Send a reminder</button>
+                <PendingButton className="cc-btn" busy="Sending…">Send a reminder</PendingButton>
               </form>
             ) : null}
 
