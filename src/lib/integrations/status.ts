@@ -11,6 +11,7 @@ import { zoomConnection } from "@/lib/zoom/oauth";
 import { connection as searchConsole, localConnection } from "@/lib/seo/search-console";
 import { analyticsConfigured } from "@/lib/analytics/vercel-web";
 import { providerConnections } from "@/lib/apps/providers";
+import { loadReportIntegrations } from "@/lib/apps/report-queries";
 import { encryptionConfigured } from "@/lib/security/secrets";
 
 /**
@@ -26,7 +27,7 @@ import { encryptionConfigured } from "@/lib/security/secrets";
  */
 
 export type IntegrationState = "connected" | "attention" | "keys_set" | "not_set_up";
-export type Category = "Payments & money" | "Email" | "Social publishing" | "Ads & tracking" | "Google" | "AI models" | "Meetings" | "Hosting & code" | "Partners" | "Core";
+export type Category = "Products" | "Payments & money" | "Email" | "Social publishing" | "Ads & tracking" | "Google" | "AI models" | "Meetings" | "Hosting & code" | "Partners" | "Core";
 
 export type Integration = {
   key: string;
@@ -73,6 +74,25 @@ export async function loadIntegrations(): Promise<Integration[]> {
   ]);
 
   const out: Integration[] = [];
+
+  /* ── Products ─────────────────────────────────────────────────── */
+  // Our own products reporting their business numbers (Held first). The
+  // status is what the last pull recorded, not whether a key merely exists.
+  for (const p of await safe(() => loadReportIntegrations(db), [])) {
+    const keySet = p.keyEnv ? Boolean(process.env[p.keyEnv]) : false;
+    out.push({
+      key: `report-${p.slug}`, name: `${p.name} business report`, category: "Products",
+      purpose: `Users, subscribers, MRR and activity pulled hourly from ${p.name}.`,
+      state: p.status === "connected" ? "connected" : p.status === "needs_attention" ? "attention" : keySet ? "keys_set" : "not_set_up",
+      detail: p.status === "connected" ? "Reporting. Pulled every hour."
+        : p.status === "needs_attention" ? (p.error ?? "The last pull did not get through.")
+        : keySet ? "Key set. Nothing pulled yet; press Pull now on the Business tab."
+        : `Not set up. Add ${p.keyEnv ?? "the report key"} in Vercel, and TTAI_REPORT_KEY in ${p.name}.`,
+      lastActivity: p.lastCheckedAt, lastActivityLabel: "Last pull",
+      envs: p.keyEnv ? env([p.keyEnv]) : [],
+      manage: { href: `/admin/apps/${p.appId}?tab=business`, label: "Business tab" },
+    });
+  }
 
   /* ── Payments & money ─────────────────────────────────────────── */
   {

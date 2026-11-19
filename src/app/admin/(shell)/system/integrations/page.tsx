@@ -21,7 +21,7 @@ const STATE: Record<IntegrationState, { label: string; tone: string }> = {
   keys_set: { label: "Keys set", tone: "t-info" },
   not_set_up: { label: "Not set up", tone: "t-muted" },
 };
-const ORDER: Category[] = ["Payments & money", "Email", "Social publishing", "Ads & tracking", "Google", "AI models", "Meetings", "Hosting & code", "Partners", "Core"];
+const ORDER: Category[] = ["Products", "Payments & money", "Email", "Social publishing", "Ads & tracking", "Google", "AI models", "Meetings", "Hosting & code", "Partners", "Core"];
 const FILTERS = { all: "All", attention: "Needs attention", connected: "Connected", keys_set: "Keys set", not_set_up: "Not set up" } as const;
 type Filter = keyof typeof FILTERS;
 
