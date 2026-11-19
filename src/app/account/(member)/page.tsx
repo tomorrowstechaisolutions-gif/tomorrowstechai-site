@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPortalMember } from "@/lib/portal/session";
+import { getPortalViewer } from "@/lib/portal/session";
 import { balanceCents, cadence, memberInvoices, memberServices, money, shortDate } from "@/lib/portal/data";
 import { InvoiceStatus } from "./parts";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function AccountOverview({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
-  const member = (await getPortalMember())!;
+  const member = (await getPortalViewer())!;
   const [{ welcome }, services, invoices] = await Promise.all([searchParams, memberServices(member.customerId), memberInvoices(member.customerId)]);
 
   const active = services.filter((s) => s.status === "active");

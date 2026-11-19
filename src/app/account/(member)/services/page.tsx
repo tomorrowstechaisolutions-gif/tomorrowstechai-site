@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPortalMember } from "@/lib/portal/session";
+import { getPortalViewer } from "@/lib/portal/session";
 import { cadence, memberHasStripeBilling, memberServices, money, shortDate } from "@/lib/portal/data";
 import { BillingButton, BillingNotice, ServiceStatus } from "../parts";
 
 export const metadata: Metadata = { title: "Services" };
 
 export default async function ServicesPage({ searchParams }: { searchParams: Promise<{ billing?: string }> }) {
-  const member = (await getPortalMember())!;
+  const member = (await getPortalViewer())!;
   const [{ billing }, services, hasBilling] = await Promise.all([
     searchParams,
     memberServices(member.customerId),

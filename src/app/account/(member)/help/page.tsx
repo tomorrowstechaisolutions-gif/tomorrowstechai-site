@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPortalMember } from "@/lib/portal/session";
+import { getPortalViewer } from "@/lib/portal/session";
 import { memberRequests, shortDate } from "@/lib/portal/data";
 import { HelpForm } from "../MemberForms";
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Get help" };
 const CAT: Record<string, string> = { question: "Question", change: "Change", problem: "Problem", billing: "Billing", cancel: "Cancellation", new_service: "New service" };
 
 export default async function HelpPage({ searchParams }: { searchParams: Promise<{ about?: string; category?: string }> }) {
-  const member = (await getPortalMember())!;
+  const member = (await getPortalViewer())!;
   const [{ about, category }, requests] = await Promise.all([searchParams, memberRequests(member.customerId)]);
   return (
     <>

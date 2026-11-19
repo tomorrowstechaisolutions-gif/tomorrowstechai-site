@@ -112,3 +112,12 @@
 .acct-addon-group { margin-top: 16px; }
 .acct-addon-group h3 { margin: 0 0 8px; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary, #94a3b8); text-transform: uppercase; letter-spacing: 0.08em; }
 .acct-list li .acct-faint { max-width: 60ch; }
+
+/* An admin viewing a client's portal: a bar that cannot be missed, and the
+   page beneath it switched off. */
+.acct-preview { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(245, 166, 35, 0.45); background: rgba(245, 166, 35, 0.1); }
+.acct-preview strong { display: block; color: #fde68a; font-size: 0.95rem; }
+.acct-preview span { display: block; margin-top: 2px; color: #fcd34d; font-size: 0.82rem; line-height: 1.45; max-width: 70ch; }
+.acct-preview form { margin: 0; }
+.acct-viewonly { border: 0; margin: 0; padding: 0; min-width: 0; }
+.acct-viewonly button:disabled, .acct-viewonly input:disabled, .acct-viewonly select:disabled, .acct-viewonly textarea:disabled, .acct-head button:disabled { opacity: 0.55; cursor: not-allowed; }
