@@ -13,6 +13,7 @@ import AppFiltersBar from "../apps/AppFilters";
 import AppRowActions from "../apps/AppRowActions";
 import AppSync from "../apps/AppSync";
 import ManageIntegrations, { type ProviderCard } from "../apps/ManageIntegrations";
+import PortfolioStrip from "../apps/PortfolioStrip";
 import RunChecks from "../apps/RunChecks";
 import {
   IconAlert,
@@ -641,6 +642,9 @@ export default async function AppsBoard({ filters }: { filters: AppFilters }) {
           ) : null}
         </div>
       </div>
+
+      {/* Our own products first: what Held and the rest report about themselves. */}
+      <PortfolioStrip />
 
       <KpiRow board={board} />
       <Tabs board={board} filters={filters} />
