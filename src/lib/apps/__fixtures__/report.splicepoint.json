@@ -1,0 +1,124 @@
+{
+  "contract": "ttai.app-report/v1",
+  "app": "splicepoint",
+  "generated_at": "2026-11-19T15:00:00.000Z",
+  "livemode": true,
+  "currency": "usd",
+  "metrics": {
+    "users_total": 42,
+    "users_new_24h": 1,
+    "users_new_7d": 5,
+    "users_new_30d": 12,
+    "active_7d": null,
+    "active_30d": null,
+    "paid_total": null,
+    "trialing": null,
+    "past_due": null,
+    "canceling": null,
+    "mrr_cents": null,
+    "collected_30d_cents": null,
+    "feedback_open": null,
+    "ai_cost_30d_cents": null
+  },
+  "extra": [
+    {
+      "key": "organizations",
+      "label": "Organizations",
+      "value": 9,
+      "unit": "count"
+    },
+    {
+      "key": "active_members",
+      "label": "Active members",
+      "value": 31,
+      "unit": "count"
+    },
+    {
+      "key": "projects",
+      "label": "Projects",
+      "value": 14,
+      "unit": "count"
+    },
+    {
+      "key": "early_access_requests",
+      "label": "Early-access requests",
+      "value": 20,
+      "unit": "count"
+    },
+    {
+      "key": "demo_requests",
+      "label": "Demo requests",
+      "value": 7,
+      "unit": "count"
+    },
+    {
+      "key": "contact_messages",
+      "label": "Contact messages",
+      "value": 4,
+      "unit": "count"
+    },
+    {
+      "key": "job_applications",
+      "label": "Job applications",
+      "value": 6,
+      "unit": "count"
+    }
+  ],
+  "health": [],
+  "events": [
+    {
+      "id": "signup:0b6f2c1e-1111-4222-8333-444455556666",
+      "kind": "signup",
+      "summary": "New signup",
+      "at": "2026-11-19T14:00:00.000Z",
+      "plan": null,
+      "amount_cents": null,
+      "url": null
+    },
+    {
+      "id": "lead:early-access:e1",
+      "kind": "lead",
+      "summary": "New early-access request",
+      "at": "2026-11-19T13:00:00.000Z",
+      "plan": null,
+      "amount_cents": null,
+      "url": null
+    },
+    {
+      "id": "lead:demo:d1",
+      "kind": "lead",
+      "summary": "New demo request",
+      "at": "2026-11-19T12:00:00.000Z",
+      "plan": null,
+      "amount_cents": null,
+      "url": null
+    },
+    {
+      "id": "lead:contact:c1",
+      "kind": "lead",
+      "summary": "New contact message",
+      "at": "2026-11-19T11:00:00.000Z",
+      "plan": null,
+      "amount_cents": null,
+      "url": null
+    },
+    {
+      "id": "feedback:contact:c2",
+      "kind": "feedback",
+      "summary": "New support message",
+      "at": "2026-11-19T10:00:00.000Z",
+      "plan": null,
+      "amount_cents": null,
+      "url": null
+    },
+    {
+      "id": "application:a1",
+      "kind": "application",
+      "summary": "New job application: sales representative",
+      "at": "2026-11-19T09:00:00.000Z",
+      "plan": null,
+      "amount_cents": null,
+      "url": null
+    }
+  ]
+}
