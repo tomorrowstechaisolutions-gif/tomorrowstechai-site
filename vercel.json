@@ -21,6 +21,10 @@
       "schedule": "12 * * * *"
     },
     {
+      "path": "/api/cron/search-console",
+      "schedule": "45 6 * * *"
+    },
+    {
       "path": "/api/cron/ai-watch",
       "schedule": "50 6 * * *"
     },

@@ -144,13 +144,27 @@ export async function loadSearch(sb: SupabaseClient, days = 28): Promise<SearchS
     .limit(4000);
 
   if (error || !data || data.length === 0) {
-    // No rows is expected before the connection exists — and also right after
-    // connecting, before the first sync. The reason distinguishes the two.
+    // No rows has four different causes, and the reason says which: not
+    // connected, never synced, the last sync failed, or the sync worked and
+    // Google simply has nothing for this property yet.
+    let reason = conn.reason;
+    if (conn.connected) {
+      const { data: run } = await sb
+        .from("seo_sync_runs")
+        .select("ok, error, finished_at")
+        .eq("source", "search_console")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      reason = !run
+        ? "Keys are set, but no sync has run yet. Press Sync now."
+        : run.ok
+          ? "The last sync worked, but Google has no search data for this property yet. A newly verified property can take a few days."
+          : `The last sync failed: ${run.error ?? "no detail"}`;
+    }
     return {
       connected: conn.connected,
-      reason: conn.connected
-        ? "Connected, but no search data has been synced yet."
-        : conn.reason,
+      reason,
       totals: null,
       previousTotals: null,
       queries: [],
