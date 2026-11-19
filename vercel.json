@@ -17,6 +17,10 @@
       "schedule": "40 6 * * *"
     },
     {
+      "path": "/api/cron/app-reports",
+      "schedule": "12 * * * *"
+    },
+    {
       "path": "/api/cron/ai-watch",
       "schedule": "50 6 * * *"
     },

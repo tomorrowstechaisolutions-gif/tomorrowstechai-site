@@ -27,7 +27,9 @@ export type HealthState = "healthy" | "warning" | "critical" | "unknown";
 
 export type IntegrationProvider =
   | "vercel" | "supabase" | "github" | "stripe" | "openai" | "resend"
-  | "twilio" | "google" | "meta" | "cloudflare" | "sentry" | "uptime" | "other";
+  | "twilio" | "google" | "meta" | "cloudflare" | "sentry" | "uptime" | "other"
+  /** One of our own products reporting its business numbers. See report.ts. */
+  | "report";
 
 export type IntegrationStatus =
   | "connected" | "needs_attention" | "disconnected" | "not_configured";
@@ -94,6 +96,7 @@ export const HEALTH_LABELS: Record<HealthState, string> = {
 };
 
 export const INTEGRATION_LABELS: Record<IntegrationProvider, string> = {
+  report: "Business report",
   vercel: "Vercel",
   supabase: "Supabase",
   github: "GitHub",
@@ -230,7 +233,7 @@ export const ENVIRONMENT_ORDER: EnvironmentType[] = [
 ];
 
 export const INTEGRATION_ORDER: IntegrationProvider[] = [
-  "vercel", "supabase", "github", "stripe", "openai", "resend",
+  "report", "vercel", "supabase", "github", "stripe", "openai", "resend",
   "twilio", "google", "meta", "cloudflare", "sentry", "uptime", "other",
 ];
 
