@@ -104,7 +104,7 @@ export default async function PortfolioStrip() {
       label: "Paid subscribers",
       value: totals.paid === null ? DASH : count(totals.paid),
       icon: <IconZap size={15} />,
-      foot: "Active in Stripe. Trials are not counted",
+      foot: "Paying customers. Trials are not counted",
     },
     {
       label: "Users",

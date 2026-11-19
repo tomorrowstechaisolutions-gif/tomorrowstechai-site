@@ -64,7 +64,7 @@ const PEOPLE: Tile[] = [
 
 const MONEY: Tile[] = [
   { key: "mrr_cents", label: "MRR", cents: true, hint: "Active subscriptions, after discounts" },
-  { key: "paid_total", label: "Paid", hint: "Active in Stripe" },
+  { key: "paid_total", label: "Paid", hint: "Paying customers right now" },
   { key: "trialing", label: "Trialing", hint: "Not revenue yet" },
   { key: "past_due", label: "Past due", hint: "Not counted in MRR" },
   { key: "canceling", label: "Canceling", hint: "Paid, set to end" },
