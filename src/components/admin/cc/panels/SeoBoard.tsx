@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadSeoBoard, type SeoBoard as Board, type SeoRecommendation } from "@/lib/seo/queries";
 import { EmptyState, Panel, PanelSkeleton } from "../Panel";
 import MiniBars from "../MiniBars";
+import PendingButton from "../PendingButton";
 import { HealthRing } from "../Viz";
 import { count, compact, DASH, pct, shortDate } from "../format";
 import {
@@ -155,7 +156,7 @@ function SearchPerformance({ board }: { board: Board }) {
       footer={
         connected ? (
           <form action={syncSearchConsoleAction}>
-            <button type="submit" className="cc-btn">Sync now</button>
+            <PendingButton className="cc-btn" busy="Syncing…">Sync now</PendingButton>
             <span className="cc-note">
               Pulls the latest search data from Google. Runs on its own every morning. Changes nothing on the site.
             </span>
@@ -322,9 +323,9 @@ function Health({ board }: { board: Board }) {
       className="cc-s8"
       footer={
         <form action={runSeoAuditAction}>
-          <button type="submit" className="cc-btn primary">
+          <PendingButton className="cc-btn primary" busy="Auditing the site…">
             {ranAt ? "Re-run audit" : "Run first audit"}
-          </button>
+          </PendingButton>
           <span className="cc-note">
             Reads the site over HTTP and records what it finds. Changes nothing.
           </span>
@@ -480,9 +481,9 @@ function Competitors({ board }: { board: Board }) {
       footer={
         <form action={addCompetitorAction} className="cc-inline-form">
           <input className="cc-input" name="domain" placeholder="competitor.com" aria-label="Competitor domain" required />
-          <button type="submit" className="cc-btn">
+          <PendingButton className="cc-btn" busy="Adding…">
             <IconPlus size={13} /> Watch
-          </button>
+          </PendingButton>
         </form>
       }
     >
@@ -558,9 +559,9 @@ function Advisor({ board }: { board: Board }) {
                     <input type="hidden" name="body" value={r.body} />
                     <input type="hidden" name="path" value={r.path ?? ""} />
                     <input type="hidden" name="severity" value={r.severity} />
-                    <button type="submit" className="cc-btn">
+                    <PendingButton className="cc-btn" busy="Queuing…">
                       Queue for review
-                    </button>
+                    </PendingButton>
                   </form>
                 ) : null}
               </div>
