@@ -306,6 +306,22 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
+            {/* Where an existing client signs back in. A utility link, kept
+                out of the main nav so it never competes with the sales links.
+                Labelled wherever it fits: a lock on its own is not something
+                a client would think to press. The one gap is 1800-2000px,
+                where the "Build my business" button joins the row and the
+                label would push it off the right edge. */}
+            <Link
+              href="/account/login"
+              className="tt-nav-link hidden md:inline-flex"
+              aria-label="Member login"
+              title="Member login"
+            >
+              <IconLock size={15} />
+              <span className="min-[1800px]:hidden min-[2000px]:inline">Member login</span>
+            </Link>
+
             <SoundToggle className="tt-sound-toggle hidden sm:inline-flex" />
 
             {initiativePage ? (
@@ -432,6 +448,17 @@ export function Header() {
                 </div>
               );
             })}
+            <Link
+              href="/account/login"
+              onClick={closeDrawer}
+              className="py-3.5 text-base font-medium border-b border-[color:var(--color-border-subtle)] flex items-center justify-between"
+            >
+              <span className="inline-flex items-center gap-2">
+                <IconLock size={16} className="text-[color:var(--color-blue-bright)]" />
+                Member login
+              </span>
+              <IconArrowRight size={16} className="text-[color:var(--color-text-muted)]" />
+            </Link>
             {initiativePage ? (
               <>
                 <Link
