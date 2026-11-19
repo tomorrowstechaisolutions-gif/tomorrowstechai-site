@@ -39,10 +39,74 @@ export type ProviderCard = {
  * can tell you a provider is connected and which account it is; it cannot
  * show you the secret, and neither can any other screen in the admin.
  */
+/**
+ * One provider's connect form, with its own state.
+ *
+ * Each provider gets its own action state so that connecting GitHub does not
+ * put the Supabase button into "Connecting…" as well, and so a result is
+ * shown next to the form it belongs to.
+ */
+function ConnectForm({ provider }: { provider: ProviderCard }) {
+  const router = useRouter();
+  const [state, action, connecting] = useActionState(connectProviderAction, INITIAL);
+
+  useEffect(() => {
+    if (state.completedAt) router.refresh();
+  }, [state.completedAt, router]);
+
+  return (
+    <form action={action}>
+      <input type="hidden" name="provider" value={provider.key} />
+      <div className="cc-field">
+        <label className="cc-label" htmlFor={`token-${provider.key}`}>Access token</label>
+        <input
+          id={`token-${provider.key}`}
+          name="token"
+          type="password"
+          className="cc-input"
+          autoComplete="off"
+          required
+          placeholder={provider.tokenHint}
+        />
+        <p className="cc-note">
+          Create one at{" "}
+          <a className="cc-link" href={provider.tokenUrl} target="_blank" rel="noreferrer">
+            {new URL(provider.tokenUrl).host}
+          </a>
+          . It is verified, then stored server-side. It is never returned to a
+          browser and never appears on any screen again.
+        </p>
+      </div>
+
+      {provider.needsTeam ? (
+        <div className="cc-field">
+          <label className="cc-label" htmlFor={`team-${provider.key}`}>Team ID</label>
+          <input
+            id={`team-${provider.key}`}
+            name="team_id"
+            className="cc-input"
+            required
+            defaultValue={provider.defaultTeam ?? ""}
+            placeholder="team_…"
+          />
+        </div>
+      ) : null}
+
+      <button type="submit" className="cc-btn primary is-sm" disabled={connecting}>
+        {connecting ? "Connecting…" : `Connect ${provider.label}`}
+      </button>
+      {connecting ? (
+        <p className="cc-note" role="status">Checking the token with {provider.label}. This usually takes a few seconds.</p>
+      ) : null}
+      {state.success ? <p className="cc-chip t-ok" role="status" style={{ marginTop: 8 }}>{state.success}</p> : null}
+      {state.error ? <p className="cc-chip t-risk" role="alert" style={{ marginTop: 8 }}>{state.error}</p> : null}
+    </form>
+  );
+}
+
 export default function ManageIntegrations({ providers }: { providers: ProviderCard[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [connectState, connectAction, connecting] = useActionState(connectProviderAction, INITIAL);
   const [disconnectState, disconnectAction, disconnecting] = useActionState(disconnectProviderAction, INITIAL);
 
   useEffect(() => {
@@ -55,9 +119,8 @@ export default function ManageIntegrations({ providers }: { providers: ProviderC
   }, [open]);
 
   useEffect(() => {
-    const at = connectState.completedAt || disconnectState.completedAt;
-    if (at) router.refresh();
-  }, [connectState.completedAt, disconnectState.completedAt, router]);
+    if (disconnectState.completedAt) router.refresh();
+  }, [disconnectState.completedAt, router]);
 
   const connectedCount = providers.filter((p) => p.connected).length;
 
@@ -92,8 +155,6 @@ export default function ManageIntegrations({ providers }: { providers: ProviderC
             </div>
 
             <div className="cc-sheet-body">
-              {connectState.success ? <p className="cc-chip t-ok" role="status">{connectState.success}</p> : null}
-              {connectState.error ? <p className="cc-chip t-risk" role="alert">{connectState.error}</p> : null}
               {disconnectState.success ? <p className="cc-chip t-ok" role="status">{disconnectState.success}</p> : null}
               {disconnectState.error ? <p className="cc-chip t-risk" role="alert">{disconnectState.error}</p> : null}
 
@@ -135,47 +196,7 @@ export default function ManageIntegrations({ providers }: { providers: ProviderC
                       </div>
                     </>
                   ) : (
-                    <form action={connectAction}>
-                      <input type="hidden" name="provider" value={provider.key} />
-                      <div className="cc-field">
-                        <label className="cc-label" htmlFor={`token-${provider.key}`}>Access token</label>
-                        <input
-                          id={`token-${provider.key}`}
-                          name="token"
-                          type="password"
-                          className="cc-input"
-                          autoComplete="off"
-                          required
-                          placeholder={provider.tokenHint}
-                        />
-                        <p className="cc-note">
-                          Create one at{" "}
-                          <a className="cc-link" href={provider.tokenUrl} target="_blank" rel="noreferrer">
-                            {new URL(provider.tokenUrl).host}
-                          </a>
-                          . It is verified, then stored server-side. It is never returned to a
-                          browser and never appears on any screen again.
-                        </p>
-                      </div>
-
-                      {provider.needsTeam ? (
-                        <div className="cc-field">
-                          <label className="cc-label" htmlFor={`team-${provider.key}`}>Team ID</label>
-                          <input
-                            id={`team-${provider.key}`}
-                            name="team_id"
-                            className="cc-input"
-                            required
-                            defaultValue={provider.defaultTeam ?? ""}
-                            placeholder="team_…"
-                          />
-                        </div>
-                      ) : null}
-
-                      <button type="submit" className="cc-btn primary is-sm" disabled={connecting}>
-                        {connecting ? "Connecting…" : `Connect ${provider.label}`}
-                      </button>
-                    </form>
+                    <ConnectForm provider={provider} />
                   )}
                 </section>
               ))}
