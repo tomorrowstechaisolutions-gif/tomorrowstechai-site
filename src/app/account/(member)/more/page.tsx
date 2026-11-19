@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPortalMember } from "@/lib/portal/session";
+import { getPortalViewer } from "@/lib/portal/session";
 import { memberCatalog, money, OFFER_ORDER, type MemberOffer } from "@/lib/portal/data";
 import { requestServiceAction } from "../../member-actions";
 
@@ -31,7 +31,7 @@ function RequestButton({ offer, label }: { offer: MemberOffer; label: string }) 
 }
 
 export default async function MoreServicesPage({ searchParams }: { searchParams: Promise<{ requested?: string }> }) {
-  const member = (await getPortalMember())!;
+  const member = (await getPortalViewer())!;
   const [{ requested }, offers] = await Promise.all([searchParams, memberCatalog(member.customerId)]);
   const notice = requested ? NOTICE[requested] : undefined;
 

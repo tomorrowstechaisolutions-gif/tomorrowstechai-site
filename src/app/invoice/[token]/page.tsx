@@ -9,6 +9,7 @@ import {
   dueTodayCents, formatDate, formatMoney, invoiceSettled, outstandingCents, recurringStartsLater,
 } from "@/lib/invoices/pricing";
 import { clientIp } from "@/lib/rate-limit";
+import { getAdminUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -73,12 +74,17 @@ export default async function PublicInvoicePage({
 
   // Telemetry, after the page is known to render. Awaited so the view count is
   // right on this very render, but it can never throw the page away.
-  const headerList = await headers();
-  await recordInvoiceView(
-    loaded,
-    clientIp(new Request("https://x/", { headers: headerList })),
-    headerList.get("user-agent")
-  );
+  // Not counted when the visitor is a signed-in admin: John checking the
+  // client's view (or following an invoice link while viewing as a client)
+  // would otherwise be logged as "opened by the client".
+  if (!(await getAdminUser())) {
+    const headerList = await headers();
+    await recordInvoiceView(
+      loaded,
+      clientIp(new Request("https://x/", { headers: headerList })),
+      headerList.get("user-agent")
+    );
+  }
 
   const inv = loaded.invoice;
   const outstanding = outstandingCents(inv);

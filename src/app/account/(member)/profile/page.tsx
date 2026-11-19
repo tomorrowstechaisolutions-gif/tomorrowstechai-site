@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPortalMember } from "@/lib/portal/session";
+import { getPortalViewer } from "@/lib/portal/session";
 import { memberProfile } from "@/lib/portal/data";
 import { ProfileForm } from "../MemberForms";
 
 export const metadata: Metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
-  const member = (await getPortalMember())!;
+  const member = (await getPortalViewer())!;
   const profile = await memberProfile(member.customerId);
   return (
     <>

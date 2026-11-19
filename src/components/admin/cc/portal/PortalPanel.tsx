@@ -1,6 +1,6 @@
 import { Panel } from "@/components/admin/cc/Panel";
 import { IconUsers } from "@/components/admin/cc/Icons";
-import { closePortalRequestAction, invitePortalMemberAction, setPortalMemberStatusAction } from "@/app/admin/portal-actions";
+import { closePortalRequestAction, invitePortalMemberAction, setPortalMemberStatusAction, viewAsClientAction } from "@/app/admin/portal-actions";
 
 export type PortalRequestRow = {
   id: string;
@@ -57,10 +57,15 @@ export function PortalPanel({
         </p>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {/* Opens in a new tab so this page stays where it is. */}
+        <form action={viewAsClientAction} target="_blank">
+          <input type="hidden" name="customer_id" value={customerId} />
+          <button className="cc-btn primary" title="See their member portal exactly as they do. View only.">View as this client</button>
+        </form>
         {email && member?.status !== "disabled" ? (
           <form action={invitePortalMemberAction}>
             <input type="hidden" name="customer_id" value={customerId} />
-            <button className="cc-btn primary">{member ? (member.status === "active" ? "Send password reset" : "Resend invite") : "Invite to member portal"}</button>
+            <button className="cc-btn">{member ? (member.status === "active" ? "Send password reset" : "Resend invite") : "Invite to member portal"}</button>
           </form>
         ) : null}
         {member ? (

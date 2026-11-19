@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
+import { VIEW_AS_COOKIE } from "@/lib/portal/session";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { issuePortalLink } from "@/lib/portal/links";
 import { sendPortalInvite } from "@/lib/portal/emails";
@@ -21,6 +23,40 @@ function str(fd: FormData, key: string, max = 200): string {
 function back(customerId: string, params: Record<string, string>): never {
   revalidatePath(`/admin/clients/${customerId}`);
   redirect(`/admin/clients/${customerId}?${new URLSearchParams(params)}`);
+}
+
+/**
+ * "View as this client": open their member portal the way they see it.
+ *
+ * Sets a short-lived cookie naming the client, readable only under /account.
+ * The portal honours it only for an admin login and only to draw pages (see
+ * getPortalViewer). It is not a sign-in as the client: no session of theirs
+ * is created, their last-sign-in time does not move, and nothing can be
+ * written from the view.
+ */
+export async function viewAsClientAction(fd: FormData) {
+  const session = await getAdminUser();
+  if (!session) redirect("/admin/login");
+  const customerId = str(fd, "customer_id", 40);
+  const supabase = await createSupabaseServerClient();
+  const { data: c } = await supabase.from("customers").select("id").eq("id", customerId).maybeSingle();
+  if (!c) back(customerId, { portal_error: "Client not found." });
+
+  (await cookies()).set(VIEW_AS_COOKIE, c.id, {
+    path: "/account",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60,
+  });
+  redirect("/account");
+}
+
+/** Leave the client's view and go back to their page in the admin. */
+export async function exitViewAsClientAction(fd: FormData) {
+  const customerId = str(fd, "customer_id", 40);
+  (await cookies()).set(VIEW_AS_COOKIE, "", { path: "/account", maxAge: 0 });
+  redirect(/^[0-9a-f-]{36}$/i.test(customerId) ? `/admin/clients/${customerId}` : "/admin/clients");
 }
 
 export async function invitePortalMemberAction(fd: FormData) {
