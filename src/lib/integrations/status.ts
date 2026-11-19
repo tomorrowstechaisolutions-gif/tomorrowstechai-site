@@ -9,7 +9,8 @@ import { metaCapiConfigured } from "@/lib/meta/capi";
 import { googleConnection } from "@/lib/google/oauth";
 import { zoomConnection } from "@/lib/zoom/oauth";
 import { connection as searchConsole, localConnection } from "@/lib/seo/search-console";
-import { analyticsConfigured } from "@/lib/analytics/vercel-web";
+import { analyticsConfigured, probe as analyticsProbe } from "@/lib/analytics/vercel-web";
+import { analyticsCard, type AnalyticsProbe } from "./analytics-card";
 import { providerConnections } from "@/lib/apps/providers";
 import { loadReportIntegrations } from "@/lib/apps/report-queries";
 import { encryptionConfigured } from "@/lib/security/secrets";
@@ -58,7 +59,12 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 
 export async function loadIntegrations(): Promise<Integration[]> {
   const db = supabaseAdmin();
-  const [stripeLast, bank, emailDomain, emailLast, social, ai, google, zoom, apps, partners, metaLeadLast, tokens] = await Promise.all([
+  // A slow Vercel must not hold the page: after 5 seconds the card falls back to "Keys set".
+  const traffic: Promise<AnalyticsProbe> = Promise.race([
+    safe<AnalyticsProbe>(() => analyticsProbe(), null),
+    new Promise<AnalyticsProbe>((resolve) => setTimeout(() => resolve("timeout"), 5_000)),
+  ]);
+  const [stripeLast, bank, emailDomain, emailLast, social, ai, google, zoom, apps, partners, metaLeadLast, tokens, trafficProbe] = await Promise.all([
     safe(async () => (await db.from("invoice_payments").select("created_at").eq("method", "stripe").order("created_at", { ascending: false }).limit(1)).data?.[0]?.created_at ?? null, null),
     safe(async () => (await db.from("bank_accounts").select("synced_at").order("synced_at", { ascending: false })).data ?? [], [] as Array<{ synced_at: string | null }>),
     safe(async () => (await db.from("email_sending_domains").select("domain, provider_status, spf_status, dkim_status, dmarc_status, last_error, last_checked_at, last_send_at").order("is_default", { ascending: false }).limit(1)).data?.[0] ?? null, null),
@@ -71,6 +77,7 @@ export async function loadIntegrations(): Promise<Integration[]> {
     safe(async () => (await db.from("partner_connections").select("partner_key, name, status, api_key_env, last_sync_at, last_sync_ok, last_sync_error, last_sync_count")).data ?? [], [] as Array<Record<string, unknown>>),
     safe(async () => (await db.from("leads").select("created_at").not("meta_leadgen_id", "is", null).order("created_at", { ascending: false }).limit(1)).data?.[0]?.created_at ?? null, null),
     safe(async () => (await db.from("social_account_tokens").select("provider")).data ?? [], [] as Array<{ provider: string }>),
+    traffic,
   ]);
 
   const out: Integration[] = [];
@@ -284,10 +291,11 @@ export async function loadIntegrations(): Promise<Integration[]> {
   out.push({
     key: "vercel-analytics", name: "Vercel Web Analytics", category: "Hosting & code",
     purpose: "Page views and visitors on Analytics and the Blog pages.",
-    state: analyticsConfigured() ? "keys_set" : "not_set_up",
-    detail: analyticsConfigured() ? "Token set. Traffic shows on Analytics." : "Not set up. Traffic panels show 'not connected'.",
+    // Connected only after one real request to Vercel answered.
+    ...analyticsCard(analyticsConfigured(), trafficProbe),
     lastActivity: null, lastActivityLabel: null,
-    envs: env(["VERCEL_ANALYTICS_TOKEN", "VERCEL_ANALYTICS_PROJECT_ID"], ["VERCEL_ANALYTICS_TEAM_ID"]),
+    // The project and team ids default to this site's, so only the token is required.
+    envs: env(["VERCEL_ANALYTICS_TOKEN"], ["VERCEL_ANALYTICS_PROJECT_ID", "VERCEL_ANALYTICS_TEAM_ID"]),
     manage: { href: "/admin/intelligence", label: "Analytics" },
   });
 
