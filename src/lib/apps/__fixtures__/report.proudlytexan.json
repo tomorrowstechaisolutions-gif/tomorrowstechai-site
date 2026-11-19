@@ -1,0 +1,201 @@
+{
+  "contract": "ttai.app-report/v1",
+  "app": "proudlytexan",
+  "generated_at": "2026-11-18T18:00:00.000Z",
+  "livemode": true,
+  "currency": "usd",
+  "metrics": {
+    "users_total": 3,
+    "users_new_24h": 0,
+    "users_new_7d": 1,
+    "users_new_30d": 2,
+    "active_7d": null,
+    "active_30d": null,
+    "paid_total": null,
+    "trialing": null,
+    "past_due": null,
+    "canceling": null,
+    "mrr_cents": null,
+    "collected_30d_cents": 9200,
+    "feedback_open": 2,
+    "ai_cost_30d_cents": null
+  },
+  "extra": [
+    {
+      "key": "orders_today",
+      "label": "Orders, today",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "sales_today_cents",
+      "label": "Sales, today",
+      "value": 4200,
+      "unit": "cents"
+    },
+    {
+      "key": "orders_7d",
+      "label": "Orders, 7 days",
+      "value": 2,
+      "unit": "count"
+    },
+    {
+      "key": "sales_7d_cents",
+      "label": "Sales, 7 days",
+      "value": 6000,
+      "unit": "cents"
+    },
+    {
+      "key": "orders_30d",
+      "label": "Orders, 30 days",
+      "value": 3,
+      "unit": "count"
+    },
+    {
+      "key": "sales_30d_cents",
+      "label": "Sales, 30 days",
+      "value": 11000,
+      "unit": "cents"
+    },
+    {
+      "key": "aov_30d_cents",
+      "label": "Average order, 30 days",
+      "value": 3667,
+      "unit": "cents"
+    },
+    {
+      "key": "orders_total",
+      "label": "Paid orders, all time",
+      "value": 4,
+      "unit": "count"
+    },
+    {
+      "key": "sales_total_cents",
+      "label": "Sales, all time",
+      "value": 13500,
+      "unit": "cents"
+    },
+    {
+      "key": "merch_orders_30d",
+      "label": "Merchandise orders, 30 days",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "merch_sales_30d_cents",
+      "label": "Merchandise sales, 30 days",
+      "value": 4200,
+      "unit": "cents"
+    },
+    {
+      "key": "digital_orders_30d",
+      "label": "Digital download orders, 30 days",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "digital_sales_30d_cents",
+      "label": "Digital download sales, 30 days",
+      "value": 1800,
+      "unit": "cents"
+    },
+    {
+      "key": "gift_card_sales_30d_cents",
+      "label": "Gift cards sold, 30 days",
+      "value": 5000,
+      "unit": "cents"
+    },
+    {
+      "key": "fulfilment_waiting",
+      "label": "Paid, not yet sent to Printful",
+      "value": 0,
+      "unit": "count"
+    },
+    {
+      "key": "fulfilment_in_production",
+      "label": "In production at Printful",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "fulfilment_done_30d",
+      "label": "Fulfilled, 30 days",
+      "value": 0,
+      "unit": "count"
+    },
+    {
+      "key": "fulfilment_errors",
+      "label": "Fulfilment errors",
+      "value": 0,
+      "unit": "count"
+    },
+    {
+      "key": "refunds_30d",
+      "label": "Refunds, 30 days",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "refunds_30d_cents",
+      "label": "Refunded, 30 days",
+      "value": 1800,
+      "unit": "cents"
+    }
+  ],
+  "health": [
+    {
+      "key": "fulfilment",
+      "label": "Order fulfilment",
+      "status": "healthy",
+      "message": "Every paid order has been sent on.",
+      "checked_at": "2026-11-18T18:00:00.000Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "order:PT-1001",
+      "kind": "order",
+      "at": "2026-11-18T16:00:00.000Z",
+      "summary": "New order: merchandise",
+      "plan": null,
+      "amount_cents": 4200,
+      "url": "https://www.proudlytexan.com/admin/orders/00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "refund:re_1",
+      "kind": "refund",
+      "at": "2026-11-16T18:00:00.000Z",
+      "summary": "Refund issued",
+      "plan": null,
+      "amount_cents": 1800,
+      "url": null
+    },
+    {
+      "id": "order:PT-1002",
+      "kind": "order",
+      "at": "2026-11-15T18:00:00.000Z",
+      "summary": "New order: digital download",
+      "plan": null,
+      "amount_cents": 1800,
+      "url": "https://www.proudlytexan.com/admin/orders/00000000-0000-4000-8000-000000000002"
+    },
+    {
+      "id": "order:PT-1003",
+      "kind": "order",
+      "at": "2026-11-08T18:00:00.000Z",
+      "summary": "New order: gift card",
+      "plan": null,
+      "amount_cents": 5000,
+      "url": "https://www.proudlytexan.com/admin/orders/00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "order:PT-1004",
+      "kind": "order",
+      "at": "2026-10-04T18:00:00.000Z",
+      "summary": "New order: merchandise",
+      "plan": null,
+      "amount_cents": 2500,
+      "url": "https://www.proudlytexan.com/admin/orders/00000000-0000-4000-8000-000000000004"
+    }
+  ]
+}

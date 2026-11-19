@@ -38,6 +38,8 @@ const KIND_LABEL: Record<ReportEventKind, string> = {
   feedback: "Feedback",
   lead: "Lead",
   application: "Application",
+  order: "Order",
+  refund: "Refund",
 };
 
 const KIND_TONE: Record<ReportEventKind, string> = {
@@ -49,6 +51,8 @@ const KIND_TONE: Record<ReportEventKind, string> = {
   feedback: "t-muted",
   lead: "t-ok",
   application: "t-info",
+  order: "t-ok",
+  refund: "t-warn",
 };
 
 type Tile = { key: keyof ReportMetrics; label: string; cents?: boolean; hint?: string };
@@ -106,6 +110,22 @@ function extraValue(entry: ReportExtra): string {
   if (entry.unit === "cents") return money(entry.value, { cents: true });
   if (entry.unit === "percent") return `${entry.value}%`;
   return count(entry.value);
+}
+
+/** Past this many, a product's own numbers get a full-width panel. */
+const MANY_EXTRAS = 8;
+
+function ExtraTiles({ extra }: { extra: ReportExtra[] }) {
+  return (
+    <div className="cc-stats">
+      {extra.map((entry) => (
+        <div className="cc-stat" key={entry.key}>
+          <div className="cc-stat-label">{entry.label}</div>
+          <div className="cc-stat-value">{extraValue(entry)}</div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /** One metric over the days that have a value. Missing days stay missing. */
@@ -207,6 +227,7 @@ export default function BusinessTab({
   // ── A report exists ──────────────────────────────────────────────────
   const fresh = isFresh(report.pulledAt, new Date());
   const m = report.metrics;
+  const manyExtras = report.extra.length > MANY_EXTRAS;
 
   const header: ReactNode = (
     <div className="cc-taglist" style={{ flexWrap: "wrap" }}>
@@ -236,6 +257,15 @@ export default function BusinessTab({
         ) : null}
       </Panel>
 
+      {/* A store reports a couple of dozen numbers of its own (orders, sales,
+          fulfilment, each book). That many gets the full width, ahead of the
+          subscription tiles, because for a store it IS the business. */}
+      {manyExtras ? (
+        <Panel title="Its own numbers" sub="Reported by the product" icon={<IconDollar size={15} />} className="cc-s12" bodyClass="flush">
+          <ExtraTiles extra={report.extra} />
+        </Panel>
+      ) : null}
+
       <Panel title="Money" icon={<IconDollar size={15} />} className="cc-s12" bodyClass="flush">
         <Tiles tiles={MONEY} metrics={m} />
       </Panel>
@@ -246,16 +276,7 @@ export default function BusinessTab({
 
       <Panel title="Operations" icon={<IconZap size={15} />} className="cc-s6" bodyClass="flush">
         <Tiles tiles={OPERATIONS} metrics={m} />
-        {report.extra.length > 0 ? (
-          <div className="cc-stats">
-            {report.extra.map((entry) => (
-              <div className="cc-stat" key={entry.key}>
-                <div className="cc-stat-label">{entry.label}</div>
-                <div className="cc-stat-value">{extraValue(entry)}</div>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        {report.extra.length > 0 && !manyExtras ? <ExtraTiles extra={report.extra} /> : null}
       </Panel>
 
       <Panel title="Its own pipelines" sub="Reported by the product" icon={<IconPulse size={15} />} className="cc-s6" bodyClass="flush">
@@ -294,7 +315,7 @@ export default function BusinessTab({
       <Panel title="Recent activity" sub="What happened inside the product" icon={<IconPulse size={15} />} className="cc-s12" bodyClass="flush">
         {events.length === 0 ? (
           <div className="cc-panel-body">
-            <EmptyState title="Nothing reported yet" text="Signups, upgrades, cancellations and failed payments land here as the product reports them." />
+            <EmptyState title="Nothing reported yet" text="Signups, orders, upgrades, cancellations and failed payments land here as the product reports them." />
           </div>
         ) : (
           <div className="cc-timeline">

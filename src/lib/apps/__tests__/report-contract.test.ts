@@ -26,7 +26,7 @@ test.each<[string, (p: Loose) => void | null, string]>([
   ["fractional metric", (p) => { p.metrics.mrr_cents = 9.5; }, "mrr_cents"],
   ["NaN metric", (p) => { p.metrics.mrr_cents = Number.NaN; }, "mrr_cents"],
   ["bad health word", (p) => { p.health[0].status = "ok"; }, "health"],
-  ["bad event kind", (p) => { p.events[0].kind = "refund"; }, "events"],
+  ["bad event kind", (p) => { p.events[0].kind = "chargeback"; }, "events"],
   ["bad date", (p) => { p.generated_at = "yesterday"; }, "generated_at"],
   ["missing app", (p) => { p.app = ""; }, "app"],
   ["livemode not boolean", (p) => { p.livemode = "yes"; }, "livemode"],
@@ -140,5 +140,56 @@ test("accepts a report built by Pool Business AI", async () => {
     expect(r.report.extra.find((e) => e.key === "pools_serviced")?.value).toBe(200);
     expect([...new Set(r.report.events.map((e) => e.kind))].sort()).toEqual(
       ["application", "cancel", "lead", "payment_failed", "signup", "upgrade"]);
+  }
+});
+
+// The two retail stores. A store has orders and refunds, not subscriptions,
+// so its feed uses two kinds of its own. Both fixtures below were produced
+// by each store's own buildReport(): proudlytexan-site
+// src/lib/portfolio-report.ts (TypeScript, Next.js) and darktidessupply-site
+// api/_portfolio-report.js (plain Node).
+test("accepts order and refund events", () => {
+  const p = clone();
+  p.events = [
+    { ...p.events[0], id: "order:PT-1001", kind: "order", summary: "New order: merchandise", plan: null, amount_cents: 4200, url: null },
+    { ...p.events[0], id: "refund:1", kind: "refund", summary: "Refund issued", plan: null, amount_cents: 1800, url: null },
+  ];
+  const r = parseReport(p);
+  expect(r.ok).toBe(true);
+  if (r.ok) expect(r.report.events.map((e) => e.kind)).toEqual(["order", "refund"]);
+});
+
+test("accepts a report built by Proudly Texan", async () => {
+  const store = (await import("../__fixtures__/report.proudlytexan.json")).default;
+  const r = parseReport(store);
+  expect(r.ok).toBe(true);
+  if (r.ok) {
+    expect(r.report.app).toBe("proudlytexan");
+    // A store has no subscribers. Null, so it never adds to the portfolio
+    // totals for paid subscribers or MRR.
+    expect(r.report.metrics.paid_total).toBeNull();
+    expect(r.report.metrics.mrr_cents).toBeNull();
+    expect(r.report.metrics.users_total).toBe(3);
+    expect(r.report.metrics.collected_30d_cents).toBe(9200);
+    expect(r.report.extra.find((e) => e.key === "orders_30d")?.value).toBe(3);
+    expect(r.report.extra.find((e) => e.key === "fulfilment_in_production")?.value).toBe(1);
+    expect([...new Set(r.report.events.map((e) => e.kind))].sort()).toEqual(["order", "refund"]);
+    expect(JSON.stringify(r.report)).not.toContain("@");
+  }
+});
+
+test("accepts a report built by Dark Tides Supply", async () => {
+  const store = (await import("../__fixtures__/report.darktidessupply.json")).default;
+  const r = parseReport(store);
+  expect(r.ok).toBe(true);
+  if (r.ok) {
+    expect(r.report.app).toBe("darktidessupply");
+    // Society memberships are its one subscription.
+    expect(r.report.metrics.paid_total).toBe(4);
+    expect(r.report.metrics.mrr_cents).toBe(3996);
+    expect(r.report.extra.find((e) => e.key === "books_units_30d")?.value).toBe(2);
+    expect(r.report.extra.find((e) => e.key === "books_sales_30d_cents")?.value).toBe(1800);
+    expect(r.report.extra.filter((e) => e.label.startsWith("Book: ")).length).toBe(2);
+    expect(JSON.stringify(r.report)).not.toContain("cs_live");
   }
 });
