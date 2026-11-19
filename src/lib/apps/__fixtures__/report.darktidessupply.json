@@ -1,0 +1,196 @@
+{
+  "contract": "ttai.app-report/v1",
+  "app": "darktidessupply",
+  "generated_at": "2026-11-18T18:00:00.000Z",
+  "livemode": true,
+  "currency": "usd",
+  "metrics": {
+    "users_total": 3,
+    "users_new_24h": 0,
+    "users_new_7d": 1,
+    "users_new_30d": 2,
+    "active_7d": null,
+    "active_30d": null,
+    "paid_total": 4,
+    "trialing": 0,
+    "past_due": 1,
+    "canceling": 1,
+    "mrr_cents": 3996,
+    "collected_30d_cents": 9300,
+    "feedback_open": null,
+    "ai_cost_30d_cents": null
+  },
+  "extra": [
+    {
+      "key": "orders_today",
+      "label": "Orders, today",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "sales_today_cents",
+      "label": "Sales, today",
+      "value": 4200,
+      "unit": "cents"
+    },
+    {
+      "key": "orders_7d",
+      "label": "Orders, 7 days",
+      "value": 2,
+      "unit": "count"
+    },
+    {
+      "key": "sales_7d_cents",
+      "label": "Sales, 7 days",
+      "value": 5100,
+      "unit": "cents"
+    },
+    {
+      "key": "orders_30d",
+      "label": "Orders, 30 days",
+      "value": 3,
+      "unit": "count"
+    },
+    {
+      "key": "sales_30d_cents",
+      "label": "Sales, 30 days",
+      "value": 10200,
+      "unit": "cents"
+    },
+    {
+      "key": "aov_30d_cents",
+      "label": "Average order, 30 days",
+      "value": 3400,
+      "unit": "cents"
+    },
+    {
+      "key": "orders_total",
+      "label": "Paid orders, all time",
+      "value": 4,
+      "unit": "count"
+    },
+    {
+      "key": "sales_total_cents",
+      "label": "Sales, all time",
+      "value": 12700,
+      "unit": "cents"
+    },
+    {
+      "key": "refunds_30d",
+      "label": "Refunds, 30 days",
+      "value": 1,
+      "unit": "count"
+    },
+    {
+      "key": "refunds_30d_cents",
+      "label": "Refunded, 30 days",
+      "value": 900,
+      "unit": "cents"
+    },
+    {
+      "key": "merch_orders_30d",
+      "label": "Merchandise orders, 30 days",
+      "value": 2,
+      "unit": "count"
+    },
+    {
+      "key": "merch_sales_30d_cents",
+      "label": "Merchandise sales, 30 days",
+      "value": 8400,
+      "unit": "cents"
+    },
+    {
+      "key": "books_sales_30d_cents",
+      "label": "Book sales, 30 days",
+      "value": 1800,
+      "unit": "cents"
+    },
+    {
+      "key": "books_units_30d",
+      "label": "Books sold, 30 days",
+      "value": 2,
+      "unit": "count"
+    },
+    {
+      "key": "books_units_total",
+      "label": "Books sold, all time",
+      "value": 10,
+      "unit": "count"
+    },
+    {
+      "key": "book_5a4afcdd44",
+      "label": "Book: Blackbeard: The Last Voyage",
+      "value": 7,
+      "unit": "count"
+    },
+    {
+      "key": "book_28c83a3b26",
+      "label": "Book: Anne Bonny",
+      "value": 3,
+      "unit": "count"
+    }
+  ],
+  "health": [
+    {
+      "key": "order_book",
+      "label": "Stripe order book",
+      "status": "healthy",
+      "message": "Read 4 paid orders from Stripe.",
+      "checked_at": "2026-11-18T18:00:00.000Z"
+    },
+    {
+      "key": "book_delivery",
+      "label": "Book delivery",
+      "status": "healthy",
+      "message": "Every paid book order in the last 30 days has a delivery record.",
+      "checked_at": "2026-11-18T18:00:00.000Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "order:d04e1d66bfd641b92648",
+      "kind": "order",
+      "at": "2026-11-18T16:00:00.000Z",
+      "summary": "New order: merchandise",
+      "plan": null,
+      "amount_cents": 4200,
+      "url": null
+    },
+    {
+      "id": "refund:f91afed6d1dc266af26d",
+      "kind": "refund",
+      "at": "2026-11-16T18:00:00.000Z",
+      "summary": "Refund issued",
+      "plan": null,
+      "amount_cents": 900,
+      "url": null
+    },
+    {
+      "id": "order:90c95bed9e3611dfcb31",
+      "kind": "order",
+      "at": "2026-11-15T18:00:00.000Z",
+      "summary": "New order: digital book",
+      "plan": null,
+      "amount_cents": 900,
+      "url": null
+    },
+    {
+      "id": "order:746a46ad06166f479db8",
+      "kind": "order",
+      "at": "2026-11-08T18:00:00.000Z",
+      "summary": "New order: merchandise and a book",
+      "plan": null,
+      "amount_cents": 5100,
+      "url": null
+    },
+    {
+      "id": "order:6f4ebe38270fe2e97786",
+      "kind": "order",
+      "at": "2026-10-04T18:00:00.000Z",
+      "summary": "New order: merchandise",
+      "plan": null,
+      "amount_cents": 2500,
+      "url": null
+    }
+  ]
+}

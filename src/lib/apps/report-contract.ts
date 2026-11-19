@@ -58,6 +58,10 @@ export const REPORT_EVENT_KINDS = [
   // and a job or partner application. Products sold through reps and staffed
   // through a careers page report these as they happen.
   "lead", "application",
+  // A store sells one order at a time rather than a subscription, so its
+  // feed is orders coming in and refunds going out. Same rule as every
+  // other event: a kind, a time, an amount and a generic summary. Never who.
+  "order", "refund",
 ] as const;
 export type ReportEventKind = (typeof REPORT_EVENT_KINDS)[number];
 
