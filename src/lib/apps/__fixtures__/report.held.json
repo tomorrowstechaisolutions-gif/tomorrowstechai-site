@@ -1,0 +1,36 @@
+{
+  "contract": "ttai.app-report/v1",
+  "app": "held",
+  "generated_at": "2026-11-18T15:00:02Z",
+  "livemode": true,
+  "currency": "usd",
+  "metrics": {
+    "users_total": 184,
+    "users_new_24h": 3,
+    "users_new_7d": 17,
+    "users_new_30d": 52,
+    "active_7d": null,
+    "active_30d": null,
+    "paid_total": 11,
+    "trialing": 4,
+    "past_due": 1,
+    "canceling": 1,
+    "mrr_cents": 12389,
+    "collected_30d_cents": 11390,
+    "feedback_open": 6,
+    "ai_cost_30d_cents": 2140
+  },
+  "extra": [
+    { "key": "households", "label": "Households", "value": 71, "unit": "count" },
+    { "key": "calendars_connected", "label": "Calendars connected", "value": 39, "unit": "count" }
+  ],
+  "health": [
+    { "key": "stripe_webhooks", "label": "Stripe webhooks", "status": "healthy", "message": "Last event 2h ago", "checked_at": "2026-11-18T15:00:02Z" },
+    { "key": "reminders", "label": "Reminders", "status": "warning", "message": "Last run 26h ago", "checked_at": "2026-11-18T15:00:02Z" }
+  ],
+  "events": [
+    { "id": "evt_1Q9", "kind": "upgrade", "at": "2026-11-18T14:12:00Z", "summary": "New Family plan", "plan": "family", "amount_cents": 999, "url": "https://myheldapp.com/admin/accounts" },
+    { "id": "signup:7b1c", "kind": "signup", "at": "2026-11-18T13:40:00Z", "summary": "New signup", "plan": null, "amount_cents": null, "url": "https://myheldapp.com/admin/people" },
+    { "id": "feedback:91", "kind": "feedback", "at": "2026-11-18T09:05:00Z", "summary": "New feedback: bug", "plan": null, "amount_cents": null, "url": "https://myheldapp.com/admin/beta/feedback" }
+  ]
+}
