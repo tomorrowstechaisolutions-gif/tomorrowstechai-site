@@ -63,6 +63,80 @@ export function outstandingCents(inv: {
   return Math.max(0, inv.total_cents - inv.amount_paid_cents);
 }
 
+/** Today's date in Chicago as YYYY-MM-DD, the calendar the business runs on. */
+function chicagoToday(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+type RecurringFacts = {
+  status: string;
+  total_cents: number;
+  amount_paid_cents: number;
+  recurring_cents: number;
+  recurring_starts_on: string | null;
+};
+
+/** The recurring line has a start date that is still ahead of today. */
+export function recurringStartsLater(
+  inv: { recurring_cents: number; recurring_starts_on: string | null },
+  now: Date = new Date()
+): boolean {
+  if (inv.recurring_cents <= 0 || !inv.recurring_starts_on) return false;
+  return inv.recurring_starts_on > chicagoToday(now);
+}
+
+/**
+ * Nothing more can be set up from this invoice.
+ *
+ * A paid invoice is finished. A monthly-only invoice has a one-time total of
+ * zero, so "paid" can never come from the one-time side: money against it, or
+ * the paid stamp the webhook sets when its subscription starts, is what says
+ * the subscription is running. Without this the page would offer a second
+ * subscription to a client who already has one.
+ */
+export function invoiceSettled(inv: RecurringFacts): boolean {
+  if (inv.status === "paid") return true;
+  if (inv.total_cents <= 0 && inv.amount_paid_cents > 0) return true;
+  return outstandingCents(inv) <= 0 && inv.recurring_cents <= 0;
+}
+
+/**
+ * What the card is charged the moment checkout completes.
+ *
+ * The outstanding one-time balance, plus the first recurring period when the
+ * recurring line starts today (or has no start date, or the date has passed).
+ * A recurring line that starts later is not charged until that date. This is
+ * the same sum Stripe arrives at from the checkout session, so the page and
+ * the email can state it before the client gets there.
+ */
+export function dueTodayCents(inv: RecurringFacts, now: Date = new Date()): number {
+  if (invoiceSettled(inv)) return 0;
+  const firstPeriod =
+    inv.recurring_cents > 0 && !recurringStartsLater(inv, now) ? inv.recurring_cents : 0;
+  return outstandingCents(inv) + firstPeriod;
+}
+
+/**
+ * The moment the first recurring charge is taken, as Unix seconds, or null
+ * when it bills straight away.
+ *
+ * Noon UTC on the start date: early morning in Chicago, and the same calendar
+ * day in both, so "the 1st" is the 1st wherever it is read. Stripe renews on
+ * this day of the month from then on.
+ */
+export function recurringStartUnix(
+  inv: { recurring_cents: number; recurring_starts_on: string | null },
+  now: Date = new Date()
+): number | null {
+  if (!recurringStartsLater(inv, now)) return null;
+  return Math.floor(new Date(`${inv.recurring_starts_on}T12:00:00Z`).getTime() / 1000);
+}
+
 /**
  * Overdue is a fact about the calendar, not a status somebody set.
  *

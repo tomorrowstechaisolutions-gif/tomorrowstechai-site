@@ -14,7 +14,7 @@
  * declaration after it is silently dropped.
  */
 
-import { formatMoney, formatDate, outstandingCents } from "./pricing";
+import { dueTodayCents, formatMoney, formatDate, outstandingCents, recurringStartsLater } from "./pricing";
 import type { Invoice, InvoiceItem } from "./types";
 import {
   BRAND, renderEmail, eyebrow, heading, paragraph, subheading,
@@ -69,6 +69,17 @@ export function moneyRows(inv: Invoice, items: InvoiceItem[]): MoneyRow[] {
     });
   }
 
+  // What the card is charged on the day, when the first month is taken at
+  // checkout. Without it a monthly-only email names a rate and no amount due.
+  if (recurringOnly && dueTodayCents(inv) > 0) {
+    rows.push({
+      label: "Due today",
+      value: money(dueTodayCents(inv)),
+      strong: true,
+      note: `first ${inv.recurring_interval}`,
+    });
+  }
+
   if (inv.recurring_cents > 0) {
     const per = `/${inv.recurring_interval}`;
     const recurringItems = items.filter((i) => i.item_kind === "recurring");
@@ -79,10 +90,14 @@ export function moneyRows(inv: Invoice, items: InvoiceItem[]): MoneyRow[] {
     rows.push({
       label: recurringItems.length ? `Total per ${inv.recurring_interval}` : "Hosting & management",
       value: `${money(inv.recurring_cents)}${per}`,
-      strong: recurringOnly,
-      note: inv.recurring_starts_on
+      strong: recurringOnly && dueTodayCents(inv) <= 0,
+      note: recurringStartsLater(inv)
         ? `starts ${formatDate(inv.recurring_starts_on)}`
-        : "billed separately",
+        : recurringOnly
+          ? "charged automatically"
+          : inv.recurring_starts_on
+            ? `starts ${formatDate(inv.recurring_starts_on)}`
+            : "billed separately",
     });
   }
 
@@ -184,10 +199,14 @@ export function buildInvoiceEmail(
   const steps = linesOf(f(c.pay_steps));
   const closing = paragraphsOf(f(c.closing));
 
+  // The inbox preview line. A monthly-only invoice used to read "$0 due" here.
+  const today = dueTodayCents(inv);
   const preheader = [
     inv.invoice_number,
-    `${formatMoney(due, inv.currency)} due`,
-    inv.due_date ? `by ${formatDate(inv.due_date)}` : "on receipt",
+    isRecurringOnly(inv)
+      ? today > 0 ? `${formatMoney(today, inv.currency)} due today` : null
+      : `${formatMoney(due, inv.currency)} due`,
+    isRecurringOnly(inv) ? null : inv.due_date ? `by ${formatDate(inv.due_date)}` : "on receipt",
     inv.recurring_cents > 0
       ? `then ${formatMoney(inv.recurring_cents, inv.currency)}/${inv.recurring_interval}`
       : null,

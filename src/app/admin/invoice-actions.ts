@@ -481,6 +481,11 @@ export async function updateInvoiceAction(formData: FormData) {
       notes: str(formData, "notes", 4000) || null,
       notes_internal: str(formData, "notes_internal", 6000) || null,
       billing: lines.some((l) => l.item_kind === "recurring") ? "monthly" : "one_time",
+      // A checkout link opened before this edit quotes the old figures and
+      // the old start date. Drop it so the next press of Pay builds a new one.
+      checkout_url: null,
+      stripe_session_id: null,
+      expires_at: null,
     })
     .eq("id", id);
 

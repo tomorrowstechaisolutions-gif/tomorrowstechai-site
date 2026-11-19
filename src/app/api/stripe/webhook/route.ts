@@ -707,6 +707,7 @@ async function linkInvoiceSubscription(invoiceId: string, stripeCustomerId: stri
   if (Object.keys(patch).length) await db.from("customers").update(patch).eq("id", customerId);
 
   if (!subscriptionId) return;
+  await stampMonthlyOnlyInvoicePaid(invoiceId);
   const { data: already } = await db.from("client_services").select("id").eq("subscription_id", subscriptionId).limit(1);
   if (already?.length) return;
 
@@ -733,6 +734,26 @@ async function linkInvoiceSubscription(invoiceId: string, stripeCustomerId: stri
       }
     }
   }
+}
+
+/**
+ * A monthly-only invoice is finished once its subscription exists.
+ *
+ * Its one-time total is zero, so the payments trigger can never move it to
+ * `paid` (it needs a total above zero to compare against, and would leave it
+ * `sent`, or `partial` once the first month is collected). Left like that, the
+ * client's page would keep offering to start the subscription again. Only
+ * touches an open invoice with nothing on the one-time side. Safe to repeat.
+ */
+async function stampMonthlyOnlyInvoicePaid(invoiceId: string) {
+  const db = supabaseAdmin();
+  await db
+    .from("invoices")
+    .update({ status: "paid", paid_at: new Date().toISOString() })
+    .eq("id", invoiceId)
+    .lte("total_cents", 0)
+    .gt("recurring_cents", 0)
+    .in("status", ["sent", "partial"]);
 }
 
 /**
@@ -865,6 +886,10 @@ async function handleInvoiceDocumentPaid(event: StripeEvent) {
     recorded_by: "stripe",
     stripe_payment_intent: paymentIntent ?? sessionId,
   });
+
+  // The insert above re-runs the payments trigger, which puts a monthly-only
+  // invoice back to `partial`. Its subscription is running: stamp it again.
+  if (str(session, "subscription")) await stampMonthlyOnlyInvoicePaid(invoiceId);
 
   await db
     .from("invoices")

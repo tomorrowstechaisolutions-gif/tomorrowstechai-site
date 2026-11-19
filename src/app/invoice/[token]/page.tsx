@@ -5,7 +5,9 @@ import { BrandMark } from "@/components/BrandMark";
 import InvoiceDocument from "@/components/invoice/InvoiceDocument";
 import InvoicePayBlock from "@/components/invoice/InvoicePayBlock";
 import { getInvoiceByToken, recordInvoiceView } from "@/lib/invoices/service";
-import { formatDate, formatMoney, outstandingCents } from "@/lib/invoices/pricing";
+import {
+  dueTodayCents, formatDate, formatMoney, invoiceSettled, outstandingCents, recurringStartsLater,
+} from "@/lib/invoices/pricing";
 import { clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -83,33 +85,46 @@ export default async function PublicInvoicePage({
   const paymentFlag = typeof query.payment === "string" ? query.payment : null;
   const money = (cents: number) => formatMoney(cents, inv.currency);
 
-  const canPay = outstanding > 0 || inv.recurring_cents > 0;
+  // A monthly-only invoice has a one-time total of zero. It is still owed:
+  // either the first month is charged today, or the card is saved now and the
+  // first charge lands on the start date. Reading "nothing outstanding" as
+  // "paid" here hid the pay button from a client who had not paid anything.
+  const settled = invoiceSettled(inv);
+  const dueToday = dueTodayCents(inv);
+  const hasRecurring = inv.recurring_cents > 0;
+  const startsLater = recurringStartsLater(inv);
+  const firstPeriodToday = hasRecurring && !startsLater;
+  const per = inv.recurring_interval;
+
+  const canPay = outstanding > 0 || hasRecurring;
 
   const payment = canPay ? (
     <InvoicePayBlock
       token={inv.public_token}
-      dueLabel={money(outstanding > 0 ? outstanding : inv.recurring_cents)}
-      state={
-        outstanding === 0 && inv.recurring_cents === 0
-          ? "paid"
-          : paymentFlag === "cancelled"
-            ? "cancelled"
-            : outstanding === 0
-              ? "paid"
-              : "due"
+      buttonLabel={dueToday > 0 ? `Pay ${money(dueToday)}` : `Set up ${per}ly payment`}
+      state={settled ? "paid" : paymentFlag === "cancelled" ? "cancelled" : "due"}
+      paidNote={
+        hasRecurring && inv.total_cents <= 0
+          ? `Your ${per}ly payment is set up — thank you. ${money(inv.recurring_cents)} is charged automatically each ${per}.`
+          : undefined
       }
       breakdown={[
-        { label: "Invoice total", value: money(inv.total_cents) },
+        ...(inv.total_cents > 0
+          ? [{ label: "Invoice total", value: money(inv.total_cents) }]
+          : []),
         ...(inv.amount_paid_cents > 0
           ? [{ label: "Already received", value: money(inv.amount_paid_cents) }]
           : []),
-        { label: "Due today", value: money(outstanding), strong: true },
-        ...(inv.recurring_cents > 0
+        ...(firstPeriodToday
+          ? [{ label: `First ${per} of service`, value: money(inv.recurring_cents) }]
+          : []),
+        { label: "Due today", value: money(dueToday), strong: true },
+        ...(hasRecurring
           ? [{
-              label: inv.recurring_starts_on
-                ? `Then ${money(inv.recurring_cents)} per ${inv.recurring_interval} from ${formatDate(inv.recurring_starts_on)}`
-                : `Then per ${inv.recurring_interval}`,
-              value: `${money(inv.recurring_cents)}/${inv.recurring_interval}`,
+              label: startsLater
+                ? `Then every ${per}, starting ${formatDate(inv.recurring_starts_on)}`
+                : `Then every ${per}, charged automatically`,
+              value: `${money(inv.recurring_cents)}/${per}`,
             }]
           : []),
       ]}

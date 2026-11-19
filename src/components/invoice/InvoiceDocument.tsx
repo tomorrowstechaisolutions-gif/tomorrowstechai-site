@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { BrandMark } from "@/components/BrandMark";
-import { formatDate, formatMoney, isOverdue, outstandingCents } from "@/lib/invoices/pricing";
+import {
+  dueTodayCents, formatDate, formatMoney, invoiceSettled, isOverdue, outstandingCents, recurringStartsLater,
+} from "@/lib/invoices/pricing";
 import { STATUS_LABELS } from "@/lib/invoices/config";
 import type { FullInvoice } from "@/lib/invoices/types";
 
@@ -58,6 +60,23 @@ export default function InvoiceDocument({
   const outstanding = outstandingCents(inv);
   const overdue = isOverdue(inv);
 
+  // Monthly-only: no one-time total, so the one-time boxes would all read $0
+  // and the header would call an unpaid invoice settled.
+  const monthlyOnly = inv.total_cents <= 0 && inv.recurring_cents > 0;
+  const settled = invoiceSettled(inv);
+  const dueToday = dueTodayCents(inv);
+  const startsLater = recurringStartsLater(inv);
+  const per = inv.recurring_interval;
+  const headline = settled
+    ? monthlyOnly ? `Your ${per}ly payment is set up — thank you.` : "Settled in full — thank you."
+    : monthlyOnly
+      ? startsLater ? `First payment on ${formatDate(inv.recurring_starts_on)}.` : `First ${per} due now.`
+      : outstanding <= 0
+        ? "Settled in full — thank you."
+        : overdue
+          ? `This was due on ${formatDate(inv.due_date)}.`
+          : `Due by ${formatDate(inv.due_date)}.`;
+
   return (
     <div className="pr-doc">
       {mode === "preview" ? (
@@ -91,19 +110,17 @@ export default function InvoiceDocument({
                 : ""}
               .
             </p>
-            {inv.due_date ? (
-              <p className="pr-valid">
-                {outstanding <= 0
-                  ? `Settled in full — thank you.`
-                  : overdue
-                    ? `This was due on ${formatDate(inv.due_date)}.`
-                    : `Due by ${formatDate(inv.due_date)}.`}
-              </p>
-            ) : null}
+            {inv.due_date || monthlyOnly ? <p className="pr-valid">{headline}</p> : null}
           </div>
           <aside className="pr-price">
-            <span>{outstanding > 0 ? "Amount due" : "Invoice total"}</span>
-            <strong>{money(outstanding > 0 ? outstanding : inv.total_cents)}</strong>
+            <span>
+              {dueToday > 0
+                ? "Amount due"
+                : monthlyOnly
+                  ? settled ? `Per ${per}` : "First payment"
+                  : "Invoice total"}
+            </span>
+            <strong>{money(dueToday > 0 ? dueToday : monthlyOnly ? inv.recurring_cents : inv.total_cents)}</strong>
             <p>
               {outstanding > 0 && inv.amount_paid_cents > 0
                 ? `${money(inv.amount_paid_cents)} of ${money(inv.total_cents)} already received`
@@ -198,11 +215,13 @@ export default function InvoiceDocument({
         <section id="totals" className="pr-block">
           <div className="pr-head"><span>02</span><h2>The figures</h2></div>
           <div className="pr-pricegrid">
-            <div>
-              <span>Subtotal</span>
-              <strong>{money(inv.subtotal_cents)}</strong>
-              <small>before anything already paid</small>
-            </div>
+            {!monthlyOnly ? (
+              <div>
+                <span>Subtotal</span>
+                <strong>{money(inv.subtotal_cents)}</strong>
+                <small>before anything already paid</small>
+              </div>
+            ) : null}
             {inv.discount_cents > 0 ? (
               <div>
                 <span>Discount</span>
@@ -210,11 +229,13 @@ export default function InvoiceDocument({
                 <small>as agreed</small>
               </div>
             ) : null}
-            <div>
-              <span>Invoice total</span>
-              <strong>{money(inv.total_cents)}</strong>
-              <small>one-time</small>
-            </div>
+            {!monthlyOnly ? (
+              <div>
+                <span>Invoice total</span>
+                <strong>{money(inv.total_cents)}</strong>
+                <small>one-time</small>
+              </div>
+            ) : null}
             {inv.amount_paid_cents > 0 ? (
               <div>
                 <span>Already received</span>
@@ -223,9 +244,17 @@ export default function InvoiceDocument({
               </div>
             ) : null}
             <div className="is-due">
-              <span>Amount due</span>
-              <strong>{money(outstanding)}</strong>
-              <small>{inv.due_date ? `by ${formatDate(inv.due_date)}` : "on receipt"}</small>
+              <span>{monthlyOnly ? "Due today" : "Amount due"}</span>
+              <strong>{money(monthlyOnly ? dueToday : outstanding)}</strong>
+              <small>
+                {monthlyOnly
+                  ? settled
+                    ? "payment is set up"
+                    : startsLater
+                      ? `first payment ${formatDate(inv.recurring_starts_on)}`
+                      : `first ${per} of service`
+                  : inv.due_date ? `by ${formatDate(inv.due_date)}` : "on receipt"}
+              </small>
             </div>
             {inv.recurring_cents > 0 ? (
               <div>
