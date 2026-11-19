@@ -12,12 +12,16 @@ import { useState } from "react";
  */
 export default function InvoicePayBlock({
   token,
-  dueLabel,
+  buttonLabel,
   breakdown,
   state,
+  paidNote,
 }: {
   token: string;
-  dueLabel: string;
+  /** The whole button text: "Pay $49", or "Set up monthly payment". */
+  buttonLabel: string;
+  /** Replaces the paid-in-full line, for an invoice with no one-time total. */
+  paidNote?: string;
   breakdown: { label: string; value: string; strong?: boolean }[];
   state: "due" | "paid" | "cancelled";
 }) {
@@ -55,7 +59,7 @@ export default function InvoicePayBlock({
 
       {state === "paid" ? (
         <p className="pr-paid">
-          Paid in full — thank you. Nothing further is owed on this invoice.
+          {paidNote ?? "Paid in full — thank you. Nothing further is owed on this invoice."}
         </p>
       ) : (
         <>
@@ -78,7 +82,7 @@ export default function InvoicePayBlock({
           {error ? <p className="pr-error">{error}</p> : null}
 
           <button type="button" className="pr-submit" onClick={pay} disabled={busy}>
-            {busy ? "Opening secure checkout…" : `Pay ${dueLabel}`}
+            {busy ? "Opening secure checkout…" : buttonLabel}
           </button>
           <p className="pr-note">
             Payment is taken by Stripe. Card details are entered on Stripe&rsquo;s

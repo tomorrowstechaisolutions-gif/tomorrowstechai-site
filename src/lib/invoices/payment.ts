@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createInvoiceCheckoutSession, stripeConfigured } from "@/lib/stripe/client";
-import { formatMoney, outstandingCents } from "./pricing";
+import { formatMoney, invoiceSettled, outstandingCents, recurringStartUnix } from "./pricing";
 import { logInvoiceEvent } from "./service";
 import type { Invoice } from "./types";
 
@@ -26,20 +26,14 @@ function stillFresh(inv: Invoice): boolean {
   return new Date(inv.expires_at).getTime() > Date.now() + 60_000;
 }
 
-/** Days between now and when the recurring line is due to start. */
-function trialDays(startsOn: string | null): number {
-  if (!startsOn) return 0;
-  const diff = new Date(`${startsOn}T12:00:00Z`).getTime() - Date.now();
-  if (diff <= 0) return 0;
-  return Math.min(730, Math.ceil(diff / 86_400_000));
-}
-
 export async function ensureInvoiceCheckout(inv: Invoice): Promise<CheckoutResult> {
   const dueNow = outstandingCents(inv);
   const recurring = Math.max(0, inv.recurring_cents);
 
   if (dueNow <= 0 && recurring <= 0) return { ok: false, reason: "nothing_due" };
-  if (inv.status === "paid" && recurring <= 0) return { ok: false, reason: "nothing_due" };
+  // Settled covers a paid invoice and a monthly-only one whose subscription
+  // is already running. Opening checkout again would start a second one.
+  if (invoiceSettled(inv)) return { ok: false, reason: "nothing_due" };
   if (!inv.client_email) {
     return { ok: false, reason: "failed", error: "This invoice has no client email address." };
   }
@@ -59,7 +53,7 @@ export async function ensureInvoiceCheckout(inv: Invoice): Promise<CheckoutResul
       dueNowCents: dueNow,
       recurringCents: recurring,
       recurringInterval: inv.recurring_interval,
-      recurringStartDays: trialDays(inv.recurring_starts_on),
+      recurringStartsAt: recurringStartUnix(inv),
       token: inv.public_token,
     });
 

@@ -398,7 +398,7 @@ export async function createUpsellCheckoutSession(opts: {
  *  - The one-time amount is the OUTSTANDING balance, not the invoice total.
  *    Part of it may already have arrived as a cheque, and asking for the full
  *    figure again would be wrong in a way the client would notice.
- *  - `recurringStartDays` is passed in rather than fixed at the campaign's 30
+ *  - `recurringStartsAt` is passed in rather than fixed at the campaign's 30
  *    days, because hosting on an invoice starts when the invoice says it
  *    starts — usually a month after launch, sometimes today.
  */
@@ -412,12 +412,32 @@ export async function createInvoiceCheckoutSession(opts: {
   dueNowCents: number;
   recurringCents: number;
   recurringInterval: "month" | "year";
-  /** Free days before the first recurring charge. Zero bills immediately. */
-  recurringStartDays: number;
+  /**
+   * When the first recurring charge is taken, as Unix seconds. Null bills the
+   * first period immediately, at checkout.
+   */
+  recurringStartsAt: number | null;
   token: string;
 }): Promise<CheckoutSession> {
   const origin = siteOrigin();
   const withRecurring = opts.recurringCents > 0;
+
+  // The start is pinned to a moment, not counted in days from whenever the
+  // client happens to finish checkout. "Hosting from the 1st" paid on the
+  // 19th must still renew on the 1st, and a day count measured from the
+  // payment drifts by however long the link sat unopened. Stripe makes the
+  // end of this period the billing anchor, so every renewal lands on the
+  // same day of the month.
+  //
+  // Checkout refuses a trial_end less than 48 hours out. Inside that window
+  // a day count is the closest it will take, with a one-day floor.
+  const secondsAway = opts.recurringStartsAt ? opts.recurringStartsAt - Math.floor(Date.now() / 1000) : 0;
+  const start: Record<string, unknown> =
+    !withRecurring || secondsAway <= 0
+      ? {}
+      : secondsAway >= 49 * 3600
+        ? { trial_end: opts.recurringStartsAt }
+        : { trial_period_days: Math.max(1, Math.round(secondsAway / 86_400)) };
 
   const metadata = {
     kind: "invoice",
@@ -464,19 +484,16 @@ export async function createInvoiceCheckoutSession(opts: {
       metadata,
       ...(withRecurring
         ? {
-            subscription_data: {
-              ...(opts.recurringStartDays > 0
-                ? { trial_period_days: opts.recurringStartDays }
-                : {}),
-              metadata,
-            },
+            subscription_data: { ...start, metadata },
           }
         : { payment_intent_data: { metadata } }),
       success_url: `${origin}/invoice/${opts.token}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/invoice/${opts.token}?payment=cancelled`,
     },
-    // One live link per invoice row. Pressing pay twice reuses it.
-    `invoice:${opts.invoiceId}`
+    // One live link per invoice as it currently stands. Pressing pay twice
+    // reuses it; an invoice edited since gets a new one, because Stripe
+    // rejects a reused key whose figures have changed.
+    `invoice:${opts.invoiceId}:${opts.dueNowCents}:${opts.recurringCents}:${opts.recurringStartsAt ?? 0}`
   );
 }
 
