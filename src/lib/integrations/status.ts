@@ -9,6 +9,7 @@ import { metaCapiConfigured } from "@/lib/meta/capi";
 import { googleConnection } from "@/lib/google/oauth";
 import { zoomConnection } from "@/lib/zoom/oauth";
 import { connection as searchConsole, localConnection } from "@/lib/seo/search-console";
+import { lastSearchConsoleRun } from "@/lib/seo/gsc-sync";
 import { analyticsConfigured, probe as analyticsProbe } from "@/lib/analytics/vercel-web";
 import { analyticsCard, type AnalyticsProbe } from "./analytics-card";
 import { providerConnections } from "@/lib/apps/providers";
@@ -64,7 +65,7 @@ export async function loadIntegrations(): Promise<Integration[]> {
     safe<AnalyticsProbe>(() => analyticsProbe(), null),
     new Promise<AnalyticsProbe>((resolve) => setTimeout(() => resolve("timeout"), 5_000)),
   ]);
-  const [stripeLast, bank, emailDomain, emailLast, social, ai, google, zoom, apps, partners, metaLeadLast, tokens, trafficProbe] = await Promise.all([
+  const [stripeLast, bank, emailDomain, emailLast, social, ai, google, zoom, apps, partners, metaLeadLast, tokens, trafficProbe, gscRun] = await Promise.all([
     safe(async () => (await db.from("invoice_payments").select("created_at").eq("method", "stripe").order("created_at", { ascending: false }).limit(1)).data?.[0]?.created_at ?? null, null),
     safe(async () => (await db.from("bank_accounts").select("synced_at").order("synced_at", { ascending: false })).data ?? [], [] as Array<{ synced_at: string | null }>),
     safe(async () => (await db.from("email_sending_domains").select("domain, provider_status, spf_status, dkim_status, dmarc_status, last_error, last_checked_at, last_send_at").order("is_default", { ascending: false }).limit(1)).data?.[0] ?? null, null),
@@ -78,6 +79,7 @@ export async function loadIntegrations(): Promise<Integration[]> {
     safe(async () => (await db.from("leads").select("created_at").not("meta_leadgen_id", "is", null).order("created_at", { ascending: false }).limit(1)).data?.[0]?.created_at ?? null, null),
     safe(async () => (await db.from("social_account_tokens").select("provider")).data ?? [], [] as Array<{ provider: string }>),
     traffic,
+    safe(() => lastSearchConsoleRun(), null),
   ]);
 
   const out: Integration[] = [];
@@ -209,12 +211,16 @@ export async function loadIntegrations(): Promise<Integration[]> {
   });
   {
     const gsc = searchConsole();
+    // Connected means the last sync actually worked, not that keys exist.
     out.push({
       key: "search-console", name: "Google Search Console", category: "Google",
       purpose: "Search impressions, clicks and keyword positions for the SEO page.",
-      state: gsc.connected ? "keys_set" : gsc.missing.length < 3 ? "attention" : "not_set_up",
-      detail: gsc.connected ? `Keys set for ${gsc.property}. Data import isn't built yet.` : gsc.reason,
-      lastActivity: null, lastActivityLabel: null,
+      state: !gsc.connected ? (gsc.missing.length < 3 ? "attention" : "not_set_up") : !gscRun ? "keys_set" : gscRun.ok ? "connected" : "attention",
+      detail: !gsc.connected ? gsc.reason
+        : !gscRun ? `Keys set for ${gsc.property}. No sync has run yet; press Sync now on SEO.`
+        : gscRun.ok ? `Syncing ${gsc.property} every morning · ${plural(gscRun.rows, "row")} last run.`
+        : `Last sync failed: ${gscRun.error ?? "no detail"}`,
+      lastActivity: gscRun?.finishedAt ?? null, lastActivityLabel: gscRun ? "Last sync" : null,
       envs: env(["GOOGLE_SEARCH_CONSOLE_SITE_URL", "GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_SERVICE_ACCOUNT_KEY"]),
       manage: { href: "/admin/marketing/seo", label: "SEO" },
     });

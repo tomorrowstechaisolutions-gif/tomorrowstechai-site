@@ -25,6 +25,7 @@ import {
   queueSeoJobAction,
   removeCompetitorAction,
   runSeoAuditAction,
+  syncSearchConsoleAction,
 } from "@/app/admin/seo-actions";
 
 /**
@@ -151,8 +152,20 @@ function SearchPerformance({ board }: { board: Board }) {
       sub={lastSyncedAt ? `Synced ${shortDate(lastSyncedAt)}` : undefined}
       icon={<IconChart size={15} />}
       className="cc-s12"
+      footer={
+        connected ? (
+          <form action={syncSearchConsoleAction}>
+            <button type="submit" className="cc-btn">Sync now</button>
+            <span className="cc-note">
+              Pulls the latest search data from Google. Runs on its own every morning. Changes nothing on the site.
+            </span>
+          </form>
+        ) : undefined
+      }
     >
-      {series.length === 0 ? (
+      {series.length === 0 && connected ? (
+        <p className="cc-note">{reason}</p>
+      ) : series.length === 0 ? (
         <NotConnected what="Search Console" reason={reason} icon={<IconSearch size={17} />} />
       ) : (
         <MiniBars
@@ -162,9 +175,6 @@ function SearchPerformance({ board }: { board: Board }) {
           format={(v, key) => `${shortDate(key)}: ${v} click${v === 1 ? "" : "s"}`}
         />
       )}
-      {connected && series.length === 0 ? (
-        <p className="cc-note">Credentials are set, but nothing has synced into seo_queries yet.</p>
-      ) : null}
     </Panel>
   );
 }

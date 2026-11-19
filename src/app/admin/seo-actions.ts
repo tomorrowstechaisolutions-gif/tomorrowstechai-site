@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { runAudit } from "@/lib/seo/audit";
+import { syncSearchConsole } from "@/lib/seo/gsc-sync";
 import { loadSeoBoard, type SeoBoard } from "@/lib/seo/queries";
 
 /**
@@ -35,6 +36,14 @@ export async function runSeoAuditAction() {
   const { supabase, actor } = await requireAdmin();
   await runAudit(supabase, actor);
   revalidatePath(SEO);
+}
+
+/** Pull Search Console now instead of waiting for the daily run. Read-only against Google. */
+export async function syncSearchConsoleAction() {
+  const { actor } = await requireAdmin();
+  await syncSearchConsole("manual", actor);
+  revalidatePath(SEO);
+  revalidatePath("/admin/system/integrations");
 }
 
 export async function addCompetitorAction(formData: FormData) {
