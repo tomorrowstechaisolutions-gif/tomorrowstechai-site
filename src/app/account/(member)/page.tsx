@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPortalViewer } from "@/lib/portal/session";
-import { balanceCents, cadence, memberInvoices, memberServices, money, shortDate } from "@/lib/portal/data";
+import { balanceCents, cadence, memberHasReviewed, memberInvoices, memberServices, money, shortDate } from "@/lib/portal/data";
+import { reviewUrl } from "@/lib/reviews/emails";
+import { markReviewLeftAction } from "../member-actions";
 import { InvoiceStatus } from "./parts";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function AccountOverview({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const member = (await getPortalViewer())!;
-  const [{ welcome }, services, invoices] = await Promise.all([searchParams, memberServices(member.customerId), memberInvoices(member.customerId)]);
+  const [{ welcome }, services, invoices, reviewed] = await Promise.all([
+    searchParams, memberServices(member.customerId), memberInvoices(member.customerId), memberHasReviewed(member.customerId),
+  ]);
 
   const active = services.filter((s) => s.status === "active");
   const monthly = active.filter((s) => s.billingType === "recurring" && !s.endDate).reduce((sum, s) => sum + s.priceCents / Math.max(1, s.intervalMonths ?? 1), 0);
@@ -53,6 +57,27 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
                 </div>
               </li>
             ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {/* Shown until the client has left a review; see memberHasReviewed. */}
+      {!reviewed ? (
+        <section className="acct-section">
+          <h2>Happy with the work?</h2>
+          <ul className="acct-list">
+            <li>
+              <div>
+                <strong>Leave us a Google review</strong>
+                <span className="acct-faint">It takes about a minute. An honest sentence or two is plenty, and it helps other local businesses find us.</span>
+              </div>
+              <div className="acct-list-end">
+                <a className="acct-btn small" href={reviewUrl()} target="_blank" rel="noopener noreferrer">Leave a review</a>
+                <form action={markReviewLeftAction} className="acct-inline-form">
+                  <button className="acct-link-btn" disabled={member.preview} title={member.preview ? "View only" : undefined}>I&rsquo;ve left one</button>
+                </form>
+              </div>
+            </li>
           </ul>
         </section>
       ) : null}
