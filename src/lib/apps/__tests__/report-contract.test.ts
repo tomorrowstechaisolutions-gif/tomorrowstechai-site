@@ -74,3 +74,18 @@ test("lowercases the currency", () => {
   const r = parseReport(p);
   expect(r.ok && r.report.currency).toBe("usd");
 });
+
+// Produced by Storyborn's own buildReport() (storyforgeai repo,
+// src/lib/portfolio/report.ts). If that product's output ever stops being a
+// valid report, this is where it shows up first.
+test("accepts a report built by Storyborn", async () => {
+  const storyborn = (await import("../__fixtures__/report.storyborn.json")).default;
+  const r = parseReport(storyborn);
+  expect(r.ok).toBe(true);
+  if (r.ok) {
+    expect(r.report.app).toBe("storyborn");
+    expect(r.report.metrics.feedback_open).toBeNull();
+    expect(r.report.metrics.mrr_cents).toBe(19100);
+    expect(r.report.events.length).toBe(3);
+  }
+});
