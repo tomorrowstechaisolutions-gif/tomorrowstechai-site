@@ -95,6 +95,27 @@ export async function totals(since: Date, until: Date, filter?: string): Promise
   return counts((body.data ?? {}) as Record<string, unknown>);
 }
 
+/**
+ * One real request, for the Integrations card: the last 7 days of traffic, or
+ * why Vercel would not give it. Never throws. Shares the ten-minute cache with
+ * the Analytics page, so opening Integrations does not add API calls.
+ */
+export async function probe(): Promise<
+  { state: "ok"; pageviews: number; visitors: number } | { state: "not-enabled" } | { state: "error"; message: string } | null
+> {
+  if (!analyticsConfigured()) return null;
+  try {
+    const until = new Date();
+    const c = await totals(new Date(until.getTime() - 7 * 86_400_000), until);
+    return { state: "ok", ...c };
+  } catch (err) {
+    const status = statusFrom(err);
+    if (status.state === "not-enabled") return { state: "not-enabled" };
+    if (status.state === "error") return status;
+    return null;
+  }
+}
+
 export async function byDimension(
   dimension: Dimension,
   since: Date,
