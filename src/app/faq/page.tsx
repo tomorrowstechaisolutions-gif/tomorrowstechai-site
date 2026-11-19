@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "FAQ",
+  title: "AI and Business Automation FAQ",
   description:
     "Common questions about Tomorrow’s Tech AI services, pricing, timelines, and how we work. Operations-first AI consulting answered in plain language.",
   alternates: { canonical: "/faq" },
   openGraph: {
-    title: "FAQ · Tomorrow’s Tech AI",
+    title: "AI and Business Automation FAQ · Tomorrow’s Tech AI",
     description:
       "Common questions about Tomorrow’s Tech AI — services, timelines, pricing, and how we work.",
     url: "https://www.tomorrowstechai.com/faq",
