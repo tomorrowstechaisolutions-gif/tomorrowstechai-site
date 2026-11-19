@@ -19,6 +19,7 @@ const COLUMNS: { head: string; links: { label: string; href: string; external?: 
       { label: "How we work", href: "/services#how-we-work" },
       { label: "Hiring", href: "/careers" },
       { label: "Contact", href: "/contact" },
+      { label: "Member login", href: "/account/login" },
     ],
   },
   {
