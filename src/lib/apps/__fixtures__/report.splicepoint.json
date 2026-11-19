@@ -11,12 +11,12 @@
     "users_new_30d": 12,
     "active_7d": null,
     "active_30d": null,
-    "paid_total": null,
+    "paid_total": 2,
     "trialing": null,
     "past_due": null,
     "canceling": null,
-    "mrr_cents": null,
-    "collected_30d_cents": null,
+    "mrr_cents": 89600,
+    "collected_30d_cents": 180000,
     "feedback_open": null,
     "ai_cost_30d_cents": null
   },
@@ -34,10 +34,34 @@
       "unit": "count"
     },
     {
-      "key": "projects",
-      "label": "Projects",
-      "value": 14,
+      "key": "active_reps",
+      "label": "Active sales reps",
+      "value": 4,
       "unit": "count"
+    },
+    {
+      "key": "partner_applications_pending",
+      "label": "Partner applications waiting",
+      "value": 2,
+      "unit": "count"
+    },
+    {
+      "key": "lead_bank_new",
+      "label": "New leads in the bank",
+      "value": 30,
+      "unit": "count"
+    },
+    {
+      "key": "open_deals",
+      "label": "Open deals",
+      "value": 6,
+      "unit": "count"
+    },
+    {
+      "key": "commissions_owed",
+      "label": "Commissions owed",
+      "value": 18960,
+      "unit": "cents"
     },
     {
       "key": "early_access_requests",
@@ -52,73 +76,93 @@
       "unit": "count"
     },
     {
-      "key": "contact_messages",
-      "label": "Contact messages",
-      "value": 4,
-      "unit": "count"
-    },
-    {
       "key": "job_applications",
       "label": "Job applications",
       "value": 6,
       "unit": "count"
     }
   ],
-  "health": [],
+  "health": [
+    {
+      "key": "stripe_webhooks",
+      "label": "Stripe webhooks",
+      "status": "healthy",
+      "message": "Last event 2 hours ago. Nothing waiting.",
+      "checked_at": "2026-11-19T15:00:00.000Z"
+    }
+  ],
   "events": [
     {
+      "plan": null,
+      "amount_cents": null,
+      "url": null,
       "id": "signup:0b6f2c1e-1111-4222-8333-444455556666",
       "kind": "signup",
       "summary": "New signup",
-      "at": "2026-11-19T14:00:00.000Z",
-      "plan": null,
-      "amount_cents": null,
-      "url": null
+      "at": "2026-11-19T14:00:00.000Z"
     },
     {
-      "id": "lead:early-access:e1",
-      "kind": "lead",
-      "summary": "New early-access request",
-      "at": "2026-11-19T13:00:00.000Z",
       "plan": null,
       "amount_cents": null,
-      "url": null
-    },
-    {
+      "url": null,
       "id": "lead:demo:d1",
       "kind": "lead",
       "summary": "New demo request",
-      "at": "2026-11-19T12:00:00.000Z",
-      "plan": null,
-      "amount_cents": null,
-      "url": null
+      "at": "2026-11-19T13:00:00.000Z"
     },
     {
-      "id": "lead:contact:c1",
-      "kind": "lead",
-      "summary": "New contact message",
-      "at": "2026-11-19T11:00:00.000Z",
       "plan": null,
       "amount_cents": null,
-      "url": null
-    },
-    {
+      "url": null,
       "id": "feedback:contact:c2",
       "kind": "feedback",
       "summary": "New support message",
-      "at": "2026-11-19T10:00:00.000Z",
-      "plan": null,
-      "amount_cents": null,
-      "url": null
+      "at": "2026-11-19T11:00:00.000Z"
     },
     {
-      "id": "application:a1",
-      "kind": "application",
-      "summary": "New job application: sales representative",
-      "at": "2026-11-19T09:00:00.000Z",
       "plan": null,
       "amount_cents": null,
-      "url": null
+      "url": null,
+      "id": "application:job:j1",
+      "kind": "application",
+      "summary": "New job application: sales representative",
+      "at": "2026-11-19T10:00:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://splicepoint.app/partners/admin/applications/p1",
+      "id": "application:partner:p1",
+      "kind": "application",
+      "summary": "New sales partner application",
+      "at": "2026-11-19T09:00:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://splicepoint.app/partners/admin/deals/g1",
+      "id": "lead:deal:g1",
+      "kind": "lead",
+      "summary": "A rep registered a new deal",
+      "at": "2026-11-19T08:00:00.000Z"
+    },
+    {
+      "plan": "Pro",
+      "amount_cents": 39600,
+      "url": "https://splicepoint.app/partners/admin/deals/w1",
+      "id": "won:deal:w1",
+      "kind": "upgrade",
+      "summary": "New customer on the Pro plan",
+      "at": "2026-11-19T07:00:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://splicepoint.app/partners/admin/deals/x1",
+      "id": "cancel:deal:x1",
+      "kind": "cancel",
+      "summary": "Customer canceled",
+      "at": "2026-11-18T12:00:00.000Z"
     }
   ]
 }

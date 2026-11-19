@@ -104,18 +104,41 @@ test("accepts lead and application events", () => {
 });
 
 // Produced by SplicePoint's own buildReport() (splicepoint repo,
-// lib/portfolio/report-shape.ts). No billing there yet, so every money
-// number arrives as null and must stay null.
+// lib/portfolio/report-shape.ts). Its money comes from its own deals and
+// payments ledger, and the states it does not track arrive as null.
 test("accepts a report built by SplicePoint", async () => {
   const splicepoint = (await import("../__fixtures__/report.splicepoint.json")).default;
   const r = parseReport(splicepoint);
   expect(r.ok).toBe(true);
   if (r.ok) {
     expect(r.report.app).toBe("splicepoint");
-    expect(r.report.metrics.mrr_cents).toBeNull();
-    expect(r.report.metrics.paid_total).toBeNull();
     expect(r.report.metrics.users_total).toBe(42);
-    expect(r.report.events.map((e) => e.kind).sort()).toEqual(
-      ["application", "feedback", "lead", "lead", "lead", "signup"]);
+    expect(r.report.metrics.paid_total).toBe(2);
+    expect(r.report.metrics.mrr_cents).toBe(89600);
+    expect(r.report.metrics.collected_30d_cents).toBe(180000);
+    expect(r.report.metrics.trialing).toBeNull();
+    expect(r.report.extra.find((e) => e.key === "commissions_owed")?.unit).toBe("cents");
+    expect([...new Set(r.report.events.map((e) => e.kind))].sort()).toEqual(
+      ["application", "cancel", "feedback", "lead", "signup", "upgrade"]);
+  }
+});
+
+// Produced by Pool Business AI's own buildReport() (clearwater-pool-platform
+// repo, website/poolbusinessai/lib/portfolio-report.js). Plain Node, a
+// different codebase from the other three, same contract.
+test("accepts a report built by Pool Business AI", async () => {
+  const pool = (await import("../__fixtures__/report.poolbusinessai.json")).default;
+  const r = parseReport(pool);
+  expect(r.ok).toBe(true);
+  if (r.ok) {
+    expect(r.report.app).toBe("poolbusinessai");
+    expect(r.report.metrics.users_total).toBe(12);
+    expect(r.report.metrics.paid_total).toBe(2);
+    expect(r.report.metrics.trialing).toBe(1);
+    expect(r.report.metrics.mrr_cents).toBe(54800);
+    expect(r.report.metrics.active_7d).toBeNull();
+    expect(r.report.extra.find((e) => e.key === "pools_serviced")?.value).toBe(200);
+    expect([...new Set(r.report.events.map((e) => e.kind))].sort()).toEqual(
+      ["application", "cancel", "lead", "payment_failed", "signup", "upgrade"]);
   }
 });

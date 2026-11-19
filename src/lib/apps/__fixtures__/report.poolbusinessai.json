@@ -1,0 +1,153 @@
+{
+  "contract": "ttai.app-report/v1",
+  "app": "poolbusinessai",
+  "generated_at": "2026-11-19T15:00:00.000Z",
+  "livemode": true,
+  "currency": "usd",
+  "metrics": {
+    "users_total": 12,
+    "users_new_24h": 1,
+    "users_new_7d": 2,
+    "users_new_30d": 5,
+    "active_7d": null,
+    "active_30d": null,
+    "paid_total": 2,
+    "trialing": 1,
+    "past_due": 0,
+    "canceling": 1,
+    "mrr_cents": 54800,
+    "collected_30d_cents": 180000,
+    "feedback_open": null,
+    "ai_cost_30d_cents": null
+  },
+  "extra": [
+    {
+      "key": "live_businesses",
+      "label": "Businesses live",
+      "value": 7,
+      "unit": "count"
+    },
+    {
+      "key": "onboarding_businesses",
+      "label": "Businesses onboarding",
+      "value": 3,
+      "unit": "count"
+    },
+    {
+      "key": "pools_serviced",
+      "label": "Pools serviced",
+      "value": 200,
+      "unit": "count"
+    },
+    {
+      "key": "active_partners",
+      "label": "Active sales partners",
+      "value": 4,
+      "unit": "count"
+    },
+    {
+      "key": "partner_applications_new",
+      "label": "Partner applications waiting",
+      "value": 2,
+      "unit": "count"
+    },
+    {
+      "key": "leads_new",
+      "label": "New leads",
+      "value": 60,
+      "unit": "count"
+    },
+    {
+      "key": "open_deals",
+      "label": "Open deals",
+      "value": 5,
+      "unit": "count"
+    },
+    {
+      "key": "commissions_owed",
+      "label": "Commissions owed",
+      "value": 18490,
+      "unit": "cents"
+    },
+    {
+      "key": "enquiries_new",
+      "label": "Website enquiries waiting",
+      "value": 3,
+      "unit": "count"
+    }
+  ],
+  "health": [
+    {
+      "key": "stripe_webhooks",
+      "label": "Stripe webhooks",
+      "status": "healthy",
+      "message": "Last event 2 hours ago. Nothing waiting.",
+      "checked_at": "2026-11-19T15:00:00.000Z"
+    }
+  ],
+  "events": [
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "live:c1",
+      "kind": "signup",
+      "summary": "A business went live",
+      "at": "2026-11-19T14:00:00.000Z"
+    },
+    {
+      "plan": "Pro",
+      "amount_cents": 34900,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "sub:s1",
+      "kind": "upgrade",
+      "summary": "New subscription on the Pro plan",
+      "at": "2026-11-19T13:30:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "cancel:s2",
+      "kind": "cancel",
+      "summary": "Subscription canceled",
+      "at": "2026-11-19T12:00:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": 34900,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "failed:p1",
+      "kind": "payment_failed",
+      "summary": "Payment failed",
+      "at": "2026-11-19T11:00:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "lead:enquiry:e1",
+      "kind": "lead",
+      "summary": "New website enquiry",
+      "at": "2026-11-19T10:00:00.000Z"
+    },
+    {
+      "plan": null,
+      "amount_cents": null,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "application:partner:a1",
+      "kind": "application",
+      "summary": "New sales partner application",
+      "at": "2026-11-19T09:00:00.000Z"
+    },
+    {
+      "plan": "Scale",
+      "amount_cents": 59900,
+      "url": "https://poolbusinessai.com/platform-admin",
+      "id": "won:d1",
+      "kind": "upgrade",
+      "summary": "A partner closed a deal on the Scale plan",
+      "at": "2026-11-19T08:00:00.000Z"
+    }
+  ]
+}
