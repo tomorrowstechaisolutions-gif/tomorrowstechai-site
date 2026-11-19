@@ -67,7 +67,7 @@ export const NAV_GROUPS: NavGroup[] = [
       // Gmail for tomorrowstechaisolutions@gmail.com, matched against the CRM.
       { href: "/admin/inbox", label: "Inbox", icon: IconMail },
       { href: "/admin/ai", label: "AI Command Center", icon: IconSpark, soon: true, badge: "aiProposals" },
-      { href: "/admin/activity", label: "Activity Center", icon: IconPulse, soon: true },
+      { href: "/admin/activity", label: "Activity Center", icon: IconPulse },
       { href: "/admin/conference-center", label: "Conference Center", icon: IconVideo, badge: "meetingsToday" },
     ],
   },
@@ -179,12 +179,6 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     title: "AI Agents",
     blurb: "Standing agents that watch one thing each — lead response time, project risk, ad performance — and propose rather than act.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/activity": {
-    title: "Activity",
-    blurb:
-      "Everything that has happened across the company, filterable by module and date. The last twelve events are on the dashboard.",
-    nearest: { href: "/admin", label: "See recent activity" },
   },
   "/admin/marketing/brand": {
     title: "Brand Assets",
