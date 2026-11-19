@@ -21,8 +21,10 @@
 --                      day. This is the trend, and it is kept.
 --   app_report_events  signups, upgrades, cancellations, failed payments.
 --                      Deduplicated on the product's own event id. 180 days.
---   app_health_checks  (existing) gains rows with target 'report:<key>' for
---                      the health a product reports about its own pipelines.
+--   A product's report on its own pipelines stays inside the stored
+--   payload. It is NOT copied into app_health_checks: the health score
+--   keeps the newest row per check type, and an hourly reported row would
+--   overwrite the result of the checks this system runs itself.
 --
 -- WHAT IS NOT STORED, and never will be by this path
 --   Names, emails, or anything a customer typed. An event carries a kind, a
@@ -185,7 +187,10 @@ select a.id, 'Production', 'production', true, v.url, 'vercel'
 from (values ('held', 'https://myheldapp.com'), ('storyborn', 'https://storyborn.app')) as v(slug, url)
 join public.apps a on lower(a.slug) = v.slug
 where not exists (
-  select 1 from public.app_environments e where e.app_id = a.id and e.is_production);
+  select 1 from public.app_environments e where e.app_id = a.id and e.is_production)
+-- An existing non-production environment already named "Production" must
+-- not abort the whole migration; that app simply keeps what it has.
+on conflict do nothing;
 
 -- The report connection. 'not_configured' until a pull succeeds; the key
 -- named here is read from the environment and never stored.

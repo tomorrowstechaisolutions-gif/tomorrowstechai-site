@@ -58,10 +58,17 @@ export type ReportWrites = {
   reportRow: Record<string, unknown>;
   dailyRow: Record<string, unknown>;
   eventRows: Record<string, unknown>[];
-  healthRows: Record<string, unknown>[];
 };
 
-/** The rows one valid report becomes. Nulls stay null all the way through. */
+/**
+ * The rows one valid report becomes. Nulls stay null all the way through.
+ *
+ * The product's own pipeline health travels inside the stored payload and is
+ * shown from there. It is deliberately not copied into app_health_checks:
+ * the app health score keeps only the newest row per check type, so an
+ * hourly row from a report would overwrite this system's own integration
+ * check, hiding a real warning or failing an app on the product's say-so.
+ */
 export function planWrites(appId: string, report: AppReport, pulledAt: Date): ReportWrites {
   const pulledIso = pulledAt.toISOString();
 
@@ -95,17 +102,6 @@ export function planWrites(appId: string, report: AppReport, pulledAt: Date): Re
       plan: event.plan,
       amount_cents: event.amount_cents,
       url: event.url,
-    })),
-    // The product's own pipelines, as the product reports them. The target
-    // prefix is how these rows are told apart from the checks this system
-    // runs itself, both on the Health tab and when pruning.
-    healthRows: report.health.map((entry) => ({
-      app_id: appId,
-      check_type: "integration",
-      target: `report:${entry.key}`,
-      status: entry.status,
-      message: entry.message ? `${entry.label}: ${entry.message}` : entry.label,
-      checked_at: pulledIso,
     })),
   };
 }

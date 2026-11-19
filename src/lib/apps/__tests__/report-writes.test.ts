@@ -40,12 +40,20 @@ test("planWrites keeps null metrics null and maps every metric key", () => {
   expect(w.dailyRow.mrr_cents).toBe(12389);
 });
 
-test("planWrites prefixes health targets and carries event ids", () => {
+test("planWrites carries event ids", () => {
   const w = planWrites("app-1", report(), new Date("2026-11-18T15:00:00Z"));
-  expect(w.healthRows.length).toBe(2);
-  expect(w.healthRows.every((h) => String(h.target).startsWith("report:"))).toBe(true);
-  expect(w.healthRows.every((h) => h.check_type === "integration")).toBe(true);
   expect(w.eventRows.map((e) => e.external_id)).toEqual(report().events.map((e) => e.id));
+});
+
+// A product reports on its own pipelines, and that stays inside the stored
+// report. It is NOT copied into app_health_checks: the app health score keeps
+// only the newest row per check type, so an hourly "integration" row from a
+// report would overwrite the result of this system's own integration check,
+// hiding a real warning or marking an app failing on the product's say-so.
+test("planWrites writes nothing into the app health checks", () => {
+  const w = planWrites("app-1", report(), new Date("2026-11-18T15:00:00Z"));
+  expect("healthRows" in w).toBe(false);
+  expect((w.reportRow.payload as { health: unknown[] }).health.length).toBe(2);
 });
 
 test("planWrites stamps the report row with when we pulled it", () => {

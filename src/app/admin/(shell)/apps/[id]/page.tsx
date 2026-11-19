@@ -133,7 +133,12 @@ export default async function AppDetailPage({
   if (tab === "Overview") {
     content = <OverviewTab app={app} canManage={canManage} />;
   } else if (tab === "Business") {
-    const business = await loadBusiness(supabase, app.id);
+    // A failed read costs this tab its numbers, not the page. That includes
+    // the window where this code is deployed before its migration is applied.
+    const business = await loadBusiness(supabase, app.id).catch((error: unknown) => {
+      console.error("[apps:business]", error instanceof Error ? error.message : error);
+      return { integration: null, report: null, events: [], daily: [], allowedHosts: [] };
+    });
     content = <BusinessTab appId={app.id} appName={app.name} business={business} />;
   } else if (tab === "Deployments") {
     const { rows, total } = await loadDeployments(supabase, app.id, page);

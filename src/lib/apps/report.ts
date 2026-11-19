@@ -159,10 +159,6 @@ async function pull(c: Connection): Promise<PullResult> {
       if (events.error) throw new Error(events.error.message);
     }
 
-    if (writes.healthRows.length) {
-      const health = await sb.from("app_health_checks").insert(writes.healthRows);
-      if (health.error) throw new Error(health.error.message);
-    }
   } catch (error) {
     return failed(`The report arrived but could not be saved: ${safeMessage(error, "database error")}`);
   }
@@ -209,8 +205,7 @@ export async function pullAllAppReports(): Promise<PullResult[]> {
 const DAY_MS = 86_400_000;
 
 /**
- * Retention. Raw snapshots and reported health are evidence for a month;
- * events for six. The daily rollup is the long memory and is never pruned.
+ * Retention. Raw snapshots are evidence for a month; events for six. The daily rollup is the long memory and is never pruned.
  */
 export async function pruneReports(): Promise<void> {
   const sb = supabaseAdmin();
@@ -219,7 +214,6 @@ export async function pruneReports(): Promise<void> {
 
   const results = await Promise.all([
     sb.from("app_reports").delete().lt("pulled_at", monthAgo),
-    sb.from("app_health_checks").delete().like("target", "report:%").lt("checked_at", monthAgo),
     sb.from("app_report_events").delete().lt("occurred_at", halfYearAgo),
   ]);
   const failed = results.find((r) => r.error);
