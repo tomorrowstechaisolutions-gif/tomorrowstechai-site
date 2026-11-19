@@ -49,6 +49,36 @@ function touch(id?: string | null) {
   }
 }
 
+/**
+ * Has this invoice been emailed in the last minute?
+ *
+ * The button locks while it sends, but a lock in the browser is a courtesy.
+ * A double click that beats it, a second tab, or a page that had not finished
+ * loading its script would each send the client the same email twice. Checked
+ * against the event log, which only records an email that actually went out.
+ */
+async function emailedJustNow(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  invoiceId: string,
+  types: string[]
+): Promise<boolean> {
+  const since = new Date(Date.now() - 60_000).toISOString();
+  const { data } = await supabase
+    .from("invoice_events")
+    .select("id")
+    .eq("invoice_id", invoiceId)
+    .in("event_type", types)
+    .eq("metadata->>delivered", "true")
+    .gte("created_at", since)
+    .limit(1);
+  return Boolean(data?.length);
+}
+
+/** Back to the invoice with a one-line result, so every send says what happened. */
+function backWithNotice(id: string, notice: string): never {
+  redirect(`/admin/invoices/${id}?notice=${notice}`);
+}
+
 async function requireAdmin() {
   const session = await getAdminUser();
   if (!session) redirect("/admin/login");
@@ -538,6 +568,8 @@ export async function sendInvoiceAction(formData: FormData) {
     .eq("invoice_id", id)
     .order("sort_order");
 
+  if (await emailedJustNow(supabase, id, ["sent", "resent"])) backWithNotice(id, "email_repeat");
+
   const url = invoiceUrl(inv.public_token);
   const resent = Boolean(inv.sent_at);
   const note = str(formData, "note", 2000) || null;
@@ -564,6 +596,7 @@ export async function sendInvoiceAction(formData: FormData) {
   });
 
   touch(id);
+  backWithNotice(id, delivered ? "emailed" : "email_failed");
 }
 
 /**
@@ -615,6 +648,7 @@ export async function markInvoiceSentAction(formData: FormData) {
   });
 
   touch(id);
+  backWithNotice(id, "marked_sent");
 }
 
 /** A nudge on something overdue. */
@@ -629,6 +663,8 @@ export async function sendInvoiceReminderAction(formData: FormData) {
 
   if (!inv.client_email) throw new Error("This invoice has no client email address.");
   if (outstandingCents(inv) <= 0) throw new Error("There is nothing outstanding on this invoice.");
+
+  if (await emailedJustNow(supabase, id, ["reminder_sent"])) backWithNotice(id, "reminder_repeat");
 
   const { data: itemRows } = await supabase
     .from("invoice_items")
@@ -654,6 +690,7 @@ export async function sendInvoiceReminderAction(formData: FormData) {
   });
 
   touch(id);
+  backWithNotice(id, delivered ? "reminded" : "email_failed");
 }
 
 // ═══════════════════════════════════════════════════════════════════════

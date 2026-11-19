@@ -2956,6 +2956,19 @@
     margin-top: 10px;
   }
 
+  /* The result of the last button press, above the page it changed. */
+  .cc-flash {
+    margin: 0 0 14px;
+    padding: 11px 14px;
+    border: 1px solid;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+  .cc-flash.is-ok   { color: var(--cc-ok);   border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.09); }
+  .cc-flash.is-warn { color: var(--cc-warn); border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.09); }
+  .pr-lastsent { margin-top: 0; align-self: center; white-space: nowrap; }
+
   /* ═══ Responsive ══════════════════════════════════════════════════════
 
      Tablet collapses the twelve columns to six. Mobile is not a squeezed
