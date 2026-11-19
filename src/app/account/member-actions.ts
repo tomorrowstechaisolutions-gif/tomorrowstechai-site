@@ -40,6 +40,23 @@ export async function updateMemberProfileAction(_prev: FormState, fd: FormData):
   return { notice: "Saved." };
 }
 
+/**
+ * The member says they have left a Google review. Recorded on their client
+ * record so the review card disappears and John stops asking. Only ever sets
+ * the date; it never clears one. An admin viewing the portal as this client
+ * has no member session, so this does nothing for them.
+ */
+export async function markReviewLeftAction(): Promise<void> {
+  const member = await getPortalMember();
+  if (!member) return;
+  await supabaseAdmin()
+    .from("customers")
+    .update({ review_received_at: new Date().toISOString() })
+    .eq("id", member.customerId)
+    .is("review_received_at", null);
+  revalidatePath("/account", "layout");
+}
+
 const CATEGORIES = ["question", "change", "problem", "billing", "cancel"] as const;
 
 export async function submitMemberRequestAction(_prev: FormState, fd: FormData): Promise<FormState> {

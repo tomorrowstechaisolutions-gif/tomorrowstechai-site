@@ -112,6 +112,22 @@ export async function memberInvoices(customerId: string): Promise<MemberInvoice[
   }));
 }
 
+/**
+ * Whether this client has left a Google review, as far as we know. Google does
+ * not report who reviewed, so this is true only once the member said so on
+ * their Overview page or John marked it on their client page.
+ */
+export async function memberHasReviewed(customerId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin()
+    .from("customers")
+    .select("review_received_at")
+    .eq("id", customerId)
+    .maybeSingle();
+  // If the answer can't be read, don't nag: treat it as already reviewed.
+  if (error) return true;
+  return Boolean(data?.review_received_at);
+}
+
 export async function memberProfile(customerId: string): Promise<MemberProfile> {
   const { data } = await supabaseAdmin()
     .from("customers")
