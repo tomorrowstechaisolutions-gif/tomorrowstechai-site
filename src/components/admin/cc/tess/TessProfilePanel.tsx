@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { TessProfile } from "@/lib/crew/profile";
 import { DIAL_KEYS, DIALS, MODE_IDS, MODES, openTopics, TOPICS, type Note, type NoteList, type TessSettings } from "@/lib/crew/tess-modes";
 import styles from "./tess.module.css";
+import { FADE_OPTIONS, TEXT_STYLES, type TextPrefs } from "./textPrefs";
 
 /**
  * Tess's profile, on the Tess tab: the mode she is in, her three dials, what
@@ -37,12 +38,16 @@ export default function TessProfilePanel({
   profile,
   busy,
   problem,
+  textPrefs,
+  onTextPrefs,
   onSettings,
   onRemove,
 }: {
   profile: TessProfile;
   busy: boolean;
   problem: string | null;
+  textPrefs: TextPrefs;
+  onTextPrefs: (next: TextPrefs) => void;
   onSettings: (next: TessSettings) => void;
   onRemove: (list: NoteList, id: string) => void;
 }) {
@@ -98,6 +103,33 @@ export default function TessProfilePanel({
             </span>
           </div>
         ))}
+      </section>
+
+      <section className={styles.panel}>
+        <h2>
+          Her words on screen <span>this browser only</span>
+        </h2>
+        <div className={styles.dial}>
+          <span>Style</span>
+          <span className={styles.seg} role="radiogroup" aria-label="Text style">
+            {TEXT_STYLES.map((o) => (
+              <button key={o.id} type="button" role="radio" aria-checked={textPrefs.style === o.id} onClick={() => onTextPrefs({ ...textPrefs, style: o.id })}>
+                {o.label}
+              </button>
+            ))}
+          </span>
+        </div>
+        <div className={styles.dial}>
+          <span>Fade away after</span>
+          <span className={styles.seg} role="radiogroup" aria-label="Fade away after">
+            {FADE_OPTIONS.map((o) => (
+              <button key={o.seconds} type="button" role="radio" aria-checked={textPrefs.fadeSeconds === o.seconds} onClick={() => onTextPrefs({ ...textPrefs, fadeSeconds: o.seconds })}>
+                {o.label}
+              </button>
+            ))}
+          </span>
+        </div>
+        <p className={styles.topicLead}>Hidden means you only hear her. Everything said is kept in the archive either way.</p>
       </section>
 
       <section className={styles.panel}>
