@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { anthropic, effort } from "@/lib/ai/claude";
 import { recordAiUsageAsync } from "@/lib/ai/record";
 import { chicagoDate } from "@/lib/time/chicago";
+import { cacheMarked } from "./cache";
 import { spendCentsToday } from "./gate-state";
 import { finishRun } from "./log";
 import { costMicroUsd, CREW_EFFORT, TESS_EFFORT } from "./models";
@@ -270,7 +271,7 @@ async function advance(sb: SupabaseClient, runId: string, opts: AdvanceOptions):
     const started = Date.now();
     let response: Anthropic.Message;
     try {
-      response = await call({ model: agent.model, system: frame.system, tools: frame.tools, messages, dropThinking: frame.dropThinking });
+      response = await call({ model: agent.model, system: frame.system, tools: frame.tools, messages: cacheMarked(messages), dropThinking: frame.dropThinking });
     } catch (err) {
       // A conversation from before its instructions were frozen, whose earlier reasoning the API now refuses.
       // Ask once more with that reasoning dropped, and remember the choice so every later call does the same.
@@ -278,7 +279,7 @@ async function advance(sb: SupabaseClient, runId: string, opts: AdvanceOptions):
       console.error("[crew] the model refused this run's earlier reasoning; dropping it from here on:", runId);
       frame = { ...frame, dropThinking: true };
       await saveFrame(frame);
-      response = await call({ model: agent.model, system: frame.system, tools: frame.tools, messages, dropThinking: true });
+      response = await call({ model: agent.model, system: frame.system, tools: frame.tools, messages: cacheMarked(messages), dropThinking: true });
     }
     modelCalls += 1;
     const spent = costMicroUsd(agent.model, response.usage);
