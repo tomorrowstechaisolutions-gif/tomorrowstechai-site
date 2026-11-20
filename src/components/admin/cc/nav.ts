@@ -71,6 +71,8 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     head: "Command",
     links: [
+      // The lead AI and her crew. The floor sits behind this entry.
+      { href: "/admin/ai", label: "Tess", icon: IconSpark, also: ["/admin/ai/floor"] },
       { href: "/admin", label: "Dashboard", icon: IconGrid },
       // Gmail for tomorrowstechaisolutions@gmail.com, matched against the CRM.
       { href: "/admin/inbox", label: "Inbox", icon: IconMail },
@@ -179,12 +181,6 @@ export const NAV_GROUPS: NavGroup[] = [
  * 404. Delete an entry the day its real page ships.
  */
 export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest?: { href: string; label: string } }> = {
-  "/admin/ai": {
-    title: "AI Command Center",
-    blurb:
-      "Where the advisor's proposals are reviewed and approved. The queue behind it is already live — ai_actions — and the dashboard's advisor writes into it. This screen is the review desk for it.",
-    nearest: { href: "/admin", label: "Ask the advisor on the dashboard" },
-  },
   "/admin/ai/agents": {
     title: "AI Agents",
     blurb: "Standing agents that watch one thing each — lead response time, project risk, ad performance — and propose rather than act.",

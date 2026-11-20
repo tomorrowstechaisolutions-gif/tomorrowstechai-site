@@ -73,3 +73,6 @@ tmp/
 # working notes and screenshots. The status snapshot is the one tracked file.
 Claude outputs/*
 !Claude outputs/ttai-website.md
+
+# brainstorm mockups (local)
+.superpowers/

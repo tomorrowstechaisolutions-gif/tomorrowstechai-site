@@ -1,3 +1,5 @@
+import Anthropic from "@anthropic-ai/sdk";
+
 /**
  * Which Claude model each kind of job uses, and the request settings the
  * Claude 5.5 models need. One place to change them.
@@ -15,15 +17,23 @@
 export const CLAUDE_FAST = "claude-haiku-5-5";
 export const CLAUDE_SMART = "claude-sonnet-5-5";
 
-export type Effort = "low" | "medium" | "high";
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
+
+/** `output_config.effort`, spread into a messages.create() call. */
+export function effort(level: Effort): { output_config: { effort: Effort } } {
+  return { output_config: { effort: level } };
+}
+
+let shared: Anthropic | null = null;
 
 /**
- * `output_config.effort`, spread into a messages.create() call. The SDK
- * pinned here (0.32) predates the field in its types, so it's passed through
- * untyped; the API reads it from the request body.
+ * The one Anthropic client. Reads ANTHROPIC_API_KEY from the environment.
+ * Shared so every caller gets the same retry and timeout settings instead of
+ * each route building its own.
  */
-export function effort(level: Effort): Record<string, never> {
-  return { output_config: { effort: level } } as unknown as Record<string, never>;
+export function anthropic(): Anthropic {
+  if (!shared) shared = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return shared;
 }
 
 /** Claude 5-generation models reject sampling parameters. */
@@ -31,7 +41,7 @@ export function acceptsSampling(model: string): boolean {
   return !/^claude-(?:haiku|sonnet|opus|fable|mythos)-5/.test(model);
 }
 
-/** True when the model declined the request (not in the pinned SDK's types). */
+/** True when the model declined the request. */
 export function refused(stopReason: string | null | undefined): boolean {
   return stopReason === "refusal";
 }

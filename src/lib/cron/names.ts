@@ -18,6 +18,7 @@ export const CRON_NAMES = [
   "bank-sync",
   "blog-publish",
   "ai-insights",
+  "crew",
 ] as const;
 
 export type CronName = (typeof CRON_NAMES)[number];

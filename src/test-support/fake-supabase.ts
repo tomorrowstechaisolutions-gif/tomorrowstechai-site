@@ -2,22 +2,31 @@
  * An in-memory stand-in for the Supabase query builder, for tests.
  *
  * It implements the calls the server code under test actually makes: select,
- * insert, update, upsert (with onConflict / ignoreDuplicates) and the filters
- * eq, neq, is, in, lte, gt, gte, lt, ilike, plus order, limit, maybeSingle
- * and single. Rows live in plain arrays so a test can read them back.
+ * insert, update, upsert (with onConflict / ignoreDuplicates), delete and the
+ * filters eq, neq, is, in, lte, gt, gte, lt, ilike, plus order, limit,
+ * maybeSingle and single. Rows live in plain arrays so a test can read them back.
  *
  * `failNext(table, op)` makes the next matching call return a database error
  * once, which is how a test plays out "the write failed, then the retry ran".
  *
- * It is not Postgres: no constraints, no triggers, no joins. A test that
- * needs one of those is testing the database, not this code.
+ * It is not Postgres: no triggers, no joins, and no constraints beyond the
+ * unique keys a test declares in `options.unique` (a second insert with the
+ * same values fails with code 23505, which is how a race is played out).
  */
 
 export type Row = Record<string, unknown>;
 export type Tables = Record<string, Row[]>;
-type Op = "select" | "insert" | "update" | "upsert";
+type Op = "select" | "insert" | "update" | "upsert" | "delete";
 
-export function fakeSupabase(initial: Tables = {}) {
+/** Numbers compare as numbers; anything else (ISO timestamps, dates) as text. */
+function cmp(a: unknown, b: unknown): number {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  const x = String(a ?? "");
+  const y = String(b ?? "");
+  return x < y ? -1 : x > y ? 1 : 0;
+}
+
+export function fakeSupabase(initial: Tables = {}, options: { unique?: Record<string, string[]> } = {}) {
   const tables: Tables = initial;
   const failures: { table: string; op: Op; message: string }[] = [];
   let nextId = 1;
@@ -39,6 +48,8 @@ export function fakeSupabase(initial: Tables = {}) {
     let head = false;
     let wantCount = false;
     const filters: ((r: Row) => boolean)[] = [];
+    const sorts: { col: string; asc: boolean }[] = [];
+    let cap: number | null = null;
 
     const run = (): { data: Row[] | null; error: { message: string; code?: string } | null; count: number | null } => {
       const failure = takeFailure(table, op);
@@ -46,6 +57,11 @@ export function fakeSupabase(initial: Tables = {}) {
 
       if (op === "insert") {
         const list = (Array.isArray(values) ? values : [values]).map((v) => ({ id: `${table}-${nextId++}`, ...v }));
+        // A unique key the test declared: a second row with the same values is refused, as Postgres would.
+        const keys = options.unique?.[table];
+        if (keys && list.some((v: Row) => keys.every((k) => v[k] != null) && rows.some((r) => keys.every((k) => r[k] === v[k])))) {
+          return { data: null, error: { message: "duplicate key value violates unique constraint", code: "23505" }, count: null };
+        }
         rows.push(...list);
         return { data: list, error: null, count: null };
       }
@@ -53,8 +69,8 @@ export function fakeSupabase(initial: Tables = {}) {
       if (op === "upsert") {
         const written: Row[] = [];
         for (const v of Array.isArray(values) ? values : [values]) {
-          const key = upsertOpts.onConflict;
-          const existing = key ? rows.find((r) => r[key] === v[key]) : undefined;
+          const keys = upsertOpts.onConflict?.split(",").map((k) => k.trim()).filter(Boolean) ?? [];
+          const existing = keys.length ? rows.find((r) => keys.every((k) => r[k] === v[k])) : undefined;
           if (existing) {
             if (!upsertOpts.ignoreDuplicates) {
               Object.assign(existing, v);
@@ -69,11 +85,26 @@ export function fakeSupabase(initial: Tables = {}) {
         return { data: written, error: null, count: null };
       }
 
-      const matched = rows.filter((r) => filters.every((f) => f(r)));
+      let matched = rows.filter((r) => filters.every((f) => f(r)));
+      if (op === "delete") {
+        for (const r of matched) rows.splice(rows.indexOf(r), 1);
+        return { data: matched, error: null, count: null };
+      }
+      if (sorts.length) {
+        matched = [...matched].sort((a, b) => {
+          for (const srt of sorts) {
+            const d = cmp(a[srt.col], b[srt.col]);
+            if (d !== 0) return srt.asc ? d : -d;
+          }
+          return 0;
+        });
+      }
+      const total = matched.length;
+      if (cap !== null && op === "select") matched = matched.slice(0, cap);
       if (op === "update") {
         for (const r of matched) Object.assign(r, values as Row);
       }
-      return { data: head ? null : matched, error: null, count: wantCount ? matched.length : null };
+      return { data: head ? null : matched, error: null, count: wantCount ? total : null };
     };
 
     const q = {
@@ -84,6 +115,7 @@ export function fakeSupabase(initial: Tables = {}) {
       },
       insert(v: Row | Row[]) { op = "insert"; values = v; return q; },
       update(v: Row) { op = "update"; values = v; return q; },
+      delete() { op = "delete"; return q; },
       upsert(v: Row | Row[], opts: { onConflict?: string; ignoreDuplicates?: boolean } = {}) {
         op = "upsert"; values = v; upsertOpts = opts; return q;
       },
@@ -91,17 +123,17 @@ export function fakeSupabase(initial: Tables = {}) {
       neq(col: string, val: unknown) { filters.push((r) => r[col] !== val); return q; },
       is(col: string, val: unknown) { filters.push((r) => (r[col] ?? null) === val); return q; },
       in(col: string, vals: unknown[]) { filters.push((r) => vals.includes(r[col])); return q; },
-      lte(col: string, val: number) { filters.push((r) => Number(r[col] ?? 0) <= val); return q; },
-      lt(col: string, val: number) { filters.push((r) => Number(r[col] ?? 0) < val); return q; },
-      gte(col: string, val: number) { filters.push((r) => Number(r[col] ?? 0) >= val); return q; },
-      gt(col: string, val: number) { filters.push((r) => Number(r[col] ?? 0) > val); return q; },
+      lte(col: string, val: number | string) { filters.push((r) => cmp(r[col] ?? (typeof val === "number" ? 0 : ""), val) <= 0); return q; },
+      lt(col: string, val: number | string) { filters.push((r) => cmp(r[col] ?? (typeof val === "number" ? 0 : ""), val) < 0); return q; },
+      gte(col: string, val: number | string) { filters.push((r) => cmp(r[col] ?? (typeof val === "number" ? 0 : ""), val) >= 0); return q; },
+      gt(col: string, val: number | string) { filters.push((r) => cmp(r[col] ?? (typeof val === "number" ? 0 : ""), val) > 0); return q; },
       ilike(col: string, val: string) {
         const want = val.replace(/\\(.)/g, "$1").toLowerCase();
         filters.push((r) => String(r[col] ?? "").toLowerCase() === want);
         return q;
       },
-      order() { return q; },
-      limit() { return q; },
+      order(col: string, opts: { ascending?: boolean } = {}) { sorts.push({ col, asc: opts.ascending !== false }); return q; },
+      limit(n: number) { cap = n; return q; },
       async maybeSingle() { const r = run(); return { data: r.data?.[0] ?? null, error: r.error }; },
       async single() { const r = run(); return { data: r.data?.[0] ?? null, error: r.error }; },
       then<T>(resolve: (v: ReturnType<typeof run>) => T) { return Promise.resolve(run()).then(resolve); },

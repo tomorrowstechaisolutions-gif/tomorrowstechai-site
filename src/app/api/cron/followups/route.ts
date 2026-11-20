@@ -1,3 +1,4 @@
+import { crewOwnsLeadFollowups } from "@/lib/crew/shifts";
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { sendFollowupEmail } from "@/lib/campaign/emails";
@@ -111,8 +112,18 @@ async function run(): Promise<Response> {
   let sent = 0;
   let skipped = 0;
 
+  // When the AI crew's Follow-through bot is working these leads, the
+  // automatic follow-ups stand down so nobody gets both. The rows are
+  // cancelled with the reason, not left pending to fire later.
+  const crewOwns = await crewOwnsLeadFollowups(db);
+
   for (const row of due ?? []) {
     if (Date.now() >= deadline) break;
+    if (crewOwns) {
+      await db.from("lead_followups").update({ status: "cancelled", error: "crew:follow-through" }).eq("id", row.id).eq("status", "pending");
+      skipped += 1;
+      continue;
+    }
     const automationKey = row.step === "followup_24h" ? "legacy_lead_followup_24h" : "legacy_lead_followup_72h";
     const definition = definitions.get(automationKey);
     // Before the claim: a paused automation leaves its rows exactly as they are.

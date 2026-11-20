@@ -1,0 +1,134 @@
+/* The Tess tab. Its own palette: this screen is a stage, darker than the rest of the admin. */
+
+.root {
+  --bg: #04070b;
+  --panel: rgba(9, 15, 23, 0.78);
+  --line: #15222f;
+  --cyan: #35d6ff;
+  --amber: #ffb347;
+  --green: #4be3a0;
+  --red: #ff6b6b;
+  --text: #dbe7f3;
+  --dim: #7d8fa3;
+  --faint: #4d5d6f;
+
+  position: relative;
+  margin: -26px -22px -56px;
+  width: calc(100% + 44px);
+  height: calc(100dvh - 61px);
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.stageArea { position: absolute; inset: 0; }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(transparent 62%, rgba(4, 7, 11, 0.9) 88%), radial-gradient(ellipse at 50% 42%, transparent 0%, transparent 32%, rgba(4, 7, 11, 0.86) 78%); }
+
+.top { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--line); background: linear-gradient(#04070b, rgba(4, 7, 11, 0.6)); }
+.name { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--cyan); margin-right: 4px; }
+.chip { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; color: var(--dim); white-space: nowrap; }
+.chip b { color: var(--text); font-weight: 600; }
+.chipLaunch { border-color: rgba(255, 179, 71, 0.45); color: var(--amber); }
+.chipPaused { border-color: rgba(255, 107, 107, 0.45); color: var(--red); }
+.spacer { flex: 1; }
+
+.modes { display: inline-flex; }
+.modes button { background: transparent; border: 1px solid var(--line); color: var(--dim); padding: 6px 13px; font-size: 12.5px; cursor: pointer; }
+.modes button:first-child { border-radius: 8px 0 0 8px; }
+.modes button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
+.modes button[aria-pressed="true"] { color: var(--cyan); border-color: var(--cyan); }
+.modes button:last-child[aria-pressed="true"] { border-left: 1px solid var(--cyan); margin-left: -1px; }
+
+.btn { border: 1px solid var(--line); color: var(--dim); background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
+.btn:hover { color: var(--text); border-color: #27425a; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btnPause { border-color: rgba(255, 107, 107, 0.4); color: var(--red); }
+.btnResume { border-color: rgba(75, 227, 160, 0.45); color: var(--green); }
+.btnPrimary { border-color: rgba(53, 214, 255, 0.5); color: var(--cyan); }
+.btn:focus-visible, .modes button:focus-visible, .round:focus-visible, .botBtn:focus-visible, .openFloor:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.field:focus { outline: none; }
+.talk:focus-within { border-color: rgba(53, 214, 255, 0.55); }
+
+.state { position: absolute; left: 50%; transform: translateX(-50%); top: 74px; z-index: 2; font-size: 11px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--cyan); opacity: 0.8; }
+
+.col { position: absolute; top: 66px; bottom: 150px; width: min(27vw, 380px); display: flex; flex-direction: column; gap: 12px; z-index: 2; transition: opacity 0.35s, transform 0.35s; overflow: auto; scrollbar-width: none; }
+.col::-webkit-scrollbar { display: none; }
+.colLeft { left: 20px; }
+.colRight { right: 20px; }
+.stage .colLeft { opacity: 0; transform: translateX(-30px); pointer-events: none; visibility: hidden; }
+.stage .colRight { opacity: 0; transform: translateX(30px); pointer-events: none; visibility: hidden; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 15px; backdrop-filter: blur(6px); }
+.panel h2 { margin: 0 0 10px; font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--dim); font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.panel h2 span { color: var(--faint); letter-spacing: 0; text-transform: none; font-weight: 400; }
+.panel p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
+.panelSetup { border-color: rgba(255, 179, 71, 0.4); }
+.panelSetup p { color: var(--text); }
+.panelSetup .btn { margin-top: 10px; }
+.note { margin-top: 8px !important; color: var(--red) !important; }
+
+.did { display: flex; gap: 9px; font-size: 12.5px; padding: 6px 0; line-height: 1.4; }
+.did i { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex: none; background: var(--green); }
+.did i.warn { background: var(--amber); }
+.did i.bad { background: var(--red); }
+.did span { color: var(--dim); }
+
+.goal { margin-bottom: 11px; }
+.goal:last-child { margin-bottom: 0; }
+.goalRow { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.goalRow b { font-weight: 600; }
+.bar { height: 5px; border-radius: 3px; background: #101a25; overflow: hidden; }
+.bar div { height: 100%; background: var(--cyan); }
+.bar div.behind { background: var(--amber); }
+
+.bot { display: flex; align-items: center; gap: 9px; padding: 6px 0; font-size: 12.5px; border-top: 1px solid var(--line); }
+.bot:first-of-type { border-top: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+.dotOn { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: blink 1.2s infinite; }
+.dotPaused { background: var(--red); }
+@keyframes blink { 50% { opacity: 0.35; } }
+.who { flex: 1; min-width: 0; }
+.who small { display: block; color: var(--dim); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.botBtn { border: 0; background: transparent; color: var(--faint); font-size: 11.5px; cursor: pointer; padding: 2px 4px; }
+.botBtn:hover { color: var(--text); }
+.openFloor { display: block; margin-top: 10px; text-align: center; border: 1px solid rgba(53, 214, 255, 0.4); color: var(--cyan); border-radius: 8px; padding: 8px; font-size: 12.5px; text-decoration: none; }
+
+.voice { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; width: min(760px, 92%); z-index: 3; text-align: center; }
+.said { font-size: 17px; line-height: 1.5; min-height: 52px; max-height: 30vh; overflow: auto; text-shadow: 0 2px 18px #000; scrollbar-width: thin; white-space: pre-wrap; }
+.stage .said { max-height: 22vh; }
+.you { color: var(--dim); font-size: 13.5px; display: block; margin-bottom: 4px; }
+.problem { color: var(--amber); font-size: 13.5px; display: block; margin-top: 6px; }
+.talk { margin-top: 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 8px 6px 16px; backdrop-filter: blur(6px); }
+.field { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--text); font-size: 14px; padding: 6px 0; }
+.field::placeholder { color: var(--faint); }
+.round { border: 1px solid var(--line); background: transparent; color: var(--dim); border-radius: 999px; padding: 6px 13px; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.round:hover { color: var(--text); }
+.round:disabled { opacity: 0.45; cursor: default; }
+.roundLive { color: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px rgba(53, 214, 255, 0.35); }
+.hint { margin-top: 7px; font-size: 11.5px; color: var(--faint); }
+
+.missing { max-width: 560px; margin: 12vh auto 0; text-align: center; position: relative; z-index: 2; padding: 0 20px; }
+.missing h1 { font-size: 20px; margin: 0 0 10px; color: var(--cyan); letter-spacing: 3px; text-transform: uppercase; font-weight: 500; }
+.missing p { color: var(--dim); font-size: 14px; line-height: 1.6; }
+
+@media (max-width: 1100px) {
+  .root { height: auto; min-height: calc(100dvh - 61px); overflow: visible; display: flex; flex-direction: column; }
+  .stageArea { position: relative; height: 46vh; min-height: 300px; order: 2; }
+  .vignette { display: none; }
+  .top { position: relative; order: 1; }
+  .state { top: auto; position: relative; left: auto; transform: none; text-align: center; order: 3; margin-top: -28px; }
+  .voice { position: relative; left: auto; transform: none; bottom: auto; width: auto; margin: 10px 14px 16px; order: 4; }
+  .col { position: relative; top: auto; bottom: auto; left: auto; right: auto; width: auto; margin: 0 14px 12px; overflow: visible; order: 5; }
+  .colRight { order: 6; margin-bottom: 24px; }
+  .stage .colLeft, .stage .colRight { display: none; }
+}
+
+@media (max-width: 900px) {
+  .root { margin: -20px -14px -48px; width: calc(100% + 28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dotOn { animation: none; }
+  .col { transition: none; }
+}
