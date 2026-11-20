@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { screenChangeFromMessage, type ScreenChange } from "@/components/admin/cc/tess/screenSettings";
 import { anthropic, effort } from "@/lib/ai/claude";
 import { briefText, buildBrief, visitSince } from "@/lib/crew/brief";
 import { openChatTurn } from "@/lib/crew/chat";
 import { TESS_EFFORT } from "@/lib/crew/models";
 import { contextBlocks, currentStateBlock, loadTessProfile } from "@/lib/crew/profile";
 import { advanceRun, thinkingSettings, type ModelCall } from "@/lib/crew/run";
+import { tessCurrent } from "@/lib/crew/tess-current";
 import { rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -19,6 +21,7 @@ export const maxDuration = 60;
  * reply is a stream of server-sent events:
  *   { type: "state", state: "thinking" | "speaking" | "idle" }
  *   { type: "text", delta }      a piece of what Tess is saying
+ *   { type: "screen", change }   Tess changed a setting that lives in the browser; apply it
  *   { type: "error", message }   something went wrong; say it plainly
  *   { type: "done" }
  *
@@ -29,6 +32,7 @@ export const maxDuration = 60;
 type Event =
   | { type: "state"; state: "thinking" | "speaking" | "idle" }
   | { type: "text"; delta: string }
+  | { type: "screen"; change: ScreenChange }
   | { type: "error"; message: string }
   | { type: "done" };
 
@@ -84,7 +88,11 @@ export async function POST(req: Request) {
           spoke = true;
           send({ type: "text", delta });
         });
-        return reply.finalMessage();
+        const message = await reply.finalMessage();
+        // A setting that lives in John's browser: the page has to make the change.
+        const change = screenChangeFromMessage(message.content);
+        if (change) send({ type: "screen", change });
+        return message;
       };
 
       send({ type: "state", state: "thinking" });
@@ -92,6 +100,7 @@ export async function POST(req: Request) {
         const runId = await openChatTurn(sb, {
           userId,
           message,
+          current: tessCurrent(),
           context: [...contextBlocks(await loadTessProfile(sb, userId)), ...[await currentStateBlock(sb)].filter((b): b is string => Boolean(b))],
           brief: async () => briefText(await buildBrief(sb, await visitSince(sb, userId))),
         });

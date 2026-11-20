@@ -5,6 +5,7 @@ import styles from "@/components/admin/cc/tess/tess.module.css";
 import { buildBrief, visitSince, type Brief } from "@/lib/crew/brief";
 import { chatHistory, type ChatLine } from "@/lib/crew/chat";
 import { loadTessProfile, type TessProfile } from "@/lib/crew/profile";
+import { tessCurrent } from "@/lib/crew/tess-current";
 import { voiceConfigured } from "@/lib/crew/voice";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -29,7 +30,7 @@ export default async function TessPage() {
   try {
     const sb = supabaseAdmin();
     const since = await visitSince(sb, session.user.id);
-    [brief, history, profile] = await Promise.all([buildBrief(sb, since), chatHistory(sb, session.user.id), loadTessProfile(sb, session.user.id)]);
+    [brief, history, profile] = await Promise.all([buildBrief(sb, since), chatHistory(sb, session.user.id, undefined, tessCurrent()), loadTessProfile(sb, session.user.id)]);
   } catch (err) {
     console.error("[tess] could not build the brief:", err);
     failure = err instanceof Error ? err.message : "unknown error";

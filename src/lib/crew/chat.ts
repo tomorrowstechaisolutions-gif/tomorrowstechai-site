@@ -60,8 +60,25 @@ function changedContext(transcript: Anthropic.MessageParam[], context: string[])
 
 const asText = (text: string): Anthropic.TextBlockParam => ({ type: "text", text });
 
+/** Tess as the code has her today (see tess-current.ts). */
+export type TessCurrent = { prompt: string; toolNames: string[] };
+
+/**
+ * True when a conversation was started under different standing instructions
+ * or a different set of tools than Tess has now. Its instructions and tools
+ * are frozen (see run.ts), so it would never get what was added since.
+ * Starting a new conversation is the clean way to pick that up.
+ */
+export function frameOutdated(frame: unknown, current: TessCurrent): boolean {
+  const f = frame as { system?: { text?: string }[]; tools?: { name?: string }[] } | null | undefined;
+  if (!f || !Array.isArray(f.system) || !Array.isArray(f.tools)) return false;
+  if (f.system[0]?.text !== current.prompt) return true;
+  const had = f.tools.map((t) => t.name).sort().join("|");
+  return had !== [...current.toolNames].sort().join("|");
+}
+
 /** The conversation this admin can carry on, if there is one. */
-async function currentRun(sb: SupabaseClient, userId: string, now: number): Promise<Run | null> {
+async function currentRun(sb: SupabaseClient, userId: string, now: number, current?: TessCurrent): Promise<Run | null> {
   const { data, error } = await sb
     .from("ai_runs")
     .select("*")
@@ -76,6 +93,7 @@ async function currentRun(sb: SupabaseClient, userId: string, now: number): Prom
   if (!run || !REUSABLE.includes(run.status)) return null;
   if (Number(run.steps_taken ?? 0) > STEP_HEADROOM) return null;
   if (hasOpenToolCall((run.transcript ?? []) as Anthropic.MessageParam[])) return null;
+  if (current && frameOutdated(run.frame, current)) return null;
   return run;
 }
 
@@ -85,12 +103,12 @@ async function currentRun(sb: SupabaseClient, userId: string, now: number): Prom
  */
 export async function openChatTurn(
   sb: SupabaseClient,
-  input: { userId: string; message: string; brief: () => Promise<string>; context?: string[]; now?: number }
+  input: { userId: string; message: string; brief: () => Promise<string>; context?: string[]; current?: TessCurrent; now?: number }
 ): Promise<string> {
   const now = input.now ?? Date.now();
   const said = input.message.trim().slice(0, 4000) || ROLE.tess.firstMessage;
   const context = input.context ?? [];
-  const existing = await currentRun(sb, input.userId, now);
+  const existing = await currentRun(sb, input.userId, now, input.current);
 
   if (existing) {
     const before = (existing.transcript ?? []) as Anthropic.MessageParam[];
@@ -123,8 +141,8 @@ export async function openChatTurn(
 export type ChatLine = { role: "john" | "tess"; text: string };
 
 /** What has been said in the conversation John can carry on, for the page. */
-export async function chatHistory(sb: SupabaseClient, userId: string, now: number = Date.now()): Promise<ChatLine[]> {
-  const run = await currentRun(sb, userId, now);
+export async function chatHistory(sb: SupabaseClient, userId: string, now: number = Date.now(), current?: TessCurrent): Promise<ChatLine[]> {
+  const run = await currentRun(sb, userId, now, current);
   return run ? linesOf(run) : [];
 }
 

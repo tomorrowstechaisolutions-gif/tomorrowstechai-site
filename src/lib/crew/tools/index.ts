@@ -5,6 +5,7 @@ import type { CrewTool } from "./core";
 import { financeOverview, listUnpaidInvoices, sendInvoiceReminderTool } from "./finance";
 import { listLeadsNeedingAttention, readLead, readLeadEmails, sendLeadEmail, updateLeadStatus } from "./leads";
 import { parkIdea, rememberAboutJohn } from "./profile";
+import { changeSettings } from "./settings";
 import { addRule, savePlaybook, setTarget } from "./setup";
 import { listRecentArticles, publishArticlePost } from "./social";
 import { flagForJohn, report } from "./tess";
@@ -24,7 +25,7 @@ const all: CrewTool[] = [
   financeOverview, listUnpaidInvoices, sendInvoiceReminderTool,
   flagForJohn, report,
   savePlaybook, setTarget, addRule,
-  rememberAboutJohn, parkIdea,
+  rememberAboutJohn, parkIdea, changeSettings,
 ];
 
 export const TOOLS: Record<string, CrewTool> = Object.fromEntries(all.map((t) => [t.name, t]));
@@ -34,7 +35,7 @@ const BY_AGENT: Record<AgentSlug, string[]> = {
   content: ["list_recent_articles", "publish_article_post", "flag_for_john", "report"],
   finance: ["finance_overview", "list_unpaid_invoices", "send_invoice_reminder", "flag_for_john", "report"],
   // Tess reads everything, raises things and holds the setup tools. She does not send.
-  tess: ["list_leads_needing_attention", "read_lead", "list_recent_articles", "finance_overview", "list_unpaid_invoices", "flag_for_john", "save_playbook", "set_target", "add_rule", "remember_about_john", "park_idea"],
+  tess: ["list_leads_needing_attention", "read_lead", "list_recent_articles", "finance_overview", "list_unpaid_invoices", "flag_for_john", "save_playbook", "set_target", "add_rule", "remember_about_john", "park_idea", "change_settings"],
 };
 
 export function toolsFor(agent: AgentSlug): CrewTool[] {
