@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import sitemap from "@/app/sitemap";
-import { parsePage, type ParsedPage } from "./parse";
+import { parsePage } from "./parse";
 import { evaluate, type AuditIssue, type AuditPage } from "./evaluate";
 
 export { evaluate };

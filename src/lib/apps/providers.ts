@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { openSecret, sealSecret } from "@/lib/security/secrets";
 
 /**
  * Server-side provider access for the Apps module.
@@ -64,7 +65,9 @@ async function readCredential(provider: ProviderKey): Promise<CredentialRow | nu
     .eq("provider", provider)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data as CredentialRow | null) ?? null;
+  const row = (data as CredentialRow | null) ?? null;
+  // Encrypted at rest; callers below see the token plain.
+  return row ? { ...row, access_token: openSecret(row.access_token, provider) } : null;
 }
 
 async function noteError(provider: ProviderKey, message: string | null): Promise<void> {
@@ -120,7 +123,7 @@ async function storeCredential(
   const { error } = await supabaseAdmin().from("integration_credentials").upsert(
     {
       provider,
-      access_token: fields.token,
+      access_token: sealSecret(fields.token, provider),
       refresh_token: null,
       token_expires_at: null,
       account_ref: fields.accountRef ?? null,

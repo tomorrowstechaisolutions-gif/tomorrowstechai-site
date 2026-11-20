@@ -36,11 +36,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default function MeetingDrawer({
   meeting,
+  now,
   closeHref,
   followUpDefault,
   focus = null,
 }: {
   meeting: MeetingWithLinks;
+  /** Epoch ms, read once by the page for this request. */
+  now: number;
   closeHref: string;
   followUpDefault: string;
   /** Opens one action section on arrival (from a row's Reschedule / Cancel). */
@@ -48,7 +51,7 @@ export default function MeetingDrawer({
 }) {
   const open = OPEN_MEETING_STATUSES.includes(meeting.status);
   const joinable = Boolean(meeting.meeting_url) && PROVIDER_IS_VIDEO[meeting.provider];
-  const startsSoon = open && Math.abs(new Date(meeting.start_at).getTime() - Date.now()) < 6 * 3600_000;
+  const startsSoon = open && Math.abs(new Date(meeting.start_at).getTime() - now) < 6 * 3600_000;
   // Zoom's host link carries the host's token and expires, so it is never
   // stored: Start goes through a server route that fetches a fresh one.
   const isZoom = meeting.provider === "zoom";

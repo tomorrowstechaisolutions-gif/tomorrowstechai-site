@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { sendFollowupEmail } from "@/lib/campaign/emails";
 import { offerByName } from "@/lib/campaign/offers";
 import { CLOSED_STATUSES } from "@/lib/supabase/types";
 import { loadSuppression } from "@/lib/email-marketing/suppression";
 import { normalizeEmail } from "@/lib/email-marketing/types";
+import { withCronRun } from "@/lib/cron/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,25 +48,15 @@ const CLAIMED = "claimed_not_completed";
 /** Stop starting new rows here; what is left stays 'pending' for the next run. */
 const RUN_WINDOW_MS = 45_000;
 
-function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-
-  // Vercel Cron sends Authorization: Bearer <CRON_SECRET>.
-  const header = req.headers.get("authorization") ?? "";
-  const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (provided.length !== secret.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(secret));
-}
-
 /** Statuses that mean nobody has engaged yet, so a nudge is still welcome. */
 const STILL_COLD = new Set(["New", "Contact Attempted"]);
 
-export async function GET(req: Request) {
+export function GET(req: Request) {
+  return withCronRun("followups", req, run);
+}
+
+async function run(): Promise<Response> {
   const deadline = Date.now() + RUN_WINDOW_MS;
-  if (!authorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
   if (!supabaseConfigured()) {
     return NextResponse.json({ ok: false, error: "supabase_not_configured" }, { status: 503 });
   }

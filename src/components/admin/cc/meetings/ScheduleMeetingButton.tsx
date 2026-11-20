@@ -67,7 +67,7 @@ export default function ScheduleMeetingButton({
   const [title, setTitle] = useState(defaultTitle ?? suggestedTitle(defaultType, contact.company));
   const [titleEdited, setTitleEdited] = useState(Boolean(defaultTitle));
   const [duration, setDuration] = useState(String(TYPE_DEFAULT_MINUTES[defaultType]));
-  const [provider, setProvider] = useState<string>("google_meet");
+  const [pickedProvider, setProvider] = useState<string>("google_meet");
   const [submitting, setSubmitting] = useState(false);
 
   const firstReady = useMemo(
@@ -75,13 +75,16 @@ export default function ScheduleMeetingButton({
     [providers]
   );
 
+  // The pick only stands while that provider can actually be used; otherwise
+  // the form falls back to the first one that can. Derived, not synced.
+  const provider = providers.find((p) => p.key === pickedProvider)?.ready ? pickedProvider : firstReady;
+
   useEffect(() => {
     if (!open) return;
-    setProvider((current) => (providers.find((p) => p.key === current)?.ready ? current : firstReady));
     const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, providers, firstReady]);
+  }, [open]);
 
   /** Changing the type refills the title, unless the person has touched it. */
   function chooseType(next: MeetingType) {

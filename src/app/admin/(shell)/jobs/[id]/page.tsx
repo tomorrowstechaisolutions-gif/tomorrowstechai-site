@@ -8,9 +8,9 @@ import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetin
 import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleConferenceLink";
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
-import { chicagoDate } from "@/lib/time/chicago";
+import { chicagoDateInDays } from "@/lib/time/chicago";
 
-import { JOB_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
+import { JOB_STAGES, STAGE_BLURB } from "@/lib/jobs/config";
 import {
   STARTER_PACKAGE,
   STARTER_STAGES,
@@ -131,7 +131,7 @@ export default async function JobDetailPage({
         contact={meetingContact}
         providers={providers}
         action={scheduleMeetingAction}
-        defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+        defaultDate={chicagoDateInDays(1)}
         defaultType={job.completed_at ? "final_review" : "kickoff"}
         jobId={job.id}
         returnTo={`/admin/jobs/${job.id}`}

@@ -1,22 +1,16 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { publishDueArticles } from "@/lib/blog/scheduler";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function authorized(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!secret) return false;
-  const expected = Buffer.from(secret);
-  const received = Buffer.from(supplied);
-  return expected.length === received.length && timingSafeEqual(expected, received);
+/** Publishes scheduled Field Notes articles whose time has come. */
+export function GET(request: Request) {
+  return withCronRun("blog-publish", request, run);
 }
 
-/** Publishes scheduled Field Notes articles whose time has come. */
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function run(): Promise<Response> {
   try {
     return NextResponse.json(await publishDueArticles());
   } catch (error) {
