@@ -91,8 +91,24 @@ export default function AdminShell({
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+  // Exactly one entry is lit: the one whose path (or alias) matches the most
+  // of the current URL. A plain startsWith lit "Automations" and "Workflows"
+  // together, and "Settings" along with "Agreements".
+  const matchLength = (link: NavLinkT): number => {
+    let best = 0;
+    for (const path of [link.href, ...(link.also ?? [])]) {
+      const hit = path === "/admin" ? pathname === "/admin" : pathname === path || pathname.startsWith(`${path}/`);
+      if (hit && path.length > best) best = path.length;
+    }
+    return best;
+  };
+  const activeHref = NAV_GROUPS.flatMap((g) => g.links)
+    .filter((l) => !l.external)
+    .reduce<{ href: string; len: number } | null>((top, l) => {
+      const len = matchLength(l);
+      return len > 0 && (!top || len > top.len) ? { href: l.href, len } : top;
+    }, null)?.href;
+  const isActive = (href: string) => href === activeHref;
 
   const badgeFor = (link: NavLinkT): number => {
     if (!link.badge) return 0;

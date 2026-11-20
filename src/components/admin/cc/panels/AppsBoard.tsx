@@ -625,6 +625,7 @@ export default async function AppsBoard({ filters }: { filters: AppFilters }) {
           </p>
         </div>
         <div className="cc-greet-actions">
+          <Link href="/admin/software" className="cc-btn">Software products</Link>
           <RunChecks canManage={canManage} label="Run checks" />
           <AppSync
             connected={connections.vercel.connected}

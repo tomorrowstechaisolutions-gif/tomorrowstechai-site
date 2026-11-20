@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { CATALOG_CATEGORIES, PRICING_MODES } from "@/lib/catalog/types";
@@ -39,4 +38,4 @@ export async function archiveCatalogPackage(_state:ActionResult,fd:FormData):Pro
 
 export async function removeCatalogImage(_state:ActionResult,fd:FormData):Promise<ActionResult>{ try{ const db=await access(); const id=text(fd,"id",40); if(!isUuid(id)) throw new Error("Invalid package."); const {data}=await db.from("catalog_items").select("image_path").eq("id",id).eq("offer_kind","package").single(); if(data?.image_path) await supabaseAdmin().storage.from("brand-assets").remove([data.image_path]); const {error}=await db.from("catalog_items").update({image_path:null,image_url:null}).eq("id",id); if(error) throw error; refresh(id); return {success:"Package image removed."}; }catch(error){return errorResult(error);} }
 
-export async function createPackageAndOpen(){ const session=await getAdminUser(); if(!session||!["owner","admin"].includes(session.admin.role)) redirect("/admin/packages"); redirect("/admin/packages/new"); }
+
