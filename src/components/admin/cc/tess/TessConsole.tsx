@@ -16,6 +16,7 @@ import TessProfilePanel from "./TessProfilePanel";
 import styles from "./tess.module.css";
 import { createTessSounds, type TessSounds } from "./tessSounds";
 import { parseTextPrefs, TEXT_EVENT, TEXT_KEY, TEXT_PREV_KEY, textFaded, type TextPrefs, type TextStyle } from "./textPrefs";
+import { useRecorderInput } from "./useRecorderInput";
 import { useSpeechInput } from "./useSpeechInput";
 
 /**
@@ -276,7 +277,11 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
     [playVoice, router, stopVoice, voice]
   );
 
-  const speech = useSpeechInput({ onFinal: ask, holdSpace: true });
+  // Two ways to hear John. With a voice service configured, his words are recorded and transcribed on the
+  // server, which is far more accurate. Without one, the browser's own speech recognition is used.
+  const recorder = useRecorderInput({ onFinal: ask, holdSpace: voice });
+  const browserSpeech = useSpeechInput({ onFinal: ask, holdSpace: !(voice && recorder.supported) });
+  const speech = voice && recorder.supported ? recorder : browserSpeech;
 
   // John has just opened the tab and there is no conversation to carry on: Tess speaks first.
   const greeted = useRef(false);
@@ -532,7 +537,7 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
         {(() => {
           const hidden = textPrefs.style === "hidden";
           const anyProblem = problem || speech.error || voiceProblem;
-          const anyWords = !hidden && (speech.listening || exchange.you || exchange.line);
+          const anyWords = !hidden && (speech.listening || speech.working || exchange.you || exchange.line);
           if (!anyWords && !anyProblem) return <div className={styles.said} aria-live="polite" />;
           return (
             <div className={`${styles.saidWrap} ${anyWords ? styles[WRAP[textPrefs.style]] ?? "" : ""} ${faded && !anyProblem ? styles.saidFaded : ""}`}>
@@ -540,6 +545,8 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
               <div className={styles.said} aria-live="polite">
                 {hidden ? null : speech.listening ? (
                   <span className={styles.you}>You: {speech.transcript || (speech.live ? "I am listening, go ahead…" : "Opening the microphone…")}</span>
+                ) : speech.working ? (
+                  <span className={styles.you}>You: working out what you said…</span>
                 ) : exchange.you ? (
                   <span className={styles.you}>You: {exchange.you}</span>
                 ) : null}
@@ -576,11 +583,11 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
               type="button"
               className={`${styles.round} ${speech.listening ? styles.roundLive : ""}`}
               onClick={() => (speech.listening ? speech.stop() : speech.start("tap"))}
-              disabled={busy && !speech.listening}
+              disabled={(busy || speech.working) && !speech.listening}
               aria-pressed={speech.listening}
               aria-label="Talk to Tess"
             >
-              {speech.listening ? "Listening · tap to send" : "Tap to talk"}
+              {speech.listening ? "Listening · tap to send" : speech.working ? "Hearing you…" : "Tap to talk"}
             </button>
           ) : null}
           <button type="button" className={styles.round} onClick={toggleSound} aria-pressed={soundOn}>
@@ -604,7 +611,7 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
           ) : speech.supported ? (
             "Tap the talk button or hold the space bar to talk, or type."
           ) : (
-            "Type to talk to Tess. This browser has no speech recognition; Chrome and Edge do."
+            "Type to talk to Tess. This browser cannot use the microphone here; Chrome and Edge can."
           )}
         </div>
       </div>
