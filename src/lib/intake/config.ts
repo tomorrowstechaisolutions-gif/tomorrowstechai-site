@@ -71,8 +71,8 @@ export const STARTER_PACKAGE = "starter_149";
 /** The promise in the ad, in business days, counted from Ready to Build. */
 export const STARTER_PROMISED_DAYS = 3;
 
-/** The one-time build price, in cents. */
-export const STARTER_PRICE_CENTS = 14900;
+/** The one-time build price, in cents. Defined once, with the Starter offer. */
+export { STARTER_PRICE_CENTS } from "@/lib/campaign/starter";
 
 // ─── The wizard ────────────────────────────────────────────────────────────
 

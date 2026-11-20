@@ -5,25 +5,14 @@ import { emailCopy } from "@/lib/system-emails/store";
 import {
   MAGNETS, SITE, buildMagnetDownloadEmail, buildOwnerMagnetEmail,
 } from "@/lib/forms/email-content";
+import { isBotSubmission } from "@/lib/spam-trap";
+import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
-
-// Rate limit
-const recentSubmissions = new Map<string, number>();
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const RATE_LIMIT_MAX = 5;
 
 const DEFAULT_AUDIENCE_ID = "47085ffe-414f-4530-a900-9d4ff86ad98d";
 
 // Whitelist of lead magnets and their emails: src/lib/forms/email-content.ts.
-
-function getClientIp(req: NextRequest): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  const real = req.headers.get("x-real-ip");
-  if (real) return real;
-  return "unknown";
-}
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -31,18 +20,19 @@ function isValidEmail(email: string): boolean {
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = getClientIp(req);
-    const now = Date.now();
-    const last = recentSubmissions.get(ip) ?? 0;
-    if (now - last < RATE_LIMIT_WINDOW_MS / RATE_LIMIT_MAX) {
+    const ip = clientIp(req);
+    const limit = await rateLimitDurable(`lead-magnet:${ip}`, { max: 5, windowMs: 60 * 60 * 1000 });
+    if (!limit.ok) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
-        { status: 429 }
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
       );
     }
-    recentSubmissions.set(ip, now);
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+    }
     const email = typeof body.email === "string" ? body.email.trim() : "";
     const firstName =
       typeof body.firstName === "string" ? body.firstName.trim().slice(0, 100) : "";
@@ -61,6 +51,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Unknown download." },
         { status: 400 }
+      );
+    }
+
+    // Looks exactly like a real success (the PDF link is public anyway), but
+    // nothing is emailed and nobody joins the list. A real person caught by
+    // mistake still gets their download.
+    if (isBotSubmission(body as Record<string, unknown>, "lead-magnet", 1500)) {
+      return NextResponse.json(
+        { ok: true, downloadUrl: `${SITE}${magnet.pdfPath}`, emailSent: true, title: magnet.title },
+        { status: 200 }
       );
     }
 

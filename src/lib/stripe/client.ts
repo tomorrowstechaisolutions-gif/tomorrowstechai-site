@@ -444,6 +444,9 @@ export async function createInvoiceCheckoutSession(opts: {
     invoice_id: opts.invoiceId,
     invoice_number: opts.invoiceNumber,
     business_name: opts.businessName ?? "",
+    // The one-time part of this charge. The webhook reads it back to book the
+    // one-time balance and the first recurring period as separate revenue.
+    due_now_cents: String(Math.max(0, Math.round(opts.dueNowCents))),
   };
 
   const lineItems: Record<string, unknown>[] = [];

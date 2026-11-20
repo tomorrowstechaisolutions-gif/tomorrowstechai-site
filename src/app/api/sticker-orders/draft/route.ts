@@ -3,6 +3,7 @@ import { calculateStickerPrice } from "@/lib/stickers/calculations";
 import { STICKER_TYPES, type DesignMethod, type StickerSelection } from "@/lib/stickers/types";
 import { ACCEPTED_ARTWORK_TYPES, MAX_ARTWORK_BYTES } from "@/lib/stickers/validation";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,15 @@ function uuidOrNull(value: unknown) {
 
 export async function POST(request: Request) {
   try {
+    // Before the body is read: a draft can carry two 25 MB uploads.
+    const limit = await rateLimitDurable(`sticker-draft:${clientIp(request)}`, { max: 20, windowMs: 60 * 60 * 1000 });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many orders saved in a short time. Please try again in a little while." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      );
+    }
+
     const form = await request.formData();
     const selection = parseSelection(form.get("selection"));
     const pricing = calculateStickerPrice(selection);

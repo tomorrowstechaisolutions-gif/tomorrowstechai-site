@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useRef, useState, FormEvent } from "react";
+import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 
 /** stacked: input above the button, for narrow columns like the Field Notes rail. */
 export function NewsletterForm({ stacked = false }: { stacked?: boolean } = {}) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const trapRef = useRef<HTMLInputElement>(null);
+  // Set on mount, not during render: the clock is not a pure value.
+  const startedAt = useRef<number>(0);
+
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -18,7 +26,12 @@ export function NewsletterForm({ stacked = false }: { stacked?: boolean } = {}) 
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          // Spam traps: a field no human sees, and a form sent faster than a person can.
+          [SPAM_TRAP_FIELD]: trapRef.current?.value ?? "",
+          ...(startedAt.current ? { elapsed_ms: Date.now() - startedAt.current } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -50,6 +63,13 @@ export function NewsletterForm({ stacked = false }: { stacked?: boolean } = {}) 
 
   return (
     <form onSubmit={handleSubmit} className={`flex flex-col ${stacked ? "" : "sm:flex-row"} gap-2 max-w-md`}>
+      {/* Honeypot: hidden from people, irresistible to bots. */}
+      <div className="bl-hp" aria-hidden="true">
+        <label>
+          Leave this empty
+          <input ref={trapRef} name={SPAM_TRAP_FIELD} type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" defaultValue="" />
+        </label>
+      </div>
       <input
         type="email"
         aria-label="Email address"
