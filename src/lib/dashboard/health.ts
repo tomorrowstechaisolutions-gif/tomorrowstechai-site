@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { lastNDays } from "./period";
 import { analyticsConfigured } from "@/lib/analytics/vercel-web";
+import { loadCronHealth, type CronHealth } from "@/lib/cron/queries";
 
 /**
  * Section 13 — System status.
@@ -46,7 +47,7 @@ export async function loadHealth(
   const ping = await sb.from("admin_users").select("id", { count: "exact", head: true });
   const dbUp = !ping.error;
 
-  const [socialAccounts, recentFollowups] = dbUp
+  const [socialAccounts, recentFollowups, cronHealth] = dbUp
     ? await Promise.all([
         sb
           .from("social_accounts")
@@ -58,8 +59,22 @@ export async function loadHealth(
           .eq("status", "sent")
           .gte("sent_at", week.fromIso)
           .then((r) => r.count ?? 0),
+        // The cron run log. Reports available: false when the cron_runs
+        // migration is not applied, and the entry below then reads as it
+        // always did.
+        loadCronHealth(sb),
       ])
-    : [[] as { platform: string; status: string; connected: boolean }[], 0];
+    : [
+        [] as { platform: string; status: string; connected: boolean }[],
+        0,
+        { available: false, crons: [] } as CronHealth,
+      ];
+
+  // Crons whose most recent logged run failed. A cron with no row yet is not
+  // counted: no evidence is not the same as a failure.
+  const failedCrons = cronHealth.available
+    ? cronHealth.crons.filter((c) => c.lastRun && !c.lastRun.ok).map((c) => c.name)
+    : [];
 
   const accounts = socialAccounts as { platform: string; status: string; connected: boolean }[];
   const connected = accounts.filter((a) => a.connected);
@@ -154,14 +169,18 @@ export async function loadHealth(
       label: "Automations",
       state: !has("CRON_SECRET")
         ? "disconnected"
-        : (recentFollowups as number) > 0
-          ? "operational"
-          : "warning",
+        : failedCrons.length > 0
+          ? "warning"
+          : (recentFollowups as number) > 0
+            ? "operational"
+            : "warning",
       detail: !has("CRON_SECRET")
         ? "CRON_SECRET is not set — the follow-up cron never runs."
-        : (recentFollowups as number) > 0
-          ? `${recentFollowups} follow-up${recentFollowups === 1 ? "" : "s"} sent in the last 7 days.`
-          : "Configured, but nothing has been sent in 7 days.",
+        : failedCrons.length > 0
+          ? `Last run failed: ${failedCrons.join(", ")}.`
+          : (recentFollowups as number) > 0
+            ? `${recentFollowups} follow-up${recentFollowups === 1 ? "" : "s"} sent in the last 7 days.`
+            : "Configured, but nothing has been sent in 7 days.",
     },
     {
       key: "payments",

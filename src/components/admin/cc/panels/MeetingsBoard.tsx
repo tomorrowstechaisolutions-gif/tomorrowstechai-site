@@ -43,9 +43,10 @@ function meetingHref(id: string, tab: MeetingTab, search: string): string {
 
 /** The Today agenda — the view you leave open on a working morning. */
 function Agenda({
-  meetings, tab, search,
+  meetings, now, tab, search,
 }: {
   meetings: MeetingWithLinks[];
+  now: number;
   tab: MeetingTab;
   search: string;
 }) {
@@ -53,7 +54,7 @@ function Agenda({
     <ol className="mt-agenda">
       {meetings.map((meeting) => {
         const joinable = Boolean(meeting.meeting_url) && PROVIDER_IS_VIDEO[meeting.provider];
-        const soon = Math.abs(new Date(meeting.start_at).getTime() - Date.now()) < 3 * 3600_000;
+        const soon = Math.abs(new Date(meeting.start_at).getTime() - now) < 3 * 3600_000;
 
         return (
           <li key={meeting.id} className={`mt-agenda-row${soon ? " is-soon" : ""}`}>
@@ -207,10 +208,12 @@ const EMPTY_COPY: Record<MeetingTab, { title: string; text: string }> = {
 };
 
 export default function MeetingsBoard({
-  kpis, meetings, tab, search, newMeeting,
+  kpis, meetings, now, tab, search, newMeeting,
 }: {
   kpis: MeetingKpis;
   meetings: MeetingWithLinks[];
+  /** Epoch ms, read once by the page for this request. */
+  now: number;
   tab: MeetingTab;
   search: string;
   /** The Schedule Meeting button, rendered by the page that knows the contact. */
@@ -279,7 +282,7 @@ export default function MeetingsBoard({
               icon={<IconUsers size={17} />}
             />
           ) : tab === "today" ? (
-            <Agenda meetings={meetings} tab={tab} search={search} />
+            <Agenda meetings={meetings} now={now} tab={tab} search={search} />
           ) : (
             <Table
               meetings={meetings}

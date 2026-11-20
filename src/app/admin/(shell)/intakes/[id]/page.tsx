@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { extendIntakeLink } from "@/app/admin/actions";
+import { nowMs } from "@/lib/time/chicago";
 import { signedFileUrl, intakeUrl } from "@/lib/intake/service";
 import {
   FIELD_LABELS,
@@ -68,7 +69,7 @@ export default async function IntakeDetailPage({
   const missing = missingRequirements(intake, files);
   const expired =
     intake.status !== "submitted" &&
-    new Date(intake.token_expires_at).getTime() < Date.now();
+    new Date(intake.token_expires_at).getTime() < nowMs();
 
   const socials = Object.entries(intake.social_links ?? {}).filter(([, v]) => v);
 

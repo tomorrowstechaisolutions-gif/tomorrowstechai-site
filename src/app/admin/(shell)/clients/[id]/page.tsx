@@ -14,7 +14,7 @@ import { ReviewPanel } from "@/components/admin/cc/reviews/ReviewPanel";
 import { businessDefaults } from "@/lib/settings/store";
 import { loadClientRequests } from "@/lib/requests/queries";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
-import { chicagoDate } from "@/lib/time/chicago";
+import { chicagoDateInDays } from "@/lib/time/chicago";
 
 import { loadClient } from "@/lib/clients/detail";
 import { recordSatisfaction, updateClientBilling, updateClientFields } from "@/app/admin/client-actions";
@@ -123,7 +123,7 @@ export default async function ClientPage({
         contact={meetingContact}
         providers={providers}
         action={scheduleMeetingAction}
-        defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+        defaultDate={chicagoDateInDays(1)}
         defaultType="strategy"
         returnTo={`/admin/clients/${client.id}`}
         timezone={BUSINESS_TIMEZONE}

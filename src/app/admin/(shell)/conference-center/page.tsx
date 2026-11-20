@@ -12,7 +12,7 @@ import { HISTORY_FILTERS } from "@/lib/conference/config";
 import type { HistoryFilter } from "@/lib/conference/config";
 import { getConferenceSettings } from "@/lib/conference/settings";
 import { zoomConnection } from "@/lib/zoom/oauth";
-import { chicagoDate } from "@/lib/time/chicago";
+import { chicagoDate, nowMs } from "@/lib/time/chicago";
 import {
   inviteToConferenceAction, scheduleConferenceAction, startInstantConferenceAction,
 } from "@/app/admin/conference-actions";
@@ -195,6 +195,7 @@ export default async function ConferenceCenterPage({
       {openMeeting ? (
         <MeetingDrawer
           meeting={openMeeting}
+          now={nowMs()}
           closeHref={closeHref}
           followUpDefault={daysFromNow(3)}
           focus={focus}

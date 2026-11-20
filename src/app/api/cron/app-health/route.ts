@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { runHealthChecks } from "@/lib/apps/checks";
 import { syncApps } from "@/lib/apps/sync";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,18 +19,11 @@ export const maxDuration = 60;
  * The sync is allowed to fail without taking the checks with it: a Vercel
  * outage should not also stop the TLS and HTTP probes, which do not need it.
  */
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const expected = Buffer.from(secret);
-  const given = Buffer.from(supplied);
-  return expected.length === given.length && timingSafeEqual(expected, given);
+export function GET(request: Request) {
+  return withCronRun("app-health", request, run);
 }
 
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+async function run(): Promise<Response> {
   const sync = await syncApps().catch((error: unknown) => ({
     ok: false as const,
     error: error instanceof Error ? error.message : "App sync failed.",

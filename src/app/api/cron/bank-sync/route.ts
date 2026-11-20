@@ -1,22 +1,16 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { mercuryConfigured, syncMercury } from "@/lib/finance/mercury";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function authorized(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!secret) return false;
-  const a = Buffer.from(secret);
-  const b = Buffer.from(supplied);
-  return a.length === b.length && timingSafeEqual(a, b);
+/** Pulls Mercury balances and transactions into the admin (read-only). */
+export function GET(request: Request) {
+  return withCronRun("bank-sync", request, run);
 }
 
-/** Pulls Mercury balances and transactions into the admin (read-only). */
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function run(): Promise<Response> {
   if (!mercuryConfigured()) return NextResponse.json({ skipped: "MERCURY_API_TOKEN not set" });
   try {
     return NextResponse.json(await syncMercury());

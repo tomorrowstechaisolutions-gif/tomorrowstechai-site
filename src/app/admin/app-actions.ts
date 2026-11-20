@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { openSecret } from "@/lib/security/secrets";
 import { runHealthChecks } from "@/lib/apps/checks";
 import {
   connectGithubProvider,
@@ -870,7 +871,7 @@ export async function redeployAction(
       .select("access_token, account_ref")
       .eq("provider", "vercel")
       .maybeSingle();
-    const token = (credential.data as { access_token: string | null } | null)?.access_token;
+    const token = openSecret((credential.data as { access_token: string | null } | null)?.access_token, "Vercel");
     const teamId = (credential.data as { account_ref: string | null } | null)?.account_ref ?? null;
     if (!token) return { error: "Vercel is not connected." };
 

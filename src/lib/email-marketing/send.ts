@@ -30,11 +30,36 @@ import { delayMs, normalizeEmail, type DelayUnit, type EmailBlock, type EmailTon
  * failure never mails a different set of people and never mails anyone
  * twice — the unique index on (campaign_id, lower(email)) plus the pending
  * filter guarantee it.
+ *
+ * TWO RUNS CAN OVERLAP — the cron and somebody pressing "Send now", or two
+ * cron invocations when one runs long. The pending filter alone does not
+ * survive that: both runs read the same pending rows. So every row is
+ * CLAIMED first (pending → sending, compare-and-set, and the run only sends
+ * if the database says the claim was its own), a claim abandoned by a run
+ * that died is handed back after STALE_CLAIM_MS, and every provider call
+ * carries an idempotency key so that the retry of an abandoned claim cannot
+ * become a second email even if the first one did leave the building.
  */
 
 const BATCH = 40;
 /** Resend's own rate limit is generous; this keeps us politely under it. */
 const PAUSE_MS = 120;
+/**
+ * How long a claim is honoured before it is treated as abandoned.
+ *
+ * A row is claimed immediately before its own send, so a healthy claim is
+ * seconds old; ten minutes is far past any single send and past the 60s
+ * function limit, and short enough that the next 15-minute cron run picks
+ * the row back up. It also sits well inside the 24 hours Resend remembers an
+ * idempotency key for, which is what makes the retry safe.
+ */
+const STALE_CLAIM_MS = 10 * 60_000;
+
+/** `deadline` is an epoch-ms wall clock: stop cleanly before it, resume next run. */
+export type RunOptions = { deadline?: number };
+
+const pastDeadline = (deadline: number | undefined) =>
+  deadline !== undefined && Date.now() >= deadline;
 
 export type SendSummary = {
   campaignId: string;
@@ -191,17 +216,80 @@ export async function buildRecipientList(
 /* ── Step 3 + 4: send ──────────────────────────────────────────────── */
 
 /**
+ * Hand back recipient rows whose claim was abandoned.
+ *
+ * A run that times out between claiming a row and recording the result
+ * leaves it in 'sending' forever: not pending, so never retried, and not
+ * sent, so never counted. `updated_at` is stamped by the table's touch
+ * trigger on every update, so for a row in 'sending' it IS the claim time —
+ * no extra column is needed to know how old a claim is.
+ *
+ * Returning the row to 'pending' is safe only because the send carries an
+ * idempotency key derived from the row id: if the dead run's email did go
+ * out, the provider answers the retry with the original message instead of
+ * sending a second one.
+ */
+export async function reapStaleRecipients(sb: SupabaseClient, campaignId: string): Promise<number> {
+  const cutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+  const { data, error } = await sb
+    .from("email_campaign_recipients")
+    .update({ status: "pending" })
+    .eq("campaign_id", campaignId)
+    .eq("status", "sending")
+    .lt("updated_at", cutoff)
+    .select("id");
+  if (error) throw new Error(`stale recipients: ${error.message}`);
+  return (data ?? []).length;
+}
+
+/** Rows that still stand between this campaign and 'sent': queued, or claimed by a live run. */
+async function countUnfinished(sb: SupabaseClient, campaignId: string): Promise<number> {
+  const { count } = await sb
+    .from("email_campaign_recipients")
+    .select("id", { count: "exact", head: true })
+    .eq("campaign_id", campaignId)
+    .in("status", ["pending", "sending"]);
+  return count ?? 0;
+}
+
+/**
+ * Close the campaign out. The status filter plus the returned row mean that
+ * when two runs both see nothing left, only one of them writes the "sent"
+ * line into the audit trail.
+ */
+async function completeCampaign(
+  sb: SupabaseClient,
+  campaign: CampaignRow,
+  body: string,
+  actor: string | null
+): Promise<void> {
+  const { data } = await sb
+    .from("email_campaigns")
+    .update({ status: "sent" })
+    .eq("id", campaign.id)
+    .neq("status", "sent")
+    .select("id");
+  if (!data || data.length === 0) return;
+
+  await sb
+    .from("email_sending_domains")
+    .update({ last_send_at: new Date().toISOString() })
+    .eq("id", campaign.sending_domain_id ?? "00000000-0000-0000-0000-000000000000");
+  await logEvent(sb, campaign.id, "sent", body, actor);
+}
+
+/**
  * Send the pending portion of a campaign's frozen list.
  *
- * Returns after `limit` recipients so a cron invocation cannot run past its
- * timeout. `remaining` tells the caller to come back, and because the list
- * is frozen and each row moves out of 'pending' as it is sent, coming back
- * resumes exactly where it stopped.
+ * Returns after `limit` recipients, or at `deadline`, so a cron invocation
+ * cannot run past its timeout. `remaining` tells the caller to come back,
+ * and because the list is frozen and each row moves out of 'pending' as it
+ * is claimed, coming back resumes exactly where it stopped.
  */
 export async function sendCampaign(
   sb: SupabaseClient,
   campaignId: string,
-  options: { limit?: number; actor?: string | null } = {}
+  options: { limit?: number; actor?: string | null } & RunOptions = {}
 ): Promise<SendSummary> {
   await primeBrand(); // phone and signer in the footer follow the business profile
   const limit = options.limit ?? 500;
@@ -234,6 +322,9 @@ export async function sendCampaign(
 
   const sender = await resolveSender(sb, campaign);
 
+  // Before reading the queue, so a row abandoned by a dead run is back in it.
+  await reapStaleRecipients(sb, campaignId);
+
   const { data: pending, error } = await sb
     .from("email_campaign_recipients")
     .select("id, email, first_name, last_name, company, lead_id")
@@ -248,22 +339,58 @@ export async function sendCampaign(
   }[];
 
   if (queue.length === 0) {
+    // A campaign still marked 'sending' with nothing queued and nothing in
+    // flight was finished by a run that died before it could say so. Now
+    // that the cron resumes 'sending' campaigns, it would otherwise be
+    // re-examined every fifteen minutes for ever.
+    if (campaign.status === "sending") {
+      summary.remaining = await countUnfinished(sb, campaignId);
+      if (summary.remaining === 0) {
+        await completeCampaign(sb, campaign, "Campaign sent. Closed out by a resumed run.", options.actor ?? null);
+        summary.message = "Campaign complete.";
+        return summary;
+      }
+    }
     summary.message = "There is nobody left to send to.";
     return summary;
   }
 
+  // Not re-applied to a campaign that is already 'sending': a resumed run
+  // must not move the moment the send started.
   await sb
     .from("email_campaigns")
     .update({ status: "sending", started_sending_at: new Date().toISOString() })
     .eq("id", campaignId)
-    .in("status", ["scheduled", "approved", "draft", "sending"]);
+    .in("status", ["scheduled", "approved", "draft"]);
 
   const clientName = await clientNameFor(sb, campaign.customer_id);
 
-  for (let i = 0; i < queue.length; i += BATCH) {
+  let outOfTime = false;
+
+  for (let i = 0; i < queue.length && !outOfTime; i += BATCH) {
     const batch = queue.slice(i, i + BATCH);
 
     for (const row of batch) {
+      // Checked before the claim, never after it: stopping here leaves the
+      // row 'pending' for the next run, with nothing half-done.
+      if (pastDeadline(options.deadline)) {
+        outOfTime = true;
+        break;
+      }
+
+      // THE CLAIM. `.select()` makes the database report which rows the
+      // update actually changed. Nothing back means another run got there
+      // first (or the write failed), and this run must not send — and must
+      // not touch the row again, which is why this sits outside the try:
+      // the catch below marks a row failed, and that row is not ours.
+      const { data: claimed, error: claimError } = await sb
+        .from("email_campaign_recipients")
+        .update({ status: "sending" })
+        .eq("id", row.id)
+        .eq("status", "pending")
+        .select("id");
+      if (claimError || !claimed || claimed.length === 0) continue;
+
       summary.attempted += 1;
       const unsubscribeUrl = campaignUnsubscribeUrl(row.id);
       const recipient = {
@@ -275,12 +402,6 @@ export async function sendCampaign(
       const context = { clientName, salesRep: campaign.owner, serviceName: null };
 
       try {
-        await sb
-          .from("email_campaign_recipients")
-          .update({ status: "sending" })
-          .eq("id", row.id)
-          .eq("status", "pending");
-
         const html = renderCampaignHtml({
           blocks: campaign.blocks ?? [],
           previewText: campaign.preview_text ?? "",
@@ -306,6 +427,11 @@ export async function sendCampaign(
           html,
           text,
           headers: listUnsubscribeHeaders(unsubscribeUrl),
+        }, {
+          // One key per recipient row. If a run dies after the provider
+          // accepted this and the reaper hands the row back, the retry gets
+          // the original message id instead of sending a second email.
+          idempotencyKey: `campaign-recipient/${row.id}`,
         });
 
         const messageId = response.data?.id ?? null;
@@ -334,32 +460,28 @@ export async function sendCampaign(
         summary.sent += 1;
       } catch (cause) {
         const message = cause instanceof Error ? cause.message : "The send failed.";
+        // Only while the row is still our claim: an error thrown AFTER it
+        // was recorded as sent must not rewrite a delivered email as failed.
         await sb
           .from("email_campaign_recipients")
           .update({ status: "failed", error: message.slice(0, 500) })
-          .eq("id", row.id);
+          .eq("id", row.id)
+          .eq("status", "sending");
         summary.failed += 1;
       }
     }
 
-    if (i + BATCH < queue.length) await sleep(PAUSE_MS);
+    if (!outOfTime && i + BATCH < queue.length) await sleep(PAUSE_MS);
   }
 
-  const { count } = await sb
-    .from("email_campaign_recipients")
-    .select("id", { count: "exact", head: true })
-    .eq("campaign_id", campaignId)
-    .eq("status", "pending");
-  summary.remaining = count ?? 0;
+  // 'sending' counts as remaining. Those rows are either in another run's
+  // hands right now or waiting for the reaper, and in both cases the
+  // campaign is not finished and must not be marked 'sent' over them.
+  summary.remaining = await countUnfinished(sb, campaignId);
 
   if (summary.remaining === 0) {
-    await sb.from("email_campaigns").update({ status: "sent" }).eq("id", campaignId);
-    await sb
-      .from("email_sending_domains")
-      .update({ last_send_at: new Date().toISOString() })
-      .eq("id", campaign.sending_domain_id ?? "00000000-0000-0000-0000-000000000000");
-    await logEvent(
-      sb, campaignId, "sent",
+    await completeCampaign(
+      sb, campaign,
       `Campaign sent. ${summary.sent} delivered to the provider, ${summary.failed} failed.`,
       options.actor ?? null
     );
@@ -474,34 +596,59 @@ export async function sendTestEmail(
 /**
  * Send everything that is due. Called by the cron.
  *
- * Campaigns are taken one at a time with a per-run budget, because a Vercel
- * function has a wall clock and half a campaign sent twice is worse than
- * half a campaign sent once. The frozen list makes resuming exact.
+ * Campaigns are taken one at a time with a per-run budget and a wall-clock
+ * deadline, because a Vercel function has a wall clock and half a campaign
+ * sent twice is worse than half a campaign sent once. The frozen list makes
+ * resuming exact.
+ *
+ * "Due" means two things. A 'scheduled' campaign whose time has come — and a
+ * campaign already 'sending', because the first run that touches a campaign
+ * moves it to 'sending', and a list longer than one run's budget would
+ * otherwise never be picked up again. In-flight campaigns go first: finishing
+ * what is half-sent matters more than starting something new. 'paused' is
+ * neither, so pausing still stops a campaign.
  */
 export async function runDueCampaigns(
   sb: SupabaseClient,
-  budget = 400
+  budget = 400,
+  options: RunOptions = {}
 ): Promise<{ examined: number; summaries: SendSummary[] }> {
   const now = new Date().toISOString();
-  const { data, error } = await sb
-    .from("email_campaigns")
-    .select("id, audience_id")
-    .eq("status", "scheduled")
-    .lte("scheduled_at", now)
-    .order("scheduled_at", { ascending: true })
-    .limit(5);
+
+  // Two plain queries rather than one `or(...)`: a 'sending' campaign started
+  // by "Send now" has no scheduled_at at all, and a null never satisfies lte.
+  const [inFlight, scheduled] = await Promise.all([
+    sb
+      .from("email_campaigns")
+      .select("id, status")
+      .eq("status", "sending")
+      .order("started_sending_at", { ascending: true })
+      .limit(5),
+    sb
+      .from("email_campaigns")
+      .select("id, status")
+      .eq("status", "scheduled")
+      .lte("scheduled_at", now)
+      .order("scheduled_at", { ascending: true })
+      .limit(5),
+  ]);
+  const error = inFlight.error ?? scheduled.error;
   if (error) throw new Error(`due campaigns: ${error.message}`);
+
+  const data = [...(inFlight.data ?? []), ...(scheduled.data ?? [])].slice(0, 5);
 
   const summaries: SendSummary[] = [];
   let left = budget;
 
-  for (const row of data ?? []) {
-    if (left <= 0) break;
+  for (const row of data) {
+    if (left <= 0 || pastDeadline(options.deadline)) break;
     try {
-      // Building is idempotent, so doing it on every run is safe and covers
-      // the case where a campaign was scheduled before its list was built.
-      await buildRecipientList(sb, row.id as string);
-      const summary = await sendCampaign(sb, row.id as string, { limit: left });
+      // Building is idempotent, and covers the case where a campaign was
+      // scheduled before its list was built. It is NOT repeated for a
+      // campaign that is already sending: that list is frozen, and
+      // re-resolving a dynamic segment mid-send would add people to it.
+      if (row.status !== "sending") await buildRecipientList(sb, row.id as string);
+      const summary = await sendCampaign(sb, row.id as string, { limit: left, deadline: options.deadline });
       summaries.push(summary);
       left -= summary.attempted;
     } catch (cause) {
@@ -514,7 +661,7 @@ export async function runDueCampaigns(
     }
   }
 
-  return { examined: (data ?? []).length, summaries };
+  return { examined: data.length, summaries };
 }
 
 /* ── The sequence stepper ──────────────────────────────────────────── */
@@ -529,10 +676,19 @@ export async function runDueCampaigns(
  * Exit rules are enforced by database triggers on suppression, so this loop
  * never has to remember to check them — an unsubscribed person is already
  * 'exited' and never appears in this query.
+ *
+ * An enrollment has no 'sending' status to claim with, so the claim is a
+ * LEASE on the one clock this loop reads: before sending, next_send_at is
+ * pushed STALE_CLAIM_MS into the future, compare-and-set on the step the row
+ * was read at. An overlapping run either loses that update or no longer sees
+ * the row as due. If this run dies after the send, the lease simply expires
+ * and the step is retried — under the same idempotency key, so the provider
+ * does not send it twice.
  */
 export async function runDueSequenceSteps(
   sb: SupabaseClient,
-  limit = 100
+  limit = 100,
+  options: RunOptions = {}
 ): Promise<{ examined: number; sent: number; completed: number; failed: number }> {
   await primeBrand(); // phone and signer in the footer follow the business profile
   const resend = client();
@@ -552,6 +708,8 @@ export async function runDueSequenceSteps(
   if (error) throw new Error(`due enrollments: ${error.message}`);
 
   for (const row of data ?? []) {
+    // Before anything is claimed, so an unreached enrollment stays due.
+    if (pastDeadline(options.deadline)) break;
     summary.examined += 1;
     const sequence = Array.isArray(row.email_sequences) ? row.email_sequences[0] : row.email_sequences;
     if (!sequence) continue;
@@ -584,6 +742,19 @@ export async function runDueSequenceSteps(
         .eq("id", row.id as string);
       continue;
     }
+
+    // THE CLAIM. Still active, still on the step we read, still due as of
+    // this run's clock — and the database has to hand the row back to prove
+    // the update was ours. No row means another run holds the lease.
+    const { data: claimed, error: claimError } = await sb
+      .from("email_sequence_enrollments")
+      .update({ next_send_at: new Date(Date.now() + STALE_CLAIM_MS).toISOString() })
+      .eq("id", row.id as string)
+      .eq("status", "active")
+      .eq("current_step", row.current_step as number)
+      .lte("next_send_at", now.toISOString())
+      .select("id");
+    if (claimError || !claimed || claimed.length === 0) continue;
 
     const unsubscribeUrl = sequenceUnsubscribeUrl(row.id as string);
     const recipient = {
@@ -622,6 +793,10 @@ export async function runDueSequenceSteps(
           unsubscribeUrl,
         }),
         headers: listUnsubscribeHeaders(unsubscribeUrl),
+      }, {
+        // One key per enrollment per step: a retry after an expired lease
+        // gets the original message back rather than sending it again.
+        idempotencyKey: `sequence-step/${row.id as string}/${nextNumber}`,
       });
 
       if (!response.data?.id) throw new Error(response.error?.message ?? "No message id was returned.");
@@ -649,7 +824,10 @@ export async function runDueSequenceSteps(
           next_send_at: nextAt,
           status: following ? "active" : "completed",
         })
-        .eq("id", row.id as string);
+        .eq("id", row.id as string)
+        // Compare-and-set again: the step only ever advances from the one
+        // this run claimed, so it can never be advanced twice.
+        .eq("current_step", row.current_step as number);
 
       await sb.from("email_events").insert({
         sequence_enrollment_id: row.id as string,
@@ -667,7 +845,8 @@ export async function runDueSequenceSteps(
       await sb
         .from("email_sequence_enrollments")
         .update({ status: "failed", error: message.slice(0, 500) })
-        .eq("id", row.id as string);
+        .eq("id", row.id as string)
+        .eq("current_step", row.current_step as number);
       summary.failed += 1;
     }
   }

@@ -48,3 +48,39 @@ export function decryptSecret(stored: string | null, label = "Integration"): str
     throw new Error(`Stored ${label} credential could not be decrypted — the encryption key changed. Reconnect ${label}.`);
   }
 }
+
+/**
+ * Encrypt a token on its way into the database, when a key is configured.
+ *
+ * For the credentials that were stored in the clear before this existed
+ * (Google, and the Vercel, GitHub and Supabase tokens behind Apps and
+ * Websites). Unlike encryptSecret it does not throw without a key: those
+ * connections already work, and a missing key must not be what breaks them.
+ * With the key set, which production has for Zoom and social, everything
+ * written from now on is encrypted.
+ */
+export function sealSecret(plain: string | null | undefined, label = "Integration"): string | null {
+  if (!plain) return null;
+  if (plain.startsWith(PREFIX)) return plain;
+  return encryptionConfigured() ? encryptSecret(plain, label) : plain;
+}
+
+/**
+ * Read a token back, whichever way it was stored.
+ *
+ * A value written before encryption is returned as it is, so existing
+ * connections keep working and are upgraded the next time they are written.
+ * An encrypted value that cannot be read (the key changed) comes back null,
+ * which every caller already treats as "not connected, reconnect": better
+ * than a settings page that will not load.
+ */
+export function openSecret(stored: string | null | undefined, label = "Integration"): string | null {
+  if (!stored) return null;
+  if (!stored.startsWith(PREFIX)) return stored;
+  try {
+    return decryptSecret(stored, label);
+  } catch (err) {
+    console.error(`[secrets] ${err instanceof Error ? err.message : `Could not read the stored ${label} credential.`}`);
+    return null;
+  }
+}

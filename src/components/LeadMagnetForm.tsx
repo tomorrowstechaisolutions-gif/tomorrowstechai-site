@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useRef, useState, FormEvent } from "react";
+import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -27,6 +28,13 @@ export function LeadMagnetForm({
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const trapRef = useRef<HTMLInputElement>(null);
+  // Set on mount, not during render: the clock is not a pure value.
+  const startedAt = useRef<number>(0);
+
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -42,6 +50,9 @@ export function LeadMagnetForm({
           email: email.trim(),
           firstName: firstName.trim(),
           magnet,
+          // Spam traps: a field no human sees, and a form sent faster than a person can.
+          [SPAM_TRAP_FIELD]: trapRef.current?.value ?? "",
+          ...(startedAt.current ? { elapsed_ms: Date.now() - startedAt.current } : {}),
         }),
       });
       const data = await res.json();
@@ -92,6 +103,13 @@ export function LeadMagnetForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
       <div>
+        {/* Honeypot: hidden from people, irresistible to bots. */}
+        <div className="bl-hp" aria-hidden="true">
+          <label>
+            Leave this empty
+            <input ref={trapRef} name={SPAM_TRAP_FIELD} type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" defaultValue="" />
+          </label>
+        </div>
         <label className="block text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1.5">
           First name (optional)
         </label>
