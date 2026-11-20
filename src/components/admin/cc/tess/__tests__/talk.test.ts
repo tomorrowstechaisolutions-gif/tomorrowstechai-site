@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { nothingHeardNotice, spaceBarTalks } from "../speechLogic";
-import { soundPlan } from "../soundPlan";
+import { BACKGROUNDS, backgroundPlan, DEFAULT_BACKGROUND, parseBackground, playsWhileHidden, soundPlan } from "../soundPlan";
 
 describe("holding the space bar to talk", () => {
   it("talks when nothing is focused", () => {
@@ -57,5 +57,51 @@ describe("the sound Tess makes in each state", () => {
 
   it("does not chirp again when nothing changed", () => {
     expect(soundPlan("listening", "listening")).toEqual({ chirp: null, bed: "none" });
+  });
+});
+
+describe("the background sound John picks", () => {
+  it("offers her own ambience, the two focus tones, and none", () => {
+    expect(BACKGROUNDS.map((b) => b.id)).toEqual(["ambient", "gamma40", "beta15", "off"]);
+    expect(DEFAULT_BACKGROUND).toBe("ambient");
+  });
+
+  it("falls back to her ambience for anything it does not recognise", () => {
+    expect(parseBackground("gamma40")).toBe("gamma40");
+    expect(parseBackground("whale-song")).toBe("ambient");
+    expect(parseBackground(null)).toBe("ambient");
+  });
+
+  it("her ambience hums and chimes only while she waits", () => {
+    expect(backgroundPlan("ambient", "idle")).toEqual({ hum: true, chimes: true, beatHz: null });
+    expect(backgroundPlan("ambient", "thinking")).toEqual({ hum: false, chimes: false, beatHz: null });
+  });
+
+  it("the 40 Hz tone beats at 40, with no hum or chimes over it", () => {
+    expect(backgroundPlan("gamma40", "idle")).toEqual({ hum: false, chimes: false, beatHz: 40 });
+  });
+
+  it("the 15 Hz tone beats at 15", () => {
+    expect(backgroundPlan("beta15", "idle")).toEqual({ hum: false, chimes: false, beatHz: 15 });
+  });
+
+  it("a focus tone carries on while she thinks, so it does not keep cutting out", () => {
+    expect(backgroundPlan("gamma40", "thinking").beatHz).toBe(40);
+  });
+
+  it("a focus tone stops while she listens or speaks", () => {
+    expect(backgroundPlan("gamma40", "none").beatHz).toBeNull();
+    expect(backgroundPlan("beta15", "none").beatHz).toBeNull();
+  });
+
+  it("none means no background at all", () => {
+    expect(backgroundPlan("off", "idle")).toEqual({ hum: false, chimes: false, beatHz: null });
+  });
+
+  it("only a focus tone keeps playing when John switches to another tab", () => {
+    expect(playsWhileHidden("gamma40")).toBe(true);
+    expect(playsWhileHidden("beta15")).toBe(true);
+    expect(playsWhileHidden("ambient")).toBe(false);
+    expect(playsWhileHidden("off")).toBe(false);
   });
 });

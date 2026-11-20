@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { TessProfile } from "@/lib/crew/profile";
 import { DIAL_KEYS, DIALS, MODE_IDS, MODES, openTopics, TOPICS, type Note, type NoteList, type TessSettings } from "@/lib/crew/tess-modes";
+import { BACKGROUNDS, type Background } from "./soundPlan";
 import styles from "./tess.module.css";
 import { FADE_OPTIONS, TEXT_STYLES, type TextPrefs } from "./textPrefs";
 
@@ -40,6 +41,9 @@ export default function TessProfilePanel({
   problem,
   textPrefs,
   onTextPrefs,
+  background,
+  onBackground,
+  soundOn,
   onSettings,
   onRemove,
 }: {
@@ -48,6 +52,9 @@ export default function TessProfilePanel({
   problem: string | null;
   textPrefs: TextPrefs;
   onTextPrefs: (next: TextPrefs) => void;
+  background: Background;
+  onBackground: (next: Background) => void;
+  soundOn: boolean;
   onSettings: (next: TessSettings) => void;
   onRemove: (list: NoteList, id: string) => void;
 }) {
@@ -103,6 +110,27 @@ export default function TessProfilePanel({
             </span>
           </div>
         ))}
+      </section>
+
+      <section className={styles.panel}>
+        <h2>
+          Background sound <span>this browser only</span>
+        </h2>
+        <div className={styles.dial}>
+          <span>While she waits</span>
+          <span className={styles.seg} role="radiogroup" aria-label="Background sound">
+            {BACKGROUNDS.map((o) => (
+              <button key={o.id} type="button" role="radio" aria-checked={background === o.id} title={o.note} onClick={() => onBackground(o.id)}>
+                {o.label}
+              </button>
+            ))}
+          </span>
+        </div>
+        <p className={styles.topicLead}>
+          {BACKGROUNDS.find((o) => o.id === background)?.note}
+          {background === "gamma40" || background === "beta15" ? " It keeps playing while you work in another tab, and pauses while she listens or speaks." : ""}
+          {soundOn ? "" : " Sound is switched off, so nothing plays until you turn it on."}
+        </p>
       </section>
 
       <section className={styles.panel}>

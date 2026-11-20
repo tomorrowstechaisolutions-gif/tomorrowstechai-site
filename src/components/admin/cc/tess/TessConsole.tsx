@@ -10,7 +10,7 @@ import type { ChatLine } from "@/lib/crew/chat";
 import type { TessProfile } from "@/lib/crew/profile";
 import { MODES } from "@/lib/crew/tess-modes";
 import { LeftPanels, RightPanels } from "./BriefPanels";
-import { soundPlan } from "./soundPlan";
+import { BACKGROUND_EVENT, BACKGROUND_KEY, parseBackground, playsWhileHidden, soundPlan, type Background } from "./soundPlan";
 import type { TessState } from "./TessCore";
 import TessProfilePanel from "./TessProfilePanel";
 import styles from "./tess.module.css";
@@ -73,6 +73,24 @@ function lastExchange(history: ChatLine[]): { you: string; line: string } {
   return { you, line };
 }
 
+function subscribeBackground(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(BACKGROUND_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(BACKGROUND_EVENT, onChange);
+  };
+}
+const backgroundSnapshot = (): Background => {
+  try {
+    return parseBackground(window.localStorage.getItem(BACKGROUND_KEY));
+  } catch {
+    return parseBackground(null);
+  }
+};
+/** Her sounds are on, and either the tab is in view or the background is one that keeps going out of view. */
+const soundsAudible = () => soundSnapshot() && (!document.hidden || playsWhileHidden(backgroundSnapshot()));
+
 function subscribeText(onChange: () => void) {
   window.addEventListener("storage", onChange);
   window.addEventListener(TEXT_EVENT, onChange);
@@ -108,6 +126,7 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
   const [voiceProblem, setVoiceProblem] = useState<string | null>(null);
   const heldBack = useRef(false);
   const soundOn = useSyncExternalStore(subscribeSound, soundSnapshot, () => true);
+  const background = useSyncExternalStore(subscribeBackground, backgroundSnapshot, () => parseBackground(null));
   const textRaw = useSyncExternalStore(subscribeText, textSnapshot, () => null);
   const textPrefs = useMemo(() => parseTextPrefs(textRaw), [textRaw]);
   /** Her words have been up for the chosen time since she went quiet. */
@@ -317,7 +336,8 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
       if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
       if (!sounds.current) {
         sounds.current = createTessSounds(ctx);
-        sounds.current.setOn(soundSnapshot() && !document.hidden);
+        sounds.current.setBackground(backgroundSnapshot());
+        sounds.current.setOn(soundsAudible());
         sounds.current.setBed(soundPlan(shownRef.current, shownRef.current).bed);
       }
       // What she said before the browser allowed sound: say it now.
@@ -326,7 +346,7 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
         void playVoice(lastSpoken.current).then((ok) => (ok ? undefined : setState("idle")));
       }
     };
-    const visibility = () => sounds.current?.setOn(soundSnapshot() && !document.hidden);
+    const visibility = () => sounds.current?.setOn(soundsAudible());
     window.addEventListener("pointerdown", wake);
     window.addEventListener("keydown", wake);
     document.addEventListener("visibilitychange", visibility);
@@ -345,8 +365,18 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
   }, [shown]);
 
   useEffect(() => {
-    sounds.current?.setOn(soundOn && !document.hidden);
-  }, [soundOn]);
+    sounds.current?.setBackground(background);
+    sounds.current?.setOn(soundOn && (!document.hidden || playsWhileHidden(background)));
+  }, [soundOn, background]);
+
+  const saveBackground = useCallback((next: Background) => {
+    try {
+      window.localStorage.setItem(BACKGROUND_KEY, next);
+    } catch {
+      /* private mode: the choice cannot be kept */
+    }
+    window.dispatchEvent(new Event(BACKGROUND_EVENT));
+  }, []);
 
   // Her words leave the screen a little while after she goes quiet. They are kept in the archive.
   const quiet = !busy && shown === "idle";
@@ -525,6 +555,9 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
             problem={profileProblem}
             textPrefs={textPrefs}
             onTextPrefs={saveTextPrefs}
+            background={background}
+            onBackground={saveBackground}
+            soundOn={soundOn}
             onSettings={(next) => void runProfile(setTessSettingsAction, next)}
             onRemove={(list, id) => void runProfile(removeTessNoteAction, { list, id })}
           />
