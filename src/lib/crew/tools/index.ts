@@ -3,6 +3,7 @@ import { STATION_IDS, type StationId } from "../stations";
 import type { AgentSlug } from "../types";
 import type { CrewTool } from "./core";
 import { financeOverview, listUnpaidInvoices, sendInvoiceReminderTool } from "./finance";
+import { findLead, logOnLead } from "./john-leads";
 import { openPage } from "./navigate";
 import { listLeadsNeedingAttention, readLead, readLeadEmails, sendLeadEmail, updateLeadStatus } from "./leads";
 import { parkIdea, rememberAboutJohn } from "./profile";
@@ -27,6 +28,7 @@ const all: CrewTool[] = [
   flagForJohn, report,
   savePlaybook, setTarget, addRule,
   rememberAboutJohn, parkIdea, changeSettings, openPage,
+  findLead, logOnLead,
 ];
 
 export const TOOLS: Record<string, CrewTool> = Object.fromEntries(all.map((t) => [t.name, t]));
@@ -35,8 +37,8 @@ const BY_AGENT: Record<AgentSlug, string[]> = {
   "follow-through": ["list_leads_needing_attention", "read_lead", "read_lead_emails", "send_lead_email", "update_lead_status", "flag_for_john", "report"],
   content: ["list_recent_articles", "publish_article_post", "flag_for_john", "report"],
   finance: ["finance_overview", "list_unpaid_invoices", "send_invoice_reminder", "flag_for_john", "report"],
-  // Tess reads everything, raises things and holds the setup tools. She does not send.
-  tess: ["list_leads_needing_attention", "read_lead", "list_recent_articles", "finance_overview", "list_unpaid_invoices", "flag_for_john", "save_playbook", "set_target", "add_rule", "remember_about_john", "park_idea", "change_settings", "open_page"],
+  // Tess reads everything, raises things, holds the setup tools and keeps John's records for him. She does not send.
+  tess: ["list_leads_needing_attention", "read_lead", "list_recent_articles", "finance_overview", "list_unpaid_invoices", "flag_for_john", "save_playbook", "set_target", "add_rule", "remember_about_john", "park_idea", "change_settings", "open_page", "find_lead", "log_on_lead"],
 };
 
 export function toolsFor(agent: AgentSlug): CrewTool[] {
