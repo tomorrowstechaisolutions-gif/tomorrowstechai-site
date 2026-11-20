@@ -23,7 +23,7 @@ vi.mock("@/lib/invoices/emails", () => ({ sendInvoiceReminder: mocks.sendInvoice
 vi.mock("@/lib/invoices/queries", () => ({ loadInvoiceWorkspace: vi.fn(async () => ({ rows: [], summary: {} })) }));
 vi.mock("@/lib/finance/overview", () => ({ loadFinanceOverview: vi.fn(async () => ({})) }));
 
-import { SIGNATURE, TOOLS, toolsFor, type ToolContext } from "../tools";
+import { SIGNATURE, TOOLS, toolsFor, toolStations, type ToolContext } from "../tools";
 import type { Agent, Business, Goal, Run } from "../types";
 
 const business: Business = {
@@ -181,6 +181,10 @@ describe("the registry", () => {
       expect(t.input_schema.required, t.name).toEqual(expect.arrayContaining(["goal_id", "expectation"]));
       expect(t.input_schema.additionalProperties, t.name).toBe(false);
     }
+  });
+
+  it("lists only the stations some tool works at, in the floor's own order", () => {
+    expect(toolStations()).toEqual(["inbox", "crm", "social", "bank", "stripe", "library"]);
   });
 
   it("every tool names a station", () => {

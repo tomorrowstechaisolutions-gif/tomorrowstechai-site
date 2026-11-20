@@ -1,4 +1,5 @@
 import "server-only";
+import { STATION_IDS, type StationId } from "../stations";
 import type { AgentSlug } from "../types";
 import type { CrewTool } from "./core";
 import { financeOverview, listUnpaidInvoices, sendInvoiceReminderTool } from "./finance";
@@ -36,4 +37,10 @@ const BY_AGENT: Record<AgentSlug, string[]> = {
 
 export function toolsFor(agent: AgentSlug): CrewTool[] {
   return BY_AGENT[agent].map((name) => TOOLS[name]).filter(Boolean);
+}
+
+/** The stations at least one tool works at. The floor shows these and no others. */
+export function toolStations(): StationId[] {
+  const used = new Set(all.map((t) => t.station));
+  return STATION_IDS.filter((id) => used.has(id));
 }
