@@ -23,7 +23,7 @@ function list(input: Record<string, unknown>, key: string): string[] {
 }
 
 /** Run a configuration write once per tool call, and log it for the floor. */
-async function once(ctx: ToolContext, tool: string, summary: string, work: () => Promise<ToolResult>): Promise<ToolResult> {
+export async function once(ctx: ToolContext, tool: string, summary: string, work: () => Promise<ToolResult>): Promise<ToolResult> {
   if (await stepFor(ctx.sb, ctx.run.id, ctx.toolUseId)) return { ok: true, text: "Already saved earlier in this conversation." };
   const result = await work();
   if (result.ok) {

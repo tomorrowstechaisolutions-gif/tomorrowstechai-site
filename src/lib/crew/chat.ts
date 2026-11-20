@@ -3,6 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { startRun } from "./log";
 import { ROLE } from "./roles";
+import { CONTEXT_TAGS } from "./tess-modes";
 import type { Agent, Run } from "./types";
 
 /**
@@ -12,6 +13,11 @@ import type { Agent, Run } from "./types";
  * run's transcript and the engine carries it forward, so Tess remembers the
  * sitting. The brief goes in once, ahead of the first message; later turns
  * add only what John said, which keeps everything before them cached.
+ *
+ * Who John is and how he wants to be answered (his profile, the mode, the
+ * dials) travel the same way: as blocks ahead of what he said, sent at the
+ * start and again only when one of them has changed. Nothing already in the
+ * conversation is rewritten, so switching mode costs one short block.
  *
  * A new conversation starts when the last one is from an earlier sitting,
  * ended badly, or is close to the engine's step limit.
@@ -31,6 +37,27 @@ function hasOpenToolCall(transcript: Anthropic.MessageParam[]): boolean {
   const last = transcript[transcript.length - 1];
   return Boolean(last && last.role === "assistant" && typeof last.content !== "string" && last.content.some((b) => b.type === "tool_use"));
 }
+
+function textsOf(message: Anthropic.MessageParam): string[] {
+  if (typeof message.content === "string") return [message.content];
+  return message.content.filter((b): b is Anthropic.TextBlockParam => b.type === "text").map((b) => b.text);
+}
+
+/** The context blocks Tess has not been told yet: new ones, and ones whose words changed. */
+function changedContext(transcript: Anthropic.MessageParam[], context: string[]): string[] {
+  return context.filter((block) => {
+    const tag = CONTEXT_TAGS.find((t) => block.startsWith(t));
+    if (!tag) return false;
+    let last: string | undefined;
+    for (const message of transcript) {
+      if (message.role !== "user") continue;
+      for (const text of textsOf(message)) if (text.startsWith(tag)) last = text;
+    }
+    return last !== block;
+  });
+}
+
+const asText = (text: string): Anthropic.TextBlockParam => ({ type: "text", text });
 
 /** The conversation this admin can carry on, if there is one. */
 async function currentRun(sb: SupabaseClient, userId: string, now: number): Promise<Run | null> {
@@ -57,14 +84,16 @@ async function currentRun(sb: SupabaseClient, userId: string, now: number): Prom
  */
 export async function openChatTurn(
   sb: SupabaseClient,
-  input: { userId: string; message: string; brief: () => Promise<string>; now?: number }
+  input: { userId: string; message: string; brief: () => Promise<string>; context?: string[]; now?: number }
 ): Promise<string> {
   const now = input.now ?? Date.now();
   const said = input.message.trim().slice(0, 4000) || ROLE.tess.firstMessage;
+  const context = input.context ?? [];
   const existing = await currentRun(sb, input.userId, now);
 
   if (existing) {
-    const transcript = [...((existing.transcript ?? []) as Anthropic.MessageParam[]), { role: "user", content: [{ type: "text", text: said }] } as Anthropic.MessageParam];
+    const before = (existing.transcript ?? []) as Anthropic.MessageParam[];
+    const transcript: Anthropic.MessageParam[] = [...before, { role: "user", content: [...changedContext(before, context).map(asText), asText(said)] }];
     const { error } = await sb.from("ai_runs").update({ transcript, status: "running", finished_at: null, error: null }).eq("id", existing.id);
     if (error) fail("Could not add to the conversation", error);
     return existing.id;
@@ -83,7 +112,7 @@ export async function openChatTurn(
 
   const run = await startRun(sb, { agent: agent as Agent, businessId: business.id, trigger: "chat", startedBy: input.userId });
   const transcript: Anthropic.MessageParam[] = [
-    { role: "user", content: [{ type: "text", text: `${BRIEF_OPEN}\n${await input.brief()}\n</brief>` }, { type: "text", text: said }] },
+    { role: "user", content: [asText(`${BRIEF_OPEN}\n${await input.brief()}\n</brief>`), ...changedContext([], context).map(asText), asText(said)] },
   ];
   const { error } = await sb.from("ai_runs").update({ transcript }).eq("id", run.id);
   if (error) fail("Could not start the conversation", error);
@@ -102,7 +131,7 @@ export async function chatHistory(sb: SupabaseClient, userId: string, now: numbe
     const text = blocks
       .filter((b): b is Anthropic.TextBlockParam => b.type === "text")
       .map((b) => b.text)
-      .filter((t) => !t.startsWith(BRIEF_OPEN) && t !== ROLE.tess.firstMessage)
+      .filter((t) => !t.startsWith(BRIEF_OPEN) && !CONTEXT_TAGS.some((tag) => t.startsWith(tag)) && t !== ROLE.tess.firstMessage)
       .join("\n")
       .trim();
     if (text) lines.push({ role: message.role === "assistant" ? "tess" : "john", text });
