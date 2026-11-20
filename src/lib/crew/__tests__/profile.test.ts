@@ -4,7 +4,7 @@ import { fakeSupabase, type Tables } from "@/test-support/fake-supabase";
 vi.mock("server-only", () => ({}));
 
 import { chatHistory, openChatTurn } from "../chat";
-import { addNote, contextBlocks, loadTessProfile, removeNote, saveTessAbout, saveTessSettings } from "../profile";
+import { addNote, contextBlocks, currentStateBlock, loadTessProfile, removeNote, saveTessAbout, saveTessSettings } from "../profile";
 import { ROLE } from "../roles";
 import { aboutJohnText, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, MODE_IDS, MODES, openTopics, TOPICS } from "../tess-modes";
 import { parkIdea, rememberAboutJohn } from "../tools/profile";
@@ -286,5 +286,40 @@ describe("Tess getting to know John over time", () => {
   it("only offers her the topics that exist", () => {
     const props = rememberAboutJohn.input_schema.properties as Record<string, { enum?: string[] }>;
     expect(props.topic.enum).toEqual(TOPICS.map((t) => t.id));
+  });
+});
+
+describe("what changed in the business mid-conversation", () => {
+  const brief = async () => "BRIEF TEXT";
+  const withBusiness = () =>
+    setup({
+      ai_businesses: [{ id: "biz-1", slug: "tomorrows-tech-ai", name: "Tomorrow's Tech AI", mode: "setup", playbook: null }],
+      ai_goals: [],
+      ai_rules: [],
+    });
+
+  it("reaches Tess as a message when John confirms the playbook or a rule is saved", async () => {
+    const { db, tables } = withBusiness();
+    await openChatTurn(db, { userId: "user-1", message: "One", brief, context: [(await currentStateBlock(db))!], now: NOW });
+    await db.from("ai_runs").update({ status: "done" }).eq("id", tables.ai_runs[0].id);
+
+    tables.ai_businesses[0].mode = "launch";
+    tables.ai_rules.push({ id: "r1", text: "Never email on Sundays.", scope: "all", active: true });
+    await openChatTurn(db, { userId: "user-1", message: "Two", brief, context: [(await currentStateBlock(db))!], now: NOW + 1000 });
+
+    const second = texts((tables.ai_runs[0].transcript as Msg[])[1]);
+    expect(second).toHaveLength(2);
+    expect(second[0].startsWith("<current_state>")).toBe(true);
+    expect(second[0]).toContain("Mode: launch");
+    expect(second[0]).toContain("Never email on Sundays.");
+  });
+
+  it("is not repeated when nothing changed, and never shows on the page", async () => {
+    const { db, tables } = withBusiness();
+    await openChatTurn(db, { userId: "user-1", message: "One", brief, context: [(await currentStateBlock(db))!], now: NOW });
+    await db.from("ai_runs").update({ status: "done" }).eq("id", tables.ai_runs[0].id);
+    await openChatTurn(db, { userId: "user-1", message: "Two", brief, context: [(await currentStateBlock(db))!], now: NOW + 1000 });
+    expect(texts((tables.ai_runs[0].transcript as Msg[])[1])).toEqual(["Two"]);
+    expect((await chatHistory(db, "user-1", NOW + 2000)).map((l) => l.text)).toEqual(["One", "Two"]);
   });
 });

@@ -143,6 +143,16 @@ describe("POST /api/admin/tess/hear", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("tells the page to fall back when ElevenLabs refuses the key", async () => {
+    vi.stubEnv("ELEVENLABS_API_KEY", "test-key");
+    fetchMock.mockResolvedValueOnce(Response.json({ detail: { status: "missing_permissions", message: "The API key is missing the permission speech_to_text" } }, { status: 401 }));
+    const res = await post(audio());
+    expect(res.status).toBe(424);
+    const body = await res.json();
+    expect(body.fallback).toBe(true);
+    expect(JSON.stringify(body)).not.toContain("test-key");
+  });
+
   it("answers 502 with a plain message when the service fails", async () => {
     vi.stubEnv("ELEVENLABS_API_KEY", "test-key");
     fetchMock.mockResolvedValueOnce(new Response("boom", { status: 500 }));

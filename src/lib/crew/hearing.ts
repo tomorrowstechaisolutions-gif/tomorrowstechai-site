@@ -15,6 +15,20 @@ import { heardText } from "@/components/admin/cc/tess/hearingLogic";
 
 const DEFAULT_MODEL = "scribe_v2";
 
+/** The service refused the request. `refusedKey` means the key itself is not allowed to transcribe. */
+export class HearingError extends Error {
+  constructor(
+    public status: number,
+    /** ElevenLabs' own short reason, such as "missing_permissions" or "quota_exceeded". Never the key. */
+    public reason: string
+  ) {
+    super(`The transcription service answered ${status}${reason ? ` (${reason})` : ""}.`);
+  }
+  get refusedKey(): boolean {
+    return this.status === 401 || this.status === 403;
+  }
+}
+
 /** Send a recording to be transcribed. Returns the words, or "" when none were heard. */
 export async function transcribe(audio: Blob): Promise<string> {
   const key = process.env.ELEVENLABS_API_KEY?.trim();
@@ -31,6 +45,11 @@ export async function transcribe(audio: Blob): Promise<string> {
     body: form,
     signal: AbortSignal.timeout(45_000),
   });
-  if (!res.ok) throw new Error(`The transcription service answered ${res.status}.`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { detail?: { status?: unknown } | string } | null;
+    const detail = body?.detail;
+    const reason = typeof detail === "string" ? detail : typeof detail?.status === "string" ? detail.status : "";
+    throw new HearingError(res.status, reason.slice(0, 80));
+  }
   return heardText(await res.json().catch(() => null));
 }

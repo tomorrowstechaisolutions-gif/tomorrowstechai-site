@@ -127,8 +127,9 @@ const HOW_OPEN = "<how_to_answer>";
 const ABOUT_OPEN = "<about_john>";
 const BUSINESSES_OPEN = "<john_businesses>";
 const LEARNED_OPEN = "<learned_about_john>";
+const STATE_OPEN = "<current_state>";
 /** Blocks that carry settings to Tess. They are not part of what John said, so the page hides them. */
-export const CONTEXT_TAGS = [ABOUT_OPEN, LEARNED_OPEN, BUSINESSES_OPEN, HOW_OPEN];
+export const CONTEXT_TAGS = [ABOUT_OPEN, LEARNED_OPEN, BUSINESSES_OPEN, STATE_OPEN, HOW_OPEN];
 
 /** Settings as they will be saved: anything unrecognised becomes the default. */
 export function cleanSettings(input: Record<string, unknown>): TessSettings {
@@ -199,4 +200,13 @@ export function businessesText(businesses: string): string | null {
     own,
     "</john_businesses>",
   ].join("\n");
+}
+
+/**
+ * The business as it stands right now, as a message. A conversation's
+ * instructions are frozen when it starts, so a playbook John confirmed, a
+ * rule saved or a target set afterwards reaches Tess this way instead.
+ */
+export function currentStateText(state: string): string {
+  return [STATE_OPEN, "The business as it stands now. Where this differs from the state in your instructions, this is the current one.", "", state.trim(), "</current_state>"].join("\n");
 }

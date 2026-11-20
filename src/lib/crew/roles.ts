@@ -93,9 +93,19 @@ function playbookText(business: Business): string {
  * the last block so both are cached while a run is in progress.
  */
 export function systemFor(agent: Agent, business: Business, goals: Goal[], rules: Rule[]): Anthropic.TextBlockParam[] {
-  const mine = rules.filter((r) => r.active && (r.scope === "all" || r.scope === agent.slug));
   const role = agent.slug === "tess" ? ROLE.tess.prompt : `${SHARED}\n\n${ROLE[agent.slug].prompt}`;
-  const state = [
+  const state = stateFor(agent.slug, business, goals, rules);
+
+  return [
+    { type: "text", text: role },
+    { type: "text", text: state, cache_control: { type: "ephemeral" } },
+  ];
+}
+
+/** The business as it stands: mode, playbook, goals and John's rules for this bot. */
+export function stateFor(slug: AgentSlug, business: Business, goals: Goal[], rules: Rule[]): string {
+  const mine = rules.filter((r) => r.active && (r.scope === "all" || r.scope === slug));
+  return [
     `Business: ${business.name}. Mode: ${business.mode}.`,
     business.mode === "launch" ? "" : "This business is not in launch mode, so nothing can be sent or changed for it. You can still read.",
     "",
@@ -107,9 +117,4 @@ export function systemFor(agent: Agent, business: Business, goals: Goal[], rules
     "",
     mine.length ? `John's standing rules. Follow every one:\n${mine.map((r) => `- ${r.text}`).join("\n")}` : "John has set no standing rules yet.",
   ].filter((line, i, all) => !(line === "" && all[i - 1] === "")).join("\n");
-
-  return [
-    { type: "text", text: role },
-    { type: "text", text: state, cache_control: { type: "ephemeral" } },
-  ];
 }
