@@ -4,14 +4,15 @@ import { WEBSITE_CHAT_PROMPT } from "@/lib/ai/prompts/website-chat";
 import { resolveSystemPrompt } from "@/lib/ai/prompt";
 import { recordAiUsageAsync } from "@/lib/ai/record";
 import { CLAUDE_FAST, effort, refused } from "@/lib/ai/claude";
+import { clientIp, dailyBudget, envCap, rateLimitDurable } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
-// Simple in-memory rate limiter (resets on cold start).
-// Production: replace with Upstash Redis or Vercel KV.
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// Per-visitor limit, plus a site-wide daily cap on model calls so a flood
+// from many addresses cannot run up the bill. Both live in src/lib/rate-limit.ts.
 const RATE_LIMIT_MAX = 20; // max requests per IP per window
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const DEFAULT_DAILY_CAP = 500; // override with CHAT_DAILY_CAP
 
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 20;
@@ -22,39 +23,14 @@ const SYSTEM_PROMPT = WEBSITE_CHAT_PROMPT;
 const SOLUTION_SLUG = "website-chat";
 const MODEL = CLAUDE_FAST;
 
-function getClientIp(req: NextRequest): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  const real = req.headers.get("x-real-ip");
-  if (real) return real;
-  return "unknown";
-}
-
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true, remaining: RATE_LIMIT_MAX - 1 };
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  entry.count += 1;
-  return { allowed: true, remaining: RATE_LIMIT_MAX - entry.count };
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const ip = getClientIp(req);
-    const { allowed, remaining } = checkRateLimit(ip);
-    if (!allowed) {
+    const limit = await rateLimitDurable(`chat:${clientIp(req)}`, { max: RATE_LIMIT_MAX, windowMs: RATE_LIMIT_WINDOW_MS });
+    const remaining = limit.remaining;
+    if (!limit.ok) {
       return NextResponse.json(
         { error: "Rate limit exceeded. Please try again in an hour." },
-        { status: 429 }
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
       );
     }
 
@@ -95,6 +71,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Chat is not configured." },
         { status: 500 }
+      );
+    }
+
+    // Checked last, after validation, so a rejected request never spends it.
+    const budget = await dailyBudget("chat", envCap("CHAT_DAILY_CAP", DEFAULT_DAILY_CAP));
+    if (!budget.ok) {
+      console.warn("[chat] daily message cap reached");
+      return NextResponse.json(
+        { error: "The assistant has hit its limit for today. Please use the contact page and we'll get back to you." },
+        { status: 429, headers: { "Retry-After": String(budget.retryAfterSeconds) } }
       );
     }
 

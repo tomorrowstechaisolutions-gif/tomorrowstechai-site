@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { verifyStripeSignature, stripeWebhookConfigured } from "@/lib/stripe/client";
-import { cancelPendingFollowups } from "@/lib/campaign/intake";
 import { sendCapiEvent } from "@/lib/meta/capi";
 import { OFFER_PRICE_CENTS, HOSTING_FROM_CENTS, CAMPAIGN_NAME } from "@/lib/campaign/config";
 import { DEFAULT_JOB_TASKS, dueDateFrom, PROMISED_DAYS } from "@/lib/jobs/config";
 import { sendBillingChangeAlert } from "@/lib/portal/emails";
 import { notifyAdminInvoice } from "@/lib/invoices/emails";
 import type { Invoice } from "@/lib/invoices/types";
+import { becomeClient } from "@/lib/clients/become-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +18,15 @@ export const dynamic = "force-dynamic";
  * Every write here is idempotent, because Stripe retries until it gets a 2xx
  * and will redeliver the same event. Money is deduplicated on
  * revenue_events.external_id; the job is deduplicated on invoice_id.
+ *
+ * Two rules keep a half-finished run repairable:
+ *   - every read and write that matters goes through must(), which throws on
+ *     a database error. Supabase returns errors instead of throwing them, so
+ *     without it a failed write looked like success and answered Stripe 200;
+ *   - the marker a replay checks ("this invoice is paid", "this payment is
+ *     recorded") is written LAST. If anything before it fails, Stripe's retry
+ *     finds the marker missing and runs the whole thing again, and because
+ *     each step is idempotent the second run only fills in what was missed.
  *
  * Runs on the service role, which bypasses RLS. That is safe only because
  * nothing past the signature check is trusted — an unverified request is
@@ -38,6 +47,16 @@ function str(o: Record<string, unknown>, key: string): string | null {
 function num(o: Record<string, unknown>, key: string): number {
   const v = o[key];
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
+/**
+ * Awaits a Supabase query and throws if it came back with an error, so the
+ * handler stops, the route answers 500 and Stripe redelivers.
+ */
+async function must<T extends { error: { message?: string } | null }>(query: PromiseLike<T>, what: string): Promise<T> {
+  const result = await query;
+  if (result.error) throw new Error(`${what}: ${result.error.message ?? "database error"}`);
+  return result;
 }
 
 function meta(o: Record<string, unknown>): Record<string, string> {
@@ -68,6 +87,9 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
+      // A bank debit or other delayed method completes checkout unpaid and
+      // confirms later with this event. Same session, same bookkeeping.
+      case "checkout.session.async_payment_succeeded":
         await handleCheckoutCompleted(event);
         break;
       case "invoice.paid":
@@ -102,6 +124,12 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   const m = meta(session);
   const leadId = m.lead_id || null;
   const invoiceId = m.invoice_id || null;
+
+  // Checkout can complete before the money exists (delayed payment methods).
+  // Nothing is booked until Stripe says it was paid; the async_payment_
+  // succeeded event brings the same session back when it is. A subscription
+  // on a trial reports "no_payment_required", which is a real sale.
+  if (str(session, "payment_status") === "unpaid") return;
 
   if (m.kind === "sticker_order") {
     await handleStickerOrderPaid(event);
@@ -140,99 +168,64 @@ async function handleCheckoutCompleted(event: StripeEvent) {
 
   const now = new Date().toISOString();
 
-  // 1. Mark the invoice paid. Bail out early on a replay.
-  //    Named type, not `typeof invoiceRow` — control-flow narrowing collapses
-  //    that to `null` at the assignment and the property reads stop compiling.
+  // 1. Find the invoice. Bail out early on a replay.
   type InvoiceRef = { id: string; status: string };
-  let invoiceRow: InvoiceRef | null = null;
-
-  {
-    const { data } = await db
-      .from("invoices")
-      .select("id, status")
-      .eq("id", invoiceId)
-      .maybeSingle();
-    invoiceRow = (data as InvoiceRef | null) ?? null;
-  }
+  const { data: invoiceData } = await must(
+    db.from("invoices").select("id, status").eq("id", invoiceId).maybeSingle(),
+    "Read the invoice"
+  );
+  const invoiceRow = (invoiceData as InvoiceRef | null) ?? null;
 
   // A lead_id we never issued, or an invoice row that has since been deleted.
   // Either way this is not a sale of ours to record.
   if (!invoiceRow) return;
 
-  // Stripe redelivers. Booking this twice would double the revenue.
+  // Stripe redelivers. `paid` is stamped at the very end of this function, so
+  // seeing it here means every step below already succeeded once.
   if (invoiceRow.status === "paid") return;
 
-  {
-    await db
-      .from("invoices")
-      .update({
-        status: "paid",
-        paid_at: now,
-        stripe_session_id: sessionId,
-        stripe_invoice_id: str(session, "invoice"),
-        stripe_payment_intent: str(session, "payment_intent"),
-      })
-      .eq("id", invoiceRow.id);
-  }
+  const { data: lead } = await must(
+    db
+      .from("leads")
+      .select("id, first_name, last_name, email, phone, business_name, campaign, utm_campaign")
+      .eq("id", leadId)
+      .maybeSingle(),
+    "Read the lead"
+  );
 
-  // 2. The lead becomes a customer.
-  const lead = leadId
-    ? (
-        await db
-          .from("leads")
-          .select("id, first_name, last_name, email, phone, business_name, campaign, utm_campaign, lead_status")
-          .eq("id", leadId)
-          .maybeSingle()
-      ).data
-    : null;
+  // 2. The lead becomes a customer: one client record, the lead closed as
+  //    Won, its follow-up emails cancelled, its paperwork linked.
+  const { customerId } = await becomeClient(db, {
+    leadId,
+    stripeCustomerId,
+    email,
+    businessName: m.business_name || null,
+    actor: "stripe",
+    note: "Paid. Status set to Won.",
+  });
 
-  let customerId: string | null = null;
-
-  const { data: existingCustomer } = await db
-    .from("customers")
-    .select("id")
-    .or(
-      [
-        `lead_id.eq.${leadId}`,
-        stripeCustomerId ? `stripe_customer_id.eq.${stripeCustomerId}` : null,
-      ]
-        .filter(Boolean)
-        .join(",")
-    )
-    .limit(1)
-    .maybeSingle();
-
-  if (existingCustomer) {
-    customerId = existingCustomer.id as string;
-    await db
+  await must(
+    db
       .from("customers")
       .update({
         status: "active",
         // The contracted rate. Collected money lives in revenue_events; this
         // is what they will pay once the trial ends.
         mrr_cents: HOSTING_FROM_CENTS,
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: stripeSubscriptionId,
       })
-      .eq("id", customerId);
-  } else {
-    const { data: created } = await db
+      .eq("id", customerId),
+    "Update the client record"
+  );
+
+  // The Stripe ids are unique per client. If this Stripe customer is already
+  // attached to a different record, that is a merge for a person to make,
+  // not a reason to keep refusing the payment, so it is logged, not thrown.
+  {
+    const { error } = await db
       .from("customers")
-      .insert({
-        lead_id: leadId,
-        name: lead ? `${lead.first_name ?? ""} ${lead.last_name ?? ""}`.trim() : null,
-        business_name: lead?.business_name ?? m.business_name ?? null,
-        email: email || lead?.email || "unknown@unknown.invalid",
-        phone: lead?.phone ?? null,
-        status: "active",
-        won_at: now,
-        mrr_cents: HOSTING_FROM_CENTS,
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: stripeSubscriptionId,
-      })
-      .select("id")
-      .single();
-    customerId = created?.id ?? null;
+      .update({ stripe_customer_id: stripeCustomerId, stripe_subscription_id: stripeSubscriptionId })
+      .eq("id", customerId);
+    if (error) console.error(`Stripe webhook: could not attach Stripe ids to client ${customerId}:`, error.message);
   }
 
   // 3. Revenue — only what was actually collected today.
@@ -244,48 +237,48 @@ async function handleCheckoutCompleted(event: StripeEvent) {
   const campaign = lead?.utm_campaign || lead?.campaign || null;
   const launchCents = amountTotal > 0 ? amountTotal : OFFER_PRICE_CENTS;
 
-  await db.from("revenue_events").upsert(
-    {
-      customer_id: customerId,
-      lead_id: leadId,
-      kind: "initial",
-      category: "launch_package",
-      description: `${CAMPAIGN_NAME} — one-time launch`,
-      amount_cents: launchCents,
-      campaign,
-      occurred_at: now,
-      external_id: `${sessionId}:launch`,
-    },
-    { onConflict: "external_id", ignoreDuplicates: true }
+  await must(
+    db.from("revenue_events").upsert(
+      {
+        customer_id: customerId,
+        lead_id: lead?.id ?? null,
+        kind: "initial",
+        category: "launch_package",
+        description: `${CAMPAIGN_NAME} — one-time launch`,
+        amount_cents: launchCents,
+        campaign,
+        occurred_at: now,
+        external_id: `${sessionId}:launch`,
+      },
+      { onConflict: "external_id", ignoreDuplicates: true }
+    ),
+    "Book the launch revenue"
   );
 
-  // 4. Close the lead out.
-  if (leadId && lead && lead.lead_status !== "Won") {
-    await db
-      .from("leads")
-      .update({ lead_status: "Won", closed_at: now })
-      .eq("id", leadId);
+  // 4. Open the job. Unique on invoice_id, so a replay can't open a second.
+  await openJob({
+    customerId,
+    leadId: lead?.id ?? null,
+    invoiceId: invoiceRow.id,
+    businessName: lead?.business_name ?? m.business_name ?? null,
+    name: lead ? `${lead.first_name ?? ""} ${lead.last_name ?? ""}`.trim() : null,
+  });
 
-    await db.from("lead_events").insert({
-      lead_id: leadId,
-      type: "revenue",
-      body: `Paid. Status set to Won.`,
-      actor: "stripe",
-    });
-
-    await cancelPendingFollowups(leadId, "status:Won");
-  }
-
-  // 5. Open the job. Unique on invoice_id, so a replay can't open a second.
-  if (customerId) {
-    await openJob({
-      customerId,
-      leadId,
-      invoiceId: invoiceRow.id,
-      businessName: lead?.business_name ?? m.business_name ?? null,
-      name: lead ? `${lead.first_name ?? ""} ${lead.last_name ?? ""}`.trim() : null,
-    });
-  }
+  // 5. Last: mark the invoice paid. This is what a replay checks, so it is
+  //    only written once everything above is on record.
+  await must(
+    db
+      .from("invoices")
+      .update({
+        status: "paid",
+        paid_at: now,
+        stripe_session_id: sessionId,
+        stripe_invoice_id: str(session, "invoice"),
+        stripe_payment_intent: str(session, "payment_intent"),
+      })
+      .eq("id", invoiceRow.id),
+    "Mark the invoice paid"
+  );
 
   // 6. Tell Meta the click turned into money, so the campaign can optimise
   //    on the thing that actually matters rather than on form fills.
@@ -319,11 +312,10 @@ async function handleStickerOrderPaid(event: StripeEvent) {
   const orderId = meta(session).order_id;
   if (!sessionId || !orderId) return;
 
-  const { data: order } = await db
-    .from("sticker_orders")
-    .select("id, status, total")
-    .eq("id", orderId)
-    .maybeSingle();
+  const { data: order } = await must(
+    db.from("sticker_orders").select("id, status, total").eq("id", orderId).maybeSingle(),
+    "Read the sticker order"
+  );
   if (!order || order.status === "paid") return;
 
   const amountTotal = num(session, "amount_total");
@@ -371,87 +363,108 @@ async function handleUpsellPaid(event: StripeEvent) {
   const invoiceId = m.invoice_id || null;
   if (!invoiceId || !sessionId) return;
 
-  const { data: invoice } = await db
-    .from("invoices")
-    .select("id, status, amount_cents, billing, lead_id, customer_id, catalog_item_id, description")
-    .eq("id", invoiceId)
-    .maybeSingle();
+  const { data: invoice } = await must(
+    db
+      .from("invoices")
+      .select("id, status, amount_cents, billing, lead_id, customer_id, catalog_item_id, description")
+      .eq("id", invoiceId)
+      .maybeSingle(),
+    "Read the upsell invoice"
+  );
 
   if (!invoice) return;
-  if (invoice.status === "paid") return; // Stripe redelivers
+  // Stripe redelivers. `paid` is stamped last, so this means it all landed.
+  if (invoice.status === "paid") return;
 
   const now = new Date().toISOString();
   const amount = num(session, "amount_total") || invoice.amount_cents;
-
-  await db
-    .from("invoices")
-    .update({
-      status: "paid",
-      paid_at: now,
-      stripe_session_id: sessionId,
-      stripe_invoice_id: str(session, "invoice"),
-      stripe_payment_intent: str(session, "payment_intent"),
-    })
-    .eq("id", invoice.id);
 
   // Category comes from the catalog item so the money lands in the right
   // bucket without the webhook needing to know what any of them mean.
   let category = "other";
   if (invoice.catalog_item_id) {
-    const { data: item } = await db
-      .from("catalog_items")
-      .select("category")
-      .eq("id", invoice.catalog_item_id)
-      .maybeSingle();
+    const { data: item } = await must(
+      db.from("catalog_items").select("category").eq("id", invoice.catalog_item_id).maybeSingle(),
+      "Read the catalog item"
+    );
     if (item?.category) category = item.category as string;
   }
 
   const { data: lead } = invoice.lead_id
-    ? await db
-        .from("leads")
-        .select("campaign, utm_campaign")
-        .eq("id", invoice.lead_id)
-        .maybeSingle()
+    ? await must(
+        db.from("leads").select("campaign, utm_campaign").eq("id", invoice.lead_id).maybeSingle(),
+        "Read the lead"
+      )
     : { data: null };
 
-  await db.from("revenue_events").upsert(
-    {
-      customer_id: invoice.customer_id,
-      lead_id: invoice.lead_id,
-      kind: "upsell",
-      category,
-      description: invoice.description ?? "Upsell",
-      amount_cents: amount,
-      campaign: lead?.utm_campaign || lead?.campaign || null,
-      occurred_at: now,
-      external_id: `${sessionId}:upsell`,
-    },
-    { onConflict: "external_id", ignoreDuplicates: true }
+  // Returns the row only when it was newly written; a replay gets nothing
+  // back. That is what makes the MRR bump below safe to reach twice.
+  const { data: booked } = await must(
+    db
+      .from("revenue_events")
+      .upsert(
+        {
+          customer_id: invoice.customer_id,
+          lead_id: invoice.lead_id,
+          kind: "upsell",
+          category,
+          description: invoice.description ?? "Upsell",
+          amount_cents: amount,
+          campaign: lead?.utm_campaign || lead?.campaign || null,
+          occurred_at: now,
+          external_id: `${sessionId}:upsell`,
+        },
+        { onConflict: "external_id", ignoreDuplicates: true }
+      )
+      .select("id"),
+    "Book the upsell revenue"
   );
+  const firstTime = (booked?.length ?? 0) > 0;
 
   // A retainer raises what this customer is worth every month from now on.
-  if (invoice.billing === "monthly" && invoice.customer_id) {
-    const { data: customer } = await db
-      .from("customers")
-      .select("mrr_cents")
-      .eq("id", invoice.customer_id)
-      .maybeSingle();
+  // Added once, alongside the revenue row; the subscription sync later
+  // replaces this figure with what Stripe actually bills.
+  if (firstTime && invoice.billing === "monthly" && invoice.customer_id) {
+    const { data: customer } = await must(
+      db.from("customers").select("mrr_cents").eq("id", invoice.customer_id).maybeSingle(),
+      "Read the client MRR"
+    );
     if (customer) {
-      await db
-        .from("customers")
-        .update({ mrr_cents: (customer.mrr_cents ?? 0) + amount })
-        .eq("id", invoice.customer_id);
+      await must(
+        db
+          .from("customers")
+          .update({ mrr_cents: (customer.mrr_cents ?? 0) + amount })
+          .eq("id", invoice.customer_id),
+        "Raise the client MRR"
+      );
     }
   }
 
-  if (invoice.lead_id) {
-    await db.from("lead_events").insert({
+  if (firstTime && invoice.lead_id) {
+    // A timeline note. Missing it must not hold up marking the invoice paid.
+    const { error } = await db.from("lead_events").insert({
       lead_id: invoice.lead_id,
       type: "revenue",
       body: `Upsell paid — ${invoice.description ?? "extra work"}.`,
       actor: "stripe",
     });
+    if (error) console.error("Stripe webhook: upsell lead event failed:", error.message);
   }
+
+  // Last: the marker a replay checks.
+  await must(
+    db
+      .from("invoices")
+      .update({
+        status: "paid",
+        paid_at: now,
+        stripe_session_id: sessionId,
+        stripe_invoice_id: str(session, "invoice"),
+        stripe_payment_intent: str(session, "payment_intent"),
+      })
+      .eq("id", invoice.id),
+    "Mark the upsell invoice paid"
+  );
 }
 
 // ── Later months ────────────────────────────────────────────────────────────
@@ -468,11 +481,10 @@ async function handleInvoicePaid(event: StripeEvent) {
   const amountPaid = num(invoice, "amount_paid");
   if (!stripeInvoiceId || !stripeCustomerId || amountPaid <= 0) return;
 
-  const { data: customer } = await db
-    .from("customers")
-    .select("id, lead_id")
-    .eq("stripe_customer_id", stripeCustomerId)
-    .maybeSingle();
+  const { data: customer } = await must(
+    db.from("customers").select("id, lead_id").eq("stripe_customer_id", stripeCustomerId).limit(1).maybeSingle(),
+    "Read the client"
+  );
   if (!customer) return;
 
   // A customer can have more than one subscription — hosting, plus any
@@ -488,29 +500,31 @@ async function handleInvoicePaid(event: StripeEvent) {
   let description = "Hosting";
 
   if (subMeta.kind === "upsell" && subMeta.catalog_item_id) {
-    const { data: item } = await db
-      .from("catalog_items")
-      .select("name, category")
-      .eq("id", subMeta.catalog_item_id)
-      .maybeSingle();
+    const { data: item } = await must(
+      db.from("catalog_items").select("name, category").eq("id", subMeta.catalog_item_id).maybeSingle(),
+      "Read the catalog item"
+    );
     if (item) {
       category = item.category as string;
       description = item.name as string;
     }
   }
 
-  await db.from("revenue_events").upsert(
-    {
-      customer_id: customer.id,
-      lead_id: customer.lead_id,
-      kind: "recurring",
-      category,
-      description,
-      amount_cents: amountPaid,
-      occurred_at: new Date().toISOString(),
-      external_id: stripeInvoiceId,
-    },
-    { onConflict: "external_id", ignoreDuplicates: true }
+  await must(
+    db.from("revenue_events").upsert(
+      {
+        customer_id: customer.id,
+        lead_id: customer.lead_id,
+        kind: "recurring",
+        category,
+        description,
+        amount_cents: amountPaid,
+        occurred_at: new Date().toISOString(),
+        external_id: stripeInvoiceId,
+      },
+      { onConflict: "external_id", ignoreDuplicates: true }
+    ),
+    "Book the recurring revenue"
   );
 }
 
@@ -545,11 +559,10 @@ async function handleSubscriptionSynced(event: StripeEvent) {
 
   await syncLinkedServices(event);
 
-  const { data: customer } = await db
-    .from("customers")
-    .select("id, status")
-    .eq("stripe_subscription_id", subscriptionId)
-    .maybeSingle();
+  const { data: customer } = await must(
+    db.from("customers").select("id, status").eq("stripe_subscription_id", subscriptionId).limit(1).maybeSingle(),
+    "Read the client"
+  );
   if (!customer) return;
 
   // Stripe moved current_period_end onto the subscription ITEM in the 2025
@@ -601,7 +614,7 @@ async function handleSubscriptionSynced(event: StripeEvent) {
     patch.churned_at = new Date().toISOString();
   }
 
-  await db.from("customers").update(patch).eq("id", customer.id);
+  await must(db.from("customers").update(patch).eq("id", customer.id), "Sync the client subscription");
 }
 
 async function handleSubscriptionCancelled(event: StripeEvent) {
@@ -639,10 +652,10 @@ async function handleSubscriptionCancelled(event: StripeEvent) {
       .eq("status", "active")
       .eq("billing_type", "recurring");
     if ((count ?? 0) > 0) continue;
-    await db
-      .from("customers")
-      .update({ status: "churned", churned_at: new Date().toISOString(), mrr_cents: 0 })
-      .eq("id", c.id);
+    await must(
+      db.from("customers").update({ status: "churned", churned_at: new Date().toISOString(), mrr_cents: 0 }).eq("id", c.id),
+      "Mark the client churned"
+    );
   }
 
   if (endedFor) {
@@ -747,13 +760,16 @@ async function linkInvoiceSubscription(invoiceId: string, stripeCustomerId: stri
  */
 async function stampMonthlyOnlyInvoicePaid(invoiceId: string) {
   const db = supabaseAdmin();
-  await db
-    .from("invoices")
-    .update({ status: "paid", paid_at: new Date().toISOString() })
-    .eq("id", invoiceId)
-    .lte("total_cents", 0)
-    .gt("recurring_cents", 0)
-    .in("status", ["sent", "partial"]);
+  await must(
+    db
+      .from("invoices")
+      .update({ status: "paid", paid_at: new Date().toISOString() })
+      .eq("id", invoiceId)
+      .lte("total_cents", 0)
+      .gt("recurring_cents", 0)
+      .in("status", ["sent", "partial"]),
+    "Mark the monthly-only invoice paid"
+  );
 }
 
 /**
@@ -797,7 +813,10 @@ async function syncLinkedServices(event: StripeEvent) {
     patch.end_date = endsAt > 0 ? chicagoDay(new Date(endsAt * 1000)) : null;
     patch.next_billing_date = !cancelling && periodEnd > 0 ? chicagoDay(new Date(periodEnd * 1000)) : null;
   }
-  await db.from("client_services").update(patch).eq("subscription_id", subscriptionId).neq("status", "ended");
+  await must(
+    db.from("client_services").update(patch).eq("subscription_id", subscriptionId).neq("status", "ended"),
+    "Sync the subscription services"
+  );
 
   // Did this event schedule or undo a cancellation? Stripe lists the fields
   // that changed, with their old values, in previous_attributes.
@@ -839,6 +858,14 @@ async function syncLinkedServices(event: StripeEvent) {
  * unique index on the payment intent, and revenue_events dedupes on
  * external_id. What is booked is what Stripe says was collected, never the
  * invoice's asking price.
+ *
+ * The payment row is what a replay checks, so it is written after the client
+ * record, the subscription link and the revenue. If any of those fail the
+ * retry starts again from the top and each one is safe to repeat.
+ *
+ * Paying an invoice also makes the payer a client: an invoice raised for a
+ * lead, before anyone converted them, used to be paid into a void: no client
+ * record, the lead still open, and a subscription with no owner to attach to.
  */
 async function handleInvoiceDocumentPaid(event: StripeEvent) {
   const db = supabaseAdmin();
@@ -855,84 +882,166 @@ async function handleInvoiceDocumentPaid(event: StripeEvent) {
   const now = new Date().toISOString();
   const paymentIntent = str(session, "payment_intent");
 
-  const { data: invoiceRow } = await db
-    .from("invoices")
-    .select("id, invoice_number, title, status, total_cents, amount_paid_cents, currency, lead_id, customer_id, client_business_name, client_contact_name, client_email, recurring_cents, recurring_interval")
-    .eq("id", invoiceId)
-    .maybeSingle();
+  const { data: invoiceRow } = await must(
+    db
+      .from("invoices")
+      .select("id, invoice_number, title, status, total_cents, amount_paid_cents, currency, lead_id, customer_id, client_business_name, client_contact_name, client_email, recurring_cents, recurring_interval")
+      .eq("id", invoiceId)
+      .maybeSingle(),
+    "Read the invoice"
+  );
   if (!invoiceRow) return;
 
-  // Paying a recurring invoice starts a Stripe subscription. Tie it to the
-  // client and their service (idempotent, so it also runs on a replay).
+  // 1. Whoever pays an invoice is a client. Skipped only when the invoice
+  //    already has its client and came from no lead: nothing to create or close.
+  let customerId = (invoiceRow.customer_id as string | null) ?? null;
+  if (!customerId || invoiceRow.lead_id) {
+    const result = await becomeClient(db, {
+      customerId,
+      leadId: (invoiceRow.lead_id as string | null) ?? null,
+      email: (invoiceRow.client_email as string | null) ?? null,
+      name: (invoiceRow.client_contact_name as string | null) ?? null,
+      businessName: (invoiceRow.client_business_name as string | null) ?? null,
+      matchByEmail: true,
+      actor: "stripe",
+      note: `Invoice ${invoiceRow.invoice_number} paid. Status set to Won.`,
+      insertExtra: { notes: `Became a client by paying invoice ${invoiceRow.invoice_number}.` },
+    });
+    customerId = result.customerId;
+    if (!invoiceRow.customer_id) {
+      await must(
+        db.from("invoices").update({ customer_id: customerId }).eq("id", invoiceId).is("customer_id", null),
+        "Link the invoice to the client"
+      );
+    }
+  }
+
+  // 2. Paying a recurring invoice starts a Stripe subscription. Tie it to the
+  //    client and their service (idempotent, so it also runs on a replay).
   await linkInvoiceSubscription(invoiceId, str(session, "customer"), str(session, "subscription"));
 
   // A replay Stripe has already delivered.
-  const { data: already } = await db
-    .from("invoice_payments")
-    .select("id")
-    .eq("invoice_id", invoiceId)
-    .eq("stripe_payment_intent", paymentIntent ?? sessionId)
-    .maybeSingle();
+  const paymentKey = paymentIntent ?? sessionId;
+  const { data: already } = await must(
+    db
+      .from("invoice_payments")
+      .select("id")
+      .eq("invoice_id", invoiceId)
+      .eq("stripe_payment_intent", paymentKey)
+      .limit(1)
+      .maybeSingle(),
+    "Look for an existing payment"
+  );
   if (already) return;
 
-  await db.from("invoice_payments").insert({
-    invoice_id: invoiceId,
-    amount_cents: amountTotal,
-    currency: (invoiceRow.currency as string) ?? "USD",
-    method: "stripe",
-    reference: sessionId,
-    paid_on: now.slice(0, 10),
-    note: "Paid by card on the invoice page.",
-    recorded_by: "stripe",
-    stripe_payment_intent: paymentIntent ?? sessionId,
-  });
+  // 3. Revenue. A recurring invoice billed straight away charges two things
+  //    in one go: the one-time balance and the first period. The checkout
+  //    session records the one-time part (due_now_cents), so each lands in
+  //    its own bucket instead of the whole charge being filed as a launch.
+  //    Sessions created before that was recorded book as one line, as before.
+  const dueNowRaw = Number(m.due_now_cents);
+  const hasSplit = Boolean(str(session, "subscription")) && m.due_now_cents !== undefined && Number.isFinite(dueNowRaw);
+  const oneTimeCents = hasSplit ? Math.min(Math.max(Math.round(dueNowRaw), 0), amountTotal) : amountTotal;
+  const firstPeriodCents = amountTotal - oneTimeCents;
+
+  if (oneTimeCents > 0) {
+    await must(
+      db.from("revenue_events").upsert(
+        {
+          customer_id: customerId,
+          lead_id: invoiceRow.lead_id ?? null,
+          kind: "initial",
+          category: "launch_package",
+          description: `Invoice ${invoiceRow.invoice_number} — ${invoiceRow.title}`,
+          amount_cents: oneTimeCents,
+          occurred_at: now,
+          external_id: `${sessionId}:invoice`,
+        },
+        { onConflict: "external_id", ignoreDuplicates: true }
+      ),
+      "Book the invoice revenue"
+    );
+  }
+  if (firstPeriodCents > 0) {
+    await must(
+      db.from("revenue_events").upsert(
+        {
+          customer_id: customerId,
+          lead_id: invoiceRow.lead_id ?? null,
+          kind: "recurring",
+          category: "hosting",
+          description: `Invoice ${invoiceRow.invoice_number} — first ${invoiceRow.recurring_interval ?? "month"}`,
+          amount_cents: firstPeriodCents,
+          occurred_at: now,
+          external_id: `${sessionId}:invoice-recurring`,
+        },
+        { onConflict: "external_id", ignoreDuplicates: true }
+      ),
+      "Book the first recurring period"
+    );
+  }
+
+  await must(
+    db
+      .from("invoices")
+      .update({
+        stripe_session_id: sessionId,
+        stripe_invoice_id: str(session, "invoice"),
+        stripe_payment_intent: paymentIntent,
+      })
+      .eq("id", invoiceId),
+    "Record the Stripe ids on the invoice"
+  );
+
+  // 4. The payment itself, last. This row is the replay marker, and writing it
+  //    is what moves the invoice to partial or paid (a database trigger).
+  {
+    const { error } = await db.from("invoice_payments").insert({
+      invoice_id: invoiceId,
+      amount_cents: amountTotal,
+      currency: (invoiceRow.currency as string) ?? "USD",
+      method: "stripe",
+      reference: sessionId,
+      paid_on: now.slice(0, 10),
+      note: "Paid by card on the invoice page.",
+      recorded_by: "stripe",
+      stripe_payment_intent: paymentKey,
+    });
+    // 23505: a second delivery of this event wrote the row a moment ago.
+    if (error && (error as { code?: string }).code === "23505") return;
+    if (error) throw new Error(`Record the invoice payment: ${error.message}`);
+  }
 
   // The insert above re-runs the payments trigger, which puts a monthly-only
   // invoice back to `partial`. Its subscription is running: stamp it again.
+  // (A failure here is repaired by the retry, through linkInvoiceSubscription.)
   if (str(session, "subscription")) await stampMonthlyOnlyInvoicePaid(invoiceId);
-
-  await db
-    .from("invoices")
-    .update({
-      stripe_session_id: sessionId,
-      stripe_invoice_id: str(session, "invoice"),
-      stripe_payment_intent: paymentIntent,
-    })
-    .eq("id", invoiceId);
 
   const settled =
     Number(invoiceRow.amount_paid_cents ?? 0) + amountTotal >= Number(invoiceRow.total_cents ?? 0);
 
-  await db.from("invoice_events").insert({
-    invoice_id: invoiceId,
-    event_type: "paid",
-    body: `Stripe collected ${(amountTotal / 100).toFixed(2)} USD.${settled ? " The invoice is now settled in full." : " A balance remains."}`,
-    actor: "stripe",
-    metadata: { session_id: sessionId, amount_cents: amountTotal, settled },
-  });
-
-  await db.from("revenue_events").upsert(
-    {
-      customer_id: invoiceRow.customer_id ?? null,
-      lead_id: invoiceRow.lead_id ?? null,
-      kind: "initial",
-      category: "launch_package",
-      description: `Invoice ${invoiceRow.invoice_number} — ${invoiceRow.title}`,
-      amount_cents: amountTotal,
-      occurred_at: now,
-      external_id: `${sessionId}:invoice`,
-    },
-    { onConflict: "external_id", ignoreDuplicates: true }
-  );
+  // From here on the payment is on record and a retry would stop at the
+  // marker, so nothing below may throw: these are notes, not money.
+  {
+    const { error } = await db.from("invoice_events").insert({
+      invoice_id: invoiceId,
+      event_type: "paid",
+      body: `Stripe collected ${(amountTotal / 100).toFixed(2)} USD.${settled ? " The invoice is now settled in full." : " A balance remains."}`,
+      actor: "stripe",
+      metadata: { session_id: sessionId, amount_cents: amountTotal, settled },
+    });
+    if (error) console.error("Stripe webhook: invoice event failed:", error.message);
+  }
 
   if (invoiceRow.lead_id) {
-    await db.from("lead_events").insert({
+    const { error } = await db.from("lead_events").insert({
       lead_id: invoiceRow.lead_id,
       type: "revenue",
       body: `Invoice ${invoiceRow.invoice_number} paid — ${(amountTotal / 100).toFixed(2)} USD.`,
       actor: "stripe",
       meta: { invoice_id: invoiceId, session_id: sessionId },
     });
+    if (error) console.error("Stripe webhook: lead event failed:", error.message);
   }
 
   // Tell John the money landed (switchable on the Notifications page). Never
@@ -960,51 +1069,74 @@ async function openJob(opts: {
 }) {
   const db = supabaseAdmin();
 
+  let jobId: string | null = null;
+
   if (opts.invoiceId) {
-    const { data: already } = await db
-      .from("jobs")
-      .select("id")
-      .eq("invoice_id", opts.invoiceId)
-      .maybeSingle();
-    if (already) return;
+    const { data: already } = await must(
+      db.from("jobs").select("id").eq("invoice_id", opts.invoiceId).limit(1).maybeSingle(),
+      "Look for an existing job"
+    );
+    jobId = (already?.id as string | undefined) ?? null;
   }
 
-  const started = new Date();
-  const title = opts.businessName || opts.name || "New launch";
+  const isNew = !jobId;
 
-  const { data: job } = await db
-    .from("jobs")
-    .insert({
-      customer_id: opts.customerId,
-      lead_id: opts.leadId,
-      invoice_id: opts.invoiceId,
-      title,
-      business_name: opts.businessName,
-      stage: "Intake",
-      package: "launch_package",
-      promised_days: PROMISED_DAYS,
-      started_at: started.toISOString(),
-      due_at: dueDateFrom(started),
-    })
-    .select("id")
-    .single();
+  if (!jobId) {
+    const started = new Date();
+    const title = opts.businessName || opts.name || "New launch";
 
-  if (!job) return;
+    const { data: job } = await must(
+      db
+        .from("jobs")
+        .insert({
+          customer_id: opts.customerId,
+          lead_id: opts.leadId,
+          invoice_id: opts.invoiceId,
+          title,
+          business_name: opts.businessName,
+          stage: "Intake",
+          package: "launch_package",
+          promised_days: PROMISED_DAYS,
+          started_at: started.toISOString(),
+          due_at: dueDateFrom(started),
+        })
+        .select("id")
+        .single(),
+      "Open the job"
+    );
+    jobId = job?.id as string;
+  }
 
-  await db.from("job_tasks").insert(
-    DEFAULT_JOB_TASKS.map((task, index) => ({
-      job_id: job.id,
-      stage: task.stage,
-      label: task.label,
-      position: index,
-    }))
+  // The checklist is written whenever the job has none, not only when the job
+  // is new: a run that opened the job and then failed must be able to finish
+  // it on the retry instead of leaving a project with nothing to do.
+  const { count: taskCount } = await must(
+    db.from("job_tasks").select("id", { count: "exact", head: true }).eq("job_id", jobId),
+    "Count the job tasks"
   );
+  if ((taskCount ?? 0) === 0) {
+    await must(
+      db.from("job_tasks").insert(
+        DEFAULT_JOB_TASKS.map((task, index) => ({
+          job_id: jobId,
+          stage: task.stage,
+          label: task.label,
+          position: index,
+        }))
+      ),
+      "Write the job checklist"
+    );
+  }
 
-  await db.from("job_events").insert({
+  if (!isNew) return;
+  const job = { id: jobId };
+
+  const { error: eventError } = await db.from("job_events").insert({
     job_id: job.id,
     kind: "payment",
     body: "Payment received. Job opened at Intake.",
     to_stage: "Intake",
     actor: "stripe",
   });
+  if (eventError) console.error("Stripe webhook: job event failed:", eventError.message);
 }

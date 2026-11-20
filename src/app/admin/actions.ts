@@ -1,5 +1,6 @@
 "use server";
 
+import { becomeClient } from "@/lib/clients/become-client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
@@ -92,7 +93,7 @@ export async function updateLeadStatus(formData: FormData) {
     await cancelPendingFollowups(leadId, `status:${status}`);
   }
 
-  if (status === "Won") await ensureCustomerForLead(leadId);
+  if (status === "Won") await ensureCustomerForLead(leadId, "Marked Won. Client record created.");
 
   revalidatePath("/admin/leads");
   revalidatePath(`/admin/leads/${leadId}`);
@@ -271,36 +272,23 @@ export async function addAppointment(formData: FormData) {
 
 // ── Revenue ─────────────────────────────────────────────────────────────────
 
-async function ensureCustomerForLead(leadId: string): Promise<string | null> {
-  const { supabase } = await requireAdmin();
-
-  const { data: existing } = await supabase
-    .from("customers")
-    .select("id")
-    .eq("lead_id", leadId)
-    .maybeSingle();
-  if (existing) return existing.id;
-
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("first_name, last_name, email, phone, business_name")
-    .eq("id", leadId)
-    .maybeSingle();
-  if (!lead) return null;
-
-  const { data: created } = await supabase
-    .from("customers")
-    .insert({
-      lead_id: leadId,
-      name: `${lead.first_name} ${lead.last_name}`.trim(),
-      business_name: lead.business_name,
-      email: lead.email,
-      phone: lead.phone,
-    })
-    .select("id")
-    .single();
-
-  return created?.id ?? null;
+/**
+ * The lead's client record, created if it does not exist yet.
+ *
+ * Goes through becomeClient, the same function the Stripe webhook and
+ * proposal conversion use, so a sale recorded by hand leaves the lead Won,
+ * its follow-up emails cancelled and its invoices and proposals linked,
+ * exactly as a card payment would.
+ */
+async function ensureCustomerForLead(leadId: string, note: string): Promise<string | null> {
+  const { supabase, actor } = await requireAdmin();
+  try {
+    const { customerId } = await becomeClient(supabase, { leadId, actor, note });
+    return customerId;
+  } catch (err) {
+    console.error("ensureCustomerForLead failed:", err);
+    return null;
+  }
 }
 
 export async function addRevenue(formData: FormData) {
@@ -316,7 +304,9 @@ export async function addRevenue(formData: FormData) {
     return;
   }
 
-  const customerId = await ensureCustomerForLead(leadId);
+  const customerId = await ensureCustomerForLead(leadId, "Revenue recorded. Status set to Won.");
+  // Money booked against no client would vanish from every client report.
+  if (!customerId) throw new Error("Could not find or create the client record for this lead.");
 
   await supabase.from("revenue_events").insert({
     customer_id: customerId,
@@ -346,7 +336,8 @@ export async function recordLaunchSale(formData: FormData) {
   const leadId = str(formData, "lead_id", 40);
   if (!leadId) return;
 
-  const customerId = await ensureCustomerForLead(leadId);
+  const customerId = await ensureCustomerForLead(leadId, "$399 Business Launch sale recorded. Status set to Won.");
+  if (!customerId) throw new Error("Could not find or create the client record for this lead.");
 
   const { data: already } = await supabase
     .from("revenue_events")
@@ -372,12 +363,6 @@ export async function recordLaunchSale(formData: FormData) {
       actor,
     });
   }
-
-  await supabase
-    .from("leads")
-    .update({ lead_status: "Won", closed_at: new Date().toISOString() })
-    .eq("id", leadId);
-  await cancelPendingFollowups(leadId, "won");
 
   revalidatePath(`/admin/leads/${leadId}`);
   revalidatePath("/admin/marketing/campaigns/business-launch");

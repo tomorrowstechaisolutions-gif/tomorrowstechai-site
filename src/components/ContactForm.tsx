@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { captureAttribution, getAttribution } from "@/lib/campaign/attribution";
 import { analyticsConsented, gaEvent } from "@/lib/analytics";
 import type { ProfileView } from "@/lib/settings/profile";
+import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 
 /**
  * Service pages link here with ?service=…&plan=… so the enquiry arrives already
@@ -53,6 +54,12 @@ export function ContactForm({offer,contact}:{offer?:ContactOffer|null;contact:Pi
   );
   const [error, setError] = useState<string>("");
   const messageRef = useRef<HTMLTextAreaElement>(null);
+  // Set on mount, not during render: the clock is not a pure value.
+  const startedAt = useRef<number>(0);
+
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
 
   // Keep the visit's first-touch campaign data (set on the first page of the
   // session, e.g. a Field Notes article opened from LinkedIn).
@@ -79,6 +86,9 @@ export function ContactForm({offer,contact}:{offer?:ContactOffer|null;contact:Pi
       company: (form.elements.namedItem("company") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
       offer: offer??null,
+      // Spam traps: a field no human sees, and a form sent faster than a person can.
+      [SPAM_TRAP_FIELD]: (form.elements.namedItem(SPAM_TRAP_FIELD) as HTMLInputElement | null)?.value ?? "",
+      ...(startedAt.current ? { elapsed_ms: Date.now() - startedAt.current } : {}),
       // Only campaign fields; the server ignores anything else it is sent.
       attribution: getAttribution(),
     };
@@ -137,6 +147,13 @@ export function ContactForm({offer,contact}:{offer?:ContactOffer|null;contact:Pi
       </div>
       <Field name="company" label="Company" />
       <div>
+        {/* Honeypot: hidden from people, irresistible to bots. */}
+        <div className="bl-hp" aria-hidden="true">
+          <label>
+            Leave this empty
+            <input name={SPAM_TRAP_FIELD} type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" defaultValue="" />
+          </label>
+        </div>
         <label
           htmlFor="message"
           className="block text-xs font-mono uppercase tracking-widest text-[#7d8ba1] mb-2"
