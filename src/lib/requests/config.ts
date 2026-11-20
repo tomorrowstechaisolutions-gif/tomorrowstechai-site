@@ -16,8 +16,13 @@
 import { BRAND } from "@/lib/email/brand";
 import type { EmailTone } from "@/lib/email/brand";
 
-/** Who a client invites. One constant so it cannot drift between templates. */
-export const OUR_EMAIL = BRAND.email;
+/**
+ * Who a client invites to their Stripe, registrar or Google account. One
+ * constant so it cannot drift between templates. This is the account John
+ * actually signs in with, NOT the public contact address in the business
+ * profile, so it is deliberately fixed here.
+ */
+export const OUR_EMAIL = "john@tomorrowstechai.com";
 
 export type RequestFieldType = "text" | "textarea" | "email" | "url" | "select";
 
@@ -121,7 +126,8 @@ function assertNoCredentialFields(t: RequestTemplate): RequestTemplate {
   return t;
 }
 
-const NEVER_ASK =
+/** Read when an email is built, so the phone number follows the business profile. */
+const NEVER_ASK = () =>
   `We will never ask you for a password, a bank login or a card number — ` +
   `not by email, not by phone, not on this page. If a message claiming to be ` +
   `from us ever does, it is not from us. Call ${BRAND.phone}.`;

@@ -22,9 +22,11 @@ type Props = {
   token: string;
   request: ClientRequest;
   template: RequestTemplate;
+  /** The business phone, from the business profile. */
+  phone: string;
 };
 
-export function ActionChecklist({ token, request, template }: Props) {
+export function ActionChecklist({ token, request, template, phone }: Props) {
   const [steps, setSteps] = useState<string[]>(request.steps_done);
   const [values, setValues] = useState<Record<string, string>>(request.payload ?? {});
   const [saving, setSaving] = useState(false);
@@ -324,7 +326,7 @@ export function ActionChecklist({ token, request, template }: Props) {
 
         <p className="itk-fineprint">
           This link is yours — please don&rsquo;t forward it. Stuck on any of
-          this? Call John on (254) 563-2130 and we&rsquo;ll do it together.
+          this? Call John on {phone} and we&rsquo;ll do it together.
           We will never ask you for a password, a bank login or a card number.
         </p>
       </div>

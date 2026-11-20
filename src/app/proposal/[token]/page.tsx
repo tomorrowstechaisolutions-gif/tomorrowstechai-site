@@ -6,6 +6,7 @@ import ProposalDocument from "@/components/proposal/ProposalDocument";
 import AcceptForm from "@/components/proposal/AcceptForm";
 import { getProposalByToken, recordProposalView } from "@/lib/proposals/service";
 import { clientIp } from "@/lib/rate-limit";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function PublicProposalPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const profile = await businessProfile();
   const loaded = await getProposalByToken(token);
 
   if (loaded === "not_found") notFound();
@@ -61,7 +63,7 @@ export default async function PublicProposalPage({
         <p>
           The date this proposal was open until has passed, so the pricing on
           it is no longer current. Email{" "}
-          <a href="mailto:john@tomorrowstechai.com">john@tomorrowstechai.com</a>{" "}
+          <a href={profile.emailHref}>{profile.email}</a>{" "}
           and we will send you a fresh copy straight away.
         </p>
       </Shell>
@@ -74,7 +76,7 @@ export default async function PublicProposalPage({
         <p>
           This link is not open for viewing at the moment. If you were expecting
           to see a proposal here, email{" "}
-          <a href="mailto:john@tomorrowstechai.com">john@tomorrowstechai.com</a>{" "}
+          <a href={profile.emailHref}>{profile.email}</a>{" "}
           and we will sort it out.
         </p>
       </Shell>

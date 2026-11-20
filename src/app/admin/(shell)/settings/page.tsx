@@ -9,10 +9,12 @@ import {
   describeHours, isAdminRole, type DefaultKey,
 } from "@/lib/settings/defaults";
 import { baseDefaults, loadBusinessDefaults } from "@/lib/settings/store";
+import { BUILT_IN_PROFILE, FIXED_IDENTITY, PROFILE_LIMITS, changedProfileKeys, type ProfileKey } from "@/lib/settings/profile";
+import { loadBusinessProfile } from "@/lib/settings/profile-store";
 import { BUSINESS_TZ } from "@/lib/time/chicago";
 import {
-  changePasswordAction, removeAdminAction, resetBusinessDefaultsAction,
-  saveBusinessDefaultsAction, setAdminRoleAction, updateMyNameAction,
+  changePasswordAction, removeAdminAction, resetBusinessDefaultsAction, resetBusinessProfileAction,
+  saveBusinessDefaultsAction, saveBusinessProfileAction, setAdminRoleAction, updateMyNameAction,
 } from "@/app/admin/settings-actions";
 import { Panel, ErrorState } from "@/components/admin/cc/Panel";
 import PendingButton from "@/components/admin/cc/PendingButton";
@@ -70,7 +72,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       ? <div className={`cc-flash ${error ? "is-warn" : "is-ok"}`} role="status">{error ?? notice}</div>
       : null;
 
-  const [stored, team] = await Promise.all([loadBusinessDefaults(), loadTeam()]);
+  const [stored, team, profile] = await Promise.all([loadBusinessDefaults(), loadTeam(), loadBusinessProfile()]);
+  const p = profile.value;
+  const profileChanged = new Set<ProfileKey>(changedProfileKeys(p));
+  const pmark = (key: ProfileKey) =>
+    profileChanged.has(key)
+      ? <span className={styles.hint}><span className={styles.changed}>Changed.</span> Built-in: {BUILT_IN_PROFILE[key]}</span>
+      : <span className={styles.hint}>Built-in value.</span>;
   const d = stored.value;
   const base = baseDefaults();
   const changed = new Set<DefaultKey>(changedKeys(d, base));
@@ -91,13 +99,99 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <div className="cc-greet">
         <div>
           <h1>Settings</h1>
-          <p>How the business runs by default, who can sign in, and your own account. Connections and keys are on Integrations.</p>
+          <p>Who the business is, how it runs by default, who can sign in, and your own account. Connections and keys are on Integrations.</p>
         </div>
       </div>
       {/* A message with no section (an old link) still shows, at the top. */}
       {!at && (notice || error) ? <div className={`cc-flash ${error ? "is-warn" : "is-ok"}`} role="status">{error ?? notice}</div> : null}
 
       <div className="cc-board">
+        {/* ── Business profile ──────────────────────────────────────── */}
+        <section className="cc-panel cc-s12" id="profile">
+          <div className="cc-panel-head">
+            <IconFile size={15} />
+            <h2>Business profile</h2>
+            <span className="cc-sub">{profileChanged.size ? `${profileChanged.size} changed from built-in` : "all built-in values"}</span>
+          </div>
+          <div className="cc-panel-body">
+            {flash("profile")}
+            {profile.readError ? (
+              <div className="cc-flash is-warn">
+                The saved profile could not be read ({profile.readError}), so the built-in values are in use and shown below.
+              </div>
+            ) : null}
+            <p className={styles.groupSub}>
+              The contact details the business shows the public. Saving changes them in system emails, invoice and proposal pages,
+              the site footer, the sales and contact pages, the member portal, Privacy and Terms, and the data search engines read.
+            </p>
+
+            <form action={saveBusinessProfileAction}>
+              <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+                <div className={styles.trio}>
+                  <label className="cc-field">
+                    <span className="cc-label">Phone</span>
+                    <input className="cc-input" type="tel" name="phone" defaultValue={p.phone} required />
+                    {pmark("phone")}
+                  </label>
+                  <label className="cc-field">
+                    <span className="cc-label">Contact email</span>
+                    <input className="cc-input" type="email" name="email" defaultValue={p.email} maxLength={PROFILE_LIMITS.email} required />
+                    {pmark("email")}
+                  </label>
+                  <label className="cc-field">
+                    <span className="cc-label">Legal business name</span>
+                    <input className="cc-input" name="legalName" defaultValue={p.legalName} maxLength={PROFILE_LIMITS.legalName} required />
+                    {pmark("legalName")}
+                  </label>
+                  <label className="cc-field">
+                    <span className="cc-label">Emails are signed</span>
+                    <input className="cc-input" name="signerName" defaultValue={p.signerName} maxLength={PROFILE_LIMITS.signerName} required />
+                    {pmark("signerName")}
+                  </label>
+                  <label className="cc-field">
+                    <span className="cc-label">Line under the signature</span>
+                    <input className="cc-input" name="signerRole" defaultValue={p.signerRole} maxLength={PROFILE_LIMITS.signerRole} required />
+                    {pmark("signerRole")}
+                  </label>
+                  <div className={styles.cityState}>
+                    <label className="cc-field">
+                      <span className="cc-label">City</span>
+                      <input className="cc-input" name="city" defaultValue={p.city} maxLength={PROFILE_LIMITS.city} required />
+                      {pmark("city")}
+                    </label>
+                    <label className="cc-field">
+                      <span className="cc-label">State</span>
+                      <input className="cc-input" name="region" defaultValue={p.region} maxLength={2} required />
+                    </label>
+                  </div>
+                </div>
+              </fieldset>
+
+              <div className={styles.bar}>
+                {canEdit ? <PendingButton className="cc-btn primary" busy="Saving…">Save profile</PendingButton> : null}
+                <span className={styles.state}>
+                  {!canEdit ? "Your role can look at these but not change them."
+                    : profile.saved ? `Last saved ${moment(profile.updatedAt) ?? "at an unknown time"}${profile.updatedBy ? ` by ${profile.updatedBy}` : ""}`
+                    : "Nothing saved yet. The site is using its built-in values."}
+                </span>
+              </div>
+            </form>
+            {canEdit && profile.saved ? (
+              <form action={resetBusinessProfileAction} style={{ marginTop: 10 }}>
+                <PendingButton className="cc-btn ghost" busy="Resetting…">Reset profile to built-in</PendingButton>
+              </form>
+            ) : null}
+
+            <p className="cc-note">
+              <b>Not controlled here:</b> the company name ({FIXED_IDENTITY.name}) and website address ({FIXED_IDENTITY.siteLabel}) are fixed, because the name runs through the wording of the whole site.
+              No street address is published anywhere, only the city and state. The city here shows in the footer and in search data; a few sentences of marketing copy that mention the city (About, Careers, Job Catcher) are written by hand and do not follow it.
+              The legal wording of Terms and Privacy, the invoice footer line (in Business defaults below), the address notifications are sent to,
+              and the account clients are asked to invite to their Stripe or domain are separate from this profile.
+              Emails already sent, and a one-to-one lead email you have already started writing, are not changed.
+            </p>
+          </div>
+        </section>
+
         {/* ── Business defaults ─────────────────────────────────────── */}
         <section className="cc-panel cc-s8" id="defaults">
           <div className="cc-panel-head">

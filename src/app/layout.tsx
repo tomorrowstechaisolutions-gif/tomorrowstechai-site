@@ -12,6 +12,8 @@ import { MetaPixel } from "@/components/MetaPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
+import { businessProfile } from "@/lib/settings/profile-store";
+import type { ProfileView } from "@/lib/settings/profile";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -127,11 +129,11 @@ const clientReviews = [
   },
 ];
 
-const organizationJsonLd = {
+const organizationJsonLd = (profile: ProfileView) => ({
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   name: "Tomorrow’s Tech AI",
-  alternateName: "Tomorrowstek LLC",
+  alternateName: profile.legalName,
   url: "https://www.tomorrowstechai.com",
   logo: "https://www.tomorrowstechai.com/brand/icon-512.png",
   image: "https://www.tomorrowstechai.com/brand/icon-512.png",
@@ -146,17 +148,17 @@ const organizationJsonLd = {
     sameAs: "https://www.linkedin.com/in/johnhockinson/",
   },
   priceRange: "$$$",
-  telephone: "+1-254-563-2130",
+  telephone: profile.phoneIntl,
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Temple",
-    addressRegion: "TX",
+    addressLocality: profile.city,
+    addressRegion: profile.region,
     addressCountry: "US",
   },
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "Customer Service",
-    email: "john@tomorrowstechai.com",
+    email: profile.email,
     url: "https://www.tomorrowstechai.com/contact",
     availableLanguage: "English",
   },
@@ -196,7 +198,7 @@ const organizationJsonLd = {
     worstRating: "1",
   },
   review: clientReviews,
-};
+});
 
 const websiteJsonLd = {
   "@context": "https://schema.org",
@@ -210,11 +212,12 @@ const websiteJsonLd = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const profile = await businessProfile();
   return (
     <html
       lang="en"
@@ -239,7 +242,7 @@ export default function RootLayout({
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd(profile)) }}
         />
         <script
           type="application/ld+json"

@@ -12,6 +12,7 @@
  * hand-wrapped), and blank lines separate paragraphs.
  */
 
+import { BRAND } from "@/lib/email/brand";
 import { BUSINESS_LAUNCH_OFFER, type Offer } from "./offers";
 import type { ScoreReason } from "@/lib/supabase/types";
 import { fill, paragraphsOf, resolveCopy, type CopySlot, type EmailCopy } from "@/lib/system-emails/copy";
@@ -148,10 +149,10 @@ ${booking}
 
 ${para(c.closing)}
 
-— John
-Founder, Tomorrow's Tech AI
+— ${BRAND.signer}
+${BRAND.signerRole}
 ${site}
-(254) 563-2130`;
+${BRAND.phone}`;
 
   return { subject: f(c.subject), html: "", text };
 }
@@ -213,10 +214,10 @@ ${booking}
 
 ${para(c.closing)}
 
-— John
-Tomorrow's Tech AI
+— ${BRAND.signer}
+${BRAND.name}
 ${site}
-(254) 563-2130`;
+${BRAND.phone}`;
   }
 
   return { subject: f(c.subject), html: "", text: body + unsubscribeFooter(c, links.unsubscribe) };

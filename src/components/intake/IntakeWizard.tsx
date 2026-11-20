@@ -47,10 +47,13 @@ export function IntakeWizard({
   token,
   initialIntake,
   initialFiles,
+  phone,
 }: {
   token: string;
   initialIntake: IntakeRecord;
   initialFiles: IntakeFile[];
+  /** The business phone, from the business profile. */
+  phone: string;
 }) {
   const [intake, setIntake] = useState(initialIntake);
   const [files, setFiles] = useState(initialFiles);
@@ -335,8 +338,8 @@ export function IntakeWizard({
         </section>
 
         <p className="itk-fineprint">
-          Questions? Reply to the email this link came from, or call
-          (254) 563-2130. Your {STARTER_PROMISED_DAYS}-business-day build window
+          Questions? Reply to the email this link came from, or call{" "}
+          {phone}. Your {STARTER_PROMISED_DAYS}-business-day build window
           starts once we have checked everything here.
         </p>
       </div>

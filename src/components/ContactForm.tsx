@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { captureAttribution, getAttribution } from "@/lib/campaign/attribution";
 import { analyticsConsented, gaEvent } from "@/lib/analytics";
+import type { ProfileView } from "@/lib/settings/profile";
 
 /**
  * Service pages link here with ?service=…&plan=… so the enquiry arrives already
@@ -46,7 +47,7 @@ function prefillFromQuery(): string {
 }
 
 type ContactOffer={id:string|null;slug:string;name:string;category:string;price:string;sourcePage:string;cta?:string|null};
-export function ContactForm({offer}:{offer?:ContactOffer|null}) {
+export function ContactForm({offer,contact}:{offer?:ContactOffer|null;contact:Pick<ProfileView,"email"|"emailHref">}) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
@@ -117,10 +118,10 @@ export function ContactForm({offer}:{offer?:ContactOffer|null}) {
           We&apos;ll be in touch within one business day. If it&apos;s urgent,
           email{" "}
           <a
-            href="mailto:john@tomorrowstechai.com"
+            href={contact.emailHref}
             className="text-[color:var(--color-cyan)] underline"
           >
-            john@tomorrowstechai.com
+            {contact.email}
           </a>{" "}
           directly.
         </p>

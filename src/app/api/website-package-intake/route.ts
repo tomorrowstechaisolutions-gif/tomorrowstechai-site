@@ -5,6 +5,7 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { getPublicPackage } from "@/lib/catalog/public";
 import { catalogPrice } from "@/lib/catalog/types";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const runtime = "nodejs";
 
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
       user_agent: req.headers.get("user-agent"),
     });
 
-    if (!result.stored) return NextResponse.json({ error: "We couldn’t save your request. Please call (254) 563-2130." }, { status: 500 });
+    if (!result.stored) return NextResponse.json({ error: `We couldn’t save your request. Please call ${(await businessProfile()).phone}.` }, { status: 500 });
 
     if (result.leadId && supabaseConfigured()) {
       const db = supabaseAdmin();

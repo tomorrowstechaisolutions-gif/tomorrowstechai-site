@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { verifyUnsubscribe } from "@/lib/email-marketing/unsubscribe";
+import { businessProfile } from "@/lib/settings/profile-store";
+import type { ProfileView } from "@/lib/settings/profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,9 +43,9 @@ function page(title: string, body: string, status = 200) {
   );
 }
 
-const FAILED = [
+const failed = (profile: ProfileView) => [
   "That link didn't work",
-  "It may have expired. Email john@tomorrowstechai.com and we'll take you off the list by hand — no questions.",
+  `It may have expired. Email ${profile.email} and we'll take you off the list by hand — no questions.`,
 ];
 
 export async function GET(request: Request) {
@@ -51,6 +53,7 @@ export async function GET(request: Request) {
   const recipientId = url.searchParams.get("r");
   const enrollmentId = url.searchParams.get("e");
   const token = url.searchParams.get("t") ?? "";
+  const FAILED = failed(await businessProfile());
 
   if (!supabaseConfigured() || (!recipientId && !enrollmentId) || !token) {
     return page(FAILED[0], FAILED[1], 400);

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ScheduleCta } from "@/components/business-launch/ScheduleCta";
 import { ContactAction } from "@/components/business-launch/ContactAction";
 import { HOSTING_FROM, OFFER_PRICE } from "@/lib/campaign/config";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Request received",
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ThankYouPage() {
+export default async function ThankYouPage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <header className="bl-topbar">
@@ -88,15 +90,15 @@ export default function ThankYouPage() {
           <p className="bl-callnote">
             Need us sooner?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               className="bl-link"
             >
@@ -110,7 +112,7 @@ export default function ThankYouPage() {
       <footer className="bl-footer">
         <p>
           © {new Date().getFullYear()}{" "}
-          Tomorrow&rsquo;s Tech AI · Tomorrowstek LLC
+          Tomorrow&rsquo;s Tech AI · {profile.legalName}
         </p>
         <p className="bl-footer-links">
           <Link href="/privacy">Privacy</Link>

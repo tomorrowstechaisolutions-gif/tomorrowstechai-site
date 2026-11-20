@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getIntakeByToken } from "@/lib/intake/service";
 import { IntakeWizard } from "@/components/intake/IntakeWizard";
 import { IntakeComplete } from "@/components/intake/IntakeComplete";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const dynamic = "force-dynamic";
 
@@ -65,5 +66,6 @@ export default async function IntakePage({
     return <IntakeComplete intake={loaded.intake} fileCount={loaded.files.length} />;
   }
 
-  return <IntakeWizard token={token} initialIntake={loaded.intake} initialFiles={loaded.files} />;
+  const profile = await businessProfile();
+  return <IntakeWizard token={token} initialIntake={loaded.intake} initialFiles={loaded.files} phone={profile.phone} />;
 }

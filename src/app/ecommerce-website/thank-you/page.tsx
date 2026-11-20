@@ -8,6 +8,7 @@ import {
   ECOM_PRICE,
   ECOM_PRODUCTS_INCLUDED,
 } from "@/lib/campaign/ecommerce";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Request received",
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function EcommerceThankYouPage() {
+export default async function EcommerceThankYouPage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <header className="bl-topbar">
@@ -97,16 +99,16 @@ export default function EcommerceThankYouPage() {
           <p className="bl-callnote">
             Need us sooner?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               offer={ECOMMERCE_OFFER}
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               offer={ECOMMERCE_OFFER}
               className="bl-link"

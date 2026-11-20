@@ -1,6 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { primeBrand } from "@/lib/settings/profile-store";
 import { resolveAudience } from "./audience";
 import { canSend, personalize, preSendChecks, renderCampaignHtml, renderCampaignText } from "./render";
 import { campaignUnsubscribeUrl, listUnsubscribeHeaders, sequenceUnsubscribeUrl } from "./unsubscribe";
@@ -202,6 +203,7 @@ export async function sendCampaign(
   campaignId: string,
   options: { limit?: number; actor?: string | null } = {}
 ): Promise<SendSummary> {
+  await primeBrand(); // phone and signer in the footer follow the business profile
   const limit = options.limit ?? 500;
   const campaign = await loadCampaign(sb, campaignId);
   const resend = client();
@@ -406,6 +408,7 @@ export async function sendTestEmail(
   campaignId: string,
   addresses: string[]
 ): Promise<{ ok: boolean; message: string }> {
+  await primeBrand(); // phone and signer in the footer follow the business profile
   const resend = client();
   if (!resend) return { ok: false, message: "No email provider is configured, so no test could be sent." };
 
@@ -531,6 +534,7 @@ export async function runDueSequenceSteps(
   sb: SupabaseClient,
   limit = 100
 ): Promise<{ examined: number; sent: number; completed: number; failed: number }> {
+  await primeBrand(); // phone and signer in the footer follow the business profile
   const resend = client();
   const now = new Date();
   const summary = { examined: 0, sent: 0, completed: 0, failed: 0 };

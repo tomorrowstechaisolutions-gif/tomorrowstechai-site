@@ -3,6 +3,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { OWNERSHIP_SUMMARY, PAYMENT_NOTE } from "@/lib/proposals/config";
 import { formatMoney } from "@/lib/proposals/pricing";
 import type { FullProposal, ProposalItem } from "@/lib/proposals/types";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 /**
  * The proposal as the client reads it.
@@ -85,7 +86,7 @@ function ItemList({
   );
 }
 
-export default function ProposalDocument({
+export default async function ProposalDocument({
   full,
   mode,
   acceptance,
@@ -96,6 +97,7 @@ export default function ProposalDocument({
   acceptance?: ReactNode;
 }) {
   const { proposal: p, items, sections, agreement, signature } = full;
+  const profile = await businessProfile();
   const money = (cents: number) => formatMoney(cents, p.currency);
   const of = (type: string) => items.filter((item) => item.item_type === type);
 
@@ -422,7 +424,7 @@ export default function ProposalDocument({
 
         <footer className="pr-foot">
           <span>Tomorrow&rsquo;s Tech AI · Solutions for tomorrow. Results today.</span>
-          <span>john@tomorrowstechai.com · (254) 563-2130</span>
+          <span>{profile.email} · {profile.phone}</span>
         </footer>
       </main>
     </div>

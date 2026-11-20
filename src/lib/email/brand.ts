@@ -1,3 +1,5 @@
+import { BUILT_IN_VIEW, FIXED_IDENTITY, type ProfileView } from "@/lib/settings/profile";
+
 /**
  * The house style for every email Tomorrow's Tech AI sends.
  *
@@ -23,23 +25,45 @@
  * to a file and looked at without sending anything.
  */
 
-export const BRAND = {
-  name: "Tomorrow's Tech AI",
+/**
+ * The brand block every email reads.
+ *
+ * Phone, email and signer come from the business profile on Settings. The
+ * values below are the built-in ones; the sender calls primeBrand() (in
+ * lib/settings/profile-store) just before building an email, which copies
+ * the saved profile in through applyBrandProfile(). They are deployment-wide
+ * values, not per-request ones, so holding them here is safe.
+ */
+export const BRAND: {
+  name: string; tagline: string; site: string; siteLabel: string;
+  phone: string; phoneHref: string; email: string;
+  signer: string; signerRole: string; logo: string;
+} = {
+  name: FIXED_IDENTITY.name,
   tagline: "Solutions for tomorrow. Results today.",
-  site: "https://tomorrowstechai.com",
-  siteLabel: "tomorrowstechai.com",
-  phone: "(254) 563-2130",
-  phoneHref: "tel:+12545632130",
-  email: "john@tomorrowstechai.com",
-  signer: "John",
-  signerRole: "Founder, Tomorrow's Tech AI",
+  site: FIXED_IDENTITY.site,
+  siteLabel: FIXED_IDENTITY.siteLabel,
+  phone: BUILT_IN_VIEW.phone,
+  phoneHref: BUILT_IN_VIEW.phoneHref,
+  email: BUILT_IN_VIEW.email,
+  signer: BUILT_IN_VIEW.signerName,
+  signerRole: BUILT_IN_VIEW.signerRole,
   /**
    * The mark already sits on its own dark plate (#070B14), so the header
    * needs no transparency and no cut-out — and it is 3.7 KB, which matters
    * when Gmail clips a message at 102 KB.
    */
   logo: "https://www.tomorrowstechai.com/icon-192.png",
-} as const;
+};
+
+/** Copies the business profile into the brand block. Called by primeBrand(). */
+export function applyBrandProfile(p: Pick<ProfileView, "phone" | "phoneHref" | "email" | "signerName" | "signerRole">): void {
+  BRAND.phone = p.phone;
+  BRAND.phoneHref = p.phoneHref;
+  BRAND.email = p.email;
+  BRAND.signer = p.signerName;
+  BRAND.signerRole = p.signerRole;
+}
 
 /** The site's own tokens, hard-coded because email cannot read a stylesheet. */
 export const C = {

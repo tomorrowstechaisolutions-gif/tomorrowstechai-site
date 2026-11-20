@@ -12,6 +12,7 @@ import {
   OFFER_PRICE,
   UPGRADES,
 } from "@/lib/campaign/config";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Launch Your Business Online for $399",
@@ -64,7 +65,8 @@ const NOT_FOR_YOU = [
   "You want the cheapest possible page and nothing behind it.",
 ];
 
-export default function BusinessLaunchPage() {
+export default async function BusinessLaunchPage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <CampaignTracking />
@@ -383,15 +385,15 @@ export default function BusinessLaunchPage() {
           <p className="bl-callnote">
             Would rather talk first?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               className="bl-link"
             >
@@ -405,7 +407,7 @@ export default function BusinessLaunchPage() {
       <footer className="bl-footer">
         <p>
           © {new Date().getFullYear()}{" "}
-          Tomorrow&rsquo;s Tech AI · Tomorrowstek LLC
+          Tomorrow&rsquo;s Tech AI · {profile.legalName}
         </p>
         <p className="bl-footer-links">
           <Link href="/privacy">Privacy</Link>

@@ -14,6 +14,8 @@ type Props = {
   lead: EmailableLead & { id: string; lead_status: string };
   /** Pending automated follow-ups; the composer offers to stop them. */
   pendingFollowups: number;
+  /** The business phone from the profile, for the signature in the templates. */
+  phone: string;
   action: (prev: LeadEmailState, formData: FormData) => Promise<LeadEmailState>;
 };
 
@@ -22,8 +24,8 @@ type Props = {
  * Templates fill the boxes; nothing is sent until Send is pressed, and the
  * full text is logged on the lead's activity.
  */
-export function LeadEmailComposer({ lead, pendingFollowups, action }: Props) {
-  const templates = leadEmailTemplates(lead);
+export function LeadEmailComposer({ lead, pendingFollowups, phone, action }: Props) {
+  const templates = leadEmailTemplates(lead, phone);
   const [templateId, setTemplateId] = useState("more-details");
   const start = templates.find((t) => t.id === templateId) ?? templates[0];
   const [subject, setSubject] = useState(start.subject);

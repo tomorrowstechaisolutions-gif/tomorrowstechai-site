@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LoginForm } from "../AuthForms";
 import type { FormState } from "../actions";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -13,6 +14,7 @@ const BANNERS: Record<string, FormState> = {
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const q = await searchParams;
+  const profile = await businessProfile();
   const banner = q.link ? BANNERS[q.link] : q.signedout ? BANNERS.signedout : q.denied ? BANNERS.denied : undefined;
   const next = q.next && q.next.startsWith("/account") ? q.next : "/account";
   return (
@@ -23,7 +25,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <LoginForm next={next} banner={banner} />
         <p className="acct-help">
           Member accounts are by invitation. If you&rsquo;re a client and don&rsquo;t have one yet, email{" "}
-          <a href="mailto:info@tomorrowstechai.com">info@tomorrowstechai.com</a>.
+          <a href={profile.emailHref}>{profile.email}</a>.
         </p>
       </section>
     </main>

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
+import { businessProfile } from "@/lib/settings/profile-store";
+import type { ProfileView } from "@/lib/settings/profile";
 
 export const metadata = {
   title: { absolute: "Job Catcher: Missed Call Text Back for Temple TX Contractors" },
@@ -97,7 +99,7 @@ const faqs = [
   },
 ];
 
-const serviceJsonLd = {
+const serviceJsonLd = (profile: ProfileView) => ({
   "@context": "https://schema.org",
   "@type": "Service",
   name: "Job Catcher — Missed Call Text-Back for Contractors",
@@ -106,15 +108,13 @@ const serviceJsonLd = {
   provider: {
     "@type": "ProfessionalService",
     name: "Tomorrow’s Tech AI",
-    legalName: "Tomorrows Tech AI LLC",
-    telephone: "+1-254-563-2130",
-    email: "john@tomorrowstechai.com",
+    legalName: profile.legalName,
+    telephone: profile.phoneIntl,
+    email: profile.email,
     address: {
       "@type": "PostalAddress",
-      streetAddress: "452 Eagle Landing Dr",
-      addressLocality: "Belton",
-      addressRegion: "TX",
-      postalCode: "76513",
+      addressLocality: profile.city,
+      addressRegion: profile.region,
       addressCountry: "US",
     },
   },
@@ -131,7 +131,7 @@ const serviceJsonLd = {
     description:
       "$350/month managed service with custom responses and a free 2-week pilot",
   },
-};
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -143,12 +143,13 @@ const faqJsonLd = {
   })),
 };
 
-export default function JobCatcherPage() {
+export default async function JobCatcherPage() {
+  const profile = await businessProfile();
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(profile)) }}
       />
       <script
         type="application/ld+json"
@@ -172,10 +173,10 @@ export default function JobCatcherPage() {
             </p>
             <div className="flex flex-wrap gap-4 mt-8">
               <a
-                href="tel:+12545632130"
+                href={profile.phoneHref}
                 className="inline-block rounded-lg bg-[color:var(--color-cyan)] px-6 py-3 font-medium text-black transition-opacity hover:opacity-90"
               >
-                Call (254) 563-2130 →
+                Call {profile.phone} →
               </a>
               <Link
                 href="/contact"
@@ -435,9 +436,9 @@ export default function JobCatcherPage() {
               That&apos;s the whole customer-service department.
             </p>
             <p className="mt-3 text-sm text-[color:var(--color-text-secondary)]">
-              John Hockinson · Founder, Tomorrows Tech AI LLC · Belton, TX ·{" "}
-              <a href="tel:+12545632130" className="text-[color:var(--color-cyan)] underline underline-offset-2 hover:no-underline">
-                (254) 563-2130
+              John Hockinson · Founder, {profile.legalName} · {profile.location} ·{" "}
+              <a href={profile.phoneHref} className="text-[color:var(--color-cyan)] underline underline-offset-2 hover:no-underline">
+                {profile.phone}
               </a>
             </p>
           </div>
@@ -472,10 +473,10 @@ export default function JobCatcherPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-6">
             <a
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               className="inline-block rounded-lg bg-[color:var(--color-cyan)] px-6 py-3 font-medium text-black transition-opacity hover:opacity-90"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </a>
             <Link
               href="/contact"

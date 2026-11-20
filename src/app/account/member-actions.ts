@@ -8,6 +8,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getPortalMember } from "@/lib/portal/session";
 import { sendPortalRequestAlert } from "@/lib/portal/emails";
 import type { FormState } from "./actions";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 /**
  * Writes a signed-in member can make. The customer id always comes from the
@@ -62,8 +63,9 @@ const CATEGORIES = ["question", "change", "problem", "billing", "cancel"] as con
 export async function submitMemberRequestAction(_prev: FormState, fd: FormData): Promise<FormState> {
   const member = await getPortalMember();
   if (!member) return { error: "Your session ended. Sign in again." };
+  const profile = await businessProfile();
   if (!rateLimit(`portal-request:${member.id}`, { max: 6, windowMs: 60 * 60 * 1000 }).ok) {
-    return { error: "You've sent several requests in the last hour. We'll get to them; for anything urgent, call (254) 563-2130." };
+    return { error: `You've sent several requests in the last hour. We'll get to them; for anything urgent, call ${profile.phone}.` };
   }
   const raw = str(fd, "category", 20);
   const category = (CATEGORIES as readonly string[]).includes(raw) ? raw : "question";
@@ -78,7 +80,7 @@ export async function submitMemberRequestAction(_prev: FormState, fd: FormData):
     subject,
     message,
   });
-  if (error) return { error: "Your request couldn't be sent. Email info@tomorrowstechai.com instead." };
+  if (error) return { error: `Your request couldn't be sent. Email ${profile.email} instead.` };
 
   await sendPortalRequestAlert({ businessName: member.businessName, from: member.email, category, subject, message, customerId: member.customerId });
   revalidatePath("/account/help");

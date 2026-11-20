@@ -1,3 +1,4 @@
+import { businessProfile } from "@/lib/settings/profile-store";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -224,6 +225,7 @@ export default async function LeadDetailPage({
           </section>
 
           <LeadEmailComposer
+            phone={(await businessProfile()).phone}
             lead={{
               id: lead.id,
               first_name: lead.first_name,

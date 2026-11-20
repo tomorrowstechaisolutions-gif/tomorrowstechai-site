@@ -161,7 +161,7 @@ export const DEFAULT_TERMS =
   "Payment is due on receipt unless another date is stated above. Work may be paused, launch withheld and managed services suspended while undisputed amounts are overdue. Hosting and management bill monthly and can be cancelled at any time — cancelling stops future charges and does not refund the month in progress.";
 
 export const DEFAULT_FOOTER =
-  "Thank you — it is a pleasure building for you. Questions about anything on this invoice: john@tomorrowstechai.com.";
+  "Thank you — it is a pleasure building for you. Questions about anything on this invoice: info@tomorrowstechai.com.";
 
 /**
  * When an invoice actually went out, or null if it has not.

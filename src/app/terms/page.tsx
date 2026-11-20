@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata = {
   title: "Terms of Service",
@@ -15,7 +16,8 @@ export const metadata = {
   },
 };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const profile = await businessProfile();
   return (
     <>
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
@@ -124,7 +126,7 @@ export default function TermsPage() {
           <h2>Contact us</h2>
           <p>
             Questions about these terms? Email{" "}
-            <strong>tomorrowstechaisolutions@gmail.com</strong> or use the{" "}
+            <strong>{profile.email}</strong> or use the{" "}
             <Link href="/contact">contact form</Link>.
           </p>
 
