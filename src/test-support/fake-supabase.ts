@@ -63,8 +63,8 @@ export function fakeSupabase(initial: Tables = {}) {
       if (op === "upsert") {
         const written: Row[] = [];
         for (const v of Array.isArray(values) ? values : [values]) {
-          const key = upsertOpts.onConflict;
-          const existing = key ? rows.find((r) => r[key] === v[key]) : undefined;
+          const keys = upsertOpts.onConflict?.split(",").map((k) => k.trim()).filter(Boolean) ?? [];
+          const existing = keys.length ? rows.find((r) => keys.every((k) => r[k] === v[k])) : undefined;
           if (existing) {
             if (!upsertOpts.ignoreDuplicates) {
               Object.assign(existing, v);

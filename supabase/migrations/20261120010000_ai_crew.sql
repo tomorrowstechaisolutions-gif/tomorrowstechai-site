@@ -120,7 +120,9 @@ insert into public.ai_crew_state (id, paused) values (true, false) on conflict (
 -- When each admin last opened Tess, so "while you were out" has a start.
 create table if not exists public.ai_visits (
   user_id   uuid primary key references auth.users(id) on delete cascade,
-  last_seen timestamptz not null default now()
+  last_seen timestamptz not null default now(),
+  -- The visit before this one. "While you were out" counts from here.
+  previous_seen timestamptz
 );
 
 do $$
