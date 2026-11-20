@@ -13,10 +13,14 @@ create table if not exists public.ai_tess_profile (
   bluntness  text not null default 'straight' check (bluntness in ('gentle', 'straight', 'blunt')),
   pushback   text not null default 'firm' check (pushback in ('light', 'firm', 'hard')),
   about      text not null default '',
+  businesses text not null default '',
   learned    jsonb not null default '[]'::jsonb,
   parked     jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+-- For a database where the first version of this file was already run.
+alter table public.ai_tess_profile add column if not exists businesses text not null default '';
 
 alter table public.ai_tess_profile enable row level security;
 drop policy if exists ai_tess_profile_admin_select on public.ai_tess_profile;

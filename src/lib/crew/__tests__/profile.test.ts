@@ -5,7 +5,8 @@ vi.mock("server-only", () => ({}));
 
 import { chatHistory, openChatTurn } from "../chat";
 import { addNote, contextBlocks, loadTessProfile, removeNote, saveTessAbout, saveTessSettings } from "../profile";
-import { aboutJohnText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, MODE_IDS, MODES } from "../tess-modes";
+import { ROLE } from "../roles";
+import { aboutJohnText, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, MODE_IDS, MODES } from "../tess-modes";
 import { parkIdea, rememberAboutJohn } from "../tools/profile";
 import { toolsFor } from "../tools";
 
@@ -184,5 +185,57 @@ describe("Tess's own notes", () => {
     const result = await rememberAboutJohn.run(ctx(db, null), { note: "Something." });
     expect(result.ok).toBe(false);
     expect(tables.ai_tess_profile).toHaveLength(0);
+  });
+});
+
+describe("John's businesses, kept apart from who he is", () => {
+  const brief = async () => "BRIEF TEXT";
+
+  it("is nothing when he has written nothing", () => {
+    expect(businessesText("  ")).toBeNull();
+  });
+
+  it("is marked as reference that may be out of date", () => {
+    const text = businessesText("SplicePoint: fiber splicing software.");
+    expect(text?.startsWith("<john_businesses>")).toBe(true);
+    expect(text).toContain("SplicePoint: fiber splicing software.");
+    expect(text).toMatch(/may be out of date/i);
+  });
+
+  it("is saved beside what he wrote about himself, and cut at its own limit", async () => {
+    const { db, tables } = setup();
+    await saveTessAbout(db, "user-1", "Systems thinker.", "y".repeat(LIMITS.businesses + 10));
+    expect(tables.ai_tess_profile[0]).toMatchObject({ about: "Systems thinker." });
+    expect(String(tables.ai_tess_profile[0].businesses)).toHaveLength(LIMITS.businesses);
+  });
+
+  it("is left alone when only the part about him is saved", async () => {
+    const { db } = setup();
+    await saveTessAbout(db, "user-1", "One.", "Held: family calendar.");
+    await saveTessAbout(db, "user-1", "Two.");
+    expect(await loadTessProfile(db, "user-1")).toMatchObject({ about: "Two.", businesses: "Held: family calendar." });
+  });
+
+  it("reaches Tess with the first message and stays off the page", async () => {
+    const { db, tables } = setup();
+    await saveTessAbout(db, "user-1", "", "Held: family calendar.");
+    await openChatTurn(db, { userId: "user-1", message: "Morning", brief, context: contextBlocks(await loadTessProfile(db, "user-1")), now: NOW });
+    const first = texts((tables.ai_runs[0].transcript as Msg[])[0]);
+    expect(first.some((t) => t.startsWith("<john_businesses>") && t.includes("Held: family calendar."))).toBe(true);
+    expect(await chatHistory(db, "user-1", NOW)).toEqual([{ role: "john", text: "Morning" }]);
+  });
+});
+
+describe("how Tess works with John, in her standing instructions", () => {
+  it("troubleshoots one step at a time", () => {
+    expect(ROLE.tess.prompt).toMatch(/one step at a time/i);
+  });
+
+  it("never passes off old or unverified figures as current", () => {
+    expect(ROLE.tess.prompt).toMatch(/never invent/i);
+  });
+
+  it("leads a decision with her recommendation", () => {
+    expect(ROLE.tess.prompt).toMatch(/recommendation first/i);
   });
 });

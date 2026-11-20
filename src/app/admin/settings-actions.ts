@@ -73,8 +73,9 @@ export async function resetBusinessProfileAction() {
 export async function saveMyTessProfileAction(fd: FormData) {
   const session = await requireAdmin();
   const about = String(fd.get("about") ?? "");
+  const businesses = String(fd.get("businesses") ?? "");
   try {
-    await saveTessAbout(supabaseAdmin(), session.user.id, about);
+    await saveTessAbout(supabaseAdmin(), session.user.id, about, businesses);
   } catch (err) {
     back("me", `Not saved: ${err instanceof Error ? err.message : "unknown error"}. If the Tess profile table has not been created yet, run 20261120020000_tess_profile.sql in Supabase.`, true);
   }

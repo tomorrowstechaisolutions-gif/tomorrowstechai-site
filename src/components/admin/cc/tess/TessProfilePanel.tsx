@@ -102,6 +102,7 @@ export default function TessProfilePanel({
       <section className={styles.panel}>
         <h2>Your master profile</h2>
         <p>{profile.about.trim() ? `She reads what you wrote about yourself (${profile.about.trim().length.toLocaleString()} characters) at the start of every conversation.` : "You have not written anything about yourself yet. She only knows what she has picked up."}</p>
+        <p>{profile.businesses.trim() ? `Your notes on your businesses: ${profile.businesses.trim().length.toLocaleString()} characters.` : "No notes on your businesses yet."}</p>
         <Link className={styles.openFloor} href="/admin/settings#me">
           Edit in Settings
         </Link>

@@ -81,12 +81,13 @@ export const DEFAULT_SETTINGS: TessSettings = { mode: "brief", length: "medium",
 export type Note = { id: string; text: string; at: string };
 export type NoteList = "learned" | "parked";
 
-export const LIMITS = { about: 12_000, note: 300, notes: 80 };
+export const LIMITS = { about: 12_000, businesses: 24_000, note: 300, notes: 80 };
 
 const HOW_OPEN = "<how_to_answer>";
 const ABOUT_OPEN = "<about_john>";
+const BUSINESSES_OPEN = "<john_businesses>";
 /** Blocks that carry settings to Tess. They are not part of what John said, so the page hides them. */
-export const CONTEXT_TAGS = [ABOUT_OPEN, HOW_OPEN];
+export const CONTEXT_TAGS = [ABOUT_OPEN, BUSINESSES_OPEN, HOW_OPEN];
 
 /** Settings as they will be saved: anything unrecognised becomes the default. */
 export function cleanSettings(input: Record<string, unknown>): TessSettings {
@@ -119,4 +120,17 @@ export function aboutJohnText(about: string, learned: Note[]): string | null {
   if (learned.length) lines.push("", "What you have learned from talking with him:", ...learned.map((n) => `- ${n.text}`));
   lines.push("</about_john>");
   return lines.join("\n");
+}
+
+/** John's own notes on his ventures, as Tess reads them. Null when he has written none. */
+export function businessesText(businesses: string): string | null {
+  const own = businesses.trim();
+  if (!own) return null;
+  return [
+    BUSINESSES_OPEN,
+    "John's own notes on his businesses and products. This is background he wrote, and it may be out of date: check prices, customers and what is actually built against the live records before relying on any of it.",
+    "",
+    own,
+    "</john_businesses>",
+  ].join("\n");
 }

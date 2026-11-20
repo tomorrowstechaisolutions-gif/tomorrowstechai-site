@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { aboutJohnText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, type Note, type NoteList, type TessSettings } from "./tess-modes";
+import { aboutJohnText, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, type Note, type NoteList, type TessSettings } from "./tess-modes";
 
 /**
  * Tess's profile for one admin: the mode and dials he picked, what he wrote
@@ -15,6 +15,8 @@ import { aboutJohnText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS
 
 export type TessProfile = TessSettings & {
   about: string;
+  /** His own notes on his ventures. Reference, kept apart from who he is. */
+  businesses: string;
   learned: Note[];
   parked: Note[];
   /** False when the table does not exist yet: the page still works, on defaults. */
@@ -30,11 +32,12 @@ function notes(value: unknown): Note[] {
 
 export async function loadTessProfile(sb: SupabaseClient, userId: string): Promise<TessProfile> {
   const { data, error } = await sb.from(TABLE).select("*").eq("user_id", userId).maybeSingle();
-  if (error) return { ...DEFAULT_SETTINGS, about: "", learned: [], parked: [], ready: false };
+  if (error) return { ...DEFAULT_SETTINGS, about: "", businesses: "", learned: [], parked: [], ready: false };
   const row = (data ?? {}) as Record<string, unknown>;
   return {
     ...cleanSettings(row),
     about: typeof row.about === "string" ? row.about : "",
+    businesses: typeof row.businesses === "string" ? row.businesses : "",
     learned: notes(row.learned),
     parked: notes(row.parked),
     ready: true,
@@ -52,8 +55,12 @@ export async function saveTessSettings(sb: SupabaseClient, userId: string, setti
   return clean;
 }
 
-export async function saveTessAbout(sb: SupabaseClient, userId: string, about: string): Promise<void> {
-  await write(sb, userId, { about: about.trim().slice(0, LIMITS.about) });
+/** What John wrote about himself and, when given, about his businesses. Leaving `businesses` out keeps what is saved. */
+export async function saveTessAbout(sb: SupabaseClient, userId: string, about: string, businesses?: string): Promise<void> {
+  await write(sb, userId, {
+    about: about.trim().slice(0, LIMITS.about),
+    ...(businesses === undefined ? {} : { businesses: businesses.trim().slice(0, LIMITS.businesses) }),
+  });
 }
 
 /** Add a note to a list. The same note twice is kept once; a full list drops its oldest. */
@@ -71,8 +78,9 @@ export async function removeNote(sb: SupabaseClient, userId: string, list: NoteL
   await write(sb, userId, { [list]: current.filter((n) => n.id !== id) });
 }
 
-/** What goes to Tess alongside John's message: who he is, then how to answer. */
+/** What goes to Tess alongside John's message: who he is, his businesses, then how to answer. */
 export function contextBlocks(profile: TessProfile): string[] {
   const about = aboutJohnText(profile.about, profile.learned);
-  return [...(about ? [about] : []), howToAnswerText(profile)];
+  const businesses = businessesText(profile.businesses);
+  return [...(about ? [about] : []), ...(businesses ? [businesses] : []), howToAnswerText(profile)];
 }

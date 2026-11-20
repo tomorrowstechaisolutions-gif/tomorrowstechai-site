@@ -379,6 +379,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <textarea className="cc-input" name="about" rows={16} maxLength={TESS_LIMITS.about} defaultValue={tess?.about ?? ""} placeholder="I am..." />
                 <span className={styles.hint}>Up to {TESS_LIMITS.about.toLocaleString()} characters. Plain text.</span>
               </label>
+              <label className="cc-field">
+                <span className="cc-label">My businesses and products</span>
+                <textarea className="cc-input" name="businesses" rows={16} maxLength={TESS_LIMITS.businesses} defaultValue={tess?.businesses ?? ""} placeholder="Each venture: what it is, who it is for, where it stands." />
+                <span className={styles.hint}>
+                  Up to {TESS_LIMITS.businesses.toLocaleString()} characters. Tess treats this as background that may be out of date, and checks prices and customers against the live records.
+                  Put the order of priority at the top.
+                </span>
+              </label>
               <div className={styles.bar}>
                 <PendingButton className="cc-btn primary" busy="Saving…">Save my profile</PendingButton>
               </div>
