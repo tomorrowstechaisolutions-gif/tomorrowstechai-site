@@ -2,6 +2,7 @@ import "server-only";
 import { chicagoDate } from "@/lib/time/chicago";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cleanWord } from "@/components/admin/cc/tess/hearingLogic";
 import { stateFor } from "./roles";
 import type { Business, Goal, Rule } from "./types";
 import { aboutJohnBlocks, businessesText, currentStateText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, TOPIC_IDS, type Note, type NoteList, type TessSettings } from "./tess-modes";
@@ -22,6 +23,8 @@ export type TessProfile = TessSettings & {
   businesses: string;
   learned: Note[];
   parked: Note[];
+  /** Names and words he wants her to hear right. Sent with every recording of his voice. */
+  words: string[];
   /** False when the table does not exist yet: the page still works, on defaults. */
   ready: boolean;
 };
@@ -35,7 +38,7 @@ function notes(value: unknown): Note[] {
 
 export async function loadTessProfile(sb: SupabaseClient, userId: string): Promise<TessProfile> {
   const { data, error } = await sb.from(TABLE).select("*").eq("user_id", userId).maybeSingle();
-  if (error) return { ...DEFAULT_SETTINGS, about: "", businesses: "", learned: [], parked: [], ready: false };
+  if (error) return { ...DEFAULT_SETTINGS, about: "", businesses: "", learned: [], parked: [], words: [], ready: false };
   const row = (data ?? {}) as Record<string, unknown>;
   return {
     ...cleanSettings(row),
@@ -43,6 +46,7 @@ export async function loadTessProfile(sb: SupabaseClient, userId: string): Promi
     businesses: typeof row.businesses === "string" ? row.businesses : "",
     learned: notes(row.learned),
     parked: notes(row.parked),
+    words: Array.isArray(row.words) ? row.words.map(cleanWord).filter(Boolean) : [],
     ready: true,
   };
 }
@@ -75,6 +79,20 @@ export async function addNote(sb: SupabaseClient, userId: string, list: NoteList
   const fresh: Note = { id: randomUUID(), text: clean, at: new Date(now).toISOString(), ...(topic && TOPIC_IDS.includes(topic) ? { topic } : {}) };
   const next = [...current, fresh].slice(-LIMITS.notes);
   await write(sb, userId, { [list]: next });
+}
+
+/** Add a word or name for her to listen for. The same word twice is kept once; a full list drops its oldest. */
+export async function addWord(sb: SupabaseClient, userId: string, input: string): Promise<string> {
+  const word = cleanWord(input);
+  if (!word) throw new Error("That cannot be listened for. Give one word or a short name: 2 to 50 characters, at most five words.");
+  const current = (await loadTessProfile(sb, userId)).words;
+  if (!current.some((w) => w.toLowerCase() === word.toLowerCase())) await write(sb, userId, { words: [...current, word].slice(-LIMITS.words) });
+  return word;
+}
+
+export async function removeWord(sb: SupabaseClient, userId: string, input: string): Promise<void> {
+  const current = (await loadTessProfile(sb, userId)).words;
+  await write(sb, userId, { words: current.filter((w) => w.toLowerCase() !== input.trim().toLowerCase()) });
 }
 
 export async function removeNote(sb: SupabaseClient, userId: string, list: NoteList, id: string): Promise<void> {

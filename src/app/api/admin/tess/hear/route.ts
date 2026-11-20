@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { HEAR_LIMITS } from "@/components/admin/cc/tess/hearingLogic";
-import { HearingError, transcribe } from "@/lib/crew/hearing";
+import { HearingError, hearingVocabulary, transcribe } from "@/lib/crew/hearing";
 import { voiceConfigured } from "@/lib/crew/voice";
 import { rateLimit } from "@/lib/rate-limit";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -32,7 +33,14 @@ export async function POST(req: Request) {
   if (audio.size > HEAR_LIMITS.maxBytes) return NextResponse.json({ error: "That recording was too long. Keep it under two minutes." }, { status: 413 });
 
   try {
-    return NextResponse.json({ text: await transcribe(audio) });
+    // The words to listen for: his own list, the admin's vocabulary, his leads' names.
+    let sb: ReturnType<typeof supabaseAdmin> | null = null;
+    try {
+      sb = supabaseAdmin();
+    } catch {
+      sb = null; // no database: she still hears, with the built-in words only
+    }
+    return NextResponse.json({ text: await transcribe(audio, await hearingVocabulary(sb, session.user.id)) });
   } catch (err) {
     console.error("[tess] hearing failed:", err instanceof Error ? err.message : err);
     if (err instanceof HearingError && err.refusedKey) {

@@ -61,6 +61,15 @@
 .noteRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 12.5px; line-height: 1.45; padding: 6px 0; border-top: 1px solid var(--line); color: var(--text); }
 .noteRow:first-of-type { border-top: 0; }
 .topicLead { margin-top: 9px !important; }
+.words { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.word { border: 1px solid var(--line); background: rgba(53, 214, 255, 0.06); color: var(--text); border-radius: 999px; padding: 3px 9px; font-size: 12px; cursor: pointer; }
+.word i { font-style: normal; color: var(--faint); margin-left: 3px; }
+.word:hover:not(:disabled) { border-color: rgba(255, 107, 107, 0.6); }
+.word:hover:not(:disabled) i { color: var(--red); }
+.word:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.wordForm { display: flex; gap: 8px; margin-top: 10px; }
+.wordForm input { flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font-size: 12.5px; padding: 5px 9px; }
+.wordForm input:focus { outline: none; border-color: rgba(53, 214, 255, 0.55); }
 .topics { margin: 8px 0 0; padding: 0 0 0 16px; font-size: 12.5px; line-height: 1.6; color: var(--text); }
 
 .btn { border: 1px solid var(--line); color: var(--dim); background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }

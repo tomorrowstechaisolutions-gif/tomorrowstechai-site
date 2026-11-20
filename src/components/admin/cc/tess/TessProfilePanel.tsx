@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { TessProfile } from "@/lib/crew/profile";
 import { DIAL_KEYS, DIALS, MODE_IDS, MODES, openTopics, TOPICS, type Note, type NoteList, type TessSettings } from "@/lib/crew/tess-modes";
 import { BACKGROUNDS, type Background } from "./soundPlan";
@@ -46,6 +47,7 @@ export default function TessProfilePanel({
   soundOn,
   onSettings,
   onRemove,
+  onWord,
 }: {
   profile: TessProfile;
   busy: boolean;
@@ -57,7 +59,10 @@ export default function TessProfilePanel({
   soundOn: boolean;
   onSettings: (next: TessSettings) => void;
   onRemove: (list: NoteList, id: string) => void;
+  /** Add a word she listens for, or remove one. */
+  onWord: (word: string, remove: boolean) => void;
 }) {
+  const [word, setWord] = useState("");
   const settings: TessSettings = { mode: profile.mode, length: profile.length, bluntness: profile.bluntness, pushback: profile.pushback };
   const locked = busy || !profile.ready;
   const open = openTopics(profile.learned);
@@ -188,6 +193,36 @@ export default function TessProfilePanel({
         ) : (
           <p className={styles.topicLead}>Every topic has an answer. She keeps saving what you tell her.</p>
         )}
+      </section>
+
+      <section className={styles.panel}>
+        <h2>
+          Words she listens for <span>{profile.words.length || ""}</span>
+        </h2>
+        <p className={styles.topicLead}>Names and words she keeps getting wrong: people, pets, businesses, your own terms. They go with every recording of your voice. She adds one herself when you correct her. Lead names and page names are already included.</p>
+        {profile.words.length ? (
+          <div className={styles.words}>
+            {profile.words.map((w) => (
+              <button key={w} type="button" className={styles.word} onClick={() => onWord(w, true)} disabled={locked} aria-label={`Remove ${w}`} title="Remove">
+                {w} <i aria-hidden>×</i>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <form
+          className={styles.wordForm}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!word.trim()) return;
+            onWord(word.trim(), false);
+            setWord("");
+          }}
+        >
+          <input value={word} onChange={(e) => setWord(e.target.value)} placeholder="Add a name or word" aria-label="A word for Tess to listen for" maxLength={50} autoComplete="off" />
+          <button type="submit" className={styles.botBtn} disabled={locked || !word.trim()}>
+            Add
+          </button>
+        </form>
       </section>
 
       <Notes title="What she has learned" empty="Nothing yet. In Chat mode she saves what you tell her about yourself." list="learned" items={profile.learned} busy={locked} onRemove={onRemove} />
