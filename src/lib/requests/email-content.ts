@@ -165,7 +165,7 @@ export function buildRequestEmail(
     subheading(f(c.why_heading)),
     paragraph(esc(t.why), { dim: true }),
     fineprint(f(c.expiry)),
-    fineprint(NEVER_ASK),
+    fineprint(NEVER_ASK()),
     signoff(),
   ].filter(Boolean);
 
@@ -196,7 +196,7 @@ export function buildRequestEmail(
     t.why,
     "",
     f(c.expiry),
-    NEVER_ASK,
+    NEVER_ASK(),
     "",
     `— ${BRAND.signer}`,
     BRAND.signerRole,

@@ -16,6 +16,7 @@ import {
   type InitiativeKind,
 } from "@/lib/central-texas-ai/config";
 import { sendInitiativeAdminNotice, sendInitiativeAdminNoticeNow, sendInitiativeConfirmation } from "@/lib/central-texas-ai/emails";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const runtime = "nodejs";
 
@@ -156,7 +157,7 @@ export async function POST(request: Request) {
     if (!result.stored || !result.leadId) {
       // Don't lose it: John still gets every field by email, even with the switch off.
       await sendInitiativeAdminNoticeNow({ kind, details, email, phone, leadId: null, duplicate: false, confirmationSent: false });
-      return NextResponse.json({ error: "We could not save your inquiry. Please try again or contact john@tomorrowstechai.com." }, { status: 503 });
+      return NextResponse.json({ error: `We could not save your inquiry. Please try again or contact ${(await businessProfile()).email}.` }, { status: 503 });
     }
 
     const confirmationSent = await sendInitiativeConfirmation(kind, email, firstName);

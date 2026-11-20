@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { verifyUnsubscribe } from "@/lib/campaign/unsubscribe";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
   if (!id || !token || !supabaseConfigured() || !verifyUnsubscribe(id, token)) {
     return page(
       "That link didn't work",
-      "It may have expired. Email john@tomorrowstechai.com and we'll take you off the list by hand — no questions.",
+      `It may have expired. Email ${(await businessProfile()).email} and we'll take you off the list by hand — no questions.`,
       400
     );
   }

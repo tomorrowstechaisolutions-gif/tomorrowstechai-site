@@ -11,6 +11,7 @@ import {
   TIMELINES,
 } from "@/lib/campaign/config";
 import { offerByName } from "@/lib/campaign/offers";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const runtime = "nodejs";
 
@@ -232,7 +233,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("Business Launch lead route error:", err);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again, or call (254) 563-2130." },
+      { error: `Something went wrong. Please try again, or call ${(await businessProfile()).phone}.` },
       { status: 500 }
     );
   }

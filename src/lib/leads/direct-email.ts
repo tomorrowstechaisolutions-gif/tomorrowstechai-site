@@ -12,11 +12,20 @@
 export const SUBJECT_MAX = 160;
 export const BODY_MAX = 10_000;
 
-export const SIGNATURE = `— John
+/** The visible signature, ending with the phone number from the business profile. */
+export function signatureFor(phone: string): string {
+  return `— John
 John C. Hockinson Jr.
 Founder, Tomorrow's Tech AI
 https://www.tomorrowstechai.com
-(254) 563-2130`;
+${phone}`;
+}
+
+/** The signature with the built-in phone number. */
+export const SIGNATURE = signatureFor("(254) 563-2130");
+
+/** The fixed first lines of any signature, to recognise one whatever phone it ends with. */
+const SIGNATURE_HEAD = "— John\nJohn C. Hockinson Jr.";
 
 export type EmailableLead = {
   first_name: string;
@@ -35,7 +44,8 @@ function greeting(firstName: string): string {
 }
 
 /** Starting points. Every one is fully editable before sending. */
-export function leadEmailTemplates(lead: Pick<EmailableLead, "first_name" | "business_name">): LeadEmailTemplate[] {
+export function leadEmailTemplates(lead: Pick<EmailableLead, "first_name" | "business_name">, phone?: string): LeadEmailTemplate[] {
+  const sig = phone ? signatureFor(phone) : SIGNATURE;
   const hi = greeting(lead.first_name);
   const forBiz = lead.business_name ? ` for ${lead.business_name}` : "";
   return [
@@ -43,7 +53,7 @@ export function leadEmailTemplates(lead: Pick<EmailableLead, "first_name" | "bus
       id: "blank",
       label: "Blank",
       subject: "",
-      body: `${hi}\n\n\n\n${SIGNATURE}`,
+      body: `${hi}\n\n\n\n${sig}`,
     },
     {
       id: "more-details",
@@ -61,7 +71,7 @@ Could you tell me a little more?
 
 A couple of sentences is plenty. If it's easier to talk it through, just reply with a good time and number to reach you.
 
-${SIGNATURE}`,
+${sig}`,
     },
     {
       id: "book-call",
@@ -73,7 +83,7 @@ Thanks for getting in touch. The fastest way for me to understand what you need 
 
 Reply with two or three times that work for you this week and I'll send an invite.
 
-${SIGNATURE}`,
+${sig}`,
     },
     {
       id: "check-in",
@@ -83,7 +93,7 @@ ${SIGNATURE}`,
 
 Just checking in on your message from the other day. If you're still looking for help, I'm happy to pick it up whenever you're ready. If the timing changed, no problem at all.
 
-${SIGNATURE}`,
+${sig}`,
     },
   ];
 }
@@ -119,7 +129,11 @@ export function checkDraft(rawSubject: string, rawBody: string): DraftCheck {
   if (!body) return { ok: false, error: "The message is empty." };
   if (body.length > BODY_MAX) return { ok: false, error: `Keep the message under ${BODY_MAX.toLocaleString("en-US")} characters.` };
   // A template's empty space left unfilled: greeting and signature, nothing else.
-  const withoutFrame = body.replace(SIGNATURE, "").replace(/^Hi[^\n]*,?/, "").trim();
+  // The signature can end with any phone number, so cut from its fixed first lines.
+  const sigAt = body.lastIndexOf(SIGNATURE_HEAD);
+  // The signature is five lines; anything written after it still counts as message.
+  const unsigned = sigAt >= 0 ? body.slice(0, sigAt) + body.slice(sigAt).split("\n").slice(5).join("\n") : body;
+  const withoutFrame = unsigned.replace(/^Hi[^\n]*,?/, "").trim();
   if (!withoutFrame) return { ok: false, error: "Write your message between the greeting and the signature." };
   return { ok: true, subject, body };
 }

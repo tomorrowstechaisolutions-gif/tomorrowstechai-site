@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./account.css";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: { default: "Member account", template: "%s · Member account" },
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 /** The member portal shell. The site header/footer are hidden here (ChromeGate). */
-export default function AccountLayout({ children }: { children: React.ReactNode }) {
+export default async function AccountLayout({ children }: { children: React.ReactNode }) {
+  const profile = await businessProfile();
   return (
     <div className="acct">
       <header className="acct-top">
@@ -19,7 +21,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       </header>
       {children}
       <footer className="acct-foot">
-        Questions? Email <a href="mailto:info@tomorrowstechai.com">info@tomorrowstechai.com</a> or call (254) 563-2130.
+        Questions? Email <a href={profile.emailHref}>{profile.email}</a> or call {profile.phone}.
       </footer>
     </div>
   );

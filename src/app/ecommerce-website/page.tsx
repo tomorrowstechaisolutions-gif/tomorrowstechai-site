@@ -18,6 +18,7 @@ import {
   ECOM_PRODUCTS_SUPPORTED,
   ECOM_STEPS,
 } from "@/lib/campaign/ecommerce";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Launch Your Online Store — $999 E-Commerce Website",
@@ -33,7 +34,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function EcommerceWebsitePage() {
+export default async function EcommerceWebsitePage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <CampaignTracking offer={ECOMMERCE_OFFER} />
@@ -386,16 +388,16 @@ export default function EcommerceWebsitePage() {
           <p className="bl-callnote">
             Would rather talk first?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               offer={ECOMMERCE_OFFER}
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               offer={ECOMMERCE_OFFER}
               className="bl-link"

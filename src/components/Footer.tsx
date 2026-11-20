@@ -9,6 +9,7 @@ import {
   IconPhone,
   IconYouTube,
 } from "./Icons";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 const COLUMNS: { head: string; links: { label: string; href: string; external?: boolean }[] }[] = [
   {
@@ -61,7 +62,8 @@ const SOCIALS = [
   { href: "https://www.instagram.com/", label: "Instagram", Icon: IconInstagram },
 ];
 
-export function Footer() {
+export async function Footer() {
+  const profile = await businessProfile();
   return (
     <footer className="border-t border-[color:var(--color-border)] mt-24">
       <div className="max-w-7xl mx-auto px-5 md:px-6 py-14">
@@ -97,7 +99,7 @@ export function Footer() {
                   <Icon size={16} />
                 </a>
               ))}
-              <a href="mailto:john@tomorrowstechai.com" aria-label="Email" className="tt-social">
+              <a href={profile.emailHref} aria-label="Email" className="tt-social">
                 <IconMail size={16} />
               </a>
             </div>
@@ -138,20 +140,20 @@ export function Footer() {
             <ul className="space-y-3.5 text-[13px]">
               <li className="flex items-start gap-2.5">
                 <IconMail size={16} className="text-[color:var(--color-blue)] mt-0.5 shrink-0" />
-                <a href="mailto:john@tomorrowstechai.com" className="tt-foot-link break-all">
-                  john@tomorrowstechai.com
+                <a href={profile.emailHref} className="tt-foot-link break-all">
+                  {profile.email}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <IconPhone size={16} className="text-[color:var(--color-blue)] mt-0.5 shrink-0" />
-                <a href="tel:+12545632130" className="tt-foot-link">
-                  (254) 563-2130
+                <a href={profile.phoneHref} className="tt-foot-link">
+                  {profile.phone}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <IconMapPin size={16} className="text-[color:var(--color-blue)] mt-0.5 shrink-0" />
                 <span className="text-[color:var(--color-text-secondary)]">
-                  Belton, Texas
+                  {profile.location}
                   <br />
                   Serving the USA
                 </span>
@@ -164,7 +166,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-[color:var(--color-border-subtle)] mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-[11.5px] text-[color:var(--color-text-muted)]">
-          <div>© 2026 Tomorrowstek LLC · Tomorrow’s Tech AI. All rights reserved.</div>
+          <div>© 2026 {profile.legalName} · Tomorrow’s Tech AI. All rights reserved.</div>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="hover:text-[color:var(--color-blue-bright)] transition-colors">
               Privacy policy

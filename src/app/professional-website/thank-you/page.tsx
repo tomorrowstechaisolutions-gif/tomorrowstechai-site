@@ -4,6 +4,7 @@ import { ScheduleCta } from "@/components/business-launch/ScheduleCta";
 import { ContactAction } from "@/components/business-launch/ContactAction";
 import { PROFESSIONAL_OFFER } from "@/lib/campaign/offers";
 import { PRO_HOSTING, PRO_PRICE } from "@/lib/campaign/professional";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Request received",
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ProfessionalThankYouPage() {
+export default async function ProfessionalThankYouPage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <header className="bl-topbar">
@@ -91,16 +93,16 @@ export default function ProfessionalThankYouPage() {
           <p className="bl-callnote">
             Need us sooner?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               offer={PROFESSIONAL_OFFER}
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               offer={PROFESSIONAL_OFFER}
               className="bl-link"

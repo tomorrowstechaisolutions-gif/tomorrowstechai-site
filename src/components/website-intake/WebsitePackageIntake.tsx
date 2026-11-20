@@ -7,6 +7,7 @@ import { IconArrowRight, IconBadgeCheck, IconCalendar, IconLock, IconMapPin, Ico
 import { type WebsitePackage, type WebsitePackageId } from "@/lib/website-packages";
 import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 import styles from "./WebsitePackageIntake.module.css";
+import type { ProfileView } from "@/lib/settings/profile";
 
 type FormState = {
   packageId: WebsitePackageId | "";
@@ -25,7 +26,7 @@ type Errors = Partial<Record<keyof FormState | "form", string>>;
 
 const emptyForm = (packageId: WebsitePackageId | ""): FormState => ({ packageId, fullName: "", email: "", phone: "", company: "", website: "", project: "", referral: "", consent: false, spamTrap: "" });
 
-export function WebsitePackageIntake({ initialPackageId,packages }: { initialPackageId: WebsitePackageId | "";packages:WebsitePackage[] }) {
+export function WebsitePackageIntake({ initialPackageId,packages,contact }: { initialPackageId: WebsitePackageId | "";packages:WebsitePackage[];contact:Pick<ProfileView,"phone"|"phoneHref"> }) {
   const [form, setForm] = useState<FormState>(() => emptyForm(initialPackageId));
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -115,7 +116,7 @@ export function WebsitePackageIntake({ initialPackageId,packages }: { initialPac
       </div>
     </main>
 
-    <section className={styles.contactStrip}><div><IconUsers size={29}/><span><b>Prefer to Talk Now?</b><small>Give us a call and we’ll be happy to help you.</small></span></div><a href="tel:+12545632130"><IconPhoneCall size={29}/><span><b>(254) 563-2130</b><small>Call our team directly</small></span></a><div><IconCalendar size={29}/><span><b>Schedule a Call</b><small>Book a quick call with our team.</small></span></div><Link href="https://cal.com/tomorrowstechai/discovery" className={styles.secondary}>Schedule Now <IconArrowRight size={16}/></Link></section>
+    <section className={styles.contactStrip}><div><IconUsers size={29}/><span><b>Prefer to Talk Now?</b><small>Give us a call and we’ll be happy to help you.</small></span></div><a href={contact.phoneHref}><IconPhoneCall size={29}/><span><b>{contact.phone}</b><small>Call our team directly</small></span></a><div><IconCalendar size={29}/><span><b>Schedule a Call</b><small>Book a quick call with our team.</small></span></div><Link href="https://cal.com/tomorrowstechai/discovery" className={styles.secondary}>Schedule Now <IconArrowRight size={16}/></Link></section>
   </div>;
 }
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
@@ -10,11 +10,13 @@ import {
   type AdminRole, type DefaultKey,
 } from "@/lib/settings/defaults";
 import { resetBusinessDefaults, saveBusinessDefaults } from "@/lib/settings/store";
+import { parseProfileForm, type ProfileKey } from "@/lib/settings/profile";
+import { BUSINESS_PROFILE_TAG, resetBusinessProfile, saveBusinessProfile } from "@/lib/settings/profile-store";
 
 const PAGE = "/admin/settings";
 const PASSWORD_MIN = 10;
 
-type Section = "defaults" | "account" | "team";
+type Section = "profile" | "defaults" | "account" | "team";
 
 async function requireAdmin() {
   const session = await getAdminUser();
@@ -29,6 +31,40 @@ function back(section: Section, message: string, error = false): never {
 }
 
 const canEdit = (role: string) => role === "owner" || role === "admin";
+
+/* ── Business profile ──────────────────────────────────────────────── */
+
+/**
+ * Public pages hold the profile in a tagged cache, and most of them are
+ * built ahead of time. Clearing the tag and the page cache is what makes a
+ * saved phone number show on the live site straight away.
+ */
+function profileChanged() {
+  updateTag(BUSINESS_PROFILE_TAG);
+  revalidatePath("/", "layout");
+}
+
+export async function saveBusinessProfileAction(fd: FormData) {
+  const session = await requireAdmin();
+  if (!canEdit(session.admin.role)) back("profile", "Your role can look at settings but not change them.", true);
+
+  const parsed = parseProfileForm((name: ProfileKey) => String(fd.get(name) ?? ""));
+  if (!parsed.ok) back("profile", parsed.error, true);
+
+  const error = await saveBusinessProfile(parsed.value, session.admin.email);
+  if (error) back("profile", `Not saved: ${error}`, true);
+  profileChanged();
+  back("profile", "Business profile saved. The site, documents and emails use it from now on.");
+}
+
+export async function resetBusinessProfileAction() {
+  const session = await requireAdmin();
+  if (!canEdit(session.admin.role)) back("profile", "Your role can look at settings but not change them.", true);
+  const error = await resetBusinessProfile();
+  if (error) back("profile", `Not reset: ${error}`, true);
+  profileChanged();
+  back("profile", "Profile is back to the built-in values.");
+}
 
 /* ── Business defaults ─────────────────────────────────────────────── */
 

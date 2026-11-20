@@ -3,16 +3,18 @@ import Link from "next/link";
 import { getPortalViewer } from "@/lib/portal/session";
 import { memberCatalog, money, OFFER_ORDER, type MemberOffer } from "@/lib/portal/data";
 import { requestServiceAction } from "../../member-actions";
+import { businessProfile } from "@/lib/settings/profile-store";
+import type { ProfileView } from "@/lib/settings/profile";
 
 export const metadata: Metadata = { title: "More services" };
 
-const NOTICE: Record<string, [string, string]> = {
+const notices = (profile: ProfileView): Record<string, [string, string]> => ({
   ok: ["ok", "Got it. We'll reach out by email, usually within one business day, with details and a quote. Nothing has been charged."],
   already: ["ok", "You've already asked about that one. We'll be in touch soon."],
-  busy: ["err", "You've sent several requests in the last hour. We'll get to them; for anything urgent, call (254) 563-2130."],
+  busy: ["err", `You've sent several requests in the last hour. We'll get to them; for anything urgent, call ${profile.phone}.`],
   missing: ["err", "That service isn't available any more. Send us a request and we'll point you to the right option."],
-  error: ["err", "Your request couldn't be sent. Email info@tomorrowstechai.com instead."],
-};
+  error: ["err", `Your request couldn't be sent. Email ${profile.email} instead.`],
+});
 
 function price(o: MemberOffer): string {
   if (o.pricingMode === "custom_quote" || !o.priceCents) return "Custom quote";
@@ -33,7 +35,7 @@ function RequestButton({ offer, label }: { offer: MemberOffer; label: string }) 
 export default async function MoreServicesPage({ searchParams }: { searchParams: Promise<{ requested?: string }> }) {
   const member = (await getPortalViewer())!;
   const [{ requested }, offers] = await Promise.all([searchParams, memberCatalog(member.customerId)]);
-  const notice = requested ? NOTICE[requested] : undefined;
+  const notice = requested ? notices(await businessProfile())[requested] : undefined;
 
   const packages = offers.filter((o) => o.pricingMode !== "custom_quote" && o.priceCents > 0);
   const addOns = offers.filter((o) => !packages.includes(o));

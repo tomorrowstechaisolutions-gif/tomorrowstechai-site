@@ -6,6 +6,8 @@
 .groupSub { font-size: .74rem; color: var(--cc-faint); line-height: 1.5; margin: 0 0 12px; }
 
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 14px; }
+.cityState { display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 10px; }
 .hint { font-size: .7rem; color: var(--cc-faint); line-height: 1.45; }
 .changed { color: var(--cc-accent); font-weight: 600; }
 
@@ -32,7 +34,12 @@
 .links b { font-size: .82rem; font-weight: 600; color: var(--cc-text); }
 .links small { font-size: .72rem; color: var(--cc-faint); line-height: 1.45; }
 
+@media (max-width: 1100px) {
+  .trio { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 720px) {
+  .trio { grid-template-columns: 1fr; }
   .pair { grid-template-columns: 1fr; gap: 0; }
   .state { margin-left: 0; text-align: left; flex-basis: 100%; }
 }

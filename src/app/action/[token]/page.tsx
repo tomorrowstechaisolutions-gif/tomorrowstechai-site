@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getRequestByToken, markOpened } from "@/lib/requests/service";
 import { ActionChecklist } from "@/components/requests/ActionChecklist";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const dynamic = "force-dynamic";
 
@@ -79,8 +80,9 @@ export default async function ClientActionPage({
   // "they haven't seen it" from "they've seen it and haven't done it", and
   // those two need completely different follow-ups.
   const request = await markOpened(loaded.request);
+  const profile = await businessProfile();
 
   return (
-    <ActionChecklist token={token} request={request} template={loaded.template} />
+    <ActionChecklist token={token} request={request} template={loaded.template} phone={profile.phone} />
   );
 }

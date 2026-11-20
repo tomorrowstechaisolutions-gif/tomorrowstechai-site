@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { primeBrand } from "@/lib/settings/profile-store";
 import type { EmailCopy } from "./copy";
 
 /**
@@ -28,6 +29,9 @@ async function all(): Promise<Map<string, Partial<EmailCopy>>> {
 
 /** The edited slots for one email (empty when it uses shipped wording). */
 export async function emailCopy(key: string): Promise<Partial<EmailCopy>> {
+  // Every sender calls this right before building, so it is also where the
+  // business profile (phone, contact email, signer) is put into the brand block.
+  await primeBrand();
   return (await all()).get(key) ?? {};
 }
 

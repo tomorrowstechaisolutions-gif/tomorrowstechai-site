@@ -16,6 +16,7 @@ import {
   PRO_STEPS,
   PRO_WHY_UPGRADE,
 } from "@/lib/campaign/professional";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Build More Than a Website — $699 Professional Website",
@@ -31,7 +32,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProfessionalWebsitePage() {
+export default async function ProfessionalWebsitePage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <CampaignTracking offer={PROFESSIONAL_OFFER} />
@@ -362,16 +364,16 @@ export default function ProfessionalWebsitePage() {
           <p className="bl-callnote">
             Would rather talk first?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               offer={PROFESSIONAL_OFFER}
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               offer={PROFESSIONAL_OFFER}
               className="bl-link"

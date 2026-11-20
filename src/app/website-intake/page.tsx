@@ -3,6 +3,7 @@ import { WebsitePackageIntake } from "@/components/website-intake/WebsitePackage
 import { getWebsitePackage } from "@/lib/website-packages";
 import { loadPublicPackages } from "@/lib/catalog/public";
 import { catalogPrice } from "@/lib/catalog/types";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: { absolute: "Website Project Inquiry | Tomorrow’s Tech AI" },
@@ -15,5 +16,6 @@ export default async function WebsiteIntakePage({ searchParams }: { searchParams
   const packages=(await loadPublicPackages("websites")).map(pkg=>({id:pkg.slug,name:pkg.name,price:catalogPrice(pkg),campaign:`${catalogPrice(pkg)} ${pkg.name}`,description:pkg.shortDescription||pkg.description,features:pkg.features.filter(x=>x.included).map(x=>x.label),featured:pkg.mostPopular||pkg.featured}));
   const legacy=getWebsitePackage(params.package);
   const selectedPackage = packages.find(pkg=>pkg.id===params.package)?.id ?? (legacy?`website-${legacy.id}`:"");
-  return <WebsitePackageIntake initialPackageId={selectedPackage} packages={packages} />;
+  const profile = await businessProfile();
+  return <WebsitePackageIntake initialPackageId={selectedPackage} packages={packages} contact={{ phone: profile.phone, phoneHref: profile.phoneHref }} />;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata = {
   title: "Careers",
@@ -58,7 +59,8 @@ const roles = [
   },
 ];
 
-export default function CareersPage() {
+export default async function CareersPage() {
+  const profile = await businessProfile();
   return (
     <>
       <section className="careers-hero border-b border-[color:var(--color-border)]">
@@ -78,7 +80,7 @@ export default function CareersPage() {
               See open roles →
             </a>
             <a
-              href="mailto:john@tomorrowstechai.com?subject=Careers%20at%20Tomorrow%27s%20Tech%20AI"
+              href={`${profile.emailHref}?subject=Careers%20at%20Tomorrow%27s%20Tech%20AI`}
               className="btn-secondary"
             >
               Introduce yourself
@@ -127,7 +129,7 @@ export default function CareersPage() {
 
               <div className="careers-role-action">
                 <a
-                  href={`mailto:john@tomorrowstechai.com?subject=${encodeURIComponent(role.subject)}`}
+                  href={`${profile.emailHref}?subject=${encodeURIComponent(role.subject)}`}
                   className="btn-primary"
                 >
                   Apply for this role →
@@ -154,7 +156,7 @@ export default function CareersPage() {
             </p>
           </div>
           <a
-            href="mailto:john@tomorrowstechai.com?subject=Careers%20at%20Tomorrow%27s%20Tech%20AI"
+            href={`${profile.emailHref}?subject=Careers%20at%20Tomorrow%27s%20Tech%20AI`}
             className="btn-primary whitespace-nowrap"
           >
             Email your application →

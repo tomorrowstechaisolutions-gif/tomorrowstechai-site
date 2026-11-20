@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getPortalViewer } from "@/lib/portal/session";
 import { memberRequests, shortDate } from "@/lib/portal/data";
 import { HelpForm } from "../MemberForms";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = { title: "Get help" };
 
@@ -9,12 +10,13 @@ const CAT: Record<string, string> = { question: "Question", change: "Change", pr
 
 export default async function HelpPage({ searchParams }: { searchParams: Promise<{ about?: string; category?: string }> }) {
   const member = (await getPortalViewer())!;
+  const profile = await businessProfile();
   const [{ about, category }, requests] = await Promise.all([searchParams, memberRequests(member.customerId)]);
   return (
     <>
       <section className="acct-section">
         <h2>Send us a request</h2>
-        <p className="acct-faint">Questions, changes, problems, billing or cancellations. It comes straight to us, and we reply by email, usually within one business day. For anything urgent, call (254) 563-2130.</p>
+        <p className="acct-faint">Questions, changes, problems, billing or cancellations. It comes straight to us, and we reply by email, usually within one business day. For anything urgent, call {profile.phone}.</p>
         <HelpForm about={about?.slice(0, 120)} category={category} />
       </section>
       {requests.length ? (

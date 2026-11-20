@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -15,7 +16,8 @@ export const metadata = {
   },
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const profile = await businessProfile();
   return (
     <>
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
@@ -194,7 +196,7 @@ export default function PrivacyPage() {
           </ul>
           <p>
             To exercise any of these rights, email us at{" "}
-            <strong>tomorrowstechaisolutions@gmail.com</strong> or use the{" "}
+            <strong>{profile.email}</strong> or use the{" "}
             <Link href="/contact">contact form</Link>.
           </p>
 
@@ -202,7 +204,7 @@ export default function PrivacyPage() {
           <p>You can have everything we hold about you deleted at any time:</p>
           <ol>
             <li>
-              Email <strong>tomorrowstechaisolutions@gmail.com</strong> with the
+              Email <strong>{profile.email}</strong> with the
               subject &quot;Delete my data&quot;, from the email address you used
               with us (or tell us the name, email or phone on your enquiry).
             </li>
@@ -236,7 +238,7 @@ export default function PrivacyPage() {
           <h2>Contact us</h2>
           <p>
             Questions about this policy? Email{" "}
-            <strong>tomorrowstechaisolutions@gmail.com</strong> or reach out
+            <strong>{profile.email}</strong> or reach out
             via our <Link href="/contact">contact page</Link>.
           </p>
 

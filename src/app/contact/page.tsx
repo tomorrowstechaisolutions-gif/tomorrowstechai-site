@@ -5,6 +5,7 @@ import { getPublicPackage } from "@/lib/catalog/public";
 import { catalogPrice } from "@/lib/catalog/types";
 import { resolveSourcePage } from "@/lib/blog/lead-attribution";
 import "./contact-booking.css";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata = {
   title: "Contact",
@@ -22,6 +23,7 @@ export const metadata = {
 
 export default async function ContactPage({searchParams}:{searchParams:Promise<{service?:string;plan?:string;from?:string;cta?:string}>}) {
   const query=await searchParams; const pkg=await getPublicPackage(query.plan);
+  const profile = await businessProfile();
   // A Field Notes article link adds ?from=/blog/<slug>&cta=<position>. Only a
   // valid article path is accepted; anything else keeps the old source page.
   const src=(fallback:string)=>resolveSourcePage({from:query.from,cta:query.cta},fallback);
@@ -89,7 +91,7 @@ export default async function ContactPage({searchParams}:{searchParams:Promise<{
 
             <p className="bk-alt">
               None of these times work?{" "}
-              <a href="mailto:john@tomorrowstechai.com?subject=Discovery%20call">Email John</a>{" "}
+              <a href={`${profile.emailHref}?subject=Discovery%20call`}>Email John</a>{" "}
               and we&apos;ll find one.
             </p>
             </div>
@@ -110,15 +112,15 @@ export default async function ContactPage({searchParams}:{searchParams:Promise<{
           Tell us a bit about what you&apos;re building. We respond within one
           business day.
         </p>
-        <ContactForm offer={offer} />
+        <ContactForm offer={offer} contact={{ email: profile.email, emailHref: profile.emailHref }} />
       </section>
 
       <section className="max-w-3xl mx-auto px-6 pb-20">
         <div className="grid md:grid-cols-3 gap-5">
           <DirectChannel
             label="Direct email"
-            value="john@tomorrowstechai.com"
-            href="mailto:john@tomorrowstechai.com"
+            value={profile.email}
+            href={profile.emailHref}
           />
           <DirectChannel
             label="LinkedIn"

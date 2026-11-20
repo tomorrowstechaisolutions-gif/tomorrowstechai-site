@@ -1,3 +1,4 @@
+import { BUILT_IN_VIEW } from "@/lib/settings/profile";
 import {
   REQUEST_SLOTS, buildRequestEmail, buildReminderEmail, buildRequestCompletedEmail, buildRequestAdminEmail,
 } from "@/lib/requests/email-content";
@@ -32,7 +33,7 @@ const common = [
   { name: "request", label: "Request type", sample: SAMPLE_TEMPLATE.pickerLabel },
   { name: "noun", label: "Request type, inside a sentence", sample: SAMPLE_TEMPLATE.noun },
   { name: "company", label: "Your company name", sample: "Tomorrow's Tech AI" },
-  { name: "phone", label: "Your phone number", sample: "(254) 563-2130" },
+  { name: "phone", label: "Your phone number", sample: BUILT_IN_VIEW.phone },
   { name: "expires_on", label: "Link open until", sample: "December 18, 2026" },
 ];
 

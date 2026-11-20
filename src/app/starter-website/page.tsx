@@ -17,6 +17,7 @@ import {
   STARTER_TURNAROUND_DAYS,
   STARTER_YOU_PROVIDE,
 } from "@/lib/campaign/starter";
+import { businessProfile } from "@/lib/settings/profile-store";
 
 export const metadata: Metadata = {
   title: "Get Your Business Online for $149",
@@ -32,7 +33,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function StarterWebsitePage() {
+export default async function StarterWebsitePage() {
+  const profile = await businessProfile();
   return (
     <div className="bl-page">
       <CampaignTracking offer={STARTER_OFFER} />
@@ -331,16 +333,16 @@ export default function StarterWebsitePage() {
           <p className="bl-callnote">
             Would rather talk first?{" "}
             <ContactAction
-              href="tel:+12545632130"
+              href={profile.phoneHref}
               method="phone"
               offer={STARTER_OFFER}
               className="bl-link"
             >
-              Call (254) 563-2130
+              Call {profile.phone}
             </ContactAction>{" "}
             or{" "}
             <ContactAction
-              href="mailto:john@tomorrowstechai.com"
+              href={profile.emailHref}
               method="email"
               offer={STARTER_OFFER}
               className="bl-link"
