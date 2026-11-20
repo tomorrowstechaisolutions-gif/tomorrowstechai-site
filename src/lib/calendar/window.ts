@@ -50,7 +50,9 @@ function labelFor(view: CalendarView, days: string[]): string {
 
   const sameMonth = first.slice(0, 7) === last.slice(0, 7);
   return sameMonth
-    ? `${fmt(first, { month: "short", day: "numeric" })} – ${fmt(last, { day: "numeric", year: "numeric" })}`
+    // Not fmt(last, { day, year }): Intl has no pattern for a day with a year
+    // and no month, and prints "2026 (day: 21)". Built by hand instead.
+    ? `${fmt(first, { month: "short", day: "numeric" })} – ${fmt(last, { day: "numeric" })}, ${fmt(last, { year: "numeric" })}`
     : `${fmt(first, { month: "short", day: "numeric" })} – ${fmt(last, { month: "short", day: "numeric", year: "numeric" })}`;
 }
 

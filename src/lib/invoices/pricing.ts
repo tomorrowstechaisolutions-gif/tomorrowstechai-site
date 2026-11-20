@@ -12,6 +12,7 @@
  */
 
 import type { InvoiceItemKind } from "./config";
+import { chicagoDayEnd } from "@/lib/time/chicago";
 
 export type InvoiceLine = {
   item_kind: InvoiceItemKind;
@@ -153,15 +154,17 @@ export function isOverdue(inv: {
   if (!inv.due_date) return false;
   if (inv.status !== "sent" && inv.status !== "partial") return false;
   if (outstandingCents(inv) <= 0) return false;
-  return new Date(`${inv.due_date}T23:59:59Z`).getTime() < Date.now();
+  // Overdue once the due date is over in Central time. End of day in UTC
+  // would turn an invoice overdue at about 6pm on the day it is due.
+  return chicagoDayEnd(inv.due_date).getTime() <= Date.now();
 }
 
 /** How many days past due, for the "12 days overdue" line. Zero if not. */
 export function daysOverdue(dueDate: string | null): number {
   if (!dueDate) return 0;
-  const due = new Date(`${dueDate}T23:59:59Z`).getTime();
+  const due = chicagoDayEnd(dueDate).getTime();
   const diff = Date.now() - due;
-  return diff <= 0 ? 0 : Math.floor(diff / 86_400_000);
+  return diff < 0 ? 0 : Math.floor(diff / 86_400_000);
 }
 
 /** $399, $1,250.50 — the one formatter the invoice and its emails share. */

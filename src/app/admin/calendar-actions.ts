@@ -14,6 +14,7 @@ import { googleConnection } from "@/lib/google/oauth";
 import {
   createGoogleEvent, deleteGoogleEvent, getGoogleEvent, updateGoogleEvent,
 } from "@/lib/google/calendar";
+import { chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Every write the Calendar makes.
@@ -77,37 +78,12 @@ function priorityOrDefault(raw: string): Priority {
  * period helpers use — the first guess can land on the wrong side of a
  * changeover, and then the offset it measured is the wrong one.
  */
-function chicagoOffsetMinutes(at: number): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-  }).formatToParts(new Date(at)).reduce<Record<string, string>>((acc, part) => {
-    acc[part.type] = part.value;
-    return acc;
-  }, {});
-
-  const asUtc = Date.UTC(
-    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
-    Number(parts.hour) % 24, Number(parts.minute), Number(parts.second)
-  );
-  return (asUtc - at) / 60000;
-}
-
 function instant(date: string, time: string | null, endOfDay = false): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
 
   const clock = time && /^\d{2}:\d{2}/.test(time) ? time : endOfDay ? "17:00" : "09:00";
   const [hours, minutes] = clock.split(":").map(Number);
-  const [y, m, d] = date.split("-").map(Number);
-  const wallClock = Date.UTC(y, m - 1, d, hours, minutes, 0);
-
-  const first = chicagoOffsetMinutes(wallClock);
-  let ts = wallClock - first * 60000;
-  const second = chicagoOffsetMinutes(ts);
-  if (second !== first) ts = wallClock - second * 60000;
-
-  return new Date(ts).toISOString();
+  return chicagoInstant(date, hours, minutes).toISOString();
 }
 
 // ═══════════════════════════════════════════════════════════════════════

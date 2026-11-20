@@ -9,6 +9,7 @@ import { loadAlerts } from "@/lib/dashboard/alerts";
 import { panel } from "@/lib/dashboard/panel";
 import { CLOSED_STATUSES } from "@/lib/supabase/types";
 import { leadAttention, type AttentionLead } from "@/lib/leads/attention";
+import { chicagoDayEnd, zonedMidnightUtc } from "@/lib/time/chicago";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +28,10 @@ async function loadBadges() {
   const chicagoToday = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Chicago",
   }).format(now);
-  const startOfToday = new Date(`${chicagoToday}T00:00:00-05:00`).toISOString();
-  const endOfToday = new Date(`${chicagoToday}T23:59:59-05:00`).toISOString();
+  // Measured for today's date, not assumed: Central is UTC-5 in summer and
+  // UTC-6 in winter, and a fixed offset is an hour out for half the year.
+  const startOfToday = zonedMidnightUtc(chicagoToday).toISOString();
+  const endOfToday = chicagoDayEnd(chicagoToday).toISOString();
   const openFilter = `(${CLOSED_STATUSES.join(",")})`;
 
   const [leadsNeedingAttention, atRisk, proposals, tasksDue, eventsToday, meetingsToday] =

@@ -23,6 +23,7 @@ import {
   type UnlinkedProject,
 } from "@/lib/apps/sync";
 import { normalizeHost, slugify } from "@/lib/apps/types";
+import { chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Writes for the Apps screens.
@@ -646,7 +647,8 @@ export async function createAppTaskAction(formData: FormData): Promise<void> {
     priority: pick(str(formData, "priority", 20), ["low", "medium", "high", "critical"], "medium"),
     status: "not_started",
     owner: nullable(formData, "owner", 160),
-    due_at: dueDate ? new Date(`${dueDate}T17:00:00Z`).toISOString() : null,
+    // 5pm Central on the due date (17:00Z would be late morning in Texas).
+    due_at: dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? chicagoInstant(dueDate, 17).toISOString() : null,
     created_by: actor,
     source: "manual",
   });

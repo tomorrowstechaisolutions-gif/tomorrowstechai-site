@@ -51,7 +51,12 @@ export const STAGE_TONE: Record<DealStage, string> = {
 export const LEAD_STATUS_STAGE: Record<string, DealStage> = {
   "New": "new",
   "Contact Attempted": "new",
-  "Contacted": "qualified",
+  // Contacted is not Qualified. Someone we have spoken to but not yet
+  // qualified is still at the top of the funnel; counting them as qualified
+  // made the dashboard show "2 Qualified" while Lead analytics, reading the
+  // same two leads, showed none. This map is the only one: the dashboard
+  // funnel is built from it (lib/dashboard/sales.ts).
+  "Contacted": "new",
   "Qualified": "qualified",
   "Demo Scheduled": "discovery",
   "Proposal/Checkout Sent": "proposal",

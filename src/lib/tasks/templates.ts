@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Priority } from "@/lib/supabase/types";
 import type { TaskType } from "./config";
 import type { TaskTemplate, TaskTemplateItem } from "./types";
+import { addDays, chicagoDate, chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Task templates: the delivery workflow for a package, stored as rows.
@@ -67,12 +68,10 @@ export type GenerateResult = {
 
 /** Chicago-business days are not modelled; offsets are plain calendar days. */
 function dueFrom(start: Date, offsetDays: number): string {
-  const due = new Date(start);
-  due.setDate(due.getDate() + offsetDays);
   // End of the working day rather than midnight, so "due Tuesday" is not
-  // already overdue at one minute past midnight on Tuesday.
-  due.setHours(17, 0, 0, 0);
-  return due.toISOString();
+  // already overdue at one minute past midnight on Tuesday. 5pm Central,
+  // measured for that date: the server's own clock is UTC.
+  return chicagoInstant(addDays(chicagoDate(start), offsetDays), 17).toISOString();
 }
 
 export async function generateTasksFromTemplate(

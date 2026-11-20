@@ -12,6 +12,7 @@ import { composePrompt, invalidatePromptCache, resolveSystemPrompt } from "@/lib
 import { WEBSITE_CHAT_PROMPT } from "@/lib/ai/prompts/website-chat";
 import { MICRO_PER_DOLLAR, slugify } from "@/lib/ai/types";
 import { acceptsSampling } from "@/lib/ai/claude";
+import { chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Writes for the AI Solutions screens.
@@ -991,7 +992,8 @@ export async function createAiTaskAction(formData: FormData): Promise<void> {
     priority: pick(str(formData, "priority", 20), ["low", "medium", "high", "critical"], "medium"),
     status: "not_started",
     owner: nullable(formData, "owner", 160),
-    due_at: dueDate ? new Date(`${dueDate}T17:00:00Z`).toISOString() : null,
+    // 5pm Central on the due date (17:00Z would be late morning in Texas).
+    due_at: dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? chicagoInstant(dueDate, 17).toISOString() : null,
     created_by: actor,
     source: "manual",
   });

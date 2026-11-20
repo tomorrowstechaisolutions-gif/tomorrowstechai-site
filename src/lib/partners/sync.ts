@@ -4,6 +4,7 @@ import { fetchOrders, fetchSettlements, partnerKeyConfigured, PartnerApiError } 
 import type { RemoteOrder, RemoteSettlement } from "./client";
 import { splitSale } from "./config";
 import type { PartnerConnection, PartnerWorkOrder } from "./types";
+import { chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Pulls a partner's assigned work and settlements into this admin.
@@ -83,7 +84,9 @@ async function ensureProject(sb: SupabaseClient, p: PartnerConnection, o: Partne
     stage: "Intake",
     package: "partner_marketing",
     project_type: "other",
-    due_at: o.ends_on ? `${o.ends_on}T17:00:00Z` : null,
+    // 5pm Central on the campaign's last day. The date comes from the
+    // partner's feed, so it is checked before it is trusted as a date.
+    due_at: o.ends_on && /^\d{4}-\d{2}-\d{2}$/.test(o.ends_on) ? chicagoInstant(o.ends_on, 17).toISOString() : null,
     notes,
     next_milestone: "Review the brief and plan the campaign",
   }).select("id").single();
