@@ -134,5 +134,5 @@ export function useSpeechInput(opts: { onFinal?: (text: string) => void; holdSpa
     };
   }, [opts.holdSpace, supported, start, stop]);
 
-  return { supported, listening, live, start, stop, transcript, error };
+  return { supported, listening, live, working: false, start, stop, transcript, error };
 }
