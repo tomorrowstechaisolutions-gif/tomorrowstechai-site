@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { openSecret, sealSecret } from "@/lib/security/secrets";
 
 /**
  * Google OAuth, and the only place a refresh token is ever touched.
@@ -85,7 +86,14 @@ export async function readCredentials(): Promise<GoogleCredentials | null> {
     .select("access_token, refresh_token, token_expires_at, account_email, calendar_id, last_error, connected_at, scope")
     .eq("provider", "google")
     .maybeSingle();
-  return (data as GoogleCredentials | null) ?? null;
+  const row = (data as GoogleCredentials | null) ?? null;
+  if (!row) return null;
+  // Tokens are encrypted at rest; everything past this point sees them plain.
+  return {
+    ...row,
+    access_token: openSecret(row.access_token, "Google"),
+    refresh_token: openSecret(row.refresh_token, "Google"),
+  };
 }
 
 /** Public-safe: says whether Google is connected without handing over a token. */
@@ -182,8 +190,8 @@ export async function exchangeCode(code: string, actor: string | null): Promise<
     {
       provider: "google",
       account_email: email,
-      access_token: token.access_token,
-      refresh_token: token.refresh_token,
+      access_token: sealSecret(token.access_token, "Google"),
+      refresh_token: sealSecret(token.refresh_token, "Google"),
       token_expires_at: expiryFrom(token.expires_in),
       scope: token.scope ?? GOOGLE_SCOPES.join(" "),
       connected_by: actor,
@@ -259,7 +267,10 @@ export async function googleAccessToken(): Promise<{ token: string; calendarId: 
   await db
     .from("integration_credentials")
     .update({
-      access_token: token.access_token,
+      access_token: sealSecret(token.access_token, "Google"),
+      // Written back every refresh so a refresh token stored before
+      // encryption existed is encrypted within the hour, with no reconnect.
+      refresh_token: sealSecret(row.refresh_token, "Google"),
       token_expires_at: expiryFrom(token.expires_in),
       last_error: null,
       last_error_at: null,

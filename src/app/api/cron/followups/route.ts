@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { sendFollowupEmail } from "@/lib/campaign/emails";
 import { offerByName } from "@/lib/campaign/offers";
 import { CLOSED_STATUSES } from "@/lib/supabase/types";
+import { loadSuppression } from "@/lib/email-marketing/suppression";
+import { normalizeEmail } from "@/lib/email-marketing/types";
+import { withCronRun } from "@/lib/cron/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * Drains the follow-up queue. Point a Vercel Cron at it hourly.
@@ -20,26 +23,40 @@ export const dynamic = "force-dynamic";
  *     Contact Attempted, so the row is skipped
  *   · lead opted out or was marked do-not-contact  → skipped
  *   · lead unsubscribed                            → skipped
+ *   · the ADDRESS is on the global suppression list → skipped. The lead
+ *     columns above only know about this lead row; the same person can have
+ *     unsubscribed, bounced or complained as a customer or through a
+ *     campaign, and email_suppressions is where that is recorded.
  * A skipped row is marked "skipped" with the reason, never silently dropped.
+ *
+ * EVERY ROW IS CLAIMED BEFORE IT IS SENT. Two invocations can overlap (a
+ * retry, a manual hit, a run that went long) and both would read the same
+ * pending rows, so reading 'pending' is not permission to send. The claim is
+ * a compare-and-set that moves the row out of 'pending' and asks the
+ * database to hand it back; no row back means another run owns it.
+ *
+ * lead_followups has no in-flight status, so the claim parks the row as
+ * 'failed' with the error CLAIMED until the outcome overwrites it a moment
+ * later. That is deliberate: if this function dies mid-row, what is left
+ * behind is a follow-up that honestly says it did not complete — it shows in
+ * the failed-follow-ups alert and is never sent a second time — rather than
+ * a 'pending' row that would be mailed again without anyone knowing whether
+ * the first one went out.
  */
-function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
+const CLAIMED = "claimed_not_completed";
 
-  // Vercel Cron sends Authorization: Bearer <CRON_SECRET>.
-  const header = req.headers.get("authorization") ?? "";
-  const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (provided.length !== secret.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(secret));
-}
+/** Stop starting new rows here; what is left stays 'pending' for the next run. */
+const RUN_WINDOW_MS = 45_000;
 
 /** Statuses that mean nobody has engaged yet, so a nudge is still welcome. */
 const STILL_COLD = new Set(["New", "Contact Attempted"]);
 
-export async function GET(req: Request) {
-  if (!authorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export function GET(req: Request) {
+  return withCronRun("followups", req, run);
+}
+
+async function run(): Promise<Response> {
+  const deadline = Date.now() + RUN_WINDOW_MS;
   if (!supabaseConfigured()) {
     return NextResponse.json({ ok: false, error: "supabase_not_configured" }, { status: 503 });
   }
@@ -69,13 +86,46 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 
+  // The global suppression list, read once for every address in this batch
+  // rather than once per row. It fails CLOSED: if the list cannot be read,
+  // nothing is sent and every row stays 'pending' for the next run, because
+  // mailing somebody who unsubscribed is the one mistake that cannot be
+  // taken back.
+  let blocked = new Map<string, string>();
+  const leadIds = [...new Set((due ?? []).map((row) => row.lead_id as string))];
+  if (leadIds.length > 0) {
+    try {
+      const { data: addresses, error: addressError } = await db
+        .from("leads")
+        .select("email")
+        .in("id", leadIds);
+      if (addressError) throw new Error(addressError.message);
+      const emails = (addresses ?? []).map((l) => l.email as string | null).filter((e): e is string => Boolean(e));
+      blocked = (await loadSuppression(db, emails)).blocked;
+    } catch (cause) {
+      console.error("Follow-up suppression check failed:", cause instanceof Error ? cause.message : cause);
+      return NextResponse.json({ ok: false, error: "suppression_unavailable" }, { status: 500 });
+    }
+  }
+
   let sent = 0;
   let skipped = 0;
 
   for (const row of due ?? []) {
+    if (Date.now() >= deadline) break;
     const automationKey = row.step === "followup_24h" ? "legacy_lead_followup_24h" : "legacy_lead_followup_72h";
     const definition = definitions.get(automationKey);
+    // Before the claim: a paused automation leaves its rows exactly as they are.
     if (definition && definition.status !== "active") continue;
+
+    const { data: claimed, error: claimError } = await db
+      .from("lead_followups")
+      .update({ status: "failed", error: CLAIMED })
+      .eq("id", row.id)
+      .eq("status", "pending")
+      .select("id");
+    if (claimError || !claimed || claimed.length === 0) continue;
+
     const runStarted = Date.now();
     const { data: lead } = await db
       .from("leads")
@@ -85,6 +135,9 @@ export async function GET(req: Request) {
       .eq("id", row.lead_id)
       .maybeSingle();
 
+    // Looked up by address, not by lead id — that is the whole point of the list.
+    const suppressedAs = lead?.email ? blocked.get(normalizeEmail(lead.email)) : undefined;
+
     const stopReason = !lead
       ? "lead_missing"
       : lead.do_not_contact
@@ -93,11 +146,13 @@ export async function GET(req: Request) {
           ? "unsubscribed"
           : !lead.email_consent
             ? "no_email_consent"
-            : CLOSED_STATUSES.includes(lead.lead_status)
-              ? `closed:${lead.lead_status}`
-              : !STILL_COLD.has(lead.lead_status)
-                ? `engaged:${lead.lead_status}`
-                : null;
+            : suppressedAs
+              ? `suppressed:${suppressedAs}`
+              : CLOSED_STATUSES.includes(lead.lead_status)
+                ? `closed:${lead.lead_status}`
+                : !STILL_COLD.has(lead.lead_status)
+                  ? `engaged:${lead.lead_status}`
+                  : null;
 
     if (stopReason) {
       await db

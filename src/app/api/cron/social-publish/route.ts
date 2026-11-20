@@ -1,22 +1,16 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { publishDueSocialPosts } from "@/lib/social/publisher";
 import { syncSocialProfiles } from "@/lib/social/sync";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function authorized(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!secret) return false;
-  const expected = Buffer.from(secret);
-  const received = Buffer.from(supplied);
-  return expected.length === received.length && timingSafeEqual(expected, received);
+export function GET(request: Request) {
+  return withCronRun("social-publish", request, run);
 }
 
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function run(): Promise<Response> {
   try {
     const publish = await publishDueSocialPosts();
     // Refresh a few stale account profiles each run (avatars/thumbnails expire).

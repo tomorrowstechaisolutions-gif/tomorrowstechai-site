@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { syncVercelWebsites } from "@/lib/vercel/website-sync";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const expectedBuffer = Buffer.from(secret);
-  const suppliedBuffer = Buffer.from(supplied);
-  return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer);
+export function GET(request: Request) {
+  return withCronRun("vercel-websites", request, run);
 }
 
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function run(): Promise<Response> {
   try {
     return NextResponse.json(await syncVercelWebsites());
   } catch (error) {

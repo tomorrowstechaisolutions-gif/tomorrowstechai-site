@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { pruneReports, pullAllAppReports } from "@/lib/apps/report";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -18,18 +18,11 @@ export const maxDuration = 60;
  * of this job, and a 500 here would only make Vercel's cron log lie about
  * which side broke.
  */
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const expected = Buffer.from(secret);
-  const given = Buffer.from(supplied);
-  return expected.length === given.length && timingSafeEqual(expected, given);
+export function GET(request: Request) {
+  return withCronRun("app-reports", request, run);
 }
 
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+async function run(): Promise<Response> {
   const results = await pullAllAppReports();
 
   // Housekeeping rides along. Failing to prune is worth a log line, not a

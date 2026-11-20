@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { annualised, effectiveProbability } from "@/lib/pipeline/forecast";
+import { withCronRun } from "@/lib/cron/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const OPEN = ["new", "qualified", "discovery", "proposal", "negotiation", "on_hold"];
 
 /**
  * Records what the pipeline was worth today. Point a daily Vercel Cron at it.
@@ -19,26 +21,13 @@ export const dynamic = "force-dynamic";
  * safe to run twice: the unique index on captured_on turns a second run into
  * an update of the same day rather than a duplicate.
  */
-function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-
-  const header = req.headers.get("authorization") ?? "";
-  const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (!provided) return false;
-
-  // Constant-time compare, same as the follow-up cron.
-  const a = Buffer.from(provided);
-  const b = Buffer.from(secret);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+export function GET(req: Request) {
+  return withCronRun("pipeline-snapshot", req, run, {
+    unauthorized: () => NextResponse.json({ error: "Not authorised." }, { status: 401 }),
+  });
 }
 
-const OPEN = ["new", "qualified", "discovery", "proposal", "negotiation", "on_hold"];
-
-export async function GET(req: Request) {
-  if (!authorized(req)) {
-    return NextResponse.json({ error: "Not authorised." }, { status: 401 });
-  }
+async function run(): Promise<Response> {
   if (!supabaseConfigured()) {
     return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
   }

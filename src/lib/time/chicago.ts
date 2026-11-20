@@ -58,6 +58,22 @@ export function zonedMidnightUtc(isoDate: string): Date {
   return new Date(ts);
 }
 
+/**
+ * The current instant, in epoch milliseconds.
+ *
+ * Server components read the clock through this, once per request, and hand
+ * the number down as a prop — so nothing below them calls Date.now() while
+ * rendering.
+ */
+export function nowMs(): number {
+  return Date.now();
+}
+
+/** YYYY-MM-DD in Chicago, `days` days after `from` (epoch ms, default now). */
+export function chicagoDateInDays(days: number, from: number = nowMs()): string {
+  return chicagoDate(new Date(from + days * 86_400_000));
+}
+
 /** YYYY-MM-DD for an instant, in Chicago. */
 export function chicagoDate(at: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {

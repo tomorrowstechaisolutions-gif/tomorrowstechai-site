@@ -1,24 +1,18 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { syncPartner } from "@/lib/partners/sync";
 import type { PartnerConnection } from "@/lib/partners/types";
+import { withCronRun } from "@/lib/cron/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Every 15 minutes: pull each partner's assigned work and settlements. */
-function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const header = req.headers.get("authorization") ?? "";
-  const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (provided.length !== secret.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(secret));
+export function GET(req: Request) {
+  return withCronRun("partner-sync", req, run);
 }
 
-export async function GET(req: Request) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function run(): Promise<Response> {
   if (!supabaseConfigured()) return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
 
   const db = supabaseAdmin();

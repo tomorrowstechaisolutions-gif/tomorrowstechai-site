@@ -13,7 +13,7 @@ import MeetingsBoard from "@/components/admin/cc/panels/MeetingsBoard";
 import MeetingDrawer from "@/components/admin/cc/meetings/MeetingDrawer";
 import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetingButton";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
-import { chicagoDate } from "@/lib/time/chicago";
+import { chicagoDateInDays, nowMs } from "@/lib/time/chicago";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Meetings" };
@@ -72,7 +72,9 @@ export default async function MeetingsPage({
   if (search) closeParams.set("q", search);
   const closeHref = `/admin/meetings?${closeParams.toString()}`;
 
-  const followUpDefault = chicagoDate(new Date(Date.now() + 3 * 86_400_000));
+  // The clock is read once per request; everything below renders against it.
+  const now = nowMs();
+  const followUpDefault = chicagoDateInDays(3, now);
 
   return (
     <>
@@ -92,6 +94,7 @@ export default async function MeetingsPage({
       <MeetingsBoard
         kpis={kpis}
         meetings={meetings}
+        now={now}
         tab={tab}
         search={search}
         newMeeting={
@@ -99,7 +102,7 @@ export default async function MeetingsPage({
             contact={blankContact}
             providers={providers}
             action={scheduleMeetingAction}
-            defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+            defaultDate={chicagoDateInDays(1, now)}
             timezone={BUSINESS_TIMEZONE}
             timezoneLabel={BUSINESS_TIMEZONE_LABEL}
             returnTo={closeHref}
@@ -110,6 +113,7 @@ export default async function MeetingsPage({
       {openMeeting ? (
         <MeetingDrawer
           meeting={openMeeting}
+          now={now}
           closeHref={closeHref}
           followUpDefault={followUpDefault}
         />

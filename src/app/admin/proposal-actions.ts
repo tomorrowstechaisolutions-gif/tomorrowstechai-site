@@ -1,5 +1,6 @@
 "use server";
 
+import { becomeClient } from "@/lib/clients/become-client";
 import { revalidatePath } from "next/cache";
 import { snapshotServiceLines } from '@/lib/services/sales';
 import { redirect } from "next/navigation";
@@ -700,39 +701,27 @@ export async function convertProposalToProjectAction(formData: FormData) {
   // Signed is the whole gate. A proposal never collects, so there is no
   // payment to wait for here — the invoice is raised after the work.
   // ── The client record. Found before created.
-  let customerId = p.customer_id;
-  if (!customerId && p.lead_id) {
-    const { data: byLead } = await supabase
-      .from("customers").select("id").eq("lead_id", p.lead_id).maybeSingle();
-    customerId = (byLead?.id as string | undefined) ?? null;
-  }
-  if (!customerId && p.client_email) {
-    const { data: byEmail } = await supabase
-      .from("customers").select("id").ilike("email", p.client_email).limit(1).maybeSingle();
-    customerId = (byEmail?.id as string | undefined) ?? null;
-  }
-  if (!customerId) {
-    const { data: created, error: customerError } = await supabase
-      .from("customers")
-      .insert({
-        lead_id: p.lead_id,
-        company_id: p.company_id,
-        name: p.client_contact_name,
-        business_name: p.client_business_name,
-        email: p.client_email || null,
-        phone: p.client_phone,
-        status: "active",
-        mrr_cents: p.recurring_price_cents,
-        owner: p.owner ?? actor,
-        notes: `Converted from proposal ${p.proposal_number}.`,
-      })
-      .select("id")
-      .single();
-    if (customerError || !created) {
-      throw new Error(`Could not create the client record: ${customerError?.message ?? "unknown"}`);
-    }
-    customerId = created.id as string;
-  }
+  //    becomeClient is the same function the Stripe webhook uses, so the
+  //    lead is closed as Won with a close date, its follow-up emails stop,
+  //    the deal is won and any invoice already raised for this lead is
+  //    linked to the client.
+  const { customerId } = await becomeClient(supabase, {
+    customerId: p.customer_id,
+    leadId: p.lead_id,
+    email: p.client_email,
+    name: p.client_contact_name,
+    businessName: p.client_business_name,
+    phone: p.client_phone,
+    matchByEmail: true,
+    dealId: p.deal_id,
+    actor,
+    note: `Proposal ${p.proposal_number} signed and converted to a project. Status set to Won.`,
+    insertExtra: {
+      company_id: p.company_id,
+      owner: p.owner ?? actor,
+      notes: `Converted from proposal ${p.proposal_number}.`,
+    },
+  });
 
   // ── The project.
   const isStarter = p.package_key === "starter_149";
@@ -888,16 +877,6 @@ export async function convertProposalToProjectAction(formData: FormData) {
       customer_id: customerId,
     })
     .eq("id", id);
-
-  if (p.deal_id) {
-    await supabase
-      .from("deals")
-      .update({ stage: "won", won_at: new Date().toISOString(), customer_id: customerId })
-      .eq("id", p.deal_id);
-  }
-  if (p.lead_id) {
-    await supabase.from("leads").update({ lead_status: "Won" }).eq("id", p.lead_id);
-  }
 
   await logProposalEvent(supabase, {
     proposalId: id,

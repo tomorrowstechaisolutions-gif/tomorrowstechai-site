@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { openSecret, sealSecret } from "@/lib/security/secrets";
 import { normalizeDomain } from "@/lib/websites/queries";
 
 const API = "https://api.vercel.com";
@@ -154,7 +155,9 @@ async function readCredentials(db: SupabaseClient): Promise<Credentials | null> 
     .eq("provider", "vercel")
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return data as Credentials | null;
+  const row = data as Credentials | null;
+  // Encrypted at rest; callers below see the token plain.
+  return row ? { ...row, access_token: openSecret(row.access_token, "Vercel") } : null;
 }
 
 export async function getVercelConnection(): Promise<VercelConnection> {
@@ -186,7 +189,7 @@ export async function connectVercel(token: string, teamId: string, actor: string
   const db = supabaseAdmin();
   const { error } = await db.from("integration_credentials").upsert({
     provider: "vercel",
-    access_token: trimmedToken,
+    access_token: sealSecret(trimmedToken, "Vercel"),
     refresh_token: null,
     token_expires_at: null,
     account_ref: trimmedTeam,

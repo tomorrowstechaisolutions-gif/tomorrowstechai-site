@@ -20,7 +20,7 @@ import ScheduleMeetingButton from "@/components/admin/cc/meetings/ScheduleMeetin
 import ScheduleConferenceLink from "@/components/admin/cc/conference/ScheduleConferenceLink";
 import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
-import { chicagoDate } from "@/lib/time/chicago";
+import { chicagoDateInDays } from "@/lib/time/chicago";
 
 import { PaymentLinkButton } from "@/components/admin/PaymentLinkButton";
 import { LeadEmailComposer } from "@/components/admin/LeadEmailComposer";
@@ -154,7 +154,7 @@ export default async function LeadDetailPage({
         contact={meetingContact}
         providers={providers}
         action={scheduleMeetingAction}
-        defaultDate={chicagoDate(new Date(Date.now() + 86_400_000))}
+        defaultDate={chicagoDateInDays(1)}
         defaultType="discovery"
         returnTo={`/admin/leads/${lead.id}`}
         timezone={BUSINESS_TIMEZONE}

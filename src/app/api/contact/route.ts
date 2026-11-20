@@ -5,6 +5,15 @@ import { buildContactLeadFields } from "@/lib/blog/lead-attribution";
 import { notifyOwner } from "@/lib/notifications/owner";
 import { emailCopy } from "@/lib/system-emails/store";
 import { buildOwnerContactEmail } from "@/lib/forms/email-content";
+import { isBotSubmission } from "@/lib/spam-trap";
+import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_MESSAGE = 8000;
+
+function text(value: unknown, max: number): string {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
 const FROM_EMAIL =
@@ -12,19 +21,49 @@ const FROM_EMAIL =
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, company, message,offer,attribution } = body as {
-      name?: string;
-      email?: string;
-      company?: string;
-      message?: string;
+    const limit = await rateLimitDurable(`contact:${clientIp(request)}`, { max: 5, windowMs: 60 * 60 * 1000 });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many messages in a short time. Try again in a little while, or email us directly." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      );
+    }
+
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+    }
+
+    // Return 200 so a bot can't tell it was caught, but send and store nothing.
+    if (isBotSubmission(body as Record<string, unknown>, "contact", 2000)) {
+      return NextResponse.json({ ok: true });
+    }
+
+    const { offer, attribution } = body as {
       offer?:{id?:string|null;slug?:string;name?:string;category?:string;price?:string;sourcePage?:string;cta?:string|null}|null;
       attribution?:unknown;
     };
+    const name = text(body.name, 200);
+    const email = text(body.email, 200);
+    const company = text(body.company, 200);
+    const message = typeof body.message === "string" ? body.message.trim() : "";
 
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: "Name, email, and message are required" },
+        { status: 400 }
+      );
+    }
+    if (!EMAIL_RE.test(email)) {
+      return NextResponse.json(
+        { error: "Enter a valid email address." },
+        { status: 400 }
+      );
+    }
+    // Rejected rather than cut short, so nobody's message is silently trimmed.
+    if (message.length > MAX_MESSAGE) {
+      return NextResponse.json(
+        { error: "That message is too long. Keep it under 8,000 characters." },
         { status: 400 }
       );
     }
@@ -72,7 +111,7 @@ export async function POST(request: Request) {
       const { error: eventError } = await supabaseAdmin().from("lead_events").insert({
         lead_id: intake.leadId,
         type: "form_submit",
-        body: String(message).trim().slice(0, 8000),
+        body: message,
         actor: "contact-form",
         meta: {
           kind: "contact_message",

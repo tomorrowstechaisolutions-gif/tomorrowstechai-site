@@ -22,7 +22,7 @@ export function ChatWidget() {
   // Groups this visitor's turns into one conversation for the AI Solutions
   // usage numbers. Random per session, sent back on each request, and
   // deliberately not identifying — it is a counter key, not a visitor id.
-  const conversationId = useRef<string>(
+  const [conversationId] = useState<string>(() =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : Math.random().toString(36).slice(2)
@@ -63,7 +63,7 @@ export function ChatWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, conversationId: conversationId.current }),
+        body: JSON.stringify({ messages: apiMessages, conversationId }),
       });
 
       const data = await res.json();
