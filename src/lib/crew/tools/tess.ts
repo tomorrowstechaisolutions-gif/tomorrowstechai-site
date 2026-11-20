@@ -4,7 +4,7 @@ import { act, GOAL_FIELDS, str, type CrewTool } from "./core";
 
 /**
  * Tools every bot has: raise something for John, and report at the end of a
- * shift. Tess's own tools (playbook, target, rules) are added in setup.ts.
+ * shift. Tess's own tools (playbook, target, rules) are in setup.ts.
  */
 
 export const flagForJohn: CrewTool = {
