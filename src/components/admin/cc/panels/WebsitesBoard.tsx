@@ -600,6 +600,7 @@ export default async function WebsitesBoard({ filters }: { filters: WebsiteFilte
           <p>Manage and monitor all websites across your portfolio.</p>
         </div>
         <div className="cc-greet-actions">
+          <Link href="/admin/hosting" className="cc-btn">Hosting &amp; costs</Link>
           <VercelSync connection={vercelConnection} />
           <AddWebsite clients={board.clients} />
         </div>

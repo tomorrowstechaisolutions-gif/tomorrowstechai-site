@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
@@ -82,6 +83,9 @@ export default async function MeetingsPage({
             Every conversation with a lead or a client — booked, started and written up.
             Each one also appears on the calendar and on the record it belongs to.
           </p>
+        </div>
+        <div className="cc-greet-actions">
+          <Link href="/admin/conference-center" className="cc-btn">Zoom Conference Center</Link>
         </div>
       </header>
 

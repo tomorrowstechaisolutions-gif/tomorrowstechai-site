@@ -58,3 +58,18 @@ supabase/.temp/
 
 # local scratch that can be deleted by hand
 _to_delete/
+
+# local build and migration snapshots, never part of the site
+_src-build.tgz
+_mig.tgz
+_globals.css
+*.zip
+
+# tool caches and scratch
+.npm-cache/
+.playwright-mcp/
+tmp/
+
+# working notes and screenshots. The status snapshot is the one tracked file.
+Claude outputs/*
+!Claude outputs/ttai-website.md

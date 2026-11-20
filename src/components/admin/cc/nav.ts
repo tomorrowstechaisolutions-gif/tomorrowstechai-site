@@ -7,7 +7,6 @@ import {
   IconCart,
   IconChart,
   IconCheckSquare,
-  IconCode,
   IconDollar,
   IconFile,
   IconFunnel,
@@ -39,9 +38,16 @@ import {
  * that already works — because a dashboard that links to a 404 is worse than
  * one that admits a gap.
  *
- * Nothing is listed twice. "CRM" and "Pipeline" are not separate entries
- * because /admin/leads is already both; giving them their own links would be
- * three doors into one room.
+ * One door per room. Where two screens read the same records, the sidebar
+ * lists one and that screen links to the other: Hosting sits behind Websites,
+ * the Zoom Conference Center behind Meetings, the Catalog behind Services and
+ * Software behind Apps. `also` keeps the sidebar entry lit while you are on
+ * the screen behind it. The pages themselves are unchanged and their URLs
+ * still work.
+ *
+ * A module with no screen yet is not listed at all. Its URL still resolves to
+ * the placeholder (SOON_ROUTES below) so an old link never 404s, but a
+ * sidebar entry that opens "not built yet" is noise.
  */
 
 export type NavLink = {
@@ -55,6 +61,8 @@ export type NavLink = {
     | "aiProposals" | "tasksNeedingAttention" | "eventsToday" | "meetingsToday";
   /** External to the admin (opens the public site). */
   external?: boolean;
+  /** Other paths this entry stands for, so it stays highlighted on them. */
+  also?: string[];
 };
 
 export type NavGroup = { head: string; links: NavLink[] };
@@ -66,9 +74,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin", label: "Dashboard", icon: IconGrid },
       // Gmail for tomorrowstechaisolutions@gmail.com, matched against the CRM.
       { href: "/admin/inbox", label: "Inbox", icon: IconMail },
-      { href: "/admin/ai", label: "AI Command Center", icon: IconSpark, soon: true, badge: "aiProposals" },
       { href: "/admin/activity", label: "Activity Center", icon: IconPulse },
-      { href: "/admin/conference-center", label: "Conference Center", icon: IconVideo, badge: "meetingsToday" },
     ],
   },
   {
@@ -95,21 +101,23 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/intakes", label: "Client intake", icon: IconBriefcase },
       { href: "/admin/tasks", label: "Tasks", icon: IconCheckSquare, badge: "tasksNeedingAttention" },
       { href: "/admin/calendar", label: "Calendar", icon: IconCalendar, badge: "eventsToday" },
-      { href: "/admin/meetings", label: "Meetings", icon: IconUsers, badge: "meetingsToday" },
+      // Meetings and the Zoom Conference Center read the same meetings.
+      { href: "/admin/meetings", label: "Meetings", icon: IconVideo, badge: "meetingsToday", also: ["/admin/conference-center"] },
     ],
   },
   {
     head: "Products & Services",
     links: [
-      { href: "/admin/catalog", label: "Catalog", icon: IconLayers },
+      // What is sold: services, the packages built from them, and the
+      // read-only catalog of both (behind Services).
+      { href: "/admin/services", label: "Services", icon: IconZap, also: ["/admin/catalog"] },
       { href: "/admin/packages", label: "Packages", icon: IconCart },
-      { href: "/admin/websites", label: "Websites", icon: IconGlobe },
-      { href: "/admin/apps", label: "Apps", icon: IconLayers },
+      // What is run: sites (hosting and its costs behind it), then products
+      // (software products behind it), then the AI systems.
+      { href: "/admin/websites", label: "Websites", icon: IconGlobe, also: ["/admin/hosting"] },
+      { href: "/admin/apps", label: "Apps", icon: IconLayers, also: ["/admin/software"] },
       { href: "/admin/ai-solutions", label: "AI Solutions", icon: IconBot },
       { href: "/logo-studio", label: "Logo Studio", icon: IconImage, external: true },
-      { href: "/admin/hosting", label: "Hosting", icon: IconServer },
-      { href: "/admin/software", label: "Software", icon: IconCode },
-      { href: "/admin/services", label: "Services", icon: IconZap },
     ],
   },
   {
@@ -135,8 +143,6 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/admin/automations", label: "Automations", icon: IconRepeat },
       { href: "/admin/automations/workflows", label: "Workflows", icon: IconLayers },
-      { href: "/admin/ai/agents", label: "AI Agents", icon: IconBot, soon: true },
-      { href: "/admin/automations/triggers", label: "Triggers", icon: IconZap, soon: true },
     ],
   },
   {
@@ -167,7 +173,11 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/** Every `soon` href, so the placeholder route knows what it is allowed to serve. */
+/**
+ * Planned modules with no screen yet. None of them is in the sidebar; these
+ * URLs resolve to an honest placeholder so an old link or bookmark does not
+ * 404. Delete an entry the day its real page ships.
+ */
 export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest?: { href: string; label: string } }> = {
   "/admin/ai": {
     title: "AI Command Center",
@@ -180,38 +190,8 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
     blurb: "Standing agents that watch one thing each — lead response time, project risk, ad performance — and propose rather than act.",
     nearest: { href: "/admin", label: "Back to the dashboard" },
   },
-  "/admin/marketing/brand": {
-    title: "Brand Assets",
-    blurb:
-      "Logos, palettes, type and templates — yours and each client's. Logo Studio already generates the marks; this is where they would live afterwards.",
-    nearest: { href: "/logo-studio", label: "Open Logo Studio" },
-  },
-  "/admin/services": {
-    title: "Service lines",
-    blurb:
-      "Per-service configuration and pricing. What each line is earning is on the dashboard; what is sellable is in the catalog.",
-    nearest: { href: "/admin/catalog", label: "Open the catalog" },
-  },
-  "/admin/marketing/social": {
-    title: "Social Center",
-    blurb:
-      "Compose, schedule and publish across channels. Accounts must be connected first — nothing here will show numbers for a platform that has not been linked.",
-    nearest: { href: "/admin", label: "Back to the dashboard" },
-  },
-  "/admin/automations": {
-    title: "Automations",
-    blurb:
-      "Rules that run without being asked. One already exists: the two lead follow-up emails.",
-    nearest: { href: "/admin/settings#defaults", label: "Set the follow-up timings" },
-  },
   "/admin/automations/triggers": {
     title: "Triggers",
     blurb: "What starts an automation — a form, a status change, a date, a webhook.",
-  },
-  "/admin/finance": {
-    title: "Finance overview",
-    blurb:
-      "Revenue, recurring revenue, expenses and margin over time. The current month is summarised on the dashboard, and every invoice is under Sales.",
-    nearest: { href: "/admin/invoices", label: "Open invoices" },
   },
 };

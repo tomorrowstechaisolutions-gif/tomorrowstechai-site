@@ -112,6 +112,7 @@ export default async function ConferenceCenterPage({
           </p>
         </div>
         <div className="cf-head-right">
+          <Link href="/admin/meetings" className="cc-btn">All meetings</Link>
           <span className={`cf-zoom ${zoomStatus.ready ? "is-on" : "is-off"}`}>
             <span className="cf-zoom-dot" aria-hidden="true" />
             {zoomStatus.ready

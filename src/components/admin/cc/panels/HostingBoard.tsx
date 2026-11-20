@@ -773,6 +773,7 @@ export default async function HostingBoard({ filters }: { filters: HostingFilter
           <p>Manage all hosting accounts, infrastructure, billing, and performance in one place.</p>
         </div>
         <div className="cc-greet-actions">
+          <Link href="/admin/websites" className="cc-btn">All websites</Link>
           <Link href="/admin/websites" className="cc-add-btn">
             <IconServer size={15} />
             <span>Add hosting account</span>

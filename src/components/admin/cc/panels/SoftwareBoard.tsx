@@ -622,6 +622,7 @@ export default async function SoftwareBoard({ filters }: { filters: SoftwareFilt
           </p>
         </div>
         <div className="cc-greet-actions">
+          <Link className="cc-btn" href="/admin/apps">All apps</Link>
           <Link className="cc-btn" href="/admin/software?view=roadmap">View Roadmap</Link>
           <Link className="cc-btn" href="/admin/settings/agreements">Manage Templates</Link>
           {canManage ? (
