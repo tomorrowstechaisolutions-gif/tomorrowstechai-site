@@ -72,6 +72,7 @@ create table if not exists public.ai_runs (
   status       text not null default 'running' check (status in ('running', 'waiting', 'done', 'failed', 'paused_budget', 'stopped')),
   transcript   jsonb not null default '[]'::jsonb,
   steps_taken  integer not null default 0,
+  cost_micro_usd bigint not null default 0,
   started_by   uuid references auth.users(id) on delete set null,
   started_at   timestamptz not null default now(),
   finished_at  timestamptz,

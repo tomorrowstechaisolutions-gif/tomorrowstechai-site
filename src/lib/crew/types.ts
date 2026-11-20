@@ -72,6 +72,8 @@ export type Run = {
   /** The conversation with the model, append-only. */
   transcript: unknown[];
   steps_taken: number;
+  /** What this run has cost in AI calls, in millionths of a dollar. */
+  cost_micro_usd: number;
   started_at: string;
   finished_at: string | null;
   error: string | null;
