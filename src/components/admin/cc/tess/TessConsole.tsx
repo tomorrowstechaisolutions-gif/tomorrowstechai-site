@@ -7,18 +7,22 @@ import { confirmPlaybookAction, setAgentPausedAction, setCrewPausedAction, type 
 import type { Brief } from "@/lib/crew/brief";
 import type { ChatLine } from "@/lib/crew/chat";
 import { LeftPanels, RightPanels } from "./BriefPanels";
+import { soundPlan } from "./soundPlan";
 import type { TessState } from "./TessCore";
 import styles from "./tess.module.css";
+import { createTessSounds, type TessSounds } from "./tessSounds";
 import { useSpeechInput } from "./useSpeechInput";
 
 /**
  * The Tess tab: the Core in the middle, the brief either side, and the
  * conversation underneath.
  *
- * John talks by holding the space bar or typing. Tess's words arrive as she
+ * John talks by tapping the talk button, holding the space bar, or typing. Tess's words arrive as she
  * writes them; when a voice is configured they are then spoken, and the
  * Core's surface follows the sound of her actual voice. Everything works by
- * typing alone: no microphone and no voice are both fine.
+ * typing alone: no microphone and no voice are both fine. Besides her voice
+ * she makes small sounds of her own for each state (see tessSounds.ts); the
+ * Sound button switches both off.
  */
 
 const TessCore = dynamic(() => import("./TessCore"), { ssr: false });
@@ -75,6 +79,8 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
   const [acting, setActing] = useState(false);
   const [actionProblem, setActionProblem] = useState<string | null>(null);
   const [needsTap, setNeedsTap] = useState(false);
+  const [voiceProblem, setVoiceProblem] = useState<string | null>(null);
+  const heldBack = useRef(false);
   const soundOn = useSyncExternalStore(subscribeSound, soundSnapshot, () => true);
 
   const busyRef = useRef(false);
@@ -84,6 +90,16 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
   const analyser = useRef<AnalyserNode | null>(null);
   const samples = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const lastSpoken = useRef("");
+  const sounds = useRef<TessSounds | null>(null);
+
+  /** One audio context for her voice and her sounds. The browser only lets it make sound after a click or key press. */
+  const ensureCtx = useCallback(() => {
+    if (audioCtx.current) return audioCtx.current;
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx.current = new Ctx();
+    return audioCtx.current;
+  }, []);
 
   /** 0 to 1: how loud Tess is right now. Her voice if it is playing, else the text arriving. */
   const getLevel = useCallback(() => {
@@ -112,18 +128,30 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
   const playVoice = useCallback(
     async (text: string) => {
       lastSpoken.current = text;
+      setVoiceProblem(null);
+      let url: string;
       try {
         const res = await fetch("/api/admin/tess/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
-        if (res.status !== 200) return false;
-        const url = URL.createObjectURL(await res.blob());
+        if (res.status === 204) return false; // nothing to say
+        if (res.status !== 200) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          setVoiceProblem(body?.error ?? "Her voice did not answer, so this one is text only.");
+          return false;
+        }
+        url = URL.createObjectURL(await res.blob());
+      } catch {
+        setVoiceProblem("Her voice could not be reached, so this one is text only.");
+        return false;
+      }
+      try {
         stopVoice();
         const el = new Audio(url);
         audio.current = { el, url };
         try {
-          const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-          if (Ctx) {
-            const ctx = (audioCtx.current ??= new Ctx());
-            if (ctx.state === "suspended") await ctx.resume().catch(() => undefined);
+          const ctx = ensureCtx();
+          if (ctx) {
+            // Not awaited: before the first click this would wait forever.
+            if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
             const node = ctx.createAnalyser();
             node.fftSize = 512;
             ctx.createMediaElementSource(el).connect(node);
@@ -140,16 +168,18 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
         };
         setState("speaking");
         await el.play();
+        heldBack.current = false;
         setNeedsTap(false);
         return true;
       } catch {
-        // The browser will not play sound until John has clicked something.
+        // The browser will not play sound until John has clicked or pressed something. The next click plays it.
         stopVoice();
+        heldBack.current = true;
         setNeedsTap(true);
         return false;
       }
     },
-    [stopVoice]
+    [ensureCtx, stopVoice]
   );
 
   const ask = useCallback(
@@ -160,6 +190,7 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
       stopVoice();
       setProblem(null);
       setNeedsTap(false);
+      heldBack.current = false;
       setExchange({ you: message.trim(), line: "" });
       setState("thinking");
 
@@ -228,10 +259,56 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
   useEffect(
     () => () => {
       stopVoice();
+      sounds.current?.dispose();
+      sounds.current = null;
       void audioCtx.current?.close().catch(() => undefined);
+      audioCtx.current = null;
+      analyser.current = null;
     },
     [stopVoice]
   );
+
+  const shown: TessState = speech.listening ? "listening" : state;
+
+  // Her own sounds. They start at the first click or key press, which is when the browser allows sound.
+  const shownRef = useRef<TessState>(shown);
+  useEffect(() => {
+    const wake = () => {
+      const ctx = ensureCtx();
+      if (!ctx) return;
+      if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+      if (!sounds.current) {
+        sounds.current = createTessSounds(ctx);
+        sounds.current.setOn(soundSnapshot() && !document.hidden);
+        sounds.current.setBed(soundPlan(shownRef.current, shownRef.current).bed);
+      }
+      // What she said before the browser allowed sound: say it now.
+      if (heldBack.current && lastSpoken.current && soundSnapshot() && !busyRef.current) {
+        heldBack.current = false;
+        void playVoice(lastSpoken.current).then((ok) => (ok ? undefined : setState("idle")));
+      }
+    };
+    const visibility = () => sounds.current?.setOn(soundSnapshot() && !document.hidden);
+    window.addEventListener("pointerdown", wake);
+    window.addEventListener("keydown", wake);
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      window.removeEventListener("pointerdown", wake);
+      window.removeEventListener("keydown", wake);
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, [ensureCtx, playVoice]);
+
+  useEffect(() => {
+    const plan = soundPlan(shownRef.current, shown);
+    shownRef.current = shown;
+    if (plan.chirp) sounds.current?.chirp(plan.chirp);
+    sounds.current?.setBed(plan.bed);
+  }, [shown]);
+
+  useEffect(() => {
+    sounds.current?.setOn(soundOn && !document.hidden);
+  }, [soundOn]);
 
   const run = useCallback(
     async (action: (fd: FormData) => Promise<CrewActionResult>, fields: Record<string, string>) => {
@@ -260,12 +337,13 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
     }
     window.dispatchEvent(new Event(SOUND_EVENT));
     if (!next) {
+      heldBack.current = false;
+      setNeedsTap(false);
       stopVoice();
       setState((s) => (s === "speaking" && !busyRef.current ? "idle" : s));
     }
   };
 
-  const shown: TessState = speech.listening ? "listening" : state;
   const working = brief.crew.filter((c) => c.working).length;
   const modeLabel = brief.business ? (brief.business.mode === "launch" ? "Launch mode" : brief.business.mode === "setup" ? "Setting up" : "Watching") : "No business";
 
@@ -335,13 +413,14 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
       <div className={styles.voice}>
         <div className={styles.said} aria-live="polite">
           {speech.listening ? (
-            <span className={styles.you}>You: {speech.transcript || "…"}</span>
+            <span className={styles.you}>You: {speech.transcript || (speech.live ? "I am listening, go ahead…" : "Opening the microphone…")}</span>
           ) : exchange.you ? (
             <span className={styles.you}>You: {exchange.you}</span>
           ) : null}
           <span>{exchange.line}</span>
           {problem ? <span className={styles.problem}>{problem}</span> : null}
           {speech.error ? <span className={styles.problem}>{speech.error}</span> : null}
+          {voiceProblem ? <span className={styles.problem}>{voiceProblem}</span> : null}
         </div>
 
         <form
@@ -367,20 +446,17 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
             <button
               type="button"
               className={`${styles.round} ${speech.listening ? styles.roundLive : ""}`}
-              onPointerDown={() => speech.start()}
-              onPointerUp={() => speech.stop()}
-              onPointerLeave={() => (speech.listening ? speech.stop() : undefined)}
-              disabled={busy}
-              aria-label="Hold to talk"
+              onClick={() => (speech.listening ? speech.stop() : speech.start("tap"))}
+              disabled={busy && !speech.listening}
+              aria-pressed={speech.listening}
+              aria-label="Talk to Tess"
             >
-              {speech.listening ? "Listening" : "Hold to talk"}
+              {speech.listening ? "Listening · tap to send" : "Tap to talk"}
             </button>
           ) : null}
-          {voice ? (
-            <button type="button" className={styles.round} onClick={toggleSound} aria-pressed={soundOn}>
-              {soundOn ? "Voice on" : "Voice off"}
-            </button>
-          ) : null}
+          <button type="button" className={styles.round} onClick={toggleSound} aria-pressed={soundOn}>
+            {soundOn ? "Sound on" : "Sound off"}
+          </button>
           <button type="submit" className={styles.round} disabled={busy || !draft.trim()}>
             Send
           </button>
@@ -388,11 +464,9 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
 
         <div className={styles.hint}>
           {needsTap && lastSpoken.current ? (
-            <button type="button" className={styles.botBtn} onClick={() => void playVoice(lastSpoken.current).then((ok) => (ok ? undefined : setState("idle")))}>
-              Your browser held the sound back. Click here to hear her.
-            </button>
+            "Your browser held her voice back. Click anywhere or press a key to hear her."
           ) : speech.supported ? (
-            "Hold the space bar to talk, or type."
+            "Tap the talk button or hold the space bar to talk, or type."
           ) : (
             "Type to talk to Tess. This browser has no speech recognition; Chrome and Edge do."
           )}
