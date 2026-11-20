@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ACTIVE_STAGES, STAGE_BLURB, type JobStage } from "@/lib/jobs/config";
+import { ACTIVE_STAGES, STAGE_BLURB } from "@/lib/jobs/config";
 import {
   STARTER_ACTIVE_STAGES,
   STARTER_PACKAGE,

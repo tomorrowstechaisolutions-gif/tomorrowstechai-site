@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { missingRequirements, type IntakeFile, type IntakeRecord } from "@/lib/intake/config";
 import { startStarterJob } from "@/app/admin/actions";
+import { nowMs } from "@/lib/time/chicago";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ export default async function IntakesPage() {
 
   const waiting = intakes.filter((i) => i.status === "draft").length;
   const ready = intakes.filter((i) => i.status === "submitted").length;
+  const now = nowMs();
 
   return (
     <>
@@ -88,7 +90,7 @@ export default async function IntakesPage() {
                   );
                   const expired =
                     intake.status !== "submitted" &&
-                    new Date(intake.token_expires_at).getTime() < Date.now();
+                    new Date(intake.token_expires_at).getTime() < now;
 
                   return (
                     <tr key={intake.id}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { CatalogItem } from "@/lib/supabase/types";
 
 /**
@@ -73,9 +74,9 @@ export function SellUpsellButton({
     return (
       <p className="ad-hint">
         Nothing in the catalog yet. Add what you sell under{" "}
-        <a className="ad-link" href="/admin/catalog">
+        <Link className="ad-link" href="/admin/catalog">
           Catalog
-        </a>
+        </Link>
         .
       </p>
     );

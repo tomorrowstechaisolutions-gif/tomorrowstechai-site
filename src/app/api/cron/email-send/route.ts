@@ -1,7 +1,7 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { runDueCampaigns, runDueSequenceSteps } from "@/lib/email-marketing/send";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -36,20 +36,12 @@ const SEQUENCE_WINDOW_MS = 50_000;
 const CAMPAIGN_CEILING = 200;
 const SEQUENCE_CEILING = 100;
 
-function authorized(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!secret) return false;
-  const expected = Buffer.from(secret);
-  const received = Buffer.from(supplied);
-  return expected.length === received.length && timingSafeEqual(expected, received);
+export function GET(request: Request) {
+  return withCronRun("email-send", request, run);
 }
 
-export async function GET(request: Request) {
+async function run(): Promise<Response> {
   const started = Date.now();
-  if (!authorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
   if (!supabaseConfigured()) {
     return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
   }

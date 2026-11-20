@@ -1,23 +1,17 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { generateInsights } from "@/lib/insights/generate";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /** Weekly AI insights (Monday morning). Writes recommendations only; changes nothing else. */
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const expected = Buffer.from(secret);
-  const given = Buffer.from(supplied);
-  return expected.length === given.length && timingSafeEqual(expected, given);
+export function GET(request: Request) {
+  return withCronRun("ai-insights", request, run);
 }
 
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function run(): Promise<Response> {
   try {
     return NextResponse.json(await generateInsights(supabaseAdmin()));
   } catch (error) {

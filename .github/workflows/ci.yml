@@ -1,0 +1,41 @@
+# Runs on every pull request and on main: types, lint and the unit tests.
+#
+# Vercel builds the preview separately, so this does not run `next build`.
+# Nothing here needs a secret: the tests are pure logic with the database and
+# every provider mocked.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: npx eslint src
+
+      - name: Test
+        run: npx vitest run

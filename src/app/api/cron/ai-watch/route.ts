@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { runAiWatch } from "@/lib/ai/watch";
+import { withCronRun } from "@/lib/cron/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,18 +16,11 @@ export const maxDuration = 60;
  * degrades to "we don't know" rather than to a stale green tick. It never
  * pauses or shuts down a solution: that is a decision a person makes.
  */
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const expected = Buffer.from(secret);
-  const given = Buffer.from(supplied);
-  return expected.length === given.length && timingSafeEqual(expected, given);
+export function GET(request: Request) {
+  return withCronRun("ai-watch", request, run);
 }
 
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+async function run(): Promise<Response> {
   try {
     const result = await runAiWatch();
     return NextResponse.json(result);
