@@ -94,7 +94,7 @@ export const DEFAULT_SETTINGS: TessSettings = { mode: "brief", length: "medium",
 export type Note = { id: string; text: string; at: string; topic?: string };
 export type NoteList = "learned" | "parked";
 
-export const LIMITS = { about: 12_000, businesses: 24_000, note: 300, notes: 80 };
+export const LIMITS = { about: 12_000, businesses: 24_000, note: 300, notes: 80, words: 60 };
 
 /**
  * What Tess wants to learn about John over time. She asks about one when the

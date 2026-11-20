@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { confirmPlaybookAction, removeTessNoteAction, setAgentPausedAction, setCrewPausedAction, setTessSettingsAction, type CrewActionResult } from "@/app/admin/crew-actions";
+import { confirmPlaybookAction, removeTessNoteAction, setAgentPausedAction, setCrewPausedAction, setTessSettingsAction, setTessWordAction, type CrewActionResult } from "@/app/admin/crew-actions";
 import type { Brief } from "@/lib/crew/brief";
 import type { ChatLine } from "@/lib/crew/chat";
 import type { TessProfile } from "@/lib/crew/profile";
@@ -191,6 +191,7 @@ export default function TessConsole({ brief, history, profile }: { brief: Brief;
             soundOn={soundOn}
             onSettings={(next) => void runProfile(setTessSettingsAction, next)}
             onRemove={(list, id) => void runProfile(removeTessNoteAction, { list, id })}
+            onWord={(word, remove) => void runProfile(setTessWordAction, { word, remove: String(remove) })}
           />
         ) : (
           <RightPanels brief={brief} busy={acting} onPauseBot={(slug, paused) => run(setAgentPausedAction, { slug, paused: String(paused) })} />

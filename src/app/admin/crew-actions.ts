@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { removeNote, saveTessSettings } from "@/lib/crew/profile";
+import { addWord, removeNote, removeWord, saveTessSettings } from "@/lib/crew/profile";
 import { confirmPlaybook, setAgentPaused, setCrewPaused } from "@/lib/crew/setup";
 import { summarizeDay } from "@/lib/crew/summaries";
 import type { AgentSlug } from "@/lib/crew/types";
@@ -86,6 +86,21 @@ export async function setTessSettingsAction(fd: FormData): Promise<CrewActionRes
   const { sb, userId } = await requireAdminUser();
   try {
     await saveTessSettings(sb, userId, { mode: text(fd, "mode"), length: text(fd, "length"), bluntness: text(fd, "bluntness"), pushback: text(fd, "pushback") });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not save that." };
+  }
+  touch();
+  return { ok: true };
+}
+
+/** Add or remove a word Tess listens for when John talks. */
+export async function setTessWordAction(fd: FormData): Promise<CrewActionResult> {
+  const { sb, userId } = await requireAdminUser();
+  const word = text(fd, "word");
+  if (!word) return { ok: false, error: "Type a word or a name first." };
+  try {
+    if (text(fd, "remove") === "true") await removeWord(sb, userId, word);
+    else await addWord(sb, userId, word);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Could not save that." };
   }

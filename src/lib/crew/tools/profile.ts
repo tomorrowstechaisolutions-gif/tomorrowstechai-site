@@ -1,5 +1,5 @@
 import "server-only";
-import { addNote } from "../profile";
+import { addNote, addWord } from "../profile";
 import { TOPIC_IDS, type NoteList } from "../tess-modes";
 import { str, type CrewTool, type ToolContext, type ToolResult } from "./core";
 import { once } from "./setup";
@@ -52,4 +52,25 @@ export const parkIdea: CrewTool = {
   kind: "read",
   station: "library",
   run: (ctx, input) => note(ctx, "park_idea", "parked", str(input, "idea", 300), "parked an idea for later", "Parked. Tell John in a few words and bring him back to what he was doing."),
+};
+
+export const learnWord: CrewTool = {
+  name: "learn_word",
+  description:
+    "Add a name or word to the list you listen for, so you hear it right next time. Use it when John corrects something you misheard (a person, a pet, a business, a product, a term of his), giving the word spelled the way he means it. One word or short name per call. Not for ordinary words you simply got wrong once.",
+  input_schema: { type: "object", properties: { word: { type: "string", description: "The word or name, spelled correctly. At most five words." } }, required: ["word"], additionalProperties: false },
+  kind: "read",
+  station: "library",
+  async run(ctx, input) {
+    const userId = ctx.run.started_by;
+    if (!userId) return { ok: false, text: "This only works while talking with John." };
+    return once(ctx, this.name, "learned a word to listen for", async () => {
+      try {
+        const word = await addWord(ctx.sb, userId, str(input, "word", 80));
+        return { ok: true, text: `"${word}" is on the list you listen for from his next recording. He can see and remove it on your profile.` };
+      } catch (err) {
+        return { ok: false, text: err instanceof Error ? err.message : "Could not save that." };
+      }
+    });
+  },
 };
