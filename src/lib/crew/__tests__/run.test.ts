@@ -67,6 +67,21 @@ beforeEach(() => {
 });
 
 describe("advanceRun", () => {
+  it("marks the end of the conversation for caching on every call, and saves the conversation unmarked", async () => {
+    const { db, run } = setup();
+    const { call, seen } = script([
+      reply([use("tu-1", "list_leads_needing_attention", {})], "tool_use"),
+      reply([text("Nothing more to do.")], "end_turn"),
+    ]);
+    await advanceRun(db, "run-1", { deadlineAt: later(), call });
+    const count = (value: unknown) => JSON.stringify(value).split('"cache_control"').length - 1;
+    expect(count(seen[0])).toBe(1);
+    expect(count(seen[1])).toBe(1);
+    const lastSent = seen[1][seen[1].length - 1].content as unknown as Record<string, unknown>[];
+    expect(lastSent[lastSent.length - 1].cache_control).toEqual({ type: "ephemeral" });
+    expect(count(run().transcript)).toBe(0);
+  });
+
   it("runs a tool the model asks for and feeds the result back", async () => {
     const { db, run } = setup();
     const { call, seen } = script([
