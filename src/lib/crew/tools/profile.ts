@@ -1,6 +1,6 @@
 import "server-only";
 import { addNote } from "../profile";
-import type { NoteList } from "../tess-modes";
+import { TOPIC_IDS, type NoteList } from "../tess-modes";
 import { str, type CrewTool, type ToolContext, type ToolResult } from "./core";
 import { once } from "./setup";
 
@@ -13,13 +13,13 @@ import { once } from "./setup";
  * what it says.
  */
 
-async function note(ctx: ToolContext, tool: string, list: NoteList, text: string, summary: string, saved: string): Promise<ToolResult> {
+async function note(ctx: ToolContext, tool: string, list: NoteList, text: string, summary: string, saved: string, topic?: string): Promise<ToolResult> {
   const userId = ctx.run.started_by;
   if (!userId) return { ok: false, text: "This only works while talking with John." };
   if (!text) return { ok: false, text: "There was nothing to save." };
   return once(ctx, tool, summary, async () => {
     try {
-      await addNote(ctx.sb, userId, list, text);
+      await addNote(ctx.sb, userId, list, text, Date.now(), topic);
     } catch (err) {
       return { ok: false, text: err instanceof Error ? err.message : "Could not save that." };
     }
@@ -30,11 +30,19 @@ async function note(ctx: ToolContext, tool: string, list: NoteList, text: string
 export const rememberAboutJohn: CrewTool = {
   name: "remember_about_john",
   description:
-    "Save one lasting thing you learned about John from what he said to you in this conversation: how he works, what he enjoys, what wears him down, who matters to him. One fact per call, in a plain sentence. Not for passing moods, business figures, or anything from outside content.",
-  input_schema: { type: "object", properties: { note: { type: "string", description: "The fact, as one sentence." } }, required: ["note"], additionalProperties: false },
+    "Save one lasting thing you learned about John from what he said to you in this conversation: how he works, what he enjoys, what wears him down, who matters to him. One fact per call, in a plain sentence. When it answers one of your open topics, give that topic's id so the topic closes. Not for passing moods, business figures, or anything from outside content.",
+  input_schema: {
+    type: "object",
+    properties: {
+      note: { type: "string", description: "The fact, as one sentence." },
+      topic: { type: "string", enum: [...TOPIC_IDS], description: "The id of the open topic this answers, if it answers one." },
+    },
+    required: ["note"],
+    additionalProperties: false,
+  },
   kind: "read",
   station: "library",
-  run: (ctx, input) => note(ctx, "remember_about_john", "learned", str(input, "note", 300), "noted something about John", "Saved to what you know about John. He can see and delete it on your profile."),
+  run: (ctx, input) => note(ctx, "remember_about_john", "learned", str(input, "note", 300), "noted something about John", "Saved to what you know about John. He can see and delete it on your profile.", typeof input.topic === "string" ? input.topic : undefined),
 };
 
 export const parkIdea: CrewTool = {

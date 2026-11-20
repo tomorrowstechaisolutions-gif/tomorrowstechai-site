@@ -60,6 +60,8 @@
 .seg button:disabled { cursor: default; }
 .noteRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 12.5px; line-height: 1.45; padding: 6px 0; border-top: 1px solid var(--line); color: var(--text); }
 .noteRow:first-of-type { border-top: 0; }
+.topicLead { margin-top: 9px !important; }
+.topics { margin: 8px 0 0; padding: 0 0 0 16px; font-size: 12.5px; line-height: 1.6; color: var(--text); }
 
 .btn { border: 1px solid var(--line); color: var(--dim); background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
 .btn:hover { color: var(--text); border-color: #27425a; }

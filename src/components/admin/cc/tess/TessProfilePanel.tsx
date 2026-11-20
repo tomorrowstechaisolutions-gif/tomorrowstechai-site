@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { TessProfile } from "@/lib/crew/profile";
-import { DIAL_KEYS, DIALS, MODE_IDS, MODES, type Note, type NoteList, type TessSettings } from "@/lib/crew/tess-modes";
+import { DIAL_KEYS, DIALS, MODE_IDS, MODES, openTopics, TOPICS, type Note, type NoteList, type TessSettings } from "@/lib/crew/tess-modes";
 import styles from "./tess.module.css";
 
 /**
@@ -48,6 +48,7 @@ export default function TessProfilePanel({
 }) {
   const settings: TessSettings = { mode: profile.mode, length: profile.length, bluntness: profile.bluntness, pushback: profile.pushback };
   const locked = busy || !profile.ready;
+  const open = openTopics(profile.learned);
 
   return (
     <>
@@ -106,6 +107,27 @@ export default function TessProfilePanel({
         <Link className={styles.openFloor} href="/admin/settings#me">
           Edit in Settings
         </Link>
+      </section>
+
+      <section className={styles.panel}>
+        <h2>
+          Getting to know you <span>{TOPICS.length - open.length} of {TOPICS.length} topics</span>
+        </h2>
+        <div className={styles.bar}>
+          <div style={{ width: `${Math.round(((TOPICS.length - open.length) / TOPICS.length) * 100)}%` }} />
+        </div>
+        {open.length ? (
+          <>
+            <p className={styles.topicLead}>She will ask about these over time: freely in Chat, at most once a sitting in Brief and Create, never in Focus or Lift.</p>
+            <ul className={styles.topics}>
+              {open.map((t) => (
+                <li key={t.id}>{t.label}</li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className={styles.topicLead}>Every topic has an answer. She keeps saving what you tell her.</p>
+        )}
       </section>
 
       <Notes title="What she has learned" empty="Nothing yet. In Chat mode she saves what you tell her about yourself." list="learned" items={profile.learned} busy={locked} onRemove={onRemove} />

@@ -6,7 +6,7 @@ vi.mock("server-only", () => ({}));
 import { chatHistory, openChatTurn } from "../chat";
 import { addNote, contextBlocks, loadTessProfile, removeNote, saveTessAbout, saveTessSettings } from "../profile";
 import { ROLE } from "../roles";
-import { aboutJohnText, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, MODE_IDS, MODES } from "../tess-modes";
+import { aboutJohnText, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, MODE_IDS, MODES, openTopics, TOPICS } from "../tess-modes";
 import { parkIdea, rememberAboutJohn } from "../tools/profile";
 import { toolsFor } from "../tools";
 
@@ -52,8 +52,10 @@ describe("Tess's modes and dials", () => {
 });
 
 describe("what Tess knows about John", () => {
-  it("is nothing when he has written nothing and she has learned nothing", () => {
-    expect(aboutJohnText("", [])).toBeNull();
+  it("is only the list of what she still wants to learn, before anything is known", () => {
+    const text = aboutJohnText("", []);
+    expect(text).toContain(TOPICS[0].label);
+    expect(text).not.toContain("In his own words");
   });
 
   it("carries his own words and what she has learned", () => {
@@ -237,5 +239,52 @@ describe("how Tess works with John, in her standing instructions", () => {
 
   it("leads a decision with her recommendation", () => {
     expect(ROLE.tess.prompt).toMatch(/recommendation first/i);
+  });
+});
+
+describe("Tess getting to know John over time", () => {
+  const note = (text: string, topic?: string) => ({ id: text, text, at: "2026-11-20T10:00:00Z", ...(topic ? { topic } : {}) });
+
+  it("starts with every topic open", () => {
+    expect(openTopics([]).map((t) => t.id)).toEqual(TOPICS.map((t) => t.id));
+    expect(TOPICS.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it("closes a topic once she has saved something under it", () => {
+    const open = openTopics([note("Best hours are 5am to noon.", "rhythm"), note("Likes Porsches.")]);
+    expect(open.map((t) => t.id)).not.toContain("rhythm");
+    expect(open).toHaveLength(TOPICS.length - 1);
+  });
+
+  it("tells her which topics are still open, and stops listing one that is covered", () => {
+    const text = aboutJohnText("Systems thinker.", [note("Best hours are 5am to noon.", "rhythm")]) ?? "";
+    const rhythm = TOPICS.find((t) => t.id === "rhythm")!;
+    const other = TOPICS.find((t) => t.id !== "rhythm")!;
+    expect(text).toContain(`${other.id}: ${other.label}`);
+    expect(text).not.toContain(`${rhythm.id}: ${rhythm.label}`);
+  });
+
+  it("asks freely in Chat, sparingly in Brief and Create, and never in Focus or Lift", () => {
+    expect(MODES.chat.questions).toMatch(/one at a time/i);
+    expect(MODES.brief.questions).toMatch(/at most one/i);
+    expect(MODES.create.questions).toMatch(/at most one/i);
+    expect(MODES.focus.questions).toMatch(/do not ask/i);
+    expect(MODES.lift.questions).toMatch(/do not ask/i);
+    expect(howToAnswerText({ ...DEFAULT_SETTINGS, mode: "focus" })).toContain(MODES.focus.questions);
+  });
+
+  it("saves an answer under its topic", async () => {
+    const { db } = setup({ ai_runs: [{ id: "run-1", agent_id: "a-tess", business_id: "biz-1", trigger: "chat", status: "running", started_by: "user-1", steps_taken: 0 }] });
+    const ctx = { sb: db, run: { id: "run-1", agent_id: "a-tess", business_id: "biz-1", started_by: "user-1" }, toolUseId: "tu-9", business: { id: "biz-1" } } as never;
+    const result = await rememberAboutJohn.run(ctx, { note: "Best hours are 5am to noon.", topic: "rhythm" });
+    expect(result.ok).toBe(true);
+    const p = await loadTessProfile(db, "user-1");
+    expect(p.learned[0]).toMatchObject({ text: "Best hours are 5am to noon.", topic: "rhythm" });
+    expect(openTopics(p.learned).map((t) => t.id)).not.toContain("rhythm");
+  });
+
+  it("only offers her the topics that exist", () => {
+    const props = rememberAboutJohn.input_schema.properties as Record<string, { enum?: string[] }>;
+    expect(props.topic.enum).toEqual(TOPICS.map((t) => t.id));
   });
 });
