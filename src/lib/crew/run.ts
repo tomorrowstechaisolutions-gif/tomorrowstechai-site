@@ -3,6 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { anthropic, effort } from "@/lib/ai/claude";
 import { recordAiUsageAsync } from "@/lib/ai/record";
+import { chicagoDate } from "@/lib/time/chicago";
 import { spendCentsToday } from "./gate-state";
 import { finishRun } from "./log";
 import { costMicroUsd, CREW_EFFORT, TESS_EFFORT } from "./models";
@@ -25,7 +26,10 @@ import type { Agent, Business, Goal, Rule, Run, RunStatus } from "./types";
  *     model's replies go back exactly as they came, thinking blocks included;
  *   - an action is never repeated. If a tick dies after a tool ran but before
  *     its result was saved, the next tick runs the tool call again, and the
- *     tool sees from the step log that it already happened.
+ *     tool sees from the step log that it already happened;
+ *   - one worker at a time. A worker takes a short lease on the run before it
+ *     touches it. A second cron tick, or a chat arriving mid-shift, finds the
+ *     lease taken and steps aside. A lease left by a worker that died expires.
  */
 
 export type ModelCall = (req: {
@@ -38,6 +42,9 @@ export type ModelCall = (req: {
 export type RunEvent = { type: "text"; text: string } | { type: "tool"; tool: string };
 
 export const MAX_STEPS_PER_RUN = 24;
+
+/** Longer than any one request can run, so a live worker never loses its lease. */
+const LEASE_MS = 90_000;
 
 const TERMINAL: RunStatus[] = ["done", "failed", "stopped"];
 
@@ -98,11 +105,37 @@ function toolUses(message: Anthropic.MessageParam | undefined): Anthropic.ToolUs
   return message.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
 }
 
-export async function advanceRun(
-  sb: SupabaseClient,
-  runId: string,
-  opts: { deadlineAt: number; call?: ModelCall; onEvent?: (event: RunEvent) => void; maxModelCalls?: number }
-): Promise<{ status: RunStatus; stepsThisTick: number }> {
+type AdvanceOptions = { deadlineAt: number; call?: ModelCall; onEvent?: (event: RunEvent) => void; maxModelCalls?: number };
+export type AdvanceResult = { status: RunStatus; stepsThisTick: number; /** Another worker holds this run; nothing was done. */ busy?: boolean };
+
+/** Take the run for this worker. False when another worker has it. */
+async function takeLease(sb: SupabaseClient, runId: string): Promise<boolean> {
+  const now = Date.now();
+  const until = new Date(now + LEASE_MS).toISOString();
+  const free = await sb.from("ai_runs").update({ locked_until: until }).eq("id", runId).is("locked_until", null).select("id");
+  if (free.error) fail("Could not take the run", free.error);
+  if (free.data?.length) return true;
+  const stale = await sb.from("ai_runs").update({ locked_until: until }).eq("id", runId).lt("locked_until", new Date(now).toISOString()).select("id");
+  if (stale.error) fail("Could not take the run", stale.error);
+  return Boolean(stale.data?.length);
+}
+
+export async function advanceRun(sb: SupabaseClient, runId: string, opts: AdvanceOptions): Promise<AdvanceResult> {
+  if (!(await takeLease(sb, runId))) {
+    const { data, error } = await sb.from("ai_runs").select("status").eq("id", runId).maybeSingle();
+    if (error) fail("Could not load the run", error);
+    if (!data) throw new Error("No such run.");
+    return { status: data.status as RunStatus, stepsThisTick: 0, busy: true };
+  }
+  try {
+    return await advance(sb, runId, opts);
+  } finally {
+    const { error } = await sb.from("ai_runs").update({ locked_until: null }).eq("id", runId);
+    if (error) console.error("[crew] could not release the run:", error.message);
+  }
+}
+
+async function advance(sb: SupabaseClient, runId: string, opts: AdvanceOptions): Promise<AdvanceResult> {
   const { data: runRow, error: runError } = await sb.from("ai_runs").select("*").eq("id", runId).maybeSingle();
   if (runError) fail("Could not load the run", runError);
   if (!runRow) throw new Error("No such run.");
@@ -118,7 +151,8 @@ export async function advanceRun(
   const { data: bizRow } = run.business_id ? await sb.from("ai_businesses").select("*").eq("id", run.business_id).maybeSingle() : { data: null };
   const business = bizRow as Business | null;
   if (!business) throw new Error("The run's business no longer exists.");
-  const today = new Date().toISOString().slice(0, 10);
+  // Goals run on the business's calendar, not UTC's.
+  const today = chicagoDate();
   const { data: goalRows } = await sb.from("ai_goals").select("*").eq("business_id", business.id).gte("period_end", today);
   const goals = (goalRows ?? []) as Goal[];
 
@@ -179,7 +213,10 @@ export async function advanceRun(
     const started = Date.now();
     const response = await call({ model: agent.model, system, tools: apiTools, messages });
     modelCalls += 1;
-    cost += costMicroUsd(agent.model, response.usage);
+    const spent = costMicroUsd(agent.model, response.usage);
+    cost += spent;
+    const { error: spendError } = await sb.from("ai_spend").insert({ run_id: runId, agent_id: agent.id, micro_usd: spent, created_at: new Date().toISOString() });
+    if (spendError) console.error("[crew] spend not recorded:", spendError.message);
     recordAiUsageAsync({
       slug: `crew-${agent.slug}`,
       model: agent.model,

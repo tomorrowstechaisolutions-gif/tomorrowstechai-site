@@ -2,7 +2,7 @@ import "server-only";
 import { getArticle, getListedArticles } from "@/lib/blog/repository";
 import { createArticleSocialDraft } from "@/lib/blog/social-draft";
 import { publishDueSocialPosts } from "@/lib/social/publisher";
-import { act, GOAL_FIELDS, read, str, type CrewTool } from "./core";
+import { act, GOAL_FIELDS, read, refuse, str, type CrewTool } from "./core";
 
 /**
  * The social desk's tools. Posting goes through the publisher the site
@@ -10,7 +10,7 @@ import { act, GOAL_FIELDS, read, str, type CrewTool } from "./core";
  * that keeps failing" rule all apply to the crew without a second copy.
  */
 
-/** The channels an article post can go to. Each is checked against its daily cap. */
+/** The channels an article post can go to. Only the ones the playbook names are used, and each is checked against its daily cap. */
 const CHANNELS = ["linkedin", "facebook", "instagram", "x"];
 
 export const listRecentArticles: CrewTool = {
@@ -46,22 +46,30 @@ export const publishArticlePost: CrewTool = {
     const article = await getArticle(slug);
     if (!article) return { ok: false, text: "No published article has that slug." };
 
-    let channels: string[] = [];
+    // John chose the channels when he set the playbook. Post there and nowhere else.
+    const chosen = [...new Set((ctx.business.playbook?.channels ?? []).map((c) => c.trim().toLowerCase()).map((c) => (c === "twitter" ? "x" : c)))].filter((c) => CHANNELS.includes(c));
+    if (!chosen.length) {
+      const reason = "The playbook names no social channel, so nothing is posted. John can add one by telling Tess.";
+      await refuse(ctx, this.name, { station: this.station, refusedSummary: `did not post "${article.title}"` }, "blocked", reason);
+      return { ok: false, text: reason };
+    }
+
+    let channels: string[] = chosen;
     return act(
       ctx,
       this.name,
       input,
       {
         action: {},
-        channels: CHANNELS,
+        channels: chosen,
         station: this.station,
         summary: `published a post for "${article.title}"`,
         refusedSummary: `did not post "${article.title}"`,
-        // Filled in by execute before the step is written.
+        // The chosen channels while in flight; the ones actually posted to afterwards.
         get payload() { return { slug, channels }; },
       },
       async () => {
-        let result = await createArticleSocialDraft(ctx.sb, article, "tess");
+        let result = await createArticleSocialDraft(ctx.sb, article, "tess", { platforms: chosen });
         if (result.state === "exists") return { ok: false, text: "That article already has a social post." };
         if (result.state === "failed") return { ok: false, text: `The post was not created: ${result.message}` };
         if (result.state === "created") {

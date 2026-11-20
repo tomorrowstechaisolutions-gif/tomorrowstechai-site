@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildAdvisorContext } from "@/lib/dashboard/advisor-context";
+import { chicagoDate } from "@/lib/time/chicago";
 import { spendCentsToday } from "./gate-state";
 import { loadStepsSince } from "./log";
 import type { Agent, AgentSlug, Business, Goal, Run, Step, StepKind } from "./types";
@@ -20,6 +21,8 @@ export type Brief = {
   since: string;
   business: { id: string; name: string; mode: Business["mode"]; hasPlaybook: boolean } | null;
   setupNeeded: boolean;
+  /** Launched, but with no target for the current period: the crew runs no shifts until one is set. */
+  noTarget: boolean;
   crewPaused: boolean;
   didWhileOut: { agent: string; summary: string; kind: StepKind; at: string }[];
   needsJohn: { id: string; title: string }[];
@@ -29,6 +32,8 @@ export type Brief = {
   spendCentsToday: number;
   capCents: number;
   rulesCount: number;
+  /** The newest standing rules, in John's words, so he can see what was saved. */
+  rules: string[];
   snapshot: string;
 };
 
@@ -91,13 +96,13 @@ async function progress(sb: SupabaseClient, goal: Goal): Promise<number | null> 
 }
 
 export async function buildBrief(sb: SupabaseClient, sinceIso: string): Promise<Brief> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = chicagoDate();
   const [bizRes, agentRes, stateRes, actionRes, ruleRes, runRes, steps, spend, context] = await Promise.all([
     sb.from("ai_businesses").select("*"),
     sb.from("ai_agents").select("*"),
     sb.from("ai_crew_state").select("paused").limit(1).maybeSingle(),
     sb.from("ai_actions").select("id, title, status, proposed_by, created_at").eq("status", "proposed").eq("proposed_by", "ai").order("created_at", { ascending: false }).limit(20),
-    sb.from("ai_rules").select("id").eq("active", true),
+    sb.from("ai_rules").select("id, text, created_at").eq("active", true).order("created_at", { ascending: false }),
     sb.from("ai_runs").select("id, agent_id, status, trigger").in("status", ["running", "waiting"]).eq("trigger", "shift"),
     loadStepsSince(sb, sinceIso, 400),
     spendCentsToday(sb),
@@ -136,6 +141,7 @@ export async function buildBrief(sb: SupabaseClient, sinceIso: string): Promise<
     since: sinceIso,
     business: business ? { id: business.id, name: business.name, mode: business.mode, hasPlaybook: Boolean(business.playbook?.sellsTo) } : null,
     setupNeeded: !business || business.mode === "setup",
+    noTarget: business?.mode === "launch" && targets.length === 0,
     crewPaused: Boolean(stateRes.data?.paused),
     didWhileOut: steps.filter((s) => s.kind !== "read").map((s) => ({ agent: nameOf.get(s.agent_id) ?? "A bot", summary: s.summary, kind: s.kind, at: s.created_at })),
     needsJohn: ((actionRes.data ?? []) as { id: string; title: string }[]).map((a) => ({ id: a.id, title: a.title })),
@@ -144,6 +150,7 @@ export async function buildBrief(sb: SupabaseClient, sinceIso: string): Promise<
     spendCentsToday: spend,
     capCents: business?.caps?.spendCentsPerDay ?? 0,
     rulesCount: (ruleRes.data ?? []).length,
+    rules: ((ruleRes.data ?? []) as { text: string }[]).slice(0, 6).map((r) => r.text),
     snapshot: context?.snapshot ?? "",
   };
 }
@@ -161,6 +168,7 @@ export function briefText(brief: Brief): string {
         : "This business has no confirmed playbook, so nothing can be sent. Your first job is the setup interview."
     );
   }
+  if (brief.noTarget) lines.push("There is no target for the current period, so the crew is not running shifts. Tell John, ask him for this month's target, and save it with set_target.");
   if (brief.crewPaused) lines.push("The whole crew is paused by John.");
 
   lines.push("", "What the crew did since John was last here:");

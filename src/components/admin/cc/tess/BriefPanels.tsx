@@ -114,7 +114,7 @@ export function RightPanels({ brief, busy, onPauseBot }: { brief: Brief; busy: b
             );
           })
         ) : (
-          <p>No target is set. Tell Tess what you want this month and she will save it.</p>
+          <p>{brief.noTarget ? "No target is set for this period, so the crew is not running shifts. Tell Tess what you want this month and she will save it." : "No target is set. Tell Tess what you want this month and she will save it."}</p>
         )}
       </section>
 
@@ -138,6 +138,21 @@ export function RightPanels({ brief, busy, onPauseBot }: { brief: Brief; busy: b
           Open the floor →
         </Link>
       </section>
+
+      {brief.rules.length ? (
+        <section className={styles.panel}>
+          <h2>
+            Rules Tess has saved <span>{brief.rulesCount}</span>
+          </h2>
+          {brief.rules.map((rule, i) => (
+            <div key={i} className={styles.did}>
+              <i />
+              <div>{rule}</div>
+            </div>
+          ))}
+          <p>Every bot follows these. If one is wrong, tell Tess.</p>
+        </section>
+      ) : null}
     </>
   );
 }

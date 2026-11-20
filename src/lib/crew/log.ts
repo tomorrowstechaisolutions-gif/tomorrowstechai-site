@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Agent, Run, RunStatus, Step } from "./types";
+import type { Agent, Run, RunStatus, Step, StepKind } from "./types";
 
 /**
  * The record of what the crew does.
@@ -108,6 +108,12 @@ export async function logStep(sb: SupabaseClient, run: Run, step: NewStep): Prom
   const { error: countError } = await sb.from("ai_runs").update({ steps_taken: seq }).eq("id", run.id);
   if (countError) fail("Could not count the step", countError);
   return { step: data as Step, duplicate: false };
+}
+
+/** Record how a claimed step turned out. */
+export async function settleStep(sb: SupabaseClient, stepId: string, outcome: { kind: StepKind; summary: string; payload: Record<string, unknown> }): Promise<void> {
+  const { error } = await sb.from("ai_steps").update({ kind: outcome.kind, summary: outcome.summary.slice(0, 300), payload: outcome.payload }).eq("id", stepId);
+  if (error) fail("Could not record the step's outcome", error);
 }
 
 export async function finishRun(sb: SupabaseClient, runId: string, status: RunStatus, error?: string): Promise<void> {

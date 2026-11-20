@@ -76,7 +76,10 @@ create table if not exists public.ai_runs (
   started_by   uuid references auth.users(id) on delete set null,
   started_at   timestamptz not null default now(),
   finished_at  timestamptz,
-  error        text
+  error        text,
+  -- A worker holds a run while it advances it, so two cron ticks (or a tick
+  -- and a chat) never work the same run at once. Expires on its own.
+  locked_until timestamptz
 );
 create index if not exists ai_runs_status_agent_idx on public.ai_runs (status, agent_id);
 
@@ -118,6 +121,17 @@ create table if not exists public.ai_crew_state (
 insert into public.ai_crew_state (id, paused) values (true, false) on conflict (id) do nothing;
 
 -- When each admin last opened Tess, so "while you were out" has a start.
+-- One row per model call, so the daily spend limit counts a call on the day
+-- it was made, however long its run has been open.
+create table if not exists public.ai_spend (
+  id         uuid primary key default gen_random_uuid(),
+  run_id     uuid references public.ai_runs(id) on delete set null,
+  agent_id   uuid references public.ai_agents(id) on delete set null,
+  micro_usd  bigint not null check (micro_usd >= 0),
+  created_at timestamptz not null default now()
+);
+create index if not exists ai_spend_created_idx on public.ai_spend (created_at);
+
 create table if not exists public.ai_visits (
   user_id   uuid primary key references auth.users(id) on delete cascade,
   last_seen timestamptz not null default now(),
@@ -128,7 +142,7 @@ create table if not exists public.ai_visits (
 do $$
 declare t text;
 begin
-  foreach t in array array['ai_businesses', 'ai_goals', 'ai_agents', 'ai_runs', 'ai_steps', 'ai_rules', 'ai_crew_state', 'ai_visits'] loop
+  foreach t in array array['ai_businesses', 'ai_goals', 'ai_agents', 'ai_runs', 'ai_steps', 'ai_rules', 'ai_crew_state', 'ai_visits', 'ai_spend'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists %I on public.%I', t || '_admin_select', t);
     execute format('create policy %I on public.%I for select to authenticated using (public.is_admin())', t || '_admin_select', t);

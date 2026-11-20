@@ -3,7 +3,7 @@ import { loadLeadsNeedingAttention } from "@/lib/dashboard/sales";
 import { getThread, gmailProfile, listThreads, sendMail } from "@/lib/google/gmail";
 import { emailBlock } from "@/lib/leads/direct-email";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/supabase/types";
-import { act, GOAL_FIELDS, read, refuse, SIGNATURE, str, type CrewTool } from "./core";
+import { act, GOAL_FIELDS, outside, read, refuse, SIGNATURE, str, type CrewTool } from "./core";
 
 /**
  * The sales desk's tools: find leads that have gone quiet, read what was said,
@@ -48,11 +48,14 @@ export const readLead: CrewTool = {
     if (error) throw new Error(`Could not read the lead: ${error.message}`);
     if (!lead) return { ok: false, text: "No lead has that id." };
     const { data: events } = await ctx.sb.from("lead_events").select("type, body, actor, created_at").eq("lead_id", id).order("created_at", { ascending: false }).limit(10);
-    const text = [
-      JSON.stringify(lead),
-      "Recent events (newest first):",
-      ...(events ?? []).map((e) => `${e.created_at} ${e.type} by ${e.actor ?? "system"}: ${e.body ?? ""}`),
-    ].join("\n");
+    // The lead wrote some of this (their form message, their replies).
+    const text = outside(
+      [
+        JSON.stringify(lead),
+        "Recent events (newest first):",
+        ...(events ?? []).map((e) => `${e.created_at} ${e.type} by ${e.actor ?? "system"}: ${e.body ?? ""}`),
+      ].join("\n")
+    );
     return read(ctx, this.name, this.station, `read ${nameOf(lead as LeadRow)}'s record`, text);
   },
 };
@@ -75,7 +78,7 @@ export const readLeadEmails: CrewTool = {
       .slice(-4)
       .map((m) => `${m.date ?? ""} from ${m.from.map((a) => a.email).join(", ")}:\n${(m.text ?? "").slice(0, 1500)}`)
       .join("\n---\n");
-    return read(ctx, this.name, this.station, `read the email thread with ${nameOf(lead as LeadRow)}`, text);
+    return read(ctx, this.name, this.station, `read the email thread with ${nameOf(lead as LeadRow)}`, outside(text));
   },
 };
 
@@ -114,6 +117,14 @@ export const sendLeadEmail: CrewTool = {
     if (block.blocked) {
       await refuse(ctx, this.name, base, "blocked", block.reason);
       return { ok: false, text: block.reason };
+    }
+    // Someone who unsubscribed is never emailed by a bot. Checked on the
+    // lead's own record, so it does not depend on the suppression list
+    // matching the address letter for letter.
+    if (lead.unsubscribed_at) {
+      const reason = "This person unsubscribed. They are never emailed.";
+      await refuse(ctx, this.name, base, "blocked", reason);
+      return { ok: false, text: reason };
     }
     const to = (lead.email as string).trim();
 

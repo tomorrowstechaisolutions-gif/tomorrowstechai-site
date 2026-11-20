@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { chicagoDate } from "@/lib/time/chicago";
 import type { AgentSlug, Business } from "./types";
 
 /**
@@ -19,7 +20,7 @@ export async function confirmPlaybook(sb: SupabaseClient, businessId: string): P
   if (!business) throw new Error("No such business.");
   if (!business.playbook?.sellsTo) throw new Error("There is no playbook to confirm yet. Ask Tess to set one up first.");
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = chicagoDate();
   const { data: goals, error: goalError } = await sb.from("ai_goals").select("id").eq("business_id", businessId).gte("period_end", today).limit(1);
   if (goalError) fail("Could not load the targets", goalError);
   if (!goals?.length) throw new Error("There is no target for this period yet. Ask Tess to set one first.");

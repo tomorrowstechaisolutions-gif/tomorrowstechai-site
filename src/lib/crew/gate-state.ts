@@ -17,9 +17,11 @@ export function todayStartIso(now: number = Date.now()): string {
 
 /** What the crew has spent on AI calls today, in cents. */
 export async function spendCentsToday(sb: SupabaseClient, now: number = Date.now()): Promise<number> {
-  const { data, error } = await sb.from("ai_runs").select("cost_micro_usd, started_at").gte("started_at", todayStartIso(now));
+  // One row per model call, so a long conversation or a resumed shift is
+  // counted on the day each call was made, not the day its run began.
+  const { data, error } = await sb.from("ai_spend").select("micro_usd, created_at").gte("created_at", todayStartIso(now));
   if (error) throw new Error(`Could not read today's AI spend: ${error.message}`);
-  const micro = (data ?? []).reduce((t, r) => t + Number(r.cost_micro_usd ?? 0), 0);
+  const micro = (data ?? []).reduce((t, r) => t + Number(r.micro_usd ?? 0), 0);
   return Math.round(micro / 10_000);
 }
 

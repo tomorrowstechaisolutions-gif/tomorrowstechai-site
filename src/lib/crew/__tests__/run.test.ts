@@ -177,7 +177,7 @@ describe("advanceRun", () => {
 
   it("stops as paused_budget before calling the model when the day's spend is used", async () => {
     const { db, run, tables } = setup();
-    tables.ai_runs.push({ id: "run-old", agent_id: "agent-ft", business_id: "biz-1", trigger: "shift", status: "done", transcript: [], steps_taken: 3, cost_micro_usd: 5_000_000, started_at: new Date().toISOString() });
+    (tables.ai_spend ??= []).push({ id: "spend-old", run_id: "run-old", micro_usd: 5_000_000, created_at: new Date().toISOString() });
     const { call } = script([]);
 
     const result = await advanceRun(db, "run-1", { deadlineAt: later(), call });

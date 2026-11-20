@@ -9,8 +9,9 @@
  * `failNext(table, op)` makes the next matching call return a database error
  * once, which is how a test plays out "the write failed, then the retry ran".
  *
- * It is not Postgres: no constraints, no triggers, no joins. A test that
- * needs one of those is testing the database, not this code.
+ * It is not Postgres: no triggers, no joins, and no constraints beyond the
+ * unique keys a test declares in `options.unique` (a second insert with the
+ * same values fails with code 23505, which is how a race is played out).
  */
 
 export type Row = Record<string, unknown>;
@@ -25,7 +26,7 @@ function cmp(a: unknown, b: unknown): number {
   return x < y ? -1 : x > y ? 1 : 0;
 }
 
-export function fakeSupabase(initial: Tables = {}) {
+export function fakeSupabase(initial: Tables = {}, options: { unique?: Record<string, string[]> } = {}) {
   const tables: Tables = initial;
   const failures: { table: string; op: Op; message: string }[] = [];
   let nextId = 1;
@@ -56,6 +57,11 @@ export function fakeSupabase(initial: Tables = {}) {
 
       if (op === "insert") {
         const list = (Array.isArray(values) ? values : [values]).map((v) => ({ id: `${table}-${nextId++}`, ...v }));
+        // A unique key the test declared: a second row with the same values is refused, as Postgres would.
+        const keys = options.unique?.[table];
+        if (keys && list.some((v: Row) => keys.every((k) => v[k] != null) && rows.some((r) => keys.every((k) => r[k] === v[k])))) {
+          return { data: null, error: { message: "duplicate key value violates unique constraint", code: "23505" }, count: null };
+        }
         rows.push(...list);
         return { data: list, error: null, count: null };
       }

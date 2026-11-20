@@ -77,9 +77,12 @@ export type SocialDraftResult =
 export async function createArticleSocialDraft(
   db: SupabaseClient,
   a: Pick<ArticleRecord, "title" | "summary" | "slug" | "tags" | "hero">,
-  actor: string
+  actor: string,
+  /** `platforms` limits the post to those platforms; left out, every destination is used. */
+  opts: { platforms?: string[] } = {}
 ): Promise<SocialDraftResult> {
   try {
+    const destinations = DESTINATIONS.filter((d) => !opts.platforms || opts.platforms.includes(d.platform));
     const base = articleUrl(a.slug);
     const { data: existing, error: findErr } = await db
       .from("social_posts")
@@ -95,10 +98,10 @@ export async function createArticleSocialDraft(
     const { data: accounts } = await db
       .from("social_accounts")
       .select("id, platform, display_name, handle, connected, status, posting_enabled")
-      .in("platform", DESTINATIONS.map((d) => d.platform));
+      .in("platform", destinations.map((d) => d.platform));
 
     const image = a.hero?.src ? absolute(a.hero.src) : null;
-    const candidates = DESTINATIONS.filter((d) => !d.needsImage || image).map((d) => {
+    const candidates = destinations.filter((d) => !d.needsImage || image).map((d) => {
       const account = (accounts ?? []).find(
         (x) => x.platform === d.platform && (d.match.test(x.display_name ?? "") || d.match.test(x.handle ?? ""))
       );

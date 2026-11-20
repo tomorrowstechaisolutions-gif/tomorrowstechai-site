@@ -95,7 +95,8 @@ export async function POST(req: Request) {
             if (event.type === "tool") send({ type: "state", state: "thinking" });
           },
         });
-        if (result.status === "paused_budget") send({ type: "error", message: "Today's AI spending limit has been reached, so I have to stop here until tomorrow." });
+        if (result.busy) send({ type: "error", message: "I am still working on your last message. Give me a moment and ask again." });
+        else if (result.status === "paused_budget") send({ type: "error", message: "Today's AI spending limit has been reached, so I have to stop here until tomorrow." });
         else if (result.status === "waiting") send({ type: "error", message: "That took longer than I get in one go. Ask me again and I will pick up where I stopped." });
         else if (result.status === "failed" || result.status === "stopped") send({ type: "error", message: "I could not finish that answer. Try asking again." });
       } catch (err) {

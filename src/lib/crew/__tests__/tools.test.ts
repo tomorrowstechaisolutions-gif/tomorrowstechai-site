@@ -27,7 +27,7 @@ import { SIGNATURE, TOOLS, toolsFor, toolStations, type ToolContext } from "../t
 import type { Agent, Business, Goal, Run } from "../types";
 
 const business: Business = {
-  id: "biz-1", slug: "tomorrows-tech-ai", name: "Tomorrow's Tech AI", mode: "launch", playbook: null, playbook_confirmed_at: "2026-11-20T00:00:00Z",
+  id: "biz-1", slug: "tomorrows-tech-ai", name: "Tomorrow's Tech AI", mode: "launch", playbook: { sellsTo: "Contractors", offers: [], voice: "Plain", offLimits: [], channels: ["email", "linkedin", "facebook"] }, playbook_confirmed_at: "2026-11-20T00:00:00Z",
   caps: { spendCentsPerDay: 500, firstEmailsPerDay: 5, postsPerDayPerChannel: 2 },
 };
 const agent: Agent = { id: "agent-ft", slug: "follow-through", name: "Follow-through", rank: "desk", desk: "sales", business_id: "biz-1", model: "claude-sonnet-5-5", schedule_minutes: 120, paused: false, last_shift_at: null };

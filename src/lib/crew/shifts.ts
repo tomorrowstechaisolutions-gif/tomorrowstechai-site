@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { chicagoDate } from "@/lib/time/chicago";
 import { dueAgents } from "./due";
 import { startRun } from "./log";
 import { advanceRun, type ModelCall } from "./run";
@@ -42,6 +43,12 @@ export async function crewOwnsLeadFollowups(sb: SupabaseClient): Promise<boolean
  * A new shift starts only for a bot whose business is in launch mode. The
  * gate would refuse everything such a shift tried anyway; not starting it
  * means no AI spend and no noise in the log before John confirms a playbook.
+ * The same goes for a business with no target for the current period (the
+ * month turned over and nothing was set): every action would be refused for
+ * want of a goal, so no shift starts until there is one.
+ *
+ * Two ticks arriving together start one shift: each must win a
+ * compare-and-set on the bot's last_shift_at before it may start.
  */
 export async function runShifts(sb: SupabaseClient, opts: { deadlineAt: number; call?: ModelCall }): Promise<{ advanced: number; started: number }> {
   if (await crewPaused(sb)) return { advanced: 0, started: 0 };
@@ -55,6 +62,9 @@ export async function runShifts(sb: SupabaseClient, opts: { deadlineAt: number; 
   const { data: bizRows, error: bizError } = await sb.from("ai_businesses").select("id, mode");
   if (bizError) throw new Error(`Could not load the businesses: ${bizError.message}`);
   const launched = new Set(((bizRows ?? []) as { id: string; mode: string }[]).filter((b) => b.mode === "launch").map((b) => b.id));
+  const { data: goalRows, error: goalError } = await sb.from("ai_goals").select("business_id, period_end").gte("period_end", chicagoDate());
+  if (goalError) throw new Error(`Could not load the targets: ${goalError.message}`);
+  const hasTarget = new Set(((goalRows ?? []) as { business_id: string }[]).map((g) => g.business_id));
   const agents = (agentRows ?? []) as Agent[];
   const open = (runRows ?? []) as Pick<Run, "id" | "agent_id" | "status" | "trigger">[];
 
@@ -69,7 +79,11 @@ export async function runShifts(sb: SupabaseClient, opts: { deadlineAt: number; 
 
   for (const agent of dueAgents(agents, open, Date.now())) {
     if (Date.now() >= opts.deadlineAt) break;
-    if (!agent.business_id || !launched.has(agent.business_id)) continue;
+    if (!agent.business_id || !launched.has(agent.business_id) || !hasTarget.has(agent.business_id)) continue;
+    const claim = sb.from("ai_agents").update({ last_shift_at: new Date().toISOString() }).eq("id", agent.id);
+    const { data: won, error: claimError } = await (agent.last_shift_at ? claim.eq("last_shift_at", agent.last_shift_at) : claim.is("last_shift_at", null)).select("id");
+    if (claimError) throw new Error(`Could not claim the shift: ${claimError.message}`);
+    if (!won?.length) continue; // Another tick started this bot a moment ago.
     const run = await startRun(sb, { agent, businessId: agent.business_id, trigger: "shift" });
     await advanceRun(sb, run.id, { deadlineAt: opts.deadlineAt, call: opts.call });
     started += 1;

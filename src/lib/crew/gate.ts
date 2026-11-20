@@ -71,6 +71,9 @@ function no(reason: GateRefusal, message: string): GateDecision {
  * else, so a paused crew never looks like a crew with a missing goal.
  */
 export function checkAction(action: GateAction, state: GateState): GateDecision {
+  // First, because it is never carried out and filing it changes nothing
+  // outward: John's list stays open while the crew is paused or being set up.
+  if (action.alwaysJohn) return no("always_john", "Only John can do this. It has been put on his list instead of carried out.");
   if (state.crewPaused) return no("crew_paused", "The whole crew is paused. Nothing is sent or changed until John resumes it.");
   if (state.agentPaused) return no("agent_paused", "This bot is paused. It can read, but it cannot send or change anything.");
   if (state.mode !== "launch") {
@@ -81,7 +84,6 @@ export function checkAction(action: GateAction, state: GateState): GateDecision 
         : "This business is in maintenance mode. The crew watches it and flags problems, and sends nothing."
     );
   }
-  if (action.alwaysJohn) return no("always_john", "Only John can do this. It has been put on his list instead of carried out.");
   if (!action.goalId || !action.expectation?.trim()) {
     return no("no_goal", "Every action needs a goal it serves and what is expected to happen. This one has neither, so it was not done.");
   }
