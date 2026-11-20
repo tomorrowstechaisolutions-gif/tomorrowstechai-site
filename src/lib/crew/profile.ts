@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { aboutJohnText, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, type Note, type NoteList, type TessSettings } from "./tess-modes";
+import { aboutJohnBlocks, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, TOPIC_IDS, type Note, type NoteList, type TessSettings } from "./tess-modes";
 
 /**
  * Tess's profile for one admin: the mode and dials he picked, what he wrote
@@ -64,12 +64,13 @@ export async function saveTessAbout(sb: SupabaseClient, userId: string, about: s
 }
 
 /** Add a note to a list. The same note twice is kept once; a full list drops its oldest. */
-export async function addNote(sb: SupabaseClient, userId: string, list: NoteList, text: string, now: number = Date.now()): Promise<void> {
+export async function addNote(sb: SupabaseClient, userId: string, list: NoteList, text: string, now: number = Date.now(), topic?: string): Promise<void> {
   const clean = text.trim().replace(/\s+/g, " ").slice(0, LIMITS.note);
   if (!clean) return;
   const current = (await loadTessProfile(sb, userId))[list];
   if (current.some((n) => n.text.toLowerCase() === clean.toLowerCase())) return;
-  const next = [...current, { id: randomUUID(), text: clean, at: new Date(now).toISOString() }].slice(-LIMITS.notes);
+  const fresh: Note = { id: randomUUID(), text: clean, at: new Date(now).toISOString(), ...(topic && TOPIC_IDS.includes(topic) ? { topic } : {}) };
+  const next = [...current, fresh].slice(-LIMITS.notes);
   await write(sb, userId, { [list]: next });
 }
 
@@ -80,7 +81,6 @@ export async function removeNote(sb: SupabaseClient, userId: string, list: NoteL
 
 /** What goes to Tess alongside John's message: who he is, his businesses, then how to answer. */
 export function contextBlocks(profile: TessProfile): string[] {
-  const about = aboutJohnText(profile.about, profile.learned);
   const businesses = businessesText(profile.businesses);
-  return [...(about ? [about] : []), ...(businesses ? [businesses] : []), howToAnswerText(profile)];
+  return [...aboutJohnBlocks(profile.about, profile.learned), ...(businesses ? [businesses] : []), howToAnswerText(profile)];
 }
