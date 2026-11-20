@@ -6,11 +6,12 @@ import { redirect } from "next/navigation";
 import { randomBytes } from "node:crypto";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import {
-  DEFAULT_FOOTER, DEFAULT_TERMS, canTransition, dueDateFor,
+  canTransition, dueDateFor,
   type InvoiceItemKind, type InvoiceStatus, type PaymentMethod, type PaymentTerm,
   ITEM_KINDS, PAYMENT_METHODS, PAYMENT_TERMS, TERM_LABELS,
 } from "@/lib/invoices/config";
 import { formatMoney, outstandingCents, daysOverdue } from "@/lib/invoices/pricing";
+import { businessDefaults } from "@/lib/settings/store";
 import { invoiceUrl, logInvoiceEvent, recomputeInvoiceTotals } from "@/lib/invoices/service";
 import {
   sendInvoiceEmail, sendInvoiceReceipt, sendInvoiceReminder, notifyAdminInvoice,
@@ -254,8 +255,8 @@ export async function createInvoiceAction(formData: FormData) {
       payment_terms: term,
       recurring_interval: str(formData, "recurring_interval", 10) === "year" ? "year" : "month",
       recurring_starts_on: isoDateOrNull(str(formData, "recurring_starts_on", 20)),
-      terms: str(formData, "terms", 6000) || DEFAULT_TERMS,
-      footer_note: str(formData, "footer_note", 2000) || DEFAULT_FOOTER,
+      terms: str(formData, "terms", 6000) || (await businessDefaults()).invoiceTermsText,
+      footer_note: str(formData, "footer_note", 2000) || (await businessDefaults()).invoiceFooter,
       notes: str(formData, "notes", 4000) || null,
       notes_internal: str(formData, "notes_internal", 6000) || null,
       public_token: newInvoiceToken(),
@@ -388,6 +389,7 @@ export async function createInvoiceFromProposalAction(formData: FormData) {
   }
 
   const issueDate = today();
+  const defaults = await businessDefaults();
 
   const { data, error } = await supabase
     .from("invoices")
@@ -411,12 +413,12 @@ export async function createInvoiceFromProposalAction(formData: FormData) {
       client_billing_address: p.client_billing_address,
       currency: p.currency,
       issue_date: issueDate,
-      due_date: dueDateFor("due_on_receipt", issueDate),
-      payment_terms: "due_on_receipt",
+      due_date: dueDateFor(defaults.invoiceTerm, issueDate),
+      payment_terms: defaults.invoiceTerm,
       recurring_interval: p.recurring_interval,
       recurring_starts_on: null,
-      terms: DEFAULT_TERMS,
-      footer_note: DEFAULT_FOOTER,
+      terms: defaults.invoiceTermsText,
+      footer_note: defaults.invoiceFooter,
       notes_internal: `Raised from ${p.proposal_number} on ${issueDate}.`,
       public_token: newInvoiceToken(),
       billing: p.recurring_price_cents > 0 ? "monthly" : "one_time",
@@ -506,7 +508,7 @@ export async function updateInvoiceAction(formData: FormData) {
       payment_terms: term,
       recurring_interval: str(formData, "recurring_interval", 10) === "year" ? "year" : "month",
       recurring_starts_on: isoDateOrNull(str(formData, "recurring_starts_on", 20)),
-      terms: str(formData, "terms", 6000) || DEFAULT_TERMS,
+      terms: str(formData, "terms", 6000) || (await businessDefaults()).invoiceTermsText,
       footer_note: str(formData, "footer_note", 2000) || null,
       notes: str(formData, "notes", 4000) || null,
       notes_internal: str(formData, "notes_internal", 6000) || null,

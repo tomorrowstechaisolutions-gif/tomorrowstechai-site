@@ -329,6 +329,7 @@ export async function emailMeetingAction(formData: FormData) {
 export async function disconnectGoogleAction() {
   await requireAdmin();
   await disconnectGoogle();
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/system/integrations");
   revalidatePath("/admin/meetings");
+  redirect("/admin/system/integrations?google=disconnected#google-account");
 }

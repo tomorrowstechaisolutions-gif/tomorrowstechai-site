@@ -6,13 +6,13 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { currentAgreement } from "@/lib/proposals/agreement";
 import {
-  DEFAULT_VALID_DAYS,
   PAYMENT_MODE_ON_WRITE,
   canTransition,
   templateByKey,
   type ProposalStatus,
 } from "@/lib/proposals/config";
 import { computePricing } from "@/lib/proposals/pricing";
+import { businessDefaults } from "@/lib/settings/store";
 import { newProposalToken, proposalUrl, logProposalEvent } from "@/lib/proposals/service";
 import { sendProposalEmail } from "@/lib/proposals/emails";
 import type { Proposal, ProposalItemType, ProposalSectionType } from "@/lib/proposals/types";
@@ -78,8 +78,9 @@ function isoDateOrNull(raw: string): string | null {
   return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
 }
 
-function defaultValidUntil(): string {
-  const date = new Date(Date.now() + DEFAULT_VALID_DAYS * 86_400_000);
+async function defaultValidUntil(): Promise<string> {
+  const { proposalValidDays } = await businessDefaults();
+  const date = new Date(Date.now() + proposalValidDays * 86_400_000);
   return date.toISOString().slice(0, 10);
 }
 
@@ -357,7 +358,7 @@ export async function createProposalAction(formData: FormData) {
       turnaround_note: str(formData, "turnaround_note", 500) || null,
       revision_limit: intOrNull(str(formData, "revision_limit", 5)),
       hosting_note: str(formData, "hosting_note", 2000) || template.hostingNote,
-      valid_until: isoDateOrNull(str(formData, "valid_until", 20)) ?? defaultValidUntil(),
+      valid_until: isoDateOrNull(str(formData, "valid_until", 20)) ?? (await defaultValidUntil()),
       public_token: newProposalToken(),
       agreement_version_id: agreement.id,
       notes_internal: str(formData, "notes_internal", 6000) || null,
@@ -491,7 +492,7 @@ export async function duplicateProposalAction(formData: FormData) {
       turnaround_note: original.turnaround_note,
       revision_limit: original.revision_limit,
       hosting_note: original.hosting_note,
-      valid_until: defaultValidUntil(),
+      valid_until: await defaultValidUntil(),
       public_token: newProposalToken(),
       // A copy carries today's wording, not the wording of a year ago.
       agreement_version_id: agreement?.id ?? original.agreement_version_id,

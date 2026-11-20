@@ -582,7 +582,7 @@ function SendingHealthPanel({ board }: { board: Board }) {
       title="Sending Health"
       sub={h.label}
       icon={<IconPulse size={15} />}
-      action={{ href: "/admin/settings", label: "View Details" }}
+      action={{ href: "/admin/system/integrations", label: "View Details" }}
     >
       <ul className="cc-health">
         {rows.map((row) => (

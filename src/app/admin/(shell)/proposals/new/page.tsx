@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { currentAgreement } from "@/lib/proposals/agreement";
 import { loadLinkCandidates } from "@/lib/proposals/queries";
-import { DEFAULT_VALID_DAYS, templateByKey } from "@/lib/proposals/config";
+import { templateByKey } from "@/lib/proposals/config";
+import { businessDefaults } from "@/lib/settings/store";
 import { createProposalAction } from "@/app/admin/proposal-actions";
 import ProposalBuilder, { type BuilderInitial, type BuilderItem } from "@/components/admin/cc/ProposalBuilder";
 
@@ -20,7 +21,9 @@ const DEFAULT_PACKAGE = "classic_399";
  * more to the point, a value that differs between render and hydration.
  */
 async function defaultValidUntil(): Promise<string> {
-  return new Date(Date.now() + DEFAULT_VALID_DAYS * 86_400_000).toISOString().slice(0, 10);
+  // How long a proposal stays open is set on Settings → Business defaults.
+  const { proposalValidDays } = await businessDefaults();
+  return new Date(Date.now() + proposalValidDays * 86_400_000).toISOString().slice(0, 10);
 }
 
 function dollars(cents: number): string {

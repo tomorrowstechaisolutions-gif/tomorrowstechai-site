@@ -391,8 +391,8 @@ async function loadFollowupSteps(sb: SupabaseClient, win: CalendarWindow): Promi
 
   const labels: Record<string, string> = {
     confirmation: "Confirmation email",
-    followup_24h: "24-hour follow-up",
-    followup_72h: "72-hour follow-up",
+    followup_24h: "First follow-up",
+    followup_72h: "Second follow-up",
   };
 
   return ((data ?? []) as Row[]).map((row) => {

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { loadIntegrations, type Category, type Integration, type IntegrationState } from "@/lib/integrations/status";
 import { Panel, ErrorState } from "@/components/admin/cc/Panel";
 import { IconAlert } from "@/components/admin/cc/Icons";
+import { GoogleAccountPanel, googleOutcome, type GoogleStatus } from "@/components/admin/cc/integrations/GoogleAccountPanel";
+import { googleConnection } from "@/lib/google/oauth";
 import fin from "@/components/admin/cc/finance/finance.module.css";
 import styles from "@/components/admin/cc/finance/integrations.module.css";
 
@@ -33,11 +35,18 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
 
   let list: Integration[] = [];
   let error: string | null = null;
+  let google: GoogleStatus | null = null;
   try {
-    list = await loadIntegrations();
+    [list, google] = await Promise.all([loadIntegrations(), googleConnection().catch(() => null)]);
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Integrations could not be loaded.";
   }
+
+  // What a round trip to Google (connect, deny, disconnect) ended in.
+  const googleFlash = googleOutcome(
+    typeof params.google === "string" ? params.google : undefined,
+    typeof params.detail === "string" ? params.detail : undefined,
+  );
 
   const count = (s: IntegrationState) => list.filter((i) => i.state === s).length;
   const shown = filter === "all" ? list : list.filter((i) => i.state === filter);
@@ -56,6 +65,7 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
           <p>Every outside service the site runs on, whether it&apos;s actually working, and where to fix it.</p>
         </div>
       </div>
+      {googleFlash ? <div className={googleFlash.ok ? fin.flashOk : fin.flashErr} role="status">{googleFlash.text}</div> : null}
       {error ? <ErrorState message={error} /> : (
         <>
           <div className="cc-kpis">
@@ -89,6 +99,8 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
               })}
               {!shown.length ? <p className={fin.note}>Nothing in this group.</p> : null}
             </section>
+
+            <GoogleAccountPanel google={google} />
 
             <Panel title="How to read this" icon={<IconAlert size={15} />} className="cc-s12">
               <p className={fin.note} style={{ marginTop: 0 }}>

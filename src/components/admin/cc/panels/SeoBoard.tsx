@@ -59,7 +59,7 @@ function NotConnected({ what, reason, icon }: { what: string; reason: string; ic
       icon={icon}
       title={`${what} is not connected`}
       text={`${reason} Nothing is shown here rather than showing zeros, because no measurement has been taken yet.`}
-      cta={{ href: "/admin/settings", label: "Open settings" }}
+      cta={{ href: "/admin/system/integrations", label: "Open integrations" }}
     />
   );
 }

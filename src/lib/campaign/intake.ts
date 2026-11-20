@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { businessDefaults } from "@/lib/settings/store";
 import { scoreLead } from "./scoring";
 import type { ScoreReason } from "@/lib/supabase/types";
 
@@ -317,10 +318,12 @@ async function scheduleFollowups(leadId: string, isDuplicate: boolean) {
 
   const db = supabaseAdmin();
   const now = Date.now();
+  // The step names are historical; the actual delays come from Settings.
+  const { followupFirstHours, followupSecondHours } = await businessDefaults();
   const rows = [
     { step: "confirmation", due_at: new Date(now).toISOString() },
-    { step: "followup_24h", due_at: new Date(now + 24 * 3600 * 1000).toISOString() },
-    { step: "followup_72h", due_at: new Date(now + 72 * 3600 * 1000).toISOString() },
+    { step: "followup_24h", due_at: new Date(now + followupFirstHours * 3600 * 1000).toISOString() },
+    { step: "followup_72h", due_at: new Date(now + followupSecondHours * 3600 * 1000).toISOString() },
   ].map((r) => ({ ...r, lead_id: leadId, channel: "email", status: "pending" }));
 
   const { error } = await db.from("lead_followups").upsert(rows, {

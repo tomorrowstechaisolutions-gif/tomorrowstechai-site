@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * Three things have to be true before a token is stored: the visitor is an
  * admin, the `state` matches the cookie this server set a moment ago, and
  * Google returned a code rather than an error. Any one of them failing ends
- * in Settings with a message, never in a stored credential.
+ * on Integrations with a message, never in a stored credential.
  *
  * The code itself never reaches the browser as anything but a query string
  * Google put there; the exchange, the tokens and the storage all happen here.
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 function settings(request: NextRequest, params: string): NextResponse {
   const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
   const next = request.cookies.get("google_oauth_next")?.value;
-  const path = next && /^\/admin(\/[A-Za-z0-9/_-]*)?$/.test(next) ? next : "/admin/settings";
+  const path = next && /^\/admin(\/[A-Za-z0-9/_-]*)?$/.test(next) ? next : "/admin/system/integrations";
   const response = NextResponse.redirect(new URL(`${path}?${params}`, base));
   response.cookies.delete("google_oauth_state");
   response.cookies.delete("google_oauth_next");

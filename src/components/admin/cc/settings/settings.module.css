@@ -1,0 +1,38 @@
+/* Settings page. */
+
+.group { padding: 14px 0 4px; border-top: 1px solid var(--cc-line-soft); }
+.group:first-of-type { border-top: 0; padding-top: 0; }
+.groupHead { font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--cc-faint); margin: 0 0 4px; }
+.groupSub { font-size: .74rem; color: var(--cc-faint); line-height: 1.5; margin: 0 0 12px; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hint { font-size: .7rem; color: var(--cc-faint); line-height: 1.45; }
+.changed { color: var(--cc-accent); font-weight: 600; }
+
+.bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--cc-line-soft); }
+.bar form { margin: 0; }
+.state { font-size: .72rem; color: var(--cc-faint); margin-left: auto; text-align: right; }
+
+.sep { border: 0; border-top: 1px solid var(--cc-line-soft); margin: 16px 0; }
+.sub { font-size: .8rem; font-weight: 650; margin: 0 0 10px; }
+
+.roleForm { display: flex; gap: 6px; align-items: center; margin: 0; }
+.roleForm select { width: auto; min-width: 104px; padding: 4px 8px; font-size: .76rem; }
+.you { font-size: .66rem; color: var(--cc-accent); margin-left: 6px; font-weight: 600; }
+
+.remove summary { cursor: pointer; font-size: .72rem; color: var(--cc-faint); list-style: none; }
+.remove summary::-webkit-details-marker { display: none; }
+.remove summary:hover { color: #fca5a5; }
+.remove[open] summary { color: #fca5a5; margin-bottom: 6px; }
+.remove form { margin: 0; }
+
+.links { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.links a { display: grid; gap: 2px; padding: 9px 10px; margin: 0 -10px; border-radius: 9px; text-decoration: none; color: inherit; }
+.links a:hover { background: rgba(255, 255, 255, .035); }
+.links b { font-size: .82rem; font-weight: 600; color: var(--cc-text); }
+.links small { font-size: .72rem; color: var(--cc-faint); line-height: 1.45; }
+
+@media (max-width: 720px) {
+  .pair { grid-template-columns: 1fr; gap: 0; }
+  .state { margin-left: 0; text-align: left; flex-basis: 100%; }
+}

@@ -29,7 +29,7 @@ export default async function HealthPanel({ className = "" }: { className?: stri
             : `${degraded} need attention`
           : undefined
       }
-      action={{ href: "/admin/settings", label: "Settings" }}
+      action={{ href: "/admin/system/integrations", label: "Integrations" }}
       className={className}
       bodyClass="flush"
     >

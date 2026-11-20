@@ -343,8 +343,8 @@ export async function loadAlerts(sb: SupabaseClient, limit = 8): Promise<Alert[]
       category: "system",
       priority: "medium",
       title: "Automated follow-up is switched off",
-      detail: "CRON_SECRET is not set, so the 24h and 72h emails never run.",
-      href: "/admin/settings",
+      detail: "CRON_SECRET is not set, so the lead follow-up emails never run.",
+      href: "/admin/system/integrations",
     });
   }
 

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   if (!googleConfigured()) {
     return NextResponse.redirect(
-      new URL("/admin/settings?google=unconfigured", process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com")
+      new URL("/admin/system/integrations?google=unconfigured", process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com")
     );
   }
 
