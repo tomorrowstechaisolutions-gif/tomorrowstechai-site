@@ -40,6 +40,8 @@ export function useRecorderInput(opts: { onFinal?: (text: string) => void; holdS
   const [live, setLive] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The transcription service refused our key. The page uses the browser's recognition until it is reloaded. */
+  const [refused, setRefused] = useState(false);
   const session = useRef<Session | null>(null);
   /** start() was called and the microphone has not opened yet. */
   const opening = useRef(false);
@@ -85,7 +87,8 @@ export function useRecorderInput(opts: { onFinal?: (text: string) => void; holdS
     try {
       const res = await fetch("/api/admin/tess/hear", { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
       if (res.status !== 200) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        const body = (await res.json().catch(() => null)) as { error?: string; fallback?: boolean } | null;
+        if (res.status === 204 || body?.fallback) setRefused(true);
         setError(body?.error ?? "I could not make out the recording. Try again, or type it.");
         return;
       }
@@ -189,7 +192,7 @@ export function useRecorderInput(opts: { onFinal?: (text: string) => void; holdS
   );
 
   useEffect(() => {
-    if (!opts.holdSpace || !supported) return;
+    if (!opts.holdSpace || !supported || refused) return;
     const down = (e: KeyboardEvent) => {
       if (e.code !== "Space" || !spaceBarTalks(e.target as HTMLElement | null)) return;
       e.preventDefault(); // also stops a focused button being pressed by the space bar
@@ -206,7 +209,7 @@ export function useRecorderInput(opts: { onFinal?: (text: string) => void; holdS
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [opts.holdSpace, supported, start, stop]);
+  }, [opts.holdSpace, supported, refused, start, stop]);
 
-  return { supported, listening, live, working, start, stop, transcript: "", error };
+  return { supported, listening, live, working, refused, start, stop, transcript: "", error };
 }

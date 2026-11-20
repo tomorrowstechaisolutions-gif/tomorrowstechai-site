@@ -73,6 +73,8 @@ export type Run = {
   status: RunStatus;
   /** The conversation with the model, append-only. */
   transcript: unknown[];
+  /** The instructions and tool definitions this run started with, replayed on every call (see run.ts). */
+  frame?: unknown;
   steps_taken: number;
   /** What this run has cost in AI calls, in millionths of a dollar. */
   cost_micro_usd: number;

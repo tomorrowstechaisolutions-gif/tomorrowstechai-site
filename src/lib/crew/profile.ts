@@ -1,7 +1,10 @@
 import "server-only";
+import { chicagoDate } from "@/lib/time/chicago";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { aboutJohnBlocks, businessesText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, TOPIC_IDS, type Note, type NoteList, type TessSettings } from "./tess-modes";
+import { stateFor } from "./roles";
+import type { Business, Goal, Rule } from "./types";
+import { aboutJohnBlocks, businessesText, currentStateText, cleanSettings, DEFAULT_SETTINGS, howToAnswerText, LIMITS, TOPIC_IDS, type Note, type NoteList, type TessSettings } from "./tess-modes";
 
 /**
  * Tess's profile for one admin: the mode and dials he picked, what he wrote
@@ -83,4 +86,19 @@ export async function removeNote(sb: SupabaseClient, userId: string, list: NoteL
 export function contextBlocks(profile: TessProfile): string[] {
   const businesses = businessesText(profile.businesses);
   return [...aboutJohnBlocks(profile.about, profile.learned), ...(businesses ? [businesses] : []), howToAnswerText(profile)];
+}
+
+/**
+ * The business Tess is working on, as it stands now, as a block for the
+ * conversation. Null when it cannot be read; the conversation carries on
+ * with what it already knows.
+ */
+export async function currentStateBlock(sb: SupabaseClient): Promise<string | null> {
+  const [{ data: businesses, error }, { data: rules }] = await Promise.all([sb.from("ai_businesses").select("*"), sb.from("ai_rules").select("*").eq("active", true)]);
+  if (error) return null;
+  const list = (businesses ?? []) as Business[];
+  const business = list.find((b) => b.mode === "launch") ?? list[0];
+  if (!business) return null;
+  const { data: goals } = await sb.from("ai_goals").select("*").eq("business_id", business.id).gte("period_end", chicagoDate());
+  return currentStateText(stateFor("tess", business, (goals ?? []) as Goal[], (rules ?? []) as Rule[]));
 }

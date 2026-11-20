@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { HEAR_LIMITS } from "@/components/admin/cc/tess/hearingLogic";
-import { transcribe } from "@/lib/crew/hearing";
+import { HearingError, transcribe } from "@/lib/crew/hearing";
 import { voiceConfigured } from "@/lib/crew/voice";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -13,8 +13,10 @@ export const maxDuration = 60;
  * { text }.
  *
  * 204 means no transcription service is configured, and the page falls back
- * to the browser's own speech recognition. The audio is passed straight
- * through and not kept.
+ * to the browser's own speech recognition. 424 with `fallback: true` means
+ * the service refused our key (it is not allowed to transcribe, or is out
+ * of credit): the page switches to the browser's recognition too. The audio
+ * is passed straight through and not kept.
  */
 export async function POST(req: Request) {
   const session = await getAdminUser();
@@ -33,6 +35,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ text: await transcribe(audio) });
   } catch (err) {
     console.error("[tess] hearing failed:", err instanceof Error ? err.message : err);
+    if (err instanceof HearingError && err.refusedKey) {
+      return NextResponse.json(
+        { fallback: true, error: "ElevenLabs would not transcribe that with this key, so I have switched to the browser's hearing. Say it again." },
+        { status: 424 }
+      );
+    }
     return NextResponse.json({ error: "I could not make out the recording. Try again, or type it." }, { status: 502 });
   }
 }

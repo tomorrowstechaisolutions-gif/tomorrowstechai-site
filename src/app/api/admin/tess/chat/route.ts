@@ -3,8 +3,8 @@ import { anthropic, effort } from "@/lib/ai/claude";
 import { briefText, buildBrief, visitSince } from "@/lib/crew/brief";
 import { openChatTurn } from "@/lib/crew/chat";
 import { TESS_EFFORT } from "@/lib/crew/models";
-import { contextBlocks, loadTessProfile } from "@/lib/crew/profile";
-import { advanceRun, type ModelCall } from "@/lib/crew/run";
+import { contextBlocks, currentStateBlock, loadTessProfile } from "@/lib/crew/profile";
+import { advanceRun, thinkingSettings, type ModelCall } from "@/lib/crew/run";
 import { rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -63,14 +63,19 @@ export async function POST(req: Request) {
       const call: ModelCall = async (request) => {
         if (spoke) send({ type: "text", delta: "\n\n" });
         speaking = false;
-        const reply = anthropic().messages.stream({
-          model: request.model,
-          max_tokens: 16000,
-          system: request.system,
-          tools: request.tools,
-          messages: request.messages,
-          ...effort(TESS_EFFORT),
-        });
+        const settings = thinkingSettings(request.dropThinking);
+        const reply = anthropic().messages.stream(
+          {
+            model: request.model,
+            max_tokens: 16000,
+            system: request.system,
+            tools: request.tools,
+            messages: request.messages,
+            ...effort(TESS_EFFORT),
+            ...settings.body,
+          },
+          settings.options
+        );
         reply.on("text", (delta) => {
           if (!speaking) {
             speaking = true;
@@ -87,7 +92,7 @@ export async function POST(req: Request) {
         const runId = await openChatTurn(sb, {
           userId,
           message,
-          context: contextBlocks(await loadTessProfile(sb, userId)),
+          context: [...contextBlocks(await loadTessProfile(sb, userId)), ...[await currentStateBlock(sb)].filter((b): b is string => Boolean(b))],
           brief: async () => briefText(await buildBrief(sb, await visitSince(sb, userId))),
         });
         const result = await advanceRun(sb, runId, {

@@ -299,8 +299,9 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
   // Two ways to hear John. With a voice service configured, his words are recorded and transcribed on the
   // server, which is far more accurate. Without one, the browser's own speech recognition is used.
   const recorder = useRecorderInput({ onFinal: ask, holdSpace: voice });
-  const browserSpeech = useSpeechInput({ onFinal: ask, holdSpace: !(voice && recorder.supported) });
-  const speech = voice && recorder.supported ? recorder : browserSpeech;
+  const useRecorder = voice && recorder.supported && !recorder.refused;
+  const browserSpeech = useSpeechInput({ onFinal: ask, holdSpace: !useRecorder });
+  const speech = useRecorder ? recorder : browserSpeech;
 
   // John has just opened the tab and there is no conversation to carry on: Tess speaks first.
   const greeted = useRef(false);
@@ -569,7 +570,7 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
       <div className={styles.voice}>
         {(() => {
           const hidden = textPrefs.style === "hidden";
-          const anyProblem = problem || speech.error || voiceProblem;
+          const anyProblem = problem || speech.error || voiceProblem || (recorder.refused && recorder.error);
           const anyWords = !hidden && (speech.listening || speech.working || exchange.you || exchange.line);
           if (!anyWords && !anyProblem) return <div className={styles.said} aria-live="polite" />;
           return (
@@ -586,6 +587,7 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
                 {hidden ? null : <span className={styles.line}>{exchange.line}</span>}
                 {problem ? <span className={styles.problem}>{problem}</span> : null}
                 {speech.error ? <span className={styles.problem}>{speech.error}</span> : null}
+                {recorder.refused && recorder.error && !speech.error ? <span className={styles.problem}>{recorder.error}</span> : null}
                 {voiceProblem ? <span className={styles.problem}>{voiceProblem}</span> : null}
               </div>
             </div>

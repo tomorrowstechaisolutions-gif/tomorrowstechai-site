@@ -27,6 +27,12 @@ import type { Agent, Business, Goal, Rule, Run, RunStatus } from "./types";
  *   - an action is never repeated. If a tick dies after a tool ran but before
  *     its result was saved, the next tick runs the tool call again, and the
  *     tool sees from the step log that it already happened;
+ *   - the instructions and the tool definitions are frozen when the run makes
+ *     its first call, and replayed word for word after that. The model's
+ *     reasoning is tied to everything that came before it, so rebuilding them
+ *     mid-conversation (a deploy, a new rule, a saved playbook) makes it
+ *     refuse its own history. What changes during a conversation reaches the
+ *     model through tool results and new messages, never by editing these;
  *   - one worker at a time. A worker takes a short lease on the run before it
  *     touches it. A second cron tick, or a chat arriving mid-shift, finds the
  *     lease taken and steps aside. A lease left by a worker that died expires.
@@ -37,7 +43,39 @@ export type ModelCall = (req: {
   system: Anthropic.TextBlockParam[];
   tools: Anthropic.Tool[];
   messages: Anthropic.MessageParam[];
+  /** This conversation's earlier reasoning can no longer be read back; have the API drop it instead of refusing. */
+  dropThinking?: boolean;
 }) => Promise<Anthropic.Message>;
+
+/** What a run froze at its first model call. */
+type Frame = { system: Anthropic.TextBlockParam[]; tools: Anthropic.Tool[]; dropThinking?: boolean };
+
+function isFrame(value: unknown): value is Frame {
+  const f = value as Frame | null;
+  return Boolean(f) && typeof f === "object" && Array.isArray(f!.system) && f!.system.length > 0 && Array.isArray(f!.tools);
+}
+
+/** True for the API's refusal of reasoning that was made under different instructions or tools. */
+export function isStaleThinking(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : "";
+  return message.includes("thinking") && message.includes("bound to a different conversation");
+}
+
+const THINKING_BINDING_BETA = "thinking-binding-controls-2026-08-01";
+
+/**
+ * The extra request settings for a conversation whose earlier reasoning must
+ * be dropped: the API then skips the blocks it cannot verify instead of
+ * answering 400. Spread `body` into the request and pass `options` as the
+ * second argument. Both are empty when nothing needs dropping.
+ */
+export function thinkingSettings(dropThinking: boolean | undefined): { body: { thinking?: Anthropic.ThinkingConfigParam }; options: { headers?: Record<string, string> } } {
+  if (!dropThinking) return { body: {}, options: {} };
+  return {
+    body: { thinking: { type: "adaptive", block_binding: { prefix_mismatch_behavior: "drop_block" } } as unknown as Anthropic.ThinkingConfigParam },
+    options: { headers: { "anthropic-beta": THINKING_BINDING_BETA } },
+  };
+}
 
 export type RunEvent = { type: "text"; text: string } | { type: "tool"; tool: string };
 
@@ -53,15 +91,21 @@ function fail(what: string, error: { message?: string } | null): never {
 }
 
 function defaultCall(slug: Agent["slug"]): ModelCall {
-  return (req) =>
-    anthropic().messages.create({
-      model: req.model,
-      max_tokens: 16000,
-      system: req.system,
-      tools: req.tools,
-      messages: req.messages,
-      ...effort(slug === "tess" ? TESS_EFFORT : CREW_EFFORT),
-    });
+  return (req) => {
+    const settings = thinkingSettings(req.dropThinking);
+    return anthropic().messages.create(
+      {
+        model: req.model,
+        max_tokens: 16000,
+        system: req.system,
+        tools: req.tools,
+        messages: req.messages,
+        ...effort(slug === "tess" ? TESS_EFFORT : CREW_EFFORT),
+        ...settings.body,
+      },
+      settings.options
+    );
+  };
 }
 
 /** Why an input is not acceptable for a tool, or null when it is. */
@@ -159,8 +203,21 @@ async function advance(sb: SupabaseClient, runId: string, opts: AdvanceOptions):
   const tools = toolsFor(agent.slug);
   const allowed = new Map(tools.map((t) => [t.name, t]));
   const apiTools: Anthropic.Tool[] = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
-  const system = systemFor(agent, business, goals, (rulesRows ?? []) as Rule[]);
   const call = opts.call ?? defaultCall(agent.slug);
+
+  // Frozen at the first call and replayed after that. Saving it is best effort:
+  // without the column the run still works, it just is not protected.
+  const saveFrame = async (next: Frame) => {
+    const { error } = await sb.from("ai_runs").update({ frame: next }).eq("id", runId);
+    if (error) console.error("[crew] could not save the run's frame:", error.message);
+  };
+  let frame: Frame;
+  if (isFrame(run.frame)) {
+    frame = run.frame;
+  } else {
+    frame = { system: systemFor(agent, business, goals, (rulesRows ?? []) as Rule[]), tools: apiTools };
+    await saveFrame(frame);
+  }
   const base = { sb, run, agent, business, goals };
 
   const messages = [...((run.transcript ?? []) as Anthropic.MessageParam[])];
@@ -211,7 +268,18 @@ async function advance(sb: SupabaseClient, runId: string, opts: AdvanceOptions):
     if ((await spendCentsToday(sb)) >= business.caps.spendCentsPerDay) return end("paused_budget", "Today's AI spending limit was reached.");
 
     const started = Date.now();
-    const response = await call({ model: agent.model, system, tools: apiTools, messages });
+    let response: Anthropic.Message;
+    try {
+      response = await call({ model: agent.model, system: frame.system, tools: frame.tools, messages, dropThinking: frame.dropThinking });
+    } catch (err) {
+      // A conversation from before its instructions were frozen, whose earlier reasoning the API now refuses.
+      // Ask once more with that reasoning dropped, and remember the choice so every later call does the same.
+      if (frame.dropThinking || !isStaleThinking(err)) throw err;
+      console.error("[crew] the model refused this run's earlier reasoning; dropping it from here on:", runId);
+      frame = { ...frame, dropThinking: true };
+      await saveFrame(frame);
+      response = await call({ model: agent.model, system: frame.system, tools: frame.tools, messages, dropThinking: true });
+    }
     modelCalls += 1;
     const spent = costMicroUsd(agent.model, response.usage);
     cost += spent;
