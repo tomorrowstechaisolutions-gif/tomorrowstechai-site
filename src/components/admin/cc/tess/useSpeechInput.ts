@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { nothingHeardNotice, spaceBarTalks } from "./speechLogic";
 
 /**
  * Talking to Tess with the microphone, using the browser's own speech
  * recognition (Chrome and Edge have it; Firefox does not, and `supported`
- * says so). Hold the space bar to talk and let go to send, or call
- * `start` / `stop` from a button.
+ * says so). Two ways in: hold the space bar and let go to send ("hold"), or
+ * tap the talk button and it sends by itself when John stops speaking ("tap").
  *
  * `onFinal` is called once with what was heard when listening stops.
  */
@@ -19,6 +20,7 @@ type Recognition = {
   interimResults: boolean;
   onresult: ((event: RecognitionEvent) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
+  onaudiostart: (() => void) | null;
   onend: (() => void) | null;
   start(): void;
   stop(): void;
@@ -39,17 +41,14 @@ const ERRORS: Record<string, string> = {
   network: "Speech recognition needs a connection and could not reach it.",
 };
 
-function typingInField(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el?.tagName) return false;
-  return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.tagName === "BUTTON" || el.isContentEditable;
-}
-
 export function useSpeechInput(opts: { onFinal?: (text: string) => void; holdSpace?: boolean } = {}) {
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
+  /** True once the browser has the microphone open and is taking sound in. */
+  const [live, setLive] = useState(false);
+  const failed = useRef(false);
   const recognition = useRef<Recognition | null>(null);
   const heard = useRef("");
   const onFinal = useRef(opts.onFinal);
@@ -64,17 +63,21 @@ export function useSpeechInput(opts: { onFinal?: (text: string) => void; holdSpa
     return () => recognition.current?.abort();
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback((mode: "hold" | "tap" = "hold") => {
     const Ctor = recognitionCtor();
     if (!Ctor || recognition.current) return;
     const r = new Ctor();
     r.lang = "en-US";
-    r.continuous = true;
+    // Held: keep listening through pauses until John lets go. Tapped: stop by itself when he stops speaking.
+    r.continuous = mode === "hold";
     r.interimResults = true;
     heard.current = "";
     setTranscript("");
     setError(null);
+    setLive(false);
+    failed.current = false;
 
+    r.onaudiostart = () => setLive(true);
     r.onresult = (event) => {
       let text = "";
       for (let i = 0; i < event.results.length; i++) text += event.results[i][0].transcript;
@@ -83,12 +86,18 @@ export function useSpeechInput(opts: { onFinal?: (text: string) => void; holdSpa
     };
     r.onerror = (event) => {
       if (event.error === "aborted" || event.error === "no-speech") return;
+      failed.current = true;
       setError(ERRORS[event.error] ?? "I could not hear that. Try again.");
     };
     r.onend = () => {
       recognition.current = null;
       setListening(false);
+      setLive(false);
       if (heard.current) onFinal.current?.(heard.current);
+      else {
+        const notice = nothingHeardNotice(heard.current, failed.current);
+        if (notice) setError(notice);
+      }
     };
 
     recognition.current = r;
@@ -108,12 +117,12 @@ export function useSpeechInput(opts: { onFinal?: (text: string) => void; holdSpa
   useEffect(() => {
     if (!opts.holdSpace || !supported) return;
     const down = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat || typingInField(e.target)) return;
-      e.preventDefault();
-      start();
+      if (e.code !== "Space" || !spaceBarTalks(e.target as HTMLElement | null)) return;
+      e.preventDefault(); // also stops a focused button being pressed by the space bar
+      if (!e.repeat) start("hold");
     };
     const up = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || typingInField(e.target)) return;
+      if (e.code !== "Space" || !spaceBarTalks(e.target as HTMLElement | null)) return;
       e.preventDefault();
       stop();
     };
@@ -125,5 +134,5 @@ export function useSpeechInput(opts: { onFinal?: (text: string) => void; holdSpa
     };
   }, [opts.holdSpace, supported, start, stop]);
 
-  return { supported, listening, start, stop, transcript, error };
+  return { supported, listening, live, start, stop, transcript, error };
 }
