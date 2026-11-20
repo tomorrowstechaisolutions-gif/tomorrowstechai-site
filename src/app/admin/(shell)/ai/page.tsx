@@ -4,6 +4,7 @@ import TessConsole from "@/components/admin/cc/tess/TessConsole";
 import styles from "@/components/admin/cc/tess/tess.module.css";
 import { buildBrief, visitSince, type Brief } from "@/lib/crew/brief";
 import { chatHistory, type ChatLine } from "@/lib/crew/chat";
+import { loadTessProfile, type TessProfile } from "@/lib/crew/profile";
 import { voiceConfigured } from "@/lib/crew/voice";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -23,17 +24,18 @@ export default async function TessPage() {
 
   let brief: Brief | null = null;
   let history: ChatLine[] = [];
+  let profile: TessProfile | null = null;
   let failure: string | null = null;
   try {
     const sb = supabaseAdmin();
     const since = await visitSince(sb, session.user.id);
-    [brief, history] = await Promise.all([buildBrief(sb, since), chatHistory(sb, session.user.id)]);
+    [brief, history, profile] = await Promise.all([buildBrief(sb, since), chatHistory(sb, session.user.id), loadTessProfile(sb, session.user.id)]);
   } catch (err) {
     console.error("[tess] could not build the brief:", err);
     failure = err instanceof Error ? err.message : "unknown error";
   }
 
-  if (!brief || !brief.business) {
+  if (!brief || !brief.business || !profile) {
     return (
       <div className={styles.root}>
         <div className={styles.missing}>
@@ -45,5 +47,5 @@ export default async function TessPage() {
     );
   }
 
-  return <TessConsole brief={brief} history={history} voice={voiceConfigured()} />;
+  return <TessConsole brief={brief} history={history} profile={profile} voice={voiceConfigured()} />;
 }

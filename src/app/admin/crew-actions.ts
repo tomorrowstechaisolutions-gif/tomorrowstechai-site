@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { removeNote, saveTessSettings } from "@/lib/crew/profile";
 import { confirmPlaybook, setAgentPaused, setCrewPaused } from "@/lib/crew/setup";
 import type { AgentSlug } from "@/lib/crew/types";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -22,6 +23,12 @@ async function requireAdmin() {
   const session = await getAdminUser();
   if (!session) redirect("/admin/login");
   return supabaseAdmin();
+}
+
+async function requireAdminUser() {
+  const session = await getAdminUser();
+  if (!session) redirect("/admin/login");
+  return { sb: supabaseAdmin(), userId: session.user.id };
 }
 
 function touch() {
@@ -68,6 +75,33 @@ export async function setAgentPausedAction(fd: FormData): Promise<CrewActionResu
     await setAgentPaused(sb, slug, text(fd, "paused") === "true");
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Could not change the pause." };
+  }
+  touch();
+  return { ok: true };
+}
+
+/** The mode and dials on Tess's profile, for the admin who is signed in. */
+export async function setTessSettingsAction(fd: FormData): Promise<CrewActionResult> {
+  const { sb, userId } = await requireAdminUser();
+  try {
+    await saveTessSettings(sb, userId, { mode: text(fd, "mode"), length: text(fd, "length"), bluntness: text(fd, "bluntness"), pushback: text(fd, "pushback") });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not save that." };
+  }
+  touch();
+  return { ok: true };
+}
+
+/** Remove one line Tess saved: something she learned, or an idea she parked. */
+export async function removeTessNoteAction(fd: FormData): Promise<CrewActionResult> {
+  const { sb, userId } = await requireAdminUser();
+  const list = text(fd, "list");
+  const id = text(fd, "id");
+  if ((list !== "learned" && list !== "parked") || !id) return { ok: false, error: "No such note." };
+  try {
+    await removeNote(sb, userId, list, id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not remove that." };
   }
   touch();
   return { ok: true };

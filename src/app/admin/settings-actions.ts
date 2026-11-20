@@ -12,11 +12,12 @@ import {
 import { resetBusinessDefaults, saveBusinessDefaults } from "@/lib/settings/store";
 import { parseProfileForm, type ProfileKey } from "@/lib/settings/profile";
 import { BUSINESS_PROFILE_TAG, resetBusinessProfile, saveBusinessProfile } from "@/lib/settings/profile-store";
+import { saveTessAbout } from "@/lib/crew/profile";
 
 const PAGE = "/admin/settings";
 const PASSWORD_MIN = 10;
 
-type Section = "profile" | "defaults" | "account" | "team";
+type Section = "profile" | "defaults" | "account" | "team" | "me";
 
 async function requireAdmin() {
   const session = await getAdminUser();
@@ -64,6 +65,21 @@ export async function resetBusinessProfileAction() {
   if (error) back("profile", `Not reset: ${error}`, true);
   profileChanged();
   back("profile", "Profile is back to the built-in values.");
+}
+
+/* ── My profile for Tess ───────────────────────────────────────────── */
+
+/** What the signed-in admin wrote about himself, for Tess. Personal: stored only in his own profile row. */
+export async function saveMyTessProfileAction(fd: FormData) {
+  const session = await requireAdmin();
+  const about = String(fd.get("about") ?? "");
+  try {
+    await saveTessAbout(supabaseAdmin(), session.user.id, about);
+  } catch (err) {
+    back("me", `Not saved: ${err instanceof Error ? err.message : "unknown error"}. If the Tess profile table has not been created yet, run 20261120020000_tess_profile.sql in Supabase.`, true);
+  }
+  revalidatePath("/admin/ai");
+  back("me", "Saved. Tess reads it from your next conversation, or your next message if you are mid-conversation.");
 }
 
 /* ── Business defaults ─────────────────────────────────────────────── */

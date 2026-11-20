@@ -68,6 +68,8 @@ export type Run = {
   agent_id: string;
   business_id: string | null;
   trigger: "shift" | "chat";
+  /** The admin a chat belongs to. Null for a shift. */
+  started_by?: string | null;
   status: RunStatus;
   /** The conversation with the model, append-only. */
   transcript: unknown[];

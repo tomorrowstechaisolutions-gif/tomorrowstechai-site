@@ -3,6 +3,7 @@ import { anthropic, effort } from "@/lib/ai/claude";
 import { briefText, buildBrief, visitSince } from "@/lib/crew/brief";
 import { openChatTurn } from "@/lib/crew/chat";
 import { TESS_EFFORT } from "@/lib/crew/models";
+import { contextBlocks, loadTessProfile } from "@/lib/crew/profile";
 import { advanceRun, type ModelCall } from "@/lib/crew/run";
 import { rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -86,6 +87,7 @@ export async function POST(req: Request) {
         const runId = await openChatTurn(sb, {
           userId,
           message,
+          context: contextBlocks(await loadTessProfile(sb, userId)),
           brief: async () => briefText(await buildBrief(sb, await visitSince(sb, userId))),
         });
         const result = await advanceRun(sb, runId, {

@@ -11,9 +11,11 @@ import {
 import { baseDefaults, loadBusinessDefaults } from "@/lib/settings/store";
 import { BUILT_IN_PROFILE, FIXED_IDENTITY, PROFILE_LIMITS, changedProfileKeys, type ProfileKey } from "@/lib/settings/profile";
 import { loadBusinessProfile } from "@/lib/settings/profile-store";
+import { loadTessProfile } from "@/lib/crew/profile";
+import { LIMITS as TESS_LIMITS } from "@/lib/crew/tess-modes";
 import { BUSINESS_TZ } from "@/lib/time/chicago";
 import {
-  changePasswordAction, removeAdminAction, resetBusinessDefaultsAction, resetBusinessProfileAction,
+  changePasswordAction, removeAdminAction, resetBusinessDefaultsAction, resetBusinessProfileAction, saveMyTessProfileAction,
   saveBusinessDefaultsAction, saveBusinessProfileAction, setAdminRoleAction, updateMyNameAction,
 } from "@/app/admin/settings-actions";
 import { Panel, ErrorState } from "@/components/admin/cc/Panel";
@@ -72,7 +74,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       ? <div className={`cc-flash ${error ? "is-warn" : "is-ok"}`} role="status">{error ?? notice}</div>
       : null;
 
-  const [stored, team, profile] = await Promise.all([loadBusinessDefaults(), loadTeam(), loadBusinessProfile()]);
+  const [stored, team, profile, tess] = await Promise.all([
+    loadBusinessDefaults(), loadTeam(), loadBusinessProfile(),
+    supabaseConfigured() ? loadTessProfile(supabaseAdmin(), session.user.id) : null,
+  ]);
   const p = profile.value;
   const profileChanged = new Set<ProfileKey>(changedProfileKeys(p));
   const pmark = (key: ProfileKey) =>
@@ -347,6 +352,36 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <input className="cc-input" type="password" name="confirm_password" autoComplete="new-password" minLength={10} required />
               </label>
               <PendingButton className="cc-btn" busy="Changing…">Change password</PendingButton>
+            </form>
+          </div>
+        </section>
+
+        {/* ── My profile for Tess ───────────────────────────────────── */}
+        <section className="cc-panel cc-s12" id="me">
+          <div className="cc-panel-head">
+            <IconUsers size={15} />
+            <h2>My profile for Tess</h2>
+            <span className="cc-sub">who she is talking to</span>
+          </div>
+          <div className="cc-panel-body">
+            {flash("me")}
+            <p className="cc-note">
+              Write about yourself in your own words: how you think and work, what drives you, what drains you, how you like to be talked to.
+              Tess reads this at the start of every conversation. It is yours alone: it is kept in your own profile row, only you and Tess see it,
+              and it is never shown on the floor. Her mode, dials and what she has learned are on the <Link href="/admin/ai">Tess tab</Link>, under Profile.
+            </p>
+            {tess && !tess.ready ? (
+              <div className="cc-flash is-warn" role="status">The Tess profile table is not in the database yet. Run 20261120020000_tess_profile.sql in Supabase, then this can be saved.</div>
+            ) : null}
+            <form action={saveMyTessProfileAction}>
+              <label className="cc-field">
+                <span className="cc-label">About me</span>
+                <textarea className="cc-input" name="about" rows={16} maxLength={TESS_LIMITS.about} defaultValue={tess?.about ?? ""} placeholder="I am..." />
+                <span className={styles.hint}>Up to {TESS_LIMITS.about.toLocaleString()} characters. Plain text.</span>
+              </label>
+              <div className={styles.bar}>
+                <PendingButton className="cc-btn primary" busy="Saving…">Save my profile</PendingButton>
+              </div>
             </form>
           </div>
         </section>

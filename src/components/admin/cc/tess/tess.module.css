@@ -36,9 +36,30 @@
 .modes { display: inline-flex; }
 .modes button { background: transparent; border: 1px solid var(--line); color: var(--dim); padding: 6px 13px; font-size: 12.5px; cursor: pointer; }
 .modes button:first-child { border-radius: 8px 0 0 8px; }
-.modes button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
-.modes button[aria-pressed="true"] { color: var(--cyan); border-color: var(--cyan); }
-.modes button:last-child[aria-pressed="true"] { border-left: 1px solid var(--cyan); margin-left: -1px; }
+.modes button:last-child { border-radius: 0 8px 8px 0; }
+.modes button + button { margin-left: -1px; }
+.modes button[aria-pressed="true"] { color: var(--cyan); border-color: var(--cyan); position: relative; z-index: 1; }
+
+/* Tess's profile */
+.modeList { display: grid; gap: 6px; }
+.modeBtn { display: grid; gap: 2px; text-align: left; background: transparent; border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; color: var(--dim); cursor: pointer; }
+.modeBtn b { font-size: 13px; font-weight: 600; color: var(--text); }
+.modeBtn small { font-size: 11.5px; line-height: 1.4; }
+.modeBtn:hover:not(:disabled) { border-color: #27425a; }
+.modeBtn:disabled { cursor: default; opacity: 0.6; }
+.modeOn, .modeOn:disabled { border-color: var(--cyan); box-shadow: 0 0 10px rgba(53, 214, 255, 0.22); opacity: 1; }
+.modeOn b { color: var(--cyan); }
+.modeBtn:focus-visible, .seg button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.dial { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--dim); padding: 5px 0; }
+.seg { display: inline-flex; flex: none; }
+.seg button { background: transparent; border: 1px solid var(--line); color: var(--dim); padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.seg button + button { margin-left: -1px; }
+.seg button:first-child { border-radius: 7px 0 0 7px; }
+.seg button:last-child { border-radius: 0 7px 7px 0; }
+.seg button[aria-checked="true"] { color: var(--cyan); border-color: var(--cyan); position: relative; z-index: 1; }
+.seg button:disabled { cursor: default; }
+.noteRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 12.5px; line-height: 1.45; padding: 6px 0; border-top: 1px solid var(--line); color: var(--text); }
+.noteRow:first-of-type { border-top: 0; }
 
 .btn { border: 1px solid var(--line); color: var(--dim); background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
 .btn:hover { color: var(--text); border-color: #27425a; }

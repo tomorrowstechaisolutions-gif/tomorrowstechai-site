@@ -3,19 +3,23 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { confirmPlaybookAction, setAgentPausedAction, setCrewPausedAction, type CrewActionResult } from "@/app/admin/crew-actions";
+import { confirmPlaybookAction, removeTessNoteAction, setAgentPausedAction, setCrewPausedAction, setTessSettingsAction, type CrewActionResult } from "@/app/admin/crew-actions";
 import type { Brief } from "@/lib/crew/brief";
 import type { ChatLine } from "@/lib/crew/chat";
+import type { TessProfile } from "@/lib/crew/profile";
+import { MODES } from "@/lib/crew/tess-modes";
 import { LeftPanels, RightPanels } from "./BriefPanels";
 import { soundPlan } from "./soundPlan";
 import type { TessState } from "./TessCore";
+import TessProfilePanel from "./TessProfilePanel";
 import styles from "./tess.module.css";
 import { createTessSounds, type TessSounds } from "./tessSounds";
 import { useSpeechInput } from "./useSpeechInput";
 
 /**
  * The Tess tab: the Core in the middle, the brief either side, and the
- * conversation underneath.
+ * conversation underneath. Three views: Briefing, Stage (the Core alone) and
+ * Profile, which swaps the right-hand column for her mode, dials and notes.
  *
  * John talks by tapping the talk button, holding the space bar, or typing. Tess's words arrive as she
  * writes them; when a voice is configured they are then spoken, and the
@@ -68,9 +72,11 @@ function lastExchange(history: ChatLine[]): { you: string; line: string } {
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
-export default function TessConsole({ brief, history, voice }: { brief: Brief; history: ChatLine[]; voice: boolean }) {
+export default function TessConsole({ brief, history, profile, voice }: { brief: Brief; history: ChatLine[]; profile: TessProfile; voice: boolean }) {
   const router = useRouter();
-  const [stage, setStage] = useState(false);
+  const [view, setView] = useState<"briefing" | "stage" | "profile">("briefing");
+  const stage = view === "stage";
+  const [profileProblem, setProfileProblem] = useState<string | null>(null);
   const [state, setState] = useState<TessState>("idle");
   const [exchange, setExchange] = useState(() => lastExchange(history));
   const [problem, setProblem] = useState<string | null>(null);
@@ -328,6 +334,25 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
     [router]
   );
 
+  /** Same as `run`, but a failure shows on the profile panel. */
+  const runProfile = useCallback(
+    async (action: (fd: FormData) => Promise<CrewActionResult>, fields: Record<string, string>) => {
+      setActing(true);
+      setProfileProblem(null);
+      const fd = new FormData();
+      for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+      try {
+        const result = await action(fd);
+        if (!result.ok) setProfileProblem(result.error);
+      } catch {
+        setProfileProblem("That did not go through. Try again.");
+      }
+      setActing(false);
+      router.refresh();
+    },
+    [router]
+  );
+
   const toggleSound = () => {
     const next = !soundOn;
     try {
@@ -375,13 +400,19 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
         <span className={styles.chip}>
           Rules learned <b>{brief.rulesCount}</b>
         </span>
+        <span className={styles.chip}>
+          Mode <b>{MODES[profile.mode].label}</b>
+        </span>
         <span className={styles.spacer} />
         <span className={styles.modes} role="group" aria-label="View">
-          <button type="button" aria-pressed={!stage} onClick={() => setStage(false)}>
+          <button type="button" aria-pressed={view === "briefing"} onClick={() => setView("briefing")}>
             Briefing
           </button>
-          <button type="button" aria-pressed={stage} onClick={() => setStage(true)}>
+          <button type="button" aria-pressed={stage} onClick={() => setView("stage")}>
             Stage
+          </button>
+          <button type="button" aria-pressed={view === "profile"} onClick={() => setView("profile")}>
+            Profile
           </button>
         </span>
         <button
@@ -407,7 +438,17 @@ export default function TessConsole({ brief, history, voice }: { brief: Brief; h
         />
       </div>
       <div className={`${styles.col} ${styles.colRight}`}>
-        <RightPanels brief={brief} busy={acting} onPauseBot={(slug, paused) => run(setAgentPausedAction, { slug, paused: String(paused) })} />
+        {view === "profile" ? (
+          <TessProfilePanel
+            profile={profile}
+            busy={acting}
+            problem={profileProblem}
+            onSettings={(next) => void runProfile(setTessSettingsAction, next)}
+            onRemove={(list, id) => void runProfile(removeTessNoteAction, { list, id })}
+          />
+        ) : (
+          <RightPanels brief={brief} busy={acting} onPauseBot={(slug, paused) => run(setAgentPausedAction, { slug, paused: String(paused) })} />
+        )}
       </div>
 
       <div className={styles.voice}>
