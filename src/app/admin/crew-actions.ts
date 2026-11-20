@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { removeNote, saveTessSettings } from "@/lib/crew/profile";
 import { confirmPlaybook, setAgentPaused, setCrewPaused } from "@/lib/crew/setup";
+import { summarizeDay } from "@/lib/crew/summaries";
 import type { AgentSlug } from "@/lib/crew/types";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -105,4 +106,17 @@ export async function removeTessNoteAction(fd: FormData): Promise<CrewActionResu
   }
   touch();
   return { ok: true };
+}
+
+/** Summarise one day of chat now, from the archive page. Does nothing for a date that is not a date. */
+export async function summarizeDayAction(fd: FormData): Promise<void> {
+  const { sb, userId } = await requireAdminUser();
+  const date = text(fd, "date");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+  try {
+    await summarizeDay(sb, userId, date);
+  } catch (err) {
+    console.error("[tess] could not summarise the day:", err instanceof Error ? err.message : err);
+  }
+  revalidatePath("/admin/ai/archive");
 }

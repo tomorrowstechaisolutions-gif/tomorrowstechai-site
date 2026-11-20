@@ -153,6 +153,14 @@
 .day[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
 .lineJohn, .lineTess { margin: 0; padding: 7px 0; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
 .lineJohn { color: var(--dim); }
+.daySummary { margin: 4px 0 10px; padding: 10px 12px; border-left: 2px solid var(--cyan); background: rgba(53, 214, 255, 0.05); font-size: 13.5px; line-height: 1.55; color: var(--text); }
+.daySummaryForm { margin: 4px 0 10px; }
+.rollup { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+.rollup h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.rollupItem { padding: 8px 0; border-top: 1px solid var(--line); }
+.rollupItem:first-of-type { border-top: 0; }
+.rollupItem b { font-size: 13px; color: var(--cyan); font-weight: 600; }
+.rollupItem p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--text); }
 .lineJohn i, .lineTess i { display: block; font-style: normal; font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--faint); margin-bottom: 1px; }
 .lineTess i { color: var(--cyan); }
 .you { color: var(--dim); font-size: 13.5px; display: block; margin-bottom: 4px; }
