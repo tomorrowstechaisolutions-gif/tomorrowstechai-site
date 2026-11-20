@@ -201,8 +201,8 @@ export const SOON_ROUTES: Record<string, { title: string; blurb: string; nearest
   "/admin/automations": {
     title: "Automations",
     blurb:
-      "Rules that run without being asked. One already exists: the 24h and 72h lead follow-up cron.",
-    nearest: { href: "/admin/settings", label: "Check automation configuration" },
+      "Rules that run without being asked. One already exists: the two lead follow-up emails.",
+    nearest: { href: "/admin/settings#defaults", label: "Set the follow-up timings" },
   },
   "/admin/automations/triggers": {
     title: "Triggers",

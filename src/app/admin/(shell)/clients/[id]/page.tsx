@@ -11,6 +11,7 @@ import MeetingsPanel from "@/components/admin/cc/meetings/MeetingsPanel";
 import RequestsPanel from "@/components/admin/cc/requests/RequestsPanel";
 import { PortalPanel, type PortalMemberRow, type PortalRequestRow } from "@/components/admin/cc/portal/PortalPanel";
 import { ReviewPanel } from "@/components/admin/cc/reviews/ReviewPanel";
+import { businessDefaults } from "@/lib/settings/store";
 import { loadClientRequests } from "@/lib/requests/queries";
 import { BUSINESS_TIMEZONE, BUSINESS_TIMEZONE_LABEL } from "@/lib/calendar/config";
 import { chicagoDate } from "@/lib/time/chicago";
@@ -393,6 +394,7 @@ export default async function ClientPage({
         {/* ── Google review ────────────────────────────────────────── */}
         <ReviewPanel
           customerId={client.id}
+          gapDays={(await businessDefaults()).reviewGapDays}
           email={client.email ?? null}
           state={{
             requestedAt: (reviewRes.data?.review_requested_at as string | null) ?? null,

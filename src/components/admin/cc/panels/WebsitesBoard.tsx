@@ -493,7 +493,7 @@ function Traffic({ board }: { board: Board }) {
             icon={<IconChart size={17} />}
             title="Analytics not connected"
             text="No analytics property is connected to any site in the portfolio, so visitor counts, sessions and traffic sources cannot be shown. Lead counts on this page are real — they come from your own database, not from analytics."
-            cta={{ href: "/admin/settings", label: "Open settings" }}
+            cta={{ href: "/admin/system/integrations", label: "Open integrations" }}
           />
           <p className="cc-note">
             Connecting one analytics property would fill in: traffic per site, portfolio traffic

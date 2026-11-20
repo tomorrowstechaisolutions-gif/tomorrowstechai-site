@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { loadLinkCandidates } from "@/lib/proposals/queries";
-import { DEFAULT_FOOTER, DEFAULT_TERMS, dueDateFor } from "@/lib/invoices/config";
+import { dueDateFor } from "@/lib/invoices/config";
+import { businessDefaults } from "@/lib/settings/store";
 import { createInvoiceAction } from "@/app/admin/invoice-actions";
 import InvoiceBuilder, { type InvoiceInitial } from "@/components/admin/cc/InvoiceBuilder";
 
@@ -43,6 +44,9 @@ export default async function NewInvoicePage({
   const leadId = pick("lead");
   const fromLead = leadId ? candidates.leads.find((l) => l.id === leadId) : undefined;
 
+  // What a new invoice starts with is set on Settings → Business defaults.
+  const defaults = await businessDefaults();
+
   const initial: InvoiceInitial = {
     title: "",
     description: "",
@@ -53,12 +57,12 @@ export default async function NewInvoicePage({
     clientPhone: fromLead?.phone ?? "",
     clientBillingAddress: "",
     issueDate,
-    dueDate: dueDateFor("due_on_receipt", issueDate),
-    paymentTerms: "due_on_receipt",
+    dueDate: dueDateFor(defaults.invoiceTerm, issueDate),
+    paymentTerms: defaults.invoiceTerm,
     recurringInterval: "month",
     recurringStartsOn: "",
-    terms: DEFAULT_TERMS,
-    footerNote: DEFAULT_FOOTER,
+    terms: defaults.invoiceTermsText,
+    footerNote: defaults.invoiceFooter,
     notes: "",
     notesInternal: "",
     leadId: fromLead?.id ?? "",

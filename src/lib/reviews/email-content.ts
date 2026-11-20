@@ -71,7 +71,10 @@ export function buildReviewRequestEmail(
   return { subject: f(c.subject), html, text };
 }
 
-/** Days to wait before the same client can be asked again by hand. */
+/**
+ * Days to wait before the same client can be asked again by hand. This is
+ * the built-in value; Settings → Business defaults can change it.
+ */
 export const REVIEW_ASK_GAP_DAYS = 14;
 
 export type ReviewState = {
@@ -84,13 +87,13 @@ export type ReviewState = {
  * Whether a client may be asked now, and if not, why. Plain logic so the rule
  * is tested: no email on file, already reviewed, or asked too recently.
  */
-export function canAskForReview(email: string | null, state: ReviewState, now: Date = new Date()): { ok: true } | { ok: false; reason: string } {
+export function canAskForReview(email: string | null, state: ReviewState, now: Date = new Date(), gapDays: number = REVIEW_ASK_GAP_DAYS): { ok: true } | { ok: false; reason: string } {
   if (!email || !email.includes("@")) return { ok: false, reason: "Add an email to this client first." };
   if (state.receivedAt) return { ok: false, reason: "This client is marked as having left a review." };
   if (state.requestedAt) {
     const days = (now.getTime() - Date.parse(state.requestedAt)) / 86_400_000;
-    if (days < REVIEW_ASK_GAP_DAYS) {
-      const wait = Math.ceil(REVIEW_ASK_GAP_DAYS - days);
+    if (days < gapDays) {
+      const wait = Math.ceil(gapDays - days);
       return { ok: false, reason: `Already asked recently. You can ask again in ${wait} day${wait === 1 ? "" : "s"}.` };
     }
   }

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient, getAdminUser } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { canAskForReview } from "@/lib/reviews/email-content";
+import { businessDefaults } from "@/lib/settings/store";
 import { sendReviewRequest } from "@/lib/reviews/emails";
 
 /**
@@ -44,7 +45,7 @@ export async function askForReviewAction(fd: FormData) {
     requestedAt: c.review_requested_at ?? null,
     requestCount: c.review_request_count ?? 0,
     receivedAt: c.review_received_at ?? null,
-  });
+  }, new Date(), (await businessDefaults()).reviewGapDays);
   if (!check.ok) back(customerId, { review_error: check.reason });
 
   const sent = await sendReviewRequest({ to: email, name: c.name ?? null, businessName: c.business_name || c.name || "your business" });

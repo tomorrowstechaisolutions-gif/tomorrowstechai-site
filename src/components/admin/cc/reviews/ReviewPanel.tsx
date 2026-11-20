@@ -9,15 +9,17 @@ const when = (iso: string | null) =>
 
 /** Google review status for one client: ask, and record that they reviewed. */
 export function ReviewPanel({
-  customerId, email, state, notice, error,
+  customerId, email, state, gapDays, notice, error,
 }: {
   customerId: string;
   email: string | null;
   state: ReviewState;
+  /** Days between asks, from Settings. Omitted = the built-in gap. */
+  gapDays?: number;
   notice?: string;
   error?: string;
 }) {
-  const check = canAskForReview(email, state);
+  const check = canAskForReview(email, state, undefined, gapDays);
   const chip = state.receivedAt ? ["Reviewed", "t-ok"] : state.requestedAt ? ["Asked", "t-info"] : ["Not asked", "t-muted"];
 
   return (

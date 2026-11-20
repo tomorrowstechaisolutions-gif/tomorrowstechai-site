@@ -10,8 +10,8 @@ export const metadata: Metadata = { title: "Overview" };
 
 export default async function AccountOverview({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const member = (await getPortalViewer())!;
-  const [{ welcome }, services, invoices, reviewed] = await Promise.all([
-    searchParams, memberServices(member.customerId), memberInvoices(member.customerId), memberHasReviewed(member.customerId),
+  const [{ welcome }, services, invoices, reviewed, reviewLink] = await Promise.all([
+    searchParams, memberServices(member.customerId), memberInvoices(member.customerId), memberHasReviewed(member.customerId), reviewUrl(),
   ]);
 
   const active = services.filter((s) => s.status === "active");
@@ -72,7 +72,7 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
                 <span className="acct-faint">It takes about a minute. An honest sentence or two is plenty, and it helps other local businesses find us.</span>
               </div>
               <div className="acct-list-end">
-                <a className="acct-btn small" href={reviewUrl()} target="_blank" rel="noopener noreferrer">Leave a review</a>
+                <a className="acct-btn small" href={reviewLink} target="_blank" rel="noopener noreferrer">Leave a review</a>
                 <form action={markReviewLeftAction} className="acct-inline-form">
                   <button className="acct-link-btn" disabled={member.preview} title={member.preview ? "View only" : undefined}>I&rsquo;ve left one</button>
                 </form>
