@@ -1,3 +1,4 @@
+import { rollUpPost } from "./rollup";
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { SocialAuthError, markAccountExpired, readAccountToken } from "./accounts";
@@ -176,19 +177,9 @@ export async function publishDueSocialPosts(limit = 20, options: { postId?: stri
   // Roll destination results up to the post once per post.
   for (const postId of touchedPosts) {
     const { data: childRows } = await sb.from("social_post_platforms").select("platform,platform_status,external_url,error_message").eq("post_id", postId);
-    const states = childRows ?? [];
-    const allPublished = states.length > 0 && states.every((child) => child.platform_status === "published");
-    // A destination still "scheduled" (e.g. cut off by the batch limit) keeps
-    // the post "scheduled" so the next run picks it up.
-    const waiting = states.some((child) => child.platform_status === "scheduled");
-    const inFlight = states.some((child) => child.platform_status === "publishing");
-    const failures = states.filter((child) => child.platform_status === "failed");
-    const stamp = new Date().toISOString();
-    const patch = allPublished
-      ? { status: "published", published_at: stamp, external_url: states.find((child) => child.external_url)?.external_url ?? null, error: null, last_publish_attempt_at: stamp }
-      : waiting || inFlight
-        ? { status: waiting ? "scheduled" : "publishing", last_publish_attempt_at: stamp }
-        : { status: "failed", error: failures.map((child) => `${child.platform}: ${child.error_message}`).join(" · ").slice(0, 1000) || "One or more platforms failed to publish", last_publish_attempt_at: stamp };
+    // Published if it reached anyone, with the failures named; failed only
+    // when nothing went out. See lib/social/rollup.
+    const patch = rollUpPost(childRows ?? [], new Date().toISOString());
     await sb.from("social_posts").update(patch).eq("id", postId);
   }
   return summary;

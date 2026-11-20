@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Priority } from "@/lib/supabase/types";
 import type { TaskType } from "./config";
 import { generateTasksFromTemplate } from "./templates";
+import { addDays, chicagoDate, chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Where business events turn into work.
@@ -52,9 +53,9 @@ async function ensureTask(
     .eq("done", false);
   if ((count ?? 0) > 0) return false;
 
-  const due = new Date();
-  due.setDate(due.getDate() + (input.dueInDays ?? 1));
-  due.setHours(17, 0, 0, 0);
+  // 5pm Central on the due day. setHours(17) would mean 5pm on the server's
+  // own clock, which is UTC in production: late morning in Texas.
+  const due = chicagoInstant(addDays(chicagoDate(), input.dueInDays ?? 1), 17);
 
   const { data } = await sb
     .from("tasks")

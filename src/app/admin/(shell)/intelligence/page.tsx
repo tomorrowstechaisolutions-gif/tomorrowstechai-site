@@ -16,6 +16,7 @@ import {
   type TrafficStatus,
 } from "@/lib/analytics/vercel-web";
 import { leadStats, type LeadStats } from "@/lib/analytics/leads";
+import { zonedMidnightUtc } from "@/lib/time/chicago";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Analytics" };
@@ -114,7 +115,7 @@ export default async function AnalyticsPage({
   const nDays = RANGES[range];
   const days = dayList(nDays);
   const until = new Date();
-  const since = new Date(`${days[0]}T00:00:00-06:00`);
+  const since = zonedMidnightUtc(days[0]);
 
   const supabase = await createSupabaseServerClient();
   const [traffic, leadsResult] = await Promise.all([

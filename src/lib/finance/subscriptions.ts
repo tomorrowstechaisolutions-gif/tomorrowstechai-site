@@ -60,6 +60,29 @@ function addDays(day: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * MRR and the number of active recurring assignments, and nothing else.
+ *
+ * For screens that only need the headline. Same rows and the same monthly
+ * maths as loadSubscriptions, so the Services page cannot show a different
+ * MRR from Finance: it used to total only assignments to individual
+ * services, which left out a client paying for a package and read $0.
+ */
+export async function loadRecurringTotals(sb: SupabaseClient): Promise<{ mrrCents: number; count: number }> {
+  const { data, error } = await sb
+    .from("client_services")
+    .select("sale_price_cents, interval_months")
+    .eq("billing_type", "recurring")
+    .eq("status", "active");
+  if (error) throw new Error(error.message);
+  const rows = data ?? [];
+  const mrrCents = rows.reduce(
+    (t, r) => t + Math.round((r.sale_price_cents ?? 0) / Math.max(1, r.interval_months ?? 1)),
+    0
+  );
+  return { mrrCents, count: rows.length };
+}
+
 export async function loadSubscriptions(sb: SupabaseClient): Promise<SubscriptionsBoard> {
   const today = chicagoDate();
 

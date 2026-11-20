@@ -1,3 +1,4 @@
+import { PAUSE_WINDOW_DAYS, shouldPauseDestination } from "@/lib/social/rollup";
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SITE_URL } from "./taxonomy";
@@ -104,8 +105,29 @@ export async function createArticleSocialDraft(
       const ready = Boolean(account?.connected && account.status === "connected" && account.posting_enabled);
       return { platform: d.platform, accountId: account?.id ?? null, ready };
     });
+
+    // An account that has failed its last few posts in a row is left out of
+    // automatic posting until the failures age out or one succeeds, so a
+    // platform that is down (X with no API credits) does not turn every
+    // article's post red. See shouldPauseDestination.
+    const readyIds = candidates.filter((t) => t.ready && t.accountId).map((t) => t.accountId as string);
+    const paused = new Set<string>();
+    if (readyIds.length > 0) {
+      const since = new Date(Date.now() - PAUSE_WINDOW_DAYS * 86_400_000).toISOString();
+      const { data: attempts } = await db
+        .from("social_publish_attempts")
+        .select("social_account_id, status, created_at")
+        .in("social_account_id", readyIds)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      for (const id of readyIds) {
+        if (shouldPauseDestination((attempts ?? []).filter((a) => a.social_account_id === id))) paused.add(id);
+      }
+    }
+
     // Auto-post only to accounts that can actually publish; otherwise propose a draft.
-    const live = candidates.filter((t) => t.ready);
+    const live = candidates.filter((t) => t.ready && !(t.accountId && paused.has(t.accountId)));
     const autopost = live.length > 0 && (await autopostEnabled(db));
     const targets = autopost ? live : candidates;
 

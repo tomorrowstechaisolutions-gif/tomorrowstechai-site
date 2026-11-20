@@ -1,6 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unwrap } from "./panel";
+import { LEAD_STATUS_STAGE } from "@/lib/crm/stages";
+import { LEAD_STATUSES } from "@/lib/supabase/types";
 import {
   CLOSED_STATUSES,
   type Lead,
@@ -23,13 +25,21 @@ export type PipelineStageKey =
   | "proposal"
   | "won";
 
-const STAGE_MAP: { key: PipelineStageKey; label: string; statuses: LeadStatus[] }[] = [
-  { key: "new", label: "New Lead", statuses: ["New", "Contact Attempted"] },
-  { key: "qualified", label: "Qualified", statuses: ["Contacted", "Qualified"] },
-  { key: "discovery", label: "Discovery", statuses: ["Demo Scheduled"] },
-  { key: "proposal", label: "Proposal", statuses: ["Proposal/Checkout Sent"] },
-  { key: "won", label: "Won", statuses: ["Won"] },
+// Which statuses sit in which stage comes from the CRM's own map, so this
+// funnel, the CRM and Lead analytics cannot put the same lead in different
+// places. Only the labels are decided here.
+const STAGE_LABELS: { key: PipelineStageKey; label: string }[] = [
+  { key: "new", label: "New Lead" },
+  { key: "qualified", label: "Qualified" },
+  { key: "discovery", label: "Discovery" },
+  { key: "proposal", label: "Proposal" },
+  { key: "won", label: "Won" },
 ];
+
+const STAGE_MAP: { key: PipelineStageKey; label: string; statuses: LeadStatus[] }[] = STAGE_LABELS.map((stage) => ({
+  ...stage,
+  statuses: LEAD_STATUSES.filter((status) => LEAD_STATUS_STAGE[status] === stage.key),
+}));
 
 export type PipelineStage = {
   key: PipelineStageKey;

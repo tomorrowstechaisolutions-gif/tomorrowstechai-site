@@ -9,9 +9,10 @@ import { count, pct, shortDate } from "../format";
 /**
  * Section 7 — website performance.
  *
- * Visitors and page views are absent because nothing on the server can read
- * GA4 or the Pixel back. The card says so once, plainly, and then shows what
- * IS measured: where leads came from and what they landed on.
+ * Visitors and page views come from Vercel Web Analytics, the same feed as
+ * the Analytics page. When it is not connected the card says so once,
+ * plainly, and still shows what IS measured: where leads came from and what
+ * they landed on.
  */
 
 export default async function WebPanel({ className = "" }: { className?: string }) {
@@ -37,11 +38,16 @@ export default async function WebPanel({ className = "" }: { className?: string 
       className={className}
       bodyClass="flush"
     >
-      {w.leadsMonth === 0 && w.paidLandingViews === 0 ? (
+      {w.leadsMonth === 0 && w.paidLandingViews === 0 && !w.pageViews ? (
+        // Truly nothing: no leads, no paid views, and no traffic on record.
         <EmptyState
           title="Nothing measured yet this month"
-          text="Every lead records its landing page, referrer and UTMs, so this fills in with the first submission. Visitor counts need a server-side analytics connection."
-          cta={{ href: "/admin/system/integrations", label: "Connect analytics" }}
+          text={w.visitorsMonth === null
+            ? "Every lead records its landing page, referrer and UTMs, so this fills in with the first submission. Visitor counts need Vercel Web Analytics connected."
+            : "No visits and no leads recorded yet this month."}
+          cta={w.visitorsMonth === null
+            ? { href: "/admin/system/integrations", label: "Connect analytics" }
+            : { href: "/admin/intelligence", label: "Open Analytics" }}
           icon={<IconGlobe size={17} />}
         />
       ) : (
@@ -71,13 +77,19 @@ export default async function WebPanel({ className = "" }: { className?: string 
             </div>
             <div className="cc-stat">
               <div className="cc-stat-label">Visitors</div>
-              <div className="cc-stat-value t-none">not connected</div>
-              <div className="cc-stat-hint">GA4 is browser-side</div>
+              <div className={`cc-stat-value ${w.visitorsMonth === null ? "t-none" : ""}`}>
+                {w.visitorsMonth === null ? "not connected" : count(w.visitorsMonth)}
+              </div>
+              <div className="cc-stat-hint">
+                {w.visitorsMonth === null ? "needs Vercel Web Analytics" : `${count(w.visitorsToday ?? 0)} today · cookieless`}
+              </div>
             </div>
             <div className="cc-stat">
               <div className="cc-stat-label">Page views</div>
-              <div className="cc-stat-value t-none">not connected</div>
-              <div className="cc-stat-hint">needs a server feed</div>
+              <div className={`cc-stat-value ${w.pageViews === null ? "t-none" : ""}`}>
+                {w.pageViews === null ? "not connected" : count(w.pageViews)}
+              </div>
+              <div className="cc-stat-hint">{w.pageViews === null ? "needs Vercel Web Analytics" : "this month"}</div>
             </div>
           </div>
 

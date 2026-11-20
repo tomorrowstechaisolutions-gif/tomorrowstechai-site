@@ -43,10 +43,17 @@ export function offsetMinutes(at: Date): number {
   return (asUtc - Math.floor(at.getTime() / 1000) * 1000) / 60000;
 }
 
-/** The UTC instant of 00:00 local on a YYYY-MM-DD. */
-export function zonedMidnightUtc(isoDate: string): Date {
+/**
+ * The UTC instant of a wall-clock time on a Chicago YYYY-MM-DD.
+ *
+ * This is the one place a Chicago date and time become an instant. Writing
+ * `${date}T17:00:00-05:00` by hand is right for half the year and an hour
+ * wrong for the other half; so is adding 5 to the hour, and so is
+ * setHours(17) on a server whose own clock is UTC.
+ */
+export function chicagoInstant(isoDate: string, hours = 0, minutes = 0, seconds = 0): Date {
   const [y, m, d] = isoDate.split("-").map(Number);
-  const guess = Date.UTC(y, m - 1, d, 0, 0, 0);
+  const guess = Date.UTC(y, m - 1, d, hours, minutes, seconds);
 
   // Two passes: the first guess can land on the wrong side of a DST change,
   // in which case the offset it measured is the wrong one.
@@ -56,6 +63,26 @@ export function zonedMidnightUtc(isoDate: string): Date {
   if (second !== first) ts = guess - second * 60000;
 
   return new Date(ts);
+}
+
+/** The UTC instant of 00:00 local on a YYYY-MM-DD. */
+export function zonedMidnightUtc(isoDate: string): Date {
+  return chicagoInstant(isoDate);
+}
+
+/** A YYYY-MM-DD moved by whole calendar days. Pure date maths, no clock. */
+export function addDays(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/**
+ * The first instant AFTER a Chicago day: midnight at the start of the next
+ * one. "Due on the 25th" and "valid until the 25th" both run to here, and
+ * `at < chicagoDayEnd(day)` is the test for "still on that day".
+ */
+export function chicagoDayEnd(isoDate: string): Date {
+  return chicagoInstant(addDays(isoDate, 1));
 }
 
 /** YYYY-MM-DD for an instant, in Chicago. */

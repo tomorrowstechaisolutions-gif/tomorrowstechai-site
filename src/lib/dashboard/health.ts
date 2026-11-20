@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { lastNDays } from "./period";
+import { analyticsConfigured } from "@/lib/analytics/vercel-web";
 
 /**
  * Section 13 — System status.
@@ -140,10 +141,13 @@ export async function loadHealth(
     {
       key: "analytics",
       label: "Analytics",
-      // GA4 is a browser tag. Nothing on the server can read it back, which is
-      // exactly why the website panel refuses to print visitor counts.
-      state: "warning",
-      detail: "GA4 and the Meta Pixel run in the browser. No server-side feed.",
+      // GA4 and the Pixel are browser tags and cannot be read back. Vercel
+      // Web Analytics can: it is what the Analytics page and the website
+      // panel read. Whether it actually answers is checked on Integrations.
+      state: analyticsConfigured() ? "operational" : "warning",
+      detail: analyticsConfigured()
+        ? "Vercel Web Analytics feeds the Analytics page. GA4 and the Meta Pixel also run in the browser."
+        : "GA4 and the Meta Pixel run in the browser. No server-side feed.",
     },
     {
       key: "automations",

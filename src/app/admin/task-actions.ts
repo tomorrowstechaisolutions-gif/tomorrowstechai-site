@@ -9,6 +9,7 @@ import {
 } from "@/lib/tasks/config";
 import { onProjectCreated } from "@/lib/tasks/automation";
 import type { Priority, TaskKind } from "@/lib/supabase/types";
+import { chicagoInstant } from "@/lib/time/chicago";
 
 /**
  * Every write the Tasks screen makes.
@@ -74,10 +75,10 @@ function timeOrNull(raw: string): string | null {
 function dueInstant(date: string | null, time: string | null): string | null {
   if (!date) return null;
   const [hours, minutes] = (time ?? "17:00").split(":").map(Number);
-  const [y, m, d] = date.split("-").map(Number);
-  // Central is UTC-5 or UTC-6; Date handles the offset from a local-ish string.
-  const at = new Date(Date.UTC(y, m - 1, d, (hours ?? 17) + 5, minutes ?? 0, 0));
-  return at.toISOString();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  // Central is UTC-5 or UTC-6 depending on the date, so the offset is
+  // measured for that day rather than added by hand.
+  return chicagoInstant(date, Number.isFinite(hours) ? hours : 17, Number.isFinite(minutes) ? minutes : 0).toISOString();
 }
 
 function statusOrNull(raw: string): TaskStatus | null {

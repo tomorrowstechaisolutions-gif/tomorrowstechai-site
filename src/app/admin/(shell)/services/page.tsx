@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient, getAdminUser } from '@/lib/supabase/server';
 import { loadServiceList } from '@/lib/services/queries';
+import { loadRecurringTotals } from '@/lib/finance/subscriptions';
 import { BILLING_LABELS, BILLING_TYPES, SERVICE_STATUSES, SERVICE_TYPES } from '@/lib/services/types';
 import { money, marginLabel } from '@/lib/services/pricing';
 import { REVENUE_CATEGORIES } from '@/lib/supabase/types';
@@ -13,7 +14,11 @@ export const metadata = { title: 'Services' };
 export default async function ServicesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await getAdminUser(); if (!session) redirect('/admin/login');
   const canManage = ['owner', 'admin'].includes(session.admin.role);
-  const params = await searchParams; const db = await createSupabaseServerClient(); const [{ services, total, summary: k, page, period }, media] = await Promise.all([loadServiceList(db, params), db.from('catalog_items').select('id,image_path,image_url').eq('offer_kind','service').limit(1000)]);
+  const params = await searchParams; const db = await createSupabaseServerClient(); const [{ services, total, summary: k, page, period }, media, recurring] = await Promise.all([loadServiceList(db, params), db.from('catalog_items').select('id,image_path,image_url').eq('offer_kind','service').limit(1000), loadRecurringTotals(db).catch(() => null)]);
+  // The headline is every active recurring assignment, packages included: the
+  // same figure as Finance. The per-service rows below stay service-only.
+  const mrrCents = recurring ? recurring.mrrCents : Number(k.mrr_cents);
+  const recurringCount = recurring ? recurring.count : Number(k.subscriptions);
   const serviceMedia = Object.fromEntries((media.data??[]).map(row=>[row.id,{imagePath:row.image_path,imageUrl:row.image_url}]));
   const pick = (key: string) => typeof params[key] === 'string' ? params[key] as string : '';
   const revenueTotal = Number(k.recurring_revenue_cents) + Number(k.one_time_cents);
@@ -22,7 +27,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
   const pageLink = (n: number) => { const p = new URLSearchParams(Object.entries(params).filter((e): e is [string,string] => typeof e[1] === 'string')); p.set('page', String(n)); return `/admin/services?${p}`; };
   return <>
     <div className="cc-greet"><div><h1>Services</h1><p>Manage the individual services Tomorrow’s Tech AI offers. Packages are managed separately.</p></div><div className="sv-actions"><Link href="/admin/packages" className="cc-btn">Manage Packages</Link><Link href="/admin/catalog" className="cc-btn">View Catalog</Link>{canManage && <ServiceModal />}</div></div>
-    <div className="sv-kpis">{[['Active Services', k.active_services, 'Available operational services'], ['Monthly Recurring Revenue', money(k.mrr_cents), 'Current run rate from active assignments'], [revenueLabel, money(k.revenue_cents), `${period === 'all' ? 'All recorded time' : `Selected period: this ${period}`}`], ['Active Clients', k.active_clients, `${k.subscriptions} recurring service assignments`], ...(canManage ? [['Average Gross Margin', marginLabel(k.average_margin), 'Only services with valid cost data']] : [])].map(([label, value, note]) => <section className="sv-kpi" key={String(label)}><span>{label}</span><strong>{value}</strong><small>{note}</small></section>)}</div>
+    <div className="sv-kpis">{[['Active Services', k.active_services, 'Available operational services'], ['Monthly Recurring Revenue', money(mrrCents), 'All active recurring assignments, packages included'], [revenueLabel, money(k.revenue_cents), `${period === 'all' ? 'All recorded time' : `Selected period: this ${period}`}`], ['Active Clients', k.active_clients, `${recurringCount} recurring assignment${recurringCount === 1 ? '' : 's'}`], ...(canManage ? [['Average Gross Margin', marginLabel(k.average_margin), 'Only services with valid cost data']] : [])].map(([label, value, note]) => <section className="sv-kpi" key={String(label)}><span>{label}</span><strong>{value}</strong><small>{note}</small></section>)}</div>
     <section className="sv-summary-grid" aria-label="Business summary">
       <div className="cc-panel sv-summary-card"><div className="sv-section-heading"><div><span className="sv-eyebrow">Revenue Mix</span><h2>{money(revenueTotal)}</h2></div><small>{period === 'all' ? 'All recorded time' : `This ${period}`}</small></div><div className="sv-mix-bar" aria-label={`${recurringShare.toFixed(0)}% recurring revenue`}><span style={{width:`${recurringShare}%`}} /></div><div className="sv-mix-legend"><div><i className="recurring" /><span>Recurring Revenue</span><strong>{money(k.recurring_revenue_cents)}</strong></div><div><i /><span>One-Time Revenue</span><strong>{money(k.one_time_cents)}</strong></div></div></div>
       <div className="cc-panel sv-summary-card"><div className="sv-section-heading"><div><span className="sv-eyebrow">Top Performing Services</span><h2>Current leaders</h2></div><small>Revenue or MRR</small></div>{k.top_services?.some(service => service.mrr_cents || service.revenue_cents) ? <ol className="sv-leaders">{k.top_services.filter(service => service.mrr_cents || service.revenue_cents).map(service => <li key={service.id}><Link className="cc-link" href={`/admin/services/${service.id}`}>{service.name}</Link><strong>{service.mrr_cents > service.revenue_cents ? `${money(service.mrr_cents)} MRR` : money(service.revenue_cents)}</strong></li>)}</ol> : <p className="sv-muted">Revenue leaders will appear after service assignments or collected invoices are linked.</p>}</div>

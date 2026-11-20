@@ -12,6 +12,7 @@ import type {
   AgreementVersion, FullProposal, Proposal, ProposalEventType,
   ProposalItem, ProposalSection, ProposalSignature,
 } from "./types";
+import { chicagoDayEnd } from "@/lib/time/chicago";
 
 /**
  * Everything the PUBLIC proposal link can do.
@@ -44,7 +45,7 @@ export function isExpired(p: Pick<Proposal, "valid_until" | "status">): boolean 
   if (!p.valid_until) return false;
   if (["signed", "payment_pending", "paid", "converted"].includes(p.status)) return false;
   // valid_until is a date: good through the end of that day, Central.
-  return Date.now() > new Date(`${p.valid_until}T23:59:59-06:00`).getTime();
+  return Date.now() >= chicagoDayEnd(p.valid_until).getTime();
 }
 
 async function assemble(

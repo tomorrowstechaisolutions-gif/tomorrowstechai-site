@@ -3,14 +3,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { unwrap } from "./panel";
 import { chicagoDate, monthToDate, todayPeriod } from "./period";
 import { JUNK_FILTER } from "@/lib/supabase/types";
+import { analyticsConfigured, totals } from "@/lib/analytics/vercel-web";
 
 /**
  * Section 7 — Website performance.
  *
- * GA4 and the Meta Pixel are BROWSER-side tags. Nothing on this deployment
- * reads an analytics API from the server, so visitor and page-view counts do
- * not exist here — and this panel says so rather than printing a number it
- * cannot stand behind.
+ * GA4 and the Meta Pixel are BROWSER-side tags and cannot be read back from
+ * the server. Visitor and page-view counts come from Vercel Web Analytics,
+ * the same cookieless feed the Analytics page reads, so this panel and that
+ * page show the same numbers. When that feed is not set up or does not
+ * answer, the counts are null and the panel says so rather than printing a
+ * number it cannot stand behind.
  *
  * What is real: every lead row carries its landing page, referrer and UTMs,
  * and paid landing-page views are reported on campaign_spend. That is enough
@@ -143,14 +146,34 @@ export async function loadWeb(sb: SupabaseClient): Promise<WebSnapshot> {
     series.push({ date: key, count: byDay.get(key) ?? 0 });
   }
 
-  const analyticsConnected = ANALYTICS_ENV.some((k) => Boolean(process.env[k]));
   const leadsToday = byDay.get(day.fromDate) ?? 0;
+
+  // Traffic, from the feed the Analytics page uses. A failure here must not
+  // take the lead figures down with it: the counts just stay unknown.
+  let visitorsToday: number | null = null;
+  let visitorsMonth: number | null = null;
+  let pageViews: number | null = null;
+  if (analyticsConfigured()) {
+    try {
+      const now = new Date();
+      const [month, today] = await Promise.all([
+        totals(new Date(current.fromIso), now),
+        totals(new Date(day.fromIso), now),
+      ]);
+      visitorsMonth = month.visitors;
+      pageViews = month.pageviews;
+      visitorsToday = today.visitors;
+    } catch (err) {
+      console.error("[dashboard/web] traffic unavailable:", err instanceof Error ? err.message : err);
+    }
+  }
+  const analyticsConnected = visitorsMonth !== null || ANALYTICS_ENV.some((k) => Boolean(process.env[k]));
 
   return {
     analyticsConnected,
-    visitorsToday: null,
-    visitorsMonth: null,
-    pageViews: null,
+    visitorsToday,
+    visitorsMonth,
+    pageViews,
     paidLandingViews,
     leadsToday,
     leadsMonth: rows.length,
