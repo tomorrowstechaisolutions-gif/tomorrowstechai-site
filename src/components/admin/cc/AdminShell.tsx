@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NAV_GROUPS, type NavLink as NavLinkT } from "./nav";
 import QuickAdd from "./QuickAdd";
+import TessOrb from "./tess/TessOrb";
+import TessProvider from "./tess/TessProvider";
 import { initials } from "./format";
 import { useCollapsed } from "./useCollapsed";
 import { IconArrowRight, IconBell, IconLogout, IconMenu, IconSearch, IconX } from "./Icons";
@@ -33,6 +35,7 @@ export default function AdminShell({
   alertCount,
   alerts,
   signOut,
+  tessVoice,
   children,
 }: {
   user: { email: string; name: string | null };
@@ -40,6 +43,8 @@ export default function AdminShell({
   alertCount: number;
   alerts: ReactNode;
   signOut: () => Promise<void>;
+  /** Whether Tess has a voice service set up. She runs around every page, so the shell is told. */
+  tessVoice: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -116,6 +121,7 @@ export default function AdminShell({
   };
 
   return (
+    <TessProvider voice={tessVoice}>
     <div className={`cc-root cc-shell ${navOpen ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`}>
       {navOpen ? (
         <div className="cc-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />
@@ -270,6 +276,9 @@ export default function AdminShell({
 
         <main className="cc-page">{children}</main>
       </div>
+      {/* Tess, as the small ball that follows John from page to page. */}
+      <TessOrb />
     </div>
+    </TessProvider>
   );
 }

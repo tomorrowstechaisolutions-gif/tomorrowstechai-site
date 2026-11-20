@@ -6,7 +6,6 @@ import { buildBrief, visitSince, type Brief } from "@/lib/crew/brief";
 import { chatHistory, type ChatLine } from "@/lib/crew/chat";
 import { loadTessProfile, type TessProfile } from "@/lib/crew/profile";
 import { tessCurrent } from "@/lib/crew/tess-current";
-import { voiceConfigured } from "@/lib/crew/voice";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
 
@@ -17,7 +16,7 @@ export const dynamic = "force-dynamic";
  * Tess: the lead AI. The brief is built on the server for this visit, from
  * the crew's own step log and the same snapshot the advisor reads, and handed
  * to the console as it stands. The conversation happens over
- * /api/admin/tess/chat.
+ * /api/admin/tess/chat, run by TessProvider in the frame around every page.
  */
 export default async function TessPage() {
   const session = await getAdminUser();
@@ -48,5 +47,5 @@ export default async function TessPage() {
     );
   }
 
-  return <TessConsole brief={brief} history={history} profile={profile} voice={voiceConfigured()} />;
+  return <TessConsole brief={brief} history={history} profile={profile} />;
 }
