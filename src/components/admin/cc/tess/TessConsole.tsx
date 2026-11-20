@@ -10,6 +10,7 @@ import type { ChatLine } from "@/lib/crew/chat";
 import type { TessProfile } from "@/lib/crew/profile";
 import { MODES } from "@/lib/crew/tess-modes";
 import { LeftPanels, RightPanels } from "./BriefPanels";
+import { applyScreenChange, SOUND_EVENT, SOUND_KEY, type ScreenChange } from "./screenSettings";
 import { BACKGROUND_EVENT, BACKGROUND_KEY, parseBackground, playsWhileHidden, soundPlan, type Background } from "./soundPlan";
 import type { TessState } from "./TessCore";
 import TessProfilePanel from "./TessProfilePanel";
@@ -35,12 +36,11 @@ import { useSpeechInput } from "./useSpeechInput";
 const TessCore = dynamic(() => import("./TessCore"), { ssr: false });
 
 const LABEL: Record<TessState, string> = { idle: "Waiting", listening: "Listening", thinking: "Thinking", speaking: "Speaking" };
-const SOUND_KEY = "tess-sound";
-const SOUND_EVENT = "tess-sound-change";
 
 type StreamEvent =
   | { type: "state"; state: "thinking" | "speaking" | "idle" }
   | { type: "text"; delta: string }
+  | { type: "screen"; change: ScreenChange }
   | { type: "error"; message: string }
   | { type: "done" };
 
@@ -277,6 +277,8 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
               setExchange((prev) => ({ ...prev, line: said }));
             } else if (event.type === "state") {
               if (event.state !== "idle") setState(event.state);
+            } else if (event.type === "screen") {
+              applyScreenChange(event.change);
             } else if (event.type === "error") {
               setProblem(event.message);
             }
