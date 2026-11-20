@@ -9,6 +9,7 @@ import { loadAlerts } from "@/lib/dashboard/alerts";
 import { panel } from "@/lib/dashboard/panel";
 import { CLOSED_STATUSES } from "@/lib/supabase/types";
 import { leadAttention, type AttentionLead } from "@/lib/leads/attention";
+import { voiceConfigured } from "@/lib/crew/voice";
 import { chicagoDayEnd, zonedMidnightUtc } from "@/lib/time/chicago";
 
 export const dynamic = "force-dynamic";
@@ -196,6 +197,7 @@ export default async function AdminShellLayout({
         </Suspense>
       }
       signOut={signOutAction}
+      tessVoice={voiceConfigured()}
     >
       {children}
     </AdminShell>

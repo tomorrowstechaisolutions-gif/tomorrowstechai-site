@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cleanPagePath, cleanPageView, pageFromMessage } from "@/components/admin/cc/tess/pages";
 import { screenChangeFromMessage, type ScreenChange } from "@/components/admin/cc/tess/screenSettings";
 import { anthropic, effort } from "@/lib/ai/claude";
 import { briefText, buildBrief, visitSince } from "@/lib/crew/brief";
@@ -7,6 +8,7 @@ import { TESS_EFFORT } from "@/lib/crew/models";
 import { contextBlocks, currentStateBlock, loadTessProfile } from "@/lib/crew/profile";
 import { advanceRun, thinkingSettings, type ModelCall } from "@/lib/crew/run";
 import { tessCurrent } from "@/lib/crew/tess-current";
+import { whereText } from "@/lib/crew/tess-modes";
 import { rateLimit } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/supabase/server";
@@ -17,11 +19,13 @@ export const maxDuration = 60;
 /**
  * Talking to Tess.
  *
- * POST { message }. An empty message means John has just opened the tab. The
+ * POST { message, page?, view? }. An empty message means John has just opened
+ * the tab. `page` is the admin page he is on and `view` the text on it. The
  * reply is a stream of server-sent events:
  *   { type: "state", state: "thinking" | "speaking" | "idle" }
  *   { type: "text", delta }      a piece of what Tess is saying
  *   { type: "screen", change }   Tess changed a setting that lives in the browser; apply it
+ *   { type: "go", href }         Tess opened a page; take John's screen there
  *   { type: "error", message }   something went wrong; say it plainly
  *   { type: "done" }
  *
@@ -33,6 +37,7 @@ type Event =
   | { type: "state"; state: "thinking" | "speaking" | "idle" }
   | { type: "text"; delta: string }
   | { type: "screen"; change: ScreenChange }
+  | { type: "go"; href: string }
   | { type: "error"; message: string }
   | { type: "done" };
 
@@ -43,8 +48,10 @@ export async function POST(req: Request) {
   const limit = rateLimit(`tess:${session.user.id}`, { max: 120, windowMs: 60 * 60 * 1000 });
   if (!limit.ok) return NextResponse.json({ error: "That is a lot in one hour. Give it a few minutes." }, { status: 429 });
 
-  const body = (await req.json().catch(() => null)) as { message?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { message?: unknown; page?: unknown; view?: unknown } | null;
   const message = typeof body?.message === "string" ? body.message : "";
+  const page = cleanPagePath(body?.page);
+  const where = page ? [whereText(page, cleanPageView(body?.view))] : [];
   const userId = session.user.id;
   const sb = supabaseAdmin();
   const encoder = new TextEncoder();
@@ -92,6 +99,9 @@ export async function POST(req: Request) {
         // A setting that lives in John's browser: the page has to make the change.
         const change = screenChangeFromMessage(message.content);
         if (change) send({ type: "screen", change });
+        // She opened a page: his screen goes there, and she goes with it.
+        const opened = pageFromMessage(message.content);
+        if (opened) send({ type: "go", href: opened.href });
         return message;
       };
 
@@ -101,7 +111,7 @@ export async function POST(req: Request) {
           userId,
           message,
           current: tessCurrent(),
-          context: [...contextBlocks(await loadTessProfile(sb, userId)), ...[await currentStateBlock(sb)].filter((b): b is string => Boolean(b))],
+          context: [...contextBlocks(await loadTessProfile(sb, userId)), ...[await currentStateBlock(sb)].filter((b): b is string => Boolean(b)), ...where],
           brief: async () => briefText(await buildBrief(sb, await visitSince(sb, userId))),
         });
         const result = await advanceRun(sb, runId, {
