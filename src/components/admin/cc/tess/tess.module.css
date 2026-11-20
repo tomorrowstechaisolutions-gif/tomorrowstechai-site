@@ -120,6 +120,41 @@
 .voice { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; width: min(760px, 92%); z-index: 3; text-align: center; }
 .said { font-size: 17px; line-height: 1.5; min-height: 52px; max-height: 30vh; overflow: auto; text-shadow: 0 2px 18px #000; scrollbar-width: thin; white-space: pre-wrap; }
 .stage .said { max-height: 22vh; }
+
+/* Her words: three styles, and fading away */
+.saidWrap { position: relative; transition: opacity 1.2s ease; }
+.saidFaded { opacity: 0; pointer-events: none; }
+
+/* Comic: a speech balloon, the way newspaper strips lettered them */
+.wrapComic { margin-top: 14px; }
+.wrapComic .said { background: #fffdf3 radial-gradient(rgba(0, 0, 0, 0.085) 1px, transparent 1.5px) 0 0 / 7px 7px; color: #151515; border: 3px solid #151515; border-radius: 26px; box-shadow: 5px 6px 0 #151515; padding: 14px 22px; text-shadow: none; font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", "Segoe Print", cursive; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; line-height: 1.45; scrollbar-color: #151515 transparent; }
+.wrapComic .you { color: #6b6b6b; font-size: 11.5px; font-weight: 400; }
+.wrapComic .problem { color: #b3261e; text-transform: none; font-weight: 400; }
+.tail { position: absolute; left: 50%; top: -17px; width: 26px; height: 20px; transform: translateX(-50%); background: #151515; clip-path: polygon(50% 0, 100% 100%, 0 100%); z-index: 1; }
+.tail::after { content: ""; position: absolute; inset: 6px 4px -2px; background: #fffdf3; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+
+/* Tech: a channel readout */
+.wrapTech .said { text-align: left; font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace; font-size: 14px; line-height: 1.6; color: #c4f1ff; text-shadow: 0 0 9px rgba(53, 214, 255, 0.4); padding: 30px 18px 14px; border: 1px solid rgba(53, 214, 255, 0.55); background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(53, 214, 255, 0.045) 3px 4px), rgba(4, 11, 17, 0.86); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+.wrapTech::before { content: "TESS // LIVE CHANNEL"; position: absolute; left: 18px; top: 9px; z-index: 1; font: 10px ui-monospace, Consolas, monospace; letter-spacing: 2.4px; color: var(--cyan); opacity: 0.85; }
+.wrapTech::after { content: ""; position: absolute; right: 22px; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: blink 1.2s infinite; z-index: 1; }
+.wrapTech .you { color: var(--amber); font-size: 12px; text-shadow: none; }
+.wrapTech .you::before { content: "> "; }
+.wrapTech .line::after { content: "▌"; margin-left: 2px; color: var(--cyan); animation: blink 1s steps(1) infinite; }
+
+/* The archive */
+.archive { height: auto; min-height: calc(100dvh - 61px); overflow: visible; }
+.archiveHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.archiveBody { max-width: 860px; margin: 0 auto; padding: 18px 20px 60px; }
+.archiveNote { color: var(--dim); font-size: 13px; margin: 0 0 14px; }
+.day { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px 16px; margin-bottom: 10px; }
+.day summary { cursor: pointer; display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 13.5px; list-style: none; }
+.day summary::-webkit-details-marker { display: none; }
+.day summary span { color: var(--faint); font-size: 12px; }
+.day[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.lineJohn, .lineTess { margin: 0; padding: 7px 0; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
+.lineJohn { color: var(--dim); }
+.lineJohn i, .lineTess i { display: block; font-style: normal; font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--faint); margin-bottom: 1px; }
+.lineTess i { color: var(--cyan); }
 .you { color: var(--dim); font-size: 13.5px; display: block; margin-bottom: 4px; }
 .problem { color: var(--amber); font-size: 13.5px; display: block; margin-top: 6px; }
 .talk { margin-top: 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 8px 6px 16px; backdrop-filter: blur(6px); }
@@ -154,4 +189,6 @@
 @media (prefers-reduced-motion: reduce) {
   .dotOn { animation: none; }
   .col { transition: none; }
+  .saidWrap { transition: none; }
+  .wrapTech::after, .wrapTech .line::after { animation: none; }
 }

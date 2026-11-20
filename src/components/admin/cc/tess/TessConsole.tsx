@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { confirmPlaybookAction, removeTessNoteAction, setAgentPausedAction, setCrewPausedAction, setTessSettingsAction, type CrewActionResult } from "@/app/admin/crew-actions";
 import type { Brief } from "@/lib/crew/brief";
 import type { ChatLine } from "@/lib/crew/chat";
@@ -14,6 +15,7 @@ import type { TessState } from "./TessCore";
 import TessProfilePanel from "./TessProfilePanel";
 import styles from "./tess.module.css";
 import { createTessSounds, type TessSounds } from "./tessSounds";
+import { parseTextPrefs, TEXT_EVENT, TEXT_KEY, TEXT_PREV_KEY, textFaded, type TextPrefs, type TextStyle } from "./textPrefs";
 import { useSpeechInput } from "./useSpeechInput";
 
 /**
@@ -70,6 +72,23 @@ function lastExchange(history: ChatLine[]): { you: string; line: string } {
   return { you, line };
 }
 
+function subscribeText(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(TEXT_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(TEXT_EVENT, onChange);
+  };
+}
+const textSnapshot = () => {
+  try {
+    return window.localStorage.getItem(TEXT_KEY);
+  } catch {
+    return null;
+  }
+};
+const WRAP: Record<TextStyle, string> = { classic: "", comic: "wrapComic", tech: "wrapTech", hidden: "" };
+
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 export default function TessConsole({ brief, history, profile, voice }: { brief: Brief; history: ChatLine[]; profile: TessProfile; voice: boolean }) {
@@ -88,6 +107,12 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
   const [voiceProblem, setVoiceProblem] = useState<string | null>(null);
   const heldBack = useRef(false);
   const soundOn = useSyncExternalStore(subscribeSound, soundSnapshot, () => true);
+  const textRaw = useSyncExternalStore(subscribeText, textSnapshot, () => null);
+  const textPrefs = useMemo(() => parseTextPrefs(textRaw), [textRaw]);
+  /** Her words have been up for the chosen time since she went quiet. */
+  const [fadeDue, setFadeDue] = useState(false);
+  /** John brought the faded words back; they stay until the next exchange. */
+  const [pinned, setPinned] = useState(false);
 
   const busyRef = useRef(false);
   const pulseAt = useRef(0);
@@ -197,6 +222,8 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
       setProblem(null);
       setNeedsTap(false);
       heldBack.current = false;
+      setFadeDue(false);
+      setPinned(false);
       setExchange({ you: message.trim(), line: "" });
       setState("thinking");
 
@@ -316,6 +343,51 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
     sounds.current?.setOn(soundOn && !document.hidden);
   }, [soundOn]);
 
+  // Her words leave the screen a little while after she goes quiet. They are kept in the archive.
+  const quiet = !busy && shown === "idle";
+  useEffect(() => {
+    if (!quiet || !textPrefs.fadeSeconds || pinned) return;
+    const timer = window.setTimeout(() => setFadeDue(true), textPrefs.fadeSeconds * 1000);
+    return () => window.clearTimeout(timer);
+  }, [quiet, textPrefs.fadeSeconds, pinned, exchange.line]);
+  const faded = textFaded({
+    fadeSeconds: textPrefs.fadeSeconds,
+    busy,
+    listening: speech.listening,
+    speaking: shown === "speaking",
+    pinned,
+    idleForMs: fadeDue && quiet ? textPrefs.fadeSeconds * 1000 : 0,
+  });
+
+  const saveTextPrefs = useCallback((next: TextPrefs) => {
+    try {
+      window.localStorage.setItem(TEXT_KEY, JSON.stringify(next));
+    } catch {
+      /* private mode: the choice cannot be kept */
+    }
+    window.dispatchEvent(new Event(TEXT_EVENT));
+  }, []);
+
+  /** Text on or off: off hides her words (she is only heard); on goes back to the style in use before. */
+  const toggleText = () => {
+    if (textPrefs.style !== "hidden") {
+      try {
+        window.localStorage.setItem(TEXT_PREV_KEY, textPrefs.style);
+      } catch {
+        /* nothing to remember it in */
+      }
+      saveTextPrefs({ ...textPrefs, style: "hidden" });
+      return;
+    }
+    let previous: string | null = null;
+    try {
+      previous = window.localStorage.getItem(TEXT_PREV_KEY);
+    } catch {
+      /* fall through to the default */
+    }
+    saveTextPrefs({ ...textPrefs, style: parseTextPrefs(JSON.stringify({ style: previous })).style });
+  };
+
   const run = useCallback(
     async (action: (fd: FormData) => Promise<CrewActionResult>, fields: Record<string, string>) => {
       setActing(true);
@@ -404,6 +476,9 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
           Mode <b>{MODES[profile.mode].label}</b>
         </span>
         <span className={styles.spacer} />
+        <Link className={styles.btn} href="/admin/ai/archive">
+          Archive
+        </Link>
         <span className={styles.modes} role="group" aria-label="View">
           <button type="button" aria-pressed={view === "briefing"} onClick={() => setView("briefing")}>
             Briefing
@@ -443,6 +518,8 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
             profile={profile}
             busy={acting}
             problem={profileProblem}
+            textPrefs={textPrefs}
+            onTextPrefs={saveTextPrefs}
             onSettings={(next) => void runProfile(setTessSettingsAction, next)}
             onRemove={(list, id) => void runProfile(removeTessNoteAction, { list, id })}
           />
@@ -452,17 +529,28 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
       </div>
 
       <div className={styles.voice}>
-        <div className={styles.said} aria-live="polite">
-          {speech.listening ? (
-            <span className={styles.you}>You: {speech.transcript || (speech.live ? "I am listening, go ahead…" : "Opening the microphone…")}</span>
-          ) : exchange.you ? (
-            <span className={styles.you}>You: {exchange.you}</span>
-          ) : null}
-          <span>{exchange.line}</span>
-          {problem ? <span className={styles.problem}>{problem}</span> : null}
-          {speech.error ? <span className={styles.problem}>{speech.error}</span> : null}
-          {voiceProblem ? <span className={styles.problem}>{voiceProblem}</span> : null}
-        </div>
+        {(() => {
+          const hidden = textPrefs.style === "hidden";
+          const anyProblem = problem || speech.error || voiceProblem;
+          const anyWords = !hidden && (speech.listening || exchange.you || exchange.line);
+          if (!anyWords && !anyProblem) return <div className={styles.said} aria-live="polite" />;
+          return (
+            <div className={`${styles.saidWrap} ${anyWords ? styles[WRAP[textPrefs.style]] ?? "" : ""} ${faded && !anyProblem ? styles.saidFaded : ""}`}>
+              {anyWords && textPrefs.style === "comic" ? <i className={styles.tail} aria-hidden /> : null}
+              <div className={styles.said} aria-live="polite">
+                {hidden ? null : speech.listening ? (
+                  <span className={styles.you}>You: {speech.transcript || (speech.live ? "I am listening, go ahead…" : "Opening the microphone…")}</span>
+                ) : exchange.you ? (
+                  <span className={styles.you}>You: {exchange.you}</span>
+                ) : null}
+                {hidden ? null : <span className={styles.line}>{exchange.line}</span>}
+                {problem ? <span className={styles.problem}>{problem}</span> : null}
+                {speech.error ? <span className={styles.problem}>{speech.error}</span> : null}
+                {voiceProblem ? <span className={styles.problem}>{voiceProblem}</span> : null}
+              </div>
+            </div>
+          );
+        })()}
 
         <form
           className={styles.talk}
@@ -498,6 +586,9 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
           <button type="button" className={styles.round} onClick={toggleSound} aria-pressed={soundOn}>
             {soundOn ? "Sound on" : "Sound off"}
           </button>
+          <button type="button" className={styles.round} onClick={toggleText} aria-pressed={textPrefs.style !== "hidden"}>
+            {textPrefs.style === "hidden" ? "Text off" : "Text on"}
+          </button>
           <button type="submit" className={styles.round} disabled={busy || !draft.trim()}>
             Send
           </button>
@@ -506,6 +597,10 @@ export default function TessConsole({ brief, history, profile, voice }: { brief:
         <div className={styles.hint}>
           {needsTap && lastSpoken.current ? (
             "Your browser held her voice back. Click anywhere or press a key to hear her."
+          ) : faded && textPrefs.style !== "hidden" && exchange.line ? (
+            <button type="button" className={styles.botBtn} onClick={() => setPinned(true)}>
+              Show what she said
+            </button>
           ) : speech.supported ? (
             "Tap the talk button or hold the space bar to talk, or type."
           ) : (

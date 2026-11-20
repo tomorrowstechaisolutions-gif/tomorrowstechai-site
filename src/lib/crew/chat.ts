@@ -1,6 +1,7 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { chicagoDate } from "@/lib/time/chicago";
 import { startRun } from "./log";
 import { ROLE } from "./roles";
 import { CONTEXT_TAGS } from "./tess-modes";
@@ -124,7 +125,11 @@ export type ChatLine = { role: "john" | "tess"; text: string };
 /** What has been said in the conversation John can carry on, for the page. */
 export async function chatHistory(sb: SupabaseClient, userId: string, now: number = Date.now()): Promise<ChatLine[]> {
   const run = await currentRun(sb, userId, now);
-  if (!run) return [];
+  return run ? linesOf(run) : [];
+}
+
+/** What John and Tess actually said in one saved conversation: no brief, no settings, no tool calls. */
+function linesOf(run: Pick<Run, "transcript">): ChatLine[] {
   const lines: ChatLine[] = [];
   for (const message of (run.transcript ?? []) as Anthropic.MessageParam[]) {
     const blocks = typeof message.content === "string" ? [{ type: "text" as const, text: message.content }] : message.content;
@@ -137,4 +142,35 @@ export async function chatHistory(sb: SupabaseClient, userId: string, now: numbe
     if (text) lines.push({ role: message.role === "assistant" ? "tess" : "john", text });
   }
   return lines;
+}
+
+export type ArchiveDay = { /** YYYY-MM-DD, Chicago. */ date: string; conversations: number; lines: ChatLine[] };
+
+/**
+ * This admin's conversations with Tess, grouped by the Chicago day each one
+ * started, newest day first. A day where nothing was actually said (he
+ * opened the tab and left) is left out.
+ */
+export async function chatArchive(sb: SupabaseClient, userId: string, limit: number = 300): Promise<ArchiveDay[]> {
+  const { data, error } = await sb
+    .from("ai_runs")
+    .select("id, started_at, transcript")
+    .eq("trigger", "chat")
+    .eq("started_by", userId)
+    .order("started_at", { ascending: false })
+    .limit(limit);
+  if (error) fail("Could not load the archive", error);
+
+  const byDay = new Map<string, ArchiveDay>();
+  const oldestFirst = [...((data ?? []) as Pick<Run, "id" | "started_at" | "transcript">[])].sort((a, b) => a.started_at.localeCompare(b.started_at));
+  for (const run of oldestFirst) {
+    const lines = linesOf(run);
+    if (!lines.length) continue;
+    const date = chicagoDate(new Date(run.started_at));
+    const day = byDay.get(date) ?? { date, conversations: 0, lines: [] };
+    day.conversations += 1;
+    day.lines.push(...lines);
+    byDay.set(date, day);
+  }
+  return [...byDay.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
