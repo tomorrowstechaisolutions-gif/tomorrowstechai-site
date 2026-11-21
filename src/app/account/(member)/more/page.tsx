@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getPortalViewer } from "@/lib/portal/session";
 import { memberCatalog, money, OFFER_ORDER, type MemberOffer } from "@/lib/portal/data";
+import { LAUNCH_NOTE } from "@/lib/catalog/launch";
 import { requestServiceAction } from "../../member-actions";
 import { businessProfile } from "@/lib/settings/profile-store";
 import type { ProfileView } from "@/lib/settings/profile";
@@ -62,8 +63,10 @@ export default async function MoreServicesPage({ searchParams }: { searchParams:
                 {o.blurb ? <p>{o.blurb}</p> : null}
                 <dl>
                   <div><dt>Price</dt><dd>{price(o)}</dd></div>
+                  {o.listCents ? <div><dt>Regular price</dt><dd>{money(o.listCents).replace(/\.00$/, "")}{o.billingType === "recurring" ? "/mo" : ""}</dd></div> : null}
                   {o.setupCents ? <div><dt>Setup</dt><dd>{money(o.setupCents).replace(/\.00$/, "")} one-time</dd></div> : null}
                 </dl>
+                {o.listCents ? <p className="acct-faint">{LAUNCH_NOTE}.</p> : null}
                 <div className="acct-svc-actions">
                   <RequestButton offer={o} label="I'm interested" />
                   {o.detailsUrl ? <Link href={o.detailsUrl} target="_blank" rel="noopener">See details</Link> : null}

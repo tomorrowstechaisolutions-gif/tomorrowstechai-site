@@ -24,6 +24,8 @@ export async function loadServiceList(db: SupabaseClient, params: Record<string,
   for (const [param, column] of [['status', 'status'], ['type', 'service_type'], ['category', 'category'], ['billing', 'billing_type']]) {
     if (value(param)) query = query.eq(column, value(param));
   }
+  if (value('shown') === 'members') query = query.eq('public_enabled', true).eq('status', 'active');
+  if (value('shown') === 'hidden') query = query.eq('public_enabled', false);
   if (value('health')) query = query.eq('health', value('health'));
   if (value('profitability') === 'strong') query = query.gte('margin', 60);
   if (value('profitability') === 'positive') query = query.gte('margin', 0).lt('margin', 60);

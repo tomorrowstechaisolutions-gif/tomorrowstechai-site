@@ -1,3 +1,4 @@
+import LaunchLine from "@/components/catalog/LaunchLine";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LeadForm } from "@/components/business-launch/LeadForm";
@@ -99,6 +100,7 @@ export default async function BusinessLaunchPage() {
               <span className="bl-pricebox-amount">${OFFER_PRICE}</span>
               <span className="bl-pricebox-unit">one-time build</span>
             </div>
+            <LaunchLine slug="website-classic" />
             <div className="bl-pricebox-note">
               Then hosting from{" "}
               <strong>${HOSTING_FROM}/month</strong> once your site is live.

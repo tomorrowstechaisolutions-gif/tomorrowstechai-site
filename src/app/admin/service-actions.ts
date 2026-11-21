@@ -1,5 +1,6 @@
 'use server';
 
+import { pricingModeFor } from '@/lib/catalog/launch';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, getAdminUser } from '@/lib/supabase/server';
 import { AVAILABILITY, BILLING_TYPES, SERVICE_FREQUENCIES, SERVICE_STATUSES, SERVICE_TYPES, type ActionResult } from '@/lib/services/types';
@@ -37,7 +38,9 @@ export async function saveService(_previous: ActionResult, fd: FormData): Promis
     };
     const { data: saved, error } = await db.rpc('save_service', { p_id: id, p_data: data, p_cost: { internal_cost_cents: parseMoney(str(fd, 'internal_cost'), true), recurring_cost_cents: parseMoney(str(fd, 'recurring_cost'), true) }, p_expected: str(fd, 'updated_at') || null });
     check(error);
-    const {error:displayError}=await db.from('catalog_items').update({slug,catalog_category:catalogCategory,short_description:str(fd,'short_description',500)||null,image_url:str(fd,'image_url',1000)||null,image_alt:str(fd,'image_alt',240)||null,icon_key:str(fd,'icon_key',80)||null,public_route:str(fd,'public_route',500)||null,meta_title:str(fd,'meta_title',180)||null,meta_description:str(fd,'meta_description',320)||null,frontend_locations:str(fd,'frontend_locations',2000).split(/[\n,]/).map(x=>x.trim()).filter(Boolean).slice(0,30),offer_kind:'service'}).eq('id',saved); check(displayError);
+    const { data: before } = await db.from('catalog_items').select('pricing_mode').eq('id', saved).maybeSingle();
+    const pricing_mode = pricingModeFor(billing, data.from_cents ?? 0, str(fd, 'pricing_mode', 30) || String(before?.pricing_mode ?? ''));
+    const {error:displayError}=await db.from('catalog_items').update({pricing_mode,slug,catalog_category:catalogCategory,short_description:str(fd,'short_description',500)||null,image_url:str(fd,'image_url',1000)||null,image_alt:str(fd,'image_alt',240)||null,icon_key:str(fd,'icon_key',80)||null,public_route:str(fd,'public_route',500)||null,meta_title:str(fd,'meta_title',180)||null,meta_description:str(fd,'meta_description',320)||null,frontend_locations:str(fd,'frontend_locations',2000).split(/[\n,]/).map(x=>x.trim()).filter(Boolean).slice(0,30),offer_kind:'service'}).eq('id',saved); check(displayError);
     touch(saved); return { success: 'Service saved.', id: saved };
   } catch (e) { return failure(e); }
 }

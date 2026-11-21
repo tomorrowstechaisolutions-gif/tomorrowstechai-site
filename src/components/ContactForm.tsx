@@ -26,10 +26,10 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter — $199/mo",
-  growth: "Growth — $399/mo",
-  "full-service": "Full Service — $699/mo",
-  custom: "Custom Growth System — from $999/mo",
+  starter: "Starter — $499/mo",
+  growth: "Growth — $899/mo",
+  "full-service": "Full Service — $1,499/mo",
+  custom: "Custom Growth System — from $2,000/mo",
 };
 
 /*

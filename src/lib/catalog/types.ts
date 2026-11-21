@@ -24,6 +24,8 @@ export type CatalogPackage = {
   description: string;
   pricingMode: PricingMode;
   priceCents: number;
+  /** The regular price, when priceCents is a launch price. Null otherwise. See lib/catalog/launch. */
+  listCents: number | null;
   setupFeeCents: number;
   billingType: "one_time" | "recurring" | "usage_based" | "custom_quote";
   billingInterval: string;
@@ -51,4 +53,10 @@ export function catalogPrice(pkg: Pick<CatalogPackage, "pricingMode" | "priceCen
   const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: pkg.priceCents % 100 ? 2 : 0 }).format(pkg.priceCents / 100);
   const interval = pkg.billingType === "recurring" ? pkg.billingInterval === "yearly" ? "/year" : pkg.billingInterval === "quarterly" ? "/quarter" : "/month" : "";
   return `${pkg.pricingMode === "starting_at" ? "Starting at " : ""}${dollars}${interval}`;
+}
+
+/** The regular price of an offer on a launch price, as "$1,800". Null when it has none. */
+export function catalogListPrice(pkg: Pick<CatalogPackage, "listCents">): string | null {
+  if (!pkg.listCents) return null;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: pkg.listCents % 100 ? 2 : 0 }).format(pkg.listCents / 100);
 }
