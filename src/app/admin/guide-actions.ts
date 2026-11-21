@@ -19,7 +19,8 @@ export async function recordGuideAction(_previous: GuideRecordState, _form: Form
     revalidatePath("/admin/guide");
     revalidatePath("/guide");
     const failed = result.failed.length ? ` ${result.failed.length} failed: ${result.failed.map((f) => `${f.id} (${f.why})`).join("; ")}.` : "";
-    return { ok: result.failed.length === 0, message: `Recorded ${result.recorded.length} line${result.recorded.length === 1 ? "" : "s"}. ${result.already} were already recorded.${failed}` };
+    const left = result.left + result.failed.length;
+    return { ok: result.failed.length === 0, message: `Recorded ${result.recorded.length} line${result.recorded.length === 1 ? "" : "s"}. ${left ? `${left} still to record: press again.` : "Everything is recorded."}${failed}` };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : "Recording failed." };
   }

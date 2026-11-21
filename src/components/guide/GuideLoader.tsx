@@ -9,6 +9,6 @@ import type { GuideOffer } from "@/lib/guide/offers";
  */
 const GuideExperience = dynamic(() => import("./GuideExperience"), { ssr: false });
 
-export default function GuideLoader(props: { offers: Record<string, GuideOffer>; clips: Record<string, string> }) {
+export default function GuideLoader(props: { offers: Record<string, GuideOffer>; clips: Record<string, string>; names: string[]; clipBase: string }) {
   return <GuideExperience {...props} />;
 }
