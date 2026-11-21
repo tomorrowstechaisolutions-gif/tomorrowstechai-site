@@ -1,3 +1,4 @@
+import LaunchLine from "@/components/catalog/LaunchLine";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LeadForm } from "@/components/business-launch/LeadForm";
@@ -70,6 +71,7 @@ export default async function EcommerceWebsitePage() {
               <span className="bl-pricebox-amount">${ECOM_PRICE}</span>
               <span className="bl-pricebox-unit">one-time build</span>
             </div>
+            <LaunchLine slug="website-ecommerce" />
             <div className="bl-pricebox-note">
               Plus hosting at <strong>${ECOM_HOSTING}/month</strong>, free for
               the first 30 days. Cancel any time.

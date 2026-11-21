@@ -1,4 +1,5 @@
 import "server-only";
+import { launchPrice } from "@/lib/catalog/launch";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { invoiceUrl } from "@/lib/invoices/service";
 
@@ -180,6 +181,8 @@ export type MemberOffer = {
   category: string;
   blurb: string | null;
   priceCents: number;
+  /** The regular price, when priceCents is a launch price. */
+  listCents: number | null;
   setupCents: number;
   billingType: string;
   pricingMode: string;
@@ -213,7 +216,7 @@ export async function memberCatalog(customerId: string): Promise<MemberOffer[]> 
   const [{ data: items }, { data: owned }, { data: open }] = await Promise.all([
     db
       .from("catalog_items")
-      .select("id, name, catalog_category, short_description, subtitle, from_cents, setup_fee_cents, billing_type, pricing_mode, badge, featured, most_popular, public_route, position")
+      .select("id, slug, name, catalog_category, short_description, subtitle, from_cents, setup_fee_cents, billing_type, pricing_mode, badge, featured, most_popular, public_route, position")
       .eq("public_enabled", true)
       .eq("active", true)
       .eq("status", "active")
@@ -226,12 +229,15 @@ export async function memberCatalog(customerId: string): Promise<MemberOffer[]> 
   const asked = new Set((open ?? []).map((r) => r.catalog_item_id as string));
   return (items ?? [])
     .filter((i) => !have.has(i.id) && OFFER_CATEGORY[i.catalog_category ?? ""])
-    .map((i) => ({
+    .map((i) => {
+      const launch = launchPrice(i.slug, i.from_cents ?? 0);
+      return {
       id: i.id,
       name: i.name,
       category: OFFER_CATEGORY[i.catalog_category as string],
       blurb: i.short_description || i.subtitle || null,
-      priceCents: i.from_cents ?? 0,
+      priceCents: launch ? launch.chargeCents : i.from_cents ?? 0,
+      listCents: launch ? launch.listCents : null,
       setupCents: i.setup_fee_cents ?? 0,
       billingType: i.billing_type ?? "one_time",
       pricingMode: i.pricing_mode ?? "custom_quote",
@@ -239,5 +245,6 @@ export async function memberCatalog(customerId: string): Promise<MemberOffer[]> 
       featured: Boolean(i.featured),
       detailsUrl: i.public_route && i.public_route.startsWith("/") && i.public_route !== "/services" ? i.public_route : null,
       requested: asked.has(i.id),
-    }));
+      };
+    });
 }
