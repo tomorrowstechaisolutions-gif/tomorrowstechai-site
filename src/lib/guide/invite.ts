@@ -1,7 +1,7 @@
 /** When Tess opens on her own, and how often. Shared by the mascot and its tests. */
 
 /** How long a visitor is left alone before she offers to help. */
-export const INVITE_AFTER_MS = 30_000;
+export const INVITE_AFTER_MS = 13_000;
 
 /** Where the browser remembers she has already offered. */
 export const INVITE_KEY = "tess-guide-invited";
