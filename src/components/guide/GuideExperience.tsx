@@ -7,14 +7,63 @@ import type { TessState } from "@/components/admin/cc/tess/TessCore";
 import type { Decision } from "@/lib/guide/brain";
 import { WORDS_LIMIT } from "@/lib/guide/brain";
 import type { GuideOffer } from "@/lib/guide/offers";
-import { GUIDE_START, GUIDE_WELCOME, guideStep, nextStep, type GuideStep } from "@/lib/guide/script";
+import { ASK_AGAIN_CLIP, BACK_CLIP, nameClip, nameKey } from "@/lib/guide/names";
+import { CONTACT_KEY, packContact, readContact } from "@/lib/guide/remember";
+import { clipName, GUIDE_START, GUIDE_WELCOME, guideStep, nextStep, type GuideStep } from "@/lib/guide/script";
 import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 import styles from "./guide.module.css";
 
 const TessCore = dynamic(() => import("@/components/admin/cc/tess/TessCore"), { ssr: false });
 
 type Contact = { name: string; email: string; phone: string };
+
+/** The visitor this browser remembers from an earlier visit, if any. Only ever called in the browser: the page is not drawn on the server. */
+function remembered(): Contact | null {
+  try {
+    return readContact(window.localStorage.getItem(CONTACT_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function remember(who: Contact | null) {
+  try {
+    if (who) window.localStorage.setItem(CONTACT_KEY, packContact(who));
+    else window.localStorage.removeItem(CONTACT_KEY);
+  } catch {
+    // Storage blocked: she simply asks again next time.
+  }
+}
 type Picked = { id: string; choice: number };
+
+type Player = { audio: { current: HTMLAudioElement | null }; muted: () => boolean; onSpeaking: () => void; onQuiet: () => void };
+
+/**
+ * Play recordings back to back. State only changes from a recording's own
+ * events, never straight away. A browser may refuse sound before the visitor
+ * has clicked anything; her words are on screen either way.
+ */
+function playInTurn(urls: string[], player: Player): void {
+  player.audio.current?.pause();
+  const [url, ...rest] = urls;
+  if (!url || player.muted()) return;
+  const clip = new Audio(url);
+  player.audio.current = clip;
+  const mine = () => player.audio.current === clip;
+  const next = () => {
+    if (!mine()) return;
+    if (rest.length) playInTurn(rest, player);
+    else player.onQuiet();
+  };
+  clip.onended = next;
+  clip.onerror = next;
+  clip.onplaying = () => {
+    if (mine()) player.onSpeaking();
+  };
+  clip.play().catch(() => {
+    if (mine()) player.onQuiet();
+  });
+}
 
 /** Save the visitor's details, and their answers when there are any. Throws only for something they can fix. */
 async function postLead(who: Contact, startedAt: number, extra: Record<string, unknown>): Promise<boolean> {
@@ -32,10 +81,12 @@ async function postLead(who: Contact, startedAt: number, extra: Record<string, u
  * asks up to three questions with answers to tap, and ends on the one service
  * that fits. Every line is a recording made once; nothing here calls a model.
  */
-export default function GuideExperience({ offers, clips }: { offers: Record<string, GuideOffer>; clips: Record<string, string> }) {
-  const [step, setStep] = useState<GuideStep>(() => guideStep(GUIDE_WELCOME)!);
+export default function GuideExperience({ offers, clips, names, clipBase }: { offers: Record<string, GuideOffer>; clips: Record<string, string>; names: string[]; clipBase: string }) {
+  // A visitor she already knows skips the introductions and starts at the first question.
+  const [contact, setContact] = useState<Contact | null>(remembered);
+  const [returning, setReturning] = useState(() => Boolean(remembered()));
+  const [step, setStep] = useState<GuideStep>(() => guideStep(remembered() ? GUIDE_START : GUIDE_WELCOME)!);
   const [path, setPath] = useState<Picked[]>([]);
-  const [contact, setContact] = useState<Contact | null>(null);
   const [state, setState] = useState<TessState>("idle");
   const [muted, setMuted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,30 +104,32 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
   // Her surface moves while a recording plays. The motion is made up, not measured, so it needs no audio permissions.
   const getLevel = useCallback(() => (speaking.current ? 0.35 + 0.3 * Math.abs(Math.sin(performance.now() / 140)) : 0), []);
 
-  // Starts a line's recording. State only changes from the recording's own events, never straight away.
-  const play = useCallback(
-    (id: string) => {
-      audio.current?.pause();
-      speaking.current = false;
-      const url = clips[id];
-      if (!url || mutedRef.current) return;
-      const clip = new Audio(url);
-      audio.current = clip;
-      const done = () => {
-        if (audio.current !== clip) return;
-        speaking.current = false;
-        setState("idle");
-      };
-      clip.onended = done;
-      clip.onerror = done;
-      clip.onplaying = () => {
+  // Plays recordings one after another, by address.
+  const playUrls = useCallback((urls: string[]) => {
+    playInTurn(urls, {
+      audio,
+      muted: () => mutedRef.current,
+      onSpeaking: () => {
         speaking.current = true;
         setState("speaking");
-      };
-      // A browser may refuse sound before the visitor has clicked anything. Her words are on screen either way.
-      clip.play().catch(done);
+      },
+      onQuiet: () => {
+        speaking.current = false;
+        setState("idle");
+      },
+    });
+  }, []);
+
+  const play = useCallback((id: string) => playUrls(clips[id] ? [clips[id]] : []), [clips, playUrls]);
+
+  // What a returning visitor hears: "Welcome back, John." when she has their name recorded, "Welcome back." when she does not, then the first question.
+  const welcomeBack = useCallback(
+    (name: string) => {
+      const named = names.includes(nameKey(name)) ? nameClip(name) : null;
+      const greeting = named ? `${clipBase}${clipName(named)}` : clips[BACK_CLIP.id];
+      playUrls([greeting, clips[ASK_AGAIN_CLIP.id] ?? clips[GUIDE_START]].filter(Boolean));
     },
-    [clips]
+    [names, clipBase, clips, playUrls]
   );
 
   const say = useCallback(
@@ -87,11 +140,15 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
     [play]
   );
 
+  const firstLine = useRef({ id: step.id, back: contact?.name ?? null });
   useEffect(() => {
     startedAt.current = Date.now();
-    play(GUIDE_WELCOME);
+    if (firstLine.current.back) welcomeBack(firstLine.current.back);
+    else play(firstLine.current.id);
+    // Whatever is playing when the page closes is what must stop, so the ref is read at that moment on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => audio.current?.pause();
-  }, [play]);
+  }, [play, welcomeBack]);
 
   const go = (next: GuideStep) => {
     setStep(next);
@@ -114,6 +171,7 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
         if (/details|valid|Too many/i.test(err.message)) throw err;
       });
       setContact(who);
+      remember(who);
       go(guideStep(GUIDE_START)!);
     } catch (err) {
       setProblem(err instanceof Error ? err.message : "That did not go through. Try once more.");
@@ -176,6 +234,11 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
     try {
       const ok = await send({ ...contact, phone }, { path, outcome: step.id, wants_call: "yes", words: typed });
       if (!ok) throw new Error("That did not go through. Try once more.");
+      // A number given here is kept, so she does not ask for it twice.
+      if (phone && phone !== contact.phone) {
+        setContact({ ...contact, phone });
+        remember({ ...contact, phone });
+      }
       setCallAsked(true);
       setProblem(null);
     } catch (err) {
@@ -196,6 +259,17 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
     } else say(step.id);
   };
 
+  // "Not you?": forget this visitor and start again from the introductions.
+  const forget = () => {
+    remember(null);
+    setContact(null);
+    setReturning(false);
+    setPath([]);
+    setTyped([]);
+    setCallAsked(false);
+    go(guideStep(GUIDE_WELCOME)!);
+  };
+
   const offer = step.kind === "outcome" ? offers[step.offer] : undefined;
   const first = contact?.name.split(/\s+/)[0];
 
@@ -209,7 +283,7 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
       <div className={styles.core} aria-hidden="true"><TessCore state={state} getLevel={getLevel} crew={[]} /></div>
 
       <section className={styles.talk} aria-live="polite">
-        <p className={styles.said}>{step.kind === "question" && step.id === GUIDE_START && first ? `Thanks, ${first}. What brought you here today?` : step.say}</p>
+        <p className={styles.said}>{step.kind === "question" && step.id === GUIDE_START && first ? `${returning ? "Welcome back" : "Thanks"}, ${first}. What brought you here today?` : step.say}</p>
 
         {step.kind === "line" ? (
           <form className={styles.form} onSubmit={begin} noValidate>
@@ -268,6 +342,7 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
 
         {problem ? <p className={styles.problem} role="alert">{problem}</p> : null}
         {path.length ? <button type="button" className={styles.quiet} onClick={back}>Go back</button> : null}
+        {returning && contact && step.id === GUIDE_START ? <button type="button" className={styles.notYou} onClick={forget}>Not {first}? Start fresh</button> : null}
       </section>
     </main>
   );

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GuideRecorder from "@/components/guide/GuideRecorder";
 import { voiceConfigured } from "@/lib/crew/voice";
-import { clipUrls } from "@/lib/guide/clips";
+import { allClips, clipUrls, RECORD_BATCH } from "@/lib/guide/clips";
+import { COMMON_NAMES } from "@/lib/guide/names";
 import { GUIDE_STEPS, scriptProblems } from "@/lib/guide/script";
 import { getAdminUser } from "@/lib/supabase/server";
 
@@ -16,8 +17,11 @@ export default async function SiteGuidePage() {
   if (!session) redirect("/admin/login");
   const clips = await clipUrls();
   const problems = scriptProblems();
-  const missing = GUIDE_STEPS.filter((s) => !clips[s.id]).length;
-  const characters = GUIDE_STEPS.filter((s) => !clips[s.id]).reduce((sum, s) => sum + s.say.length, 0);
+  const every = allClips();
+  const unrecorded = every.filter((c) => !clips[c.id]);
+  const missing = unrecorded.length;
+  const characters = unrecorded.reduce((sum, c) => sum + c.say.length, 0);
+  const namesRecorded = COMMON_NAMES.filter((n) => clips[`back-${n.toLowerCase()}`]).length;
 
   return (
     <>
@@ -31,9 +35,10 @@ export default async function SiteGuidePage() {
       {problems.length ? <div className="cc-error" role="alert"><strong>The script has a problem.</strong><ul style={{ margin: "6px 0 0 18px" }}>{problems.map((p) => <li key={p}>{p}</li>)}</ul></div> : null}
       <section className="cc-panel" style={{ padding: 16, marginBottom: 12 }}>
         <p style={{ margin: "0 0 10px" }}>
-          {missing === 0 ? `All ${GUIDE_STEPS.length} lines are recorded.` : `${missing} of ${GUIDE_STEPS.length} lines have no recording yet (about ${characters.toLocaleString("en-US")} characters of speech). Until a line is recorded, visitors see its words without her voice.`}
+          {missing === 0 ? `All ${every.length} lines are recorded.` : `${missing} of ${every.length} lines have no recording yet (about ${characters.toLocaleString("en-US")} characters of speech). Until a line is recorded, visitors see its words without her voice. Each press records up to ${RECORD_BATCH}.`}
         </p>
-        <GuideRecorder canRecord={["owner", "admin"].includes(session.admin.role)} voiceReady={voiceConfigured()} missing={missing} />
+        <p style={{ margin: "0 0 10px" }}>First names she can say when she welcomes a visitor back: {namesRecorded} of {COMMON_NAMES.length} recorded. Anyone else hears a plain welcome back and sees their name on screen.</p>
+        <GuideRecorder canRecord={["owner", "admin"].includes(session.admin.role)} voiceReady={voiceConfigured()} missing={missing} batch={RECORD_BATCH} />
       </section>
       <section className="cc-panel" style={{ padding: 16 }}>
         <table className="cc-table" style={{ width: "100%" }}>
