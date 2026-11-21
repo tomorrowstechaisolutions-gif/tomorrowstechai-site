@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { loadAlerts, type Alert } from "@/lib/dashboard/alerts";
 import { NOTIFICATIONS, type NotificationDef } from "@/lib/notifications/owner";
 import { setNotificationAction } from "@/app/admin/notification-actions";
+import PhoneAlerts from "@/components/admin/cc/push/PhoneAlerts";
+import { pushPublicKey } from "@/lib/push/send";
 import { Panel, EmptyState, ErrorState } from "@/components/admin/cc/Panel";
 import { IconAlert, IconBell, IconClock, IconMail } from "@/components/admin/cc/Icons";
 import fin from "@/components/admin/cc/finance/finance.module.css";
@@ -38,6 +40,9 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   let off = new Set<string>();
   let log: LogRow[] = [];
   let error: string | null = null;
+  // How many devices get phone alerts. Zero until the table exists and a device signs up.
+  const { count: deviceCount } = await db.from("push_subscriptions").select("id", { count: "exact", head: true });
+  const devices = deviceCount ?? 0;
   try {
     const [a, prefs, l] = await Promise.all([
       loadAlerts(await createSupabaseServerClient(), 50),
@@ -89,6 +94,9 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </div>
 
           <div className="cc-board" style={{ marginTop: 16 }}>
+            <Panel title="Alerts on your phone" sub="Free push alerts on your lock screen. Not text messages." icon={<IconBell size={15} />} className="cc-s12">
+              <PhoneAlerts publicKey={pushPublicKey()} devices={devices} />
+            </Panel>
             <Panel title="Emails to you" sub={`Sent to ${to} through Resend`} icon={<IconMail size={15} />} className="cc-s8">
               {GROUPS.map((g) => (
                 <div key={g} className={styles.group}>
