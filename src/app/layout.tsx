@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PointerFX } from "@/components/fx/PointerFX";
@@ -7,7 +6,7 @@ import { SoundEffects } from "@/components/fx/UiSound";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DeferredUI } from "@/components/DeferredUI";
-import { ChromeGate, MarketingWidgetGate } from "@/components/ChromeGate";
+import { ChromeGate } from "@/components/ChromeGate";
 import { MetaPixel } from "@/components/MetaPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -264,22 +263,6 @@ export default async function RootLayout({
         </ChromeGate>
         <DeferredUI />
         <MetaPixel />
-        {/* SMS opt-in chat widget required for A2P 10DLC consent collection.
-            Suppressed on /business-launch (its form collects SMS consent
-            itself, and a second chat bubble competes with the single CTA) and
-            in /admin. It still loads on every other page of the site. */}
-        <MarketingWidgetGate>
-          <Script
-            src="https://widgets.leadconnectorhq.com/loader.js"
-            data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
-            data-widget-id="6a68bd33b0ee6ed3ac662935"
-            data-source="WEB_USER"
-            // After the page has fully loaded: the chat bubble is never part
-            // of the first screen, and loading it earlier delayed the
-            // headline paint on phones.
-            strategy="lazyOnload"
-          />
-        </MarketingWidgetGate>
         <SpeedInsights />
         <SiteAnalytics />
       </body>
