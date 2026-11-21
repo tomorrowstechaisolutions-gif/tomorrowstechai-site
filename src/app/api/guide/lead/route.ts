@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         const sent = await new Resend(process.env.RESEND_API_KEY).emails.send({ from: FROM_EMAIL, to: [TO_EMAIL], replyTo: email, subject: mail.subject, text: mail.text });
         if (sent.error) console.error("[guide] alert email failed:", sent.error);
         return !sent.error;
-      }).catch((err: unknown) => console.error("[guide] alert email failed:", err instanceof Error ? err.message : err));
+      }, intake.leadId ? `/admin/leads/${intake.leadId}` : null).catch((err: unknown) => console.error("[guide] alert email failed:", err instanceof Error ? err.message : err));
     }
 
     return NextResponse.json({ ok: true });
