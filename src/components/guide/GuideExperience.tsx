@@ -7,6 +7,7 @@ import type { TessState } from "@/components/admin/cc/tess/TessCore";
 import type { Decision } from "@/lib/guide/brain";
 import { WORDS_LIMIT } from "@/lib/guide/brain";
 import type { GuideOffer } from "@/lib/guide/offers";
+import { CONTACT_KEY, packContact, readContact } from "@/lib/guide/remember";
 import { GUIDE_START, GUIDE_WELCOME, guideStep, nextStep, type GuideStep } from "@/lib/guide/script";
 import { SPAM_TRAP_FIELD } from "@/lib/spam-trap";
 import styles from "./guide.module.css";
@@ -14,6 +15,24 @@ import styles from "./guide.module.css";
 const TessCore = dynamic(() => import("@/components/admin/cc/tess/TessCore"), { ssr: false });
 
 type Contact = { name: string; email: string; phone: string };
+
+/** The visitor this browser remembers from an earlier visit, if any. Only ever called in the browser: the page is not drawn on the server. */
+function remembered(): Contact | null {
+  try {
+    return readContact(window.localStorage.getItem(CONTACT_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function remember(who: Contact | null) {
+  try {
+    if (who) window.localStorage.setItem(CONTACT_KEY, packContact(who));
+    else window.localStorage.removeItem(CONTACT_KEY);
+  } catch {
+    // Storage blocked: she simply asks again next time.
+  }
+}
 type Picked = { id: string; choice: number };
 
 /** Save the visitor's details, and their answers when there are any. Throws only for something they can fix. */
@@ -33,9 +52,11 @@ async function postLead(who: Contact, startedAt: number, extra: Record<string, u
  * that fits. Every line is a recording made once; nothing here calls a model.
  */
 export default function GuideExperience({ offers, clips }: { offers: Record<string, GuideOffer>; clips: Record<string, string> }) {
-  const [step, setStep] = useState<GuideStep>(() => guideStep(GUIDE_WELCOME)!);
+  // A visitor she already knows skips the introductions and starts at the first question.
+  const [contact, setContact] = useState<Contact | null>(remembered);
+  const [returning, setReturning] = useState(() => Boolean(remembered()));
+  const [step, setStep] = useState<GuideStep>(() => guideStep(remembered() ? GUIDE_START : GUIDE_WELCOME)!);
   const [path, setPath] = useState<Picked[]>([]);
-  const [contact, setContact] = useState<Contact | null>(null);
   const [state, setState] = useState<TessState>("idle");
   const [muted, setMuted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -87,9 +108,10 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
     [play]
   );
 
+  const firstLine = useRef(step.id);
   useEffect(() => {
     startedAt.current = Date.now();
-    play(GUIDE_WELCOME);
+    play(firstLine.current);
     return () => audio.current?.pause();
   }, [play]);
 
@@ -114,6 +136,7 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
         if (/details|valid|Too many/i.test(err.message)) throw err;
       });
       setContact(who);
+      remember(who);
       go(guideStep(GUIDE_START)!);
     } catch (err) {
       setProblem(err instanceof Error ? err.message : "That did not go through. Try once more.");
@@ -176,6 +199,11 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
     try {
       const ok = await send({ ...contact, phone }, { path, outcome: step.id, wants_call: "yes", words: typed });
       if (!ok) throw new Error("That did not go through. Try once more.");
+      // A number given here is kept, so she does not ask for it twice.
+      if (phone && phone !== contact.phone) {
+        setContact({ ...contact, phone });
+        remember({ ...contact, phone });
+      }
       setCallAsked(true);
       setProblem(null);
     } catch (err) {
@@ -196,6 +224,17 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
     } else say(step.id);
   };
 
+  // "Not you?": forget this visitor and start again from the introductions.
+  const forget = () => {
+    remember(null);
+    setContact(null);
+    setReturning(false);
+    setPath([]);
+    setTyped([]);
+    setCallAsked(false);
+    go(guideStep(GUIDE_WELCOME)!);
+  };
+
   const offer = step.kind === "outcome" ? offers[step.offer] : undefined;
   const first = contact?.name.split(/\s+/)[0];
 
@@ -209,7 +248,7 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
       <div className={styles.core} aria-hidden="true"><TessCore state={state} getLevel={getLevel} crew={[]} /></div>
 
       <section className={styles.talk} aria-live="polite">
-        <p className={styles.said}>{step.kind === "question" && step.id === GUIDE_START && first ? `Thanks, ${first}. What brought you here today?` : step.say}</p>
+        <p className={styles.said}>{step.kind === "question" && step.id === GUIDE_START && first ? `${returning ? "Welcome back" : "Thanks"}, ${first}. What brought you here today?` : step.say}</p>
 
         {step.kind === "line" ? (
           <form className={styles.form} onSubmit={begin} noValidate>
@@ -268,6 +307,7 @@ export default function GuideExperience({ offers, clips }: { offers: Record<stri
 
         {problem ? <p className={styles.problem} role="alert">{problem}</p> : null}
         {path.length ? <button type="button" className={styles.quiet} onClick={back}>Go back</button> : null}
+        {returning && contact && step.id === GUIDE_START ? <button type="button" className={styles.notYou} onClick={forget}>Not {first}? Start fresh</button> : null}
       </section>
     </main>
   );

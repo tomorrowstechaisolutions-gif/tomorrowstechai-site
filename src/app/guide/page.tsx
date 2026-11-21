@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import GuideExperience from "@/components/guide/GuideExperience";
+import GuideLoader from "@/components/guide/GuideLoader";
 import { clipUrls } from "@/lib/guide/clips";
 import { loadGuideOffers } from "@/lib/guide/offers";
 
@@ -14,5 +14,5 @@ export const revalidate = 300;
 
 export default async function GuidePage() {
   const [offers, clips] = await Promise.all([loadGuideOffers(), clipUrls()]);
-  return <GuideExperience offers={offers} clips={clips} />;
+  return <GuideLoader offers={offers} clips={clips} />;
 }
