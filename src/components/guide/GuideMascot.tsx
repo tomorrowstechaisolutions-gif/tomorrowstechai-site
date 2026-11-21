@@ -12,8 +12,12 @@ const still = () => 0;
 
 /**
  * Tess in the corner of the public site. She is always there as a small
- * ball. About thirty seconds after a visitor arrives she opens once, as the
- * globe, and offers to help. Either way a click takes them to her page.
+ * living globe. Thirteen seconds after a visitor arrives she opens once and
+ * offers to help. Either way a click takes them to her page.
+ *
+ * The small globe is drawn only once the page has gone quiet, so it never
+ * competes with the page's own loading. Until then a plain glowing ball
+ * holds her place, and stays if the browser cannot draw her at all.
  *
  * The pop-up is silent: a browser will not play sound before a click. The
  * click that opens her page is what lets her speak there.
@@ -21,6 +25,19 @@ const still = () => 0;
 export function GuideMascot() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [alive, setAlive] = useState(false);
+
+  useEffect(() => {
+    const begin = () => setAlive(true);
+    // Not every browser has requestIdleCallback; a short wait does the same job.
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (typeof w.requestIdleCallback === "function") {
+      const id = w.requestIdleCallback(begin, { timeout: 4000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(begin, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     let seen: string | null = null;
@@ -53,7 +70,9 @@ export function GuideMascot() {
           <button type="button" className={styles.primary} onClick={start}>Get started</button>
         </div>
       ) : (
-        <button type="button" className={styles.ball} onClick={start} aria-label="Talk to Tess, the site guide" title="Talk to Tess" />
+        <button type="button" className={`${styles.ball} ${alive ? styles.live : ""}`} onClick={start} aria-label="Talk to Tess, the site guide" title="Talk to Tess">
+          {alive ? <TessCore state="idle" getLevel={still} crew={[]} small /> : null}
+        </button>
       )}
     </div>
   );

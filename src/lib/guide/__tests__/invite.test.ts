@@ -6,8 +6,8 @@ import { inviteDue, INVITE_AFTER_MS, INVITE_REST_MS, mascotShows } from "../invi
 import { offerFromRow } from "../offers";
 
 describe("when Tess offers to help on her own", () => {
-  it("waits about thirty seconds", () => {
-    expect(INVITE_AFTER_MS).toBe(30_000);
+  it("waits thirteen seconds", () => {
+    expect(INVITE_AFTER_MS).toBe(13_000);
   });
 
   it("offers to a visitor she has never offered to", () => {

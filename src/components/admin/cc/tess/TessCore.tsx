@@ -28,7 +28,12 @@ function cloud(count: number, color: number, size: number, opacity: number) {
   return { mesh: new THREE.Points(geometry, material), positions, geometry, material };
 }
 
-export default function TessCore({ state, getLevel, crew }: { state: TessState; getLevel: () => number; crew: { working: boolean }[] }) {
+/**
+ * `small` is for a ball a few dozen pixels across (the mascot on the public
+ * site): fewer, larger points so she still reads at that size, centred in her
+ * box and filling it.
+ */
+export default function TessCore({ state, getLevel, crew, small = false }: { state: TessState; getLevel: () => number; crew: { working: boolean }[]; small?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef(state);
   const levelRef = useRef(getLevel);
@@ -54,9 +59,10 @@ export default function TessCore({ state, getLevel, crew }: { state: TessState; 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
-    camera.position.set(0, 0.25, 6.2);
-    // Lifted a little so her words have clear room underneath.
-    scene.position.y = 0.42;
+    const far = small ? 4.7 : 6.2;
+    camera.position.set(0, small ? 0 : 0.25, far);
+    // Lifted a little so her words have clear room underneath. The small ball sits dead centre.
+    scene.position.y = small ? 0 : 0.42;
 
     const fit = () => {
       const w = canvas.clientWidth || 1;
@@ -64,15 +70,15 @@ export default function TessCore({ state, getLevel, crew }: { state: TessState; 
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       // On a narrow screen pull back so the sphere and its orbit still fit.
-      camera.position.z = camera.aspect < 1 ? 6.2 / Math.max(camera.aspect, 0.45) : 6.2;
+      camera.position.z = camera.aspect < 1 ? far / Math.max(camera.aspect, 0.45) : far;
       camera.updateProjectionMatrix();
     };
     fit();
     const observer = new ResizeObserver(fit);
     observer.observe(canvas);
 
-    const N = 9000;
-    const shell = cloud(N, CYAN, 0.024, 0.85);
+    const N = small ? 1600 : 9000;
+    const shell = cloud(N, CYAN, small ? 0.085 : 0.024, small ? 0.95 : 0.85);
     const dir = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
       const y = 1 - (i / (N - 1)) * 2;
@@ -82,8 +88,8 @@ export default function TessCore({ state, getLevel, crew }: { state: TessState; 
       dir[i * 3 + 1] = y;
       dir[i * 3 + 2] = Math.sin(th) * r;
     }
-    const M = 1400;
-    const heart = cloud(M, AMBER, 0.028, 0.7);
+    const M = small ? 260 : 1400;
+    const heart = cloud(M, AMBER, small ? 0.09 : 0.028, 0.7);
     const seed: [number, number, number][] = [];
     for (let j = 0; j < M; j++) seed.push([Math.random() * 6.28, Math.acos(2 * Math.random() - 1), 0.15 + Math.random() * 0.4]);
     const glow = new THREE.Mesh(
@@ -176,7 +182,7 @@ export default function TessCore({ state, getLevel, crew }: { state: TessState; 
       for (const sat of sats) sat.mesh.material.dispose();
       renderer.dispose();
     };
-  }, [crewCount]);
+  }, [crewCount, small]);
 
   return <canvas ref={canvasRef} aria-hidden="true" style={{ width: "100%", height: "100%", display: "block" }} />;
 }
