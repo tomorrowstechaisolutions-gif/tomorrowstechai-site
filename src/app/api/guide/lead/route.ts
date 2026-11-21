@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { intakeLead } from "@/lib/campaign/intake";
+import { guideAlert } from "@/lib/guide/alert";
 import { guideStep, pathSummary } from "@/lib/guide/script";
+import { notifyOwner } from "@/lib/notifications/owner";
 import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
 import { isBotSubmission } from "@/lib/spam-trap";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
@@ -17,6 +20,10 @@ import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const text = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+
+const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "john@tomorrowstechai.com";
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "Tomorrow’s Tech AI <hello@tomorrowstechai.com>";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.tomorrowstechai.com";
 
 export async function POST(request: Request) {
   try {
@@ -66,6 +73,25 @@ export async function POST(request: Request) {
       });
       if (error) console.error("[guide] the answers were not written on the lead:", error.message);
     }
+    // Tell John. Once when they reach a recommendation, and again if they ask for a call.
+    // An email that fails must never fail the visitor: the lead is already saved.
+    if (outcome?.kind === "outcome" && summary) {
+      const wantsCall = text(body.wants_call, 5) === "yes";
+      // "Already a lead" means from before this visit. The first call of this same visit also makes the second one a duplicate, so the lead's age decides.
+      let returning = false;
+      if (intake.leadId && intake.duplicate && supabaseConfigured()) {
+        const { data: lead } = await supabaseAdmin().from("leads").select("created_at").eq("id", intake.leadId).maybeSingle();
+        returning = Boolean(lead?.created_at) && Date.now() - new Date(lead!.created_at as string).getTime() > 60 * 60 * 1000;
+      }
+      const mail = guideAlert({ name, email, phone, need: outcome.need, summary, typed, wantsCall, leadUrl: intake.leadId ? `${SITE}/admin/leads/${intake.leadId}` : null, returning });
+      await notifyOwner("lead.guide", `${name} · ${outcome.need}${wantsCall ? " · call requested" : ""}`, async () => {
+        if (!process.env.RESEND_API_KEY) return false;
+        const sent = await new Resend(process.env.RESEND_API_KEY).emails.send({ from: FROM_EMAIL, to: [TO_EMAIL], replyTo: email, subject: mail.subject, text: mail.text });
+        if (sent.error) console.error("[guide] alert email failed:", sent.error);
+        return !sent.error;
+      }).catch((err: unknown) => console.error("[guide] alert email failed:", err instanceof Error ? err.message : err));
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[guide] lead failed:", err instanceof Error ? err.message : err);

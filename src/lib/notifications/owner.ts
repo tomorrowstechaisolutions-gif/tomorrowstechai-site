@@ -14,7 +14,7 @@ import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
  */
 
 export type NotificationKey =
-  | "lead.contact_form" | "lead.new" | "lead.ctai" | "lead.magnet_download" | "newsletter.subscribe"
+  | "lead.contact_form" | "lead.new" | "lead.guide" | "lead.ctai" | "lead.magnet_download" | "newsletter.subscribe"
   | "proposal.signed" | "proposal.declined" | "request.completed"
   | "invoice.paid" | "invoice.partial"
   | "portal.request" | "portal.new_service"
@@ -25,6 +25,7 @@ export type NotificationDef = { key: NotificationKey; group: "Leads" | "Sales" |
 export const NOTIFICATIONS: NotificationDef[] = [
   { key: "lead.contact_form", group: "Leads", label: "Contact form", when: "Someone sends the contact form on tomorrowstechai.com. Reply-to is the visitor." },
   { key: "lead.new", group: "Leads", label: "New lead from a campaign form or Meta ad", when: "A new lead from the business-launch form or a Facebook/Instagram instant form." },
+  { key: "lead.guide", group: "Leads", label: "Site guide finished", when: "A visitor answers Tess's questions on the site and gets a recommendation. A second email follows if they ask for a call." },
   { key: "lead.ctai", group: "Leads", label: "Central Texas AI interest", when: "A business or partner fills in the Central Texas AI interest form." },
   { key: "lead.magnet_download", group: "Leads", label: "Lead magnet download", when: "A new person downloads a guide and joins your email list." },
   { key: "newsletter.subscribe", group: "Leads", label: "Newsletter signup", when: "A new person subscribes to Field Notes." },
