@@ -73,6 +73,8 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       // The lead AI and her crew. The floor sits behind this entry.
       { href: "/admin/ai", label: "Tess", icon: IconSpark, also: ["/admin/ai/floor"] },
+      // What Tess says to visitors on the public site, and her recordings.
+      { href: "/admin/guide", label: "Site Guide", icon: IconSpark },
       { href: "/admin", label: "Dashboard", icon: IconGrid },
       // Gmail for tomorrowstechaisolutions@gmail.com, matched against the CRM.
       { href: "/admin/inbox", label: "Inbox", icon: IconMail },

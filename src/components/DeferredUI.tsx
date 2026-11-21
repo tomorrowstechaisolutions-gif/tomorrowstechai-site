@@ -2,23 +2,24 @@
 
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
+import { mascotShows } from "@/lib/guide/invite";
 
 /**
- * Defers loading of non-critical UI (chat widget + cookie consent).
+ * Defers loading of non-critical UI (Tess, the site guide, + cookie consent).
  *
  * Both components are interactive overlays that don't need to render
  * during initial paint. By dynamically importing with ssr: false,
  * we keep them out of the initial JS bundle and out of hydration —
  * they mount client-side after the rest of the page is interactive.
  *
- * The chat widget is suppressed on the paid campaign landing page and in
- * the admin center: on /business-launch it competes with the single CTA,
- * and in /admin it has no business being there at all. The cookie banner
- * still renders everywhere — it gates the Meta Pixel, so it has to.
+ * Tess stays off the paid campaign pages, the admin and the member area
+ * (see mascotShows): on an ad page she would compete with its single button.
+ * The cookie banner still renders everywhere — it gates the Meta Pixel, so
+ * it has to.
  */
 
-const ChatWidget = dynamic(
-  () => import("./ChatWidget").then((m) => ({ default: m.ChatWidget })),
+const GuideMascot = dynamic(
+  () => import("./guide/GuideMascot").then((m) => ({ default: m.GuideMascot })),
   { ssr: false }
 );
 
@@ -27,17 +28,13 @@ const CookieConsent = dynamic(
   { ssr: false }
 );
 
-const NO_CHAT_PREFIXES = ["/business-launch", "/admin", "/account"];
 
 export function DeferredUI() {
   const pathname = usePathname() ?? "";
-  const hideChat = NO_CHAT_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
 
   return (
     <>
-      {!hideChat && <ChatWidget />}
+      {mascotShows(pathname) && <GuideMascot />}
       <CookieConsent />
     </>
   );

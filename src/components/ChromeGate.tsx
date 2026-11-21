@@ -19,6 +19,8 @@ const BARE_PREFIXES = [
   "/action",
   "/proposal",
   "/account",
+  // Tess's own page: just her and the visitor.
+  "/guide",
 ];
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {
@@ -36,14 +38,4 @@ export function BareOnly({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   return null;
-}
-
-/**
- * Marketing chat is useful on browsing pages, but competes with focused forms
- * and sticky mobile checkout controls on transactional routes.
- */
-export function MarketingWidgetGate({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() ?? "";
-  const hidden = pathname === "/custom-stickers" || BARE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-  return hidden ? null : <>{children}</>;
 }
