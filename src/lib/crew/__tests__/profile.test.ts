@@ -27,10 +27,28 @@ type Msg = { role: string; content: { type: string; text?: string }[] | string }
 const texts = (m: Msg) => (typeof m.content === "string" ? [m.content] : m.content.map((b) => b.text ?? ""));
 
 describe("Tess's modes and dials", () => {
-  it("has the five modes John asked for, each with its own instructions", () => {
-    expect([...MODE_IDS]).toEqual(["brief", "chat", "lift", "focus", "create"]);
+  it("has the six modes John asked for, each with its own instructions", () => {
+    expect([...MODE_IDS]).toEqual(["brief", "chat", "lift", "focus", "create", "funny"]);
     const seen = new Set(MODE_IDS.map((id) => MODES[id].instructions));
-    expect(seen.size).toBe(5);
+    expect(seen.size).toBe(6);
+  });
+
+  it("the funny mode roasts John and still answers the question", () => {
+    expect(MODES.funny.label).toBe("Funny");
+    expect(MODES.funny.instructions).toMatch(/roast/i);
+    expect(MODES.funny.instructions).toMatch(/answer/i);
+  });
+
+  it("the funny mode keeps private details out, since it may be recorded", () => {
+    // John films this for YouTube. A lead's name or a real dollar figure said
+    // out loud for a laugh would be public.
+    expect(MODES.funny.instructions).toMatch(/recorded/i);
+    expect(MODES.funny.instructions).toMatch(/never say .*name/i);
+    expect(MODES.funny.instructions).toMatch(/dollar/i);
+  });
+
+  it("the funny mode does not ask get-to-know-you questions", () => {
+    expect(MODES.funny.questions).toMatch(/do not ask/i);
   });
 
   it("falls back to the defaults for anything it does not recognise", () => {
