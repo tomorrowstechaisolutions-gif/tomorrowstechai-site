@@ -121,3 +121,6 @@ for (const p of plan.toInsert) {
   added++;
 }
 console.log(`\nLoaded ${added} of ${plan.toInsert.length} post(s) for "${batch.name}". ${plan.skipped.length} were already loaded, ${plan.past.length} left out because their time has passed.`);
+// Finish now. The connections opened for the image checks and the database
+// can otherwise keep the process open for minutes after the work is done.
+process.exit(process.exitCode ?? 0);
