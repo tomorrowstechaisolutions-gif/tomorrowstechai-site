@@ -43,7 +43,7 @@ describe("Tess changing her own mode and how she answers", () => {
 
   it("only offers the values that exist", () => {
     const props = changeSettings.input_schema.properties as Record<string, { enum?: unknown[] }>;
-    expect(props.mode.enum).toEqual(["brief", "chat", "lift", "focus", "create"]);
+    expect(props.mode.enum).toEqual(["brief", "chat", "lift", "focus", "create", "funny"]);
     expect(props.background.enum).toEqual(["ambient", "gamma40", "beta15", "off"]);
     expect(props.text_style.enum).toEqual(["classic", "comic", "tech", "hidden"]);
     expect(props.sound.enum).toEqual(["on", "off"]);
