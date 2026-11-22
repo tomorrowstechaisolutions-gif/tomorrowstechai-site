@@ -8,9 +8,10 @@ export type NotificationKey =
   | "proposal.signed" | "proposal.declined" | "request.completed"
   | "invoice.paid" | "invoice.partial"
   | "portal.request" | "portal.new_service"
-  | "billing.cancel_scheduled" | "billing.cancel_undone" | "billing.subscription_ended";
+  | "billing.cancel_scheduled" | "billing.cancel_undone" | "billing.subscription_ended"
+  | "social.runway";
 
-export type NotificationDef = { key: NotificationKey; group: "Leads" | "Sales" | "Money" | "Clients"; label: string; when: string };
+export type NotificationDef = { key: NotificationKey; group: "Leads" | "Sales" | "Money" | "Clients" | "Marketing"; label: string; when: string };
 
 export const NOTIFICATIONS: NotificationDef[] = [
   { key: "lead.contact_form", group: "Leads", label: "Contact form", when: "Someone sends the contact form on tomorrowstechai.com. Reply-to is the visitor." },
@@ -29,4 +30,5 @@ export const NOTIFICATIONS: NotificationDef[] = [
   { key: "billing.cancel_scheduled", group: "Money", label: "Cancellation scheduled", when: "A client schedules their subscription to cancel." },
   { key: "billing.cancel_undone", group: "Money", label: "Cancellation undone", when: "A client takes back a scheduled cancellation." },
   { key: "billing.subscription_ended", group: "Money", label: "Subscription ended", when: "A client's subscription actually ends." },
+  { key: "social.runway", group: "Marketing", label: "Daily social posts running low", when: "The scheduled daily posts have 14 days, 7 days or 1 day left." },
 ];

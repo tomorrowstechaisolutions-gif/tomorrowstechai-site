@@ -22,7 +22,7 @@ export const metadata: Metadata = { title: "Notifications" };
  */
 
 type LogRow = { key: string; status: "sent" | "skipped" | "failed"; summary: string | null; created_at: string };
-const GROUPS: NotificationDef["group"][] = ["Leads", "Sales", "Money", "Clients"];
+const GROUPS: NotificationDef["group"][] = ["Leads", "Sales", "Money", "Clients", "Marketing"];
 const PRIORITY_TONE: Record<string, string> = { critical: "t-risk", high: "t-warn", medium: "t-info", low: "t-muted" };
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
 

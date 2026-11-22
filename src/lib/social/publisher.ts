@@ -1,4 +1,4 @@
-import { rollUpPost } from "./rollup";
+import { mayUseFallbackAccount, rollUpPost } from "./rollup";
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { SocialAuthError, markAccountExpired, readAccountToken } from "./accounts";
@@ -116,7 +116,7 @@ export async function publishDueSocialPosts(limit = 20, options: { postId?: stri
 
     let account = one(row.social_accounts as AccountRow | AccountRow[] | null);
     if (!account?.connected || account.status !== "connected" || !account.posting_enabled || !account.external_id) {
-      account = await fallbackAccount(platform, post.customer_id);
+      account = mayUseFallbackAccount(row.social_account_id as string | null) ? await fallbackAccount(platform, post.customer_id) : null;
       if (account) await sb.from("social_post_platforms").update({ social_account_id: account.id }).eq("id", row.id);
     }
 
