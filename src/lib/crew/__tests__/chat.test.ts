@@ -50,9 +50,9 @@ describe("openChatTurn", () => {
     expect(texts((tables.ai_runs[0].transcript as Msg[])[0])[1]).toBe("John has just opened the Tess tab.");
   });
 
-  it("carries on the same conversation without a second brief", async () => {
+  it("carries on the same conversation without a second brief while the brief is recent", async () => {
     brief.mockClear();
-    const { db, tables } = setup({ ai_runs: [openRun()] });
+    const { db, tables } = setup({ ai_runs: [openRun({ started_at: "2026-11-20T13:55:00.000Z" })] });
     const runId = await openChatTurn(db, { userId: "user-1", message: "What should I do first?", brief, now: NOW });
 
     expect(runId).toBe("run-1");
@@ -86,6 +86,92 @@ describe("openChatTurn", () => {
     expect(runId).not.toBe("run-1");
     expect(tables.ai_runs).toHaveLength(2);
     expect(brief).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("openChatTurn keeps the brief current", () => {
+  const briefAt = (iso: string, body: string) => `Brief as of ${iso}. John was last here at 2026-11-19T22:00:00.000Z.
+
+${body}`;
+  const withBrief = (iso: string, body: string, over: Record<string, unknown> = {}) =>
+    openRun({
+      transcript: [
+        { role: "user", content: [{ type: "text", text: `<brief>
+${briefAt(iso, body)}
+</brief>` }, { type: "text", text: "John has just opened the Tess tab." }] },
+        { role: "assistant", content: [{ type: "text", text: "Morning, John." }] },
+      ],
+      ...over,
+    });
+  const OLD = "Business snapshot:\n- 0 posts scheduled, 0 awaiting approval.";
+  const NEW = "Business snapshot:\n- 30 posts scheduled, 0 awaiting approval.";
+
+  it("sends a newer brief ahead of what John said when the numbers changed", async () => {
+    // The conversation is an hour old and 30 posts were scheduled since it began.
+    const fresh = vi.fn(async () => briefAt("2026-11-20T14:00:00.000Z", NEW));
+    const before = withBrief("2026-11-20T13:00:00.000Z", OLD);
+    const { db, tables } = setup({ ai_runs: [withBrief("2026-11-20T13:00:00.000Z", OLD)] });
+    await openChatTurn(db, { userId: "user-1", message: "Do you see the posts?", brief: fresh, now: NOW });
+
+    const transcript = tables.ai_runs[0].transcript as Msg[];
+    expect(transcript).toHaveLength(3);
+    const said = texts(transcript[2]);
+    expect(said).toHaveLength(2);
+    expect(said[0].startsWith("<brief>")).toBe(true);
+    expect(said[0]).toContain("30 posts scheduled");
+    expect(said[0]).toMatch(/newer brief/i);
+    expect(said[1]).toBe("Do you see the posts?");
+    expect(transcript.slice(0, 2)).toEqual(before.transcript);
+  });
+
+  it("sends nothing new when only the time on the brief changed", async () => {
+    const fresh = vi.fn(async () => briefAt("2026-11-20T14:00:00.000Z", OLD));
+    const { db, tables } = setup({ ai_runs: [withBrief("2026-11-20T13:00:00.000Z", OLD)] });
+    await openChatTurn(db, { userId: "user-1", message: "Next?", brief: fresh, now: NOW });
+    expect(texts((tables.ai_runs[0].transcript as Msg[])[2])).toEqual(["Next?"]);
+  });
+
+  it("does not count today's AI spend as a change", async () => {
+    // Her own spend moves on every turn; that alone is not news.
+    const fresh = vi.fn(async () => briefAt("2026-11-20T14:00:00.000Z", `${OLD}
+AI spend today: $0.71 of a $5.00 daily limit. Standing rules: 0.`));
+    const { db, tables } = setup({ ai_runs: [withBrief("2026-11-20T13:00:00.000Z", `${OLD}
+AI spend today: $0.62 of a $5.00 daily limit. Standing rules: 0.`)] });
+    await openChatTurn(db, { userId: "user-1", message: "Next?", brief: fresh, now: NOW });
+    expect(texts((tables.ai_runs[0].transcript as Msg[])[2])).toEqual(["Next?"]);
+  });
+
+  it("does not look again within ten minutes of the last brief", async () => {
+    const fresh = vi.fn(async () => briefAt("2026-11-20T14:00:00.000Z", NEW));
+    const { db } = setup({ ai_runs: [withBrief("2026-11-20T13:51:00.000Z", OLD)] });
+    await openChatTurn(db, { userId: "user-1", message: "Next?", brief: fresh, now: NOW });
+    expect(fresh).not.toHaveBeenCalled();
+  });
+
+  it("measures from the newest brief, not the first one", async () => {
+    const run = withBrief("2026-11-20T12:00:00.000Z", OLD);
+    run.transcript.push({ role: "user", content: [{ type: "text", text: `<brief>
+${briefAt("2026-11-20T13:55:00.000Z", NEW)}
+</brief>` }, { type: "text", text: "And now?" }] });
+    run.transcript.push({ role: "assistant", content: [{ type: "text", text: "Thirty are scheduled." }] });
+    const fresh = vi.fn(async () => briefAt("2026-11-20T14:00:00.000Z", NEW));
+    const { db } = setup({ ai_runs: [run] });
+    await openChatTurn(db, { userId: "user-1", message: "Thanks", brief: fresh, now: NOW });
+    expect(fresh).not.toHaveBeenCalled();
+  });
+
+  it("carries on with what John said if the newer brief cannot be built", async () => {
+    const broken = vi.fn(async () => { throw new Error("database is busy"); });
+    const { db, tables } = setup({ ai_runs: [withBrief("2026-11-20T13:00:00.000Z", OLD)] });
+    await openChatTurn(db, { userId: "user-1", message: "Still there?", brief: broken, now: NOW });
+    expect(texts((tables.ai_runs[0].transcript as Msg[])[2])).toEqual(["Still there?"]);
+  });
+
+  it("keeps a newer brief out of what is shown as said", async () => {
+    const fresh = vi.fn(async () => briefAt("2026-11-20T14:00:00.000Z", NEW));
+    const { db } = setup({ ai_runs: [withBrief("2026-11-20T13:00:00.000Z", OLD)] });
+    await openChatTurn(db, { userId: "user-1", message: "Do you see the posts?", brief: fresh, now: NOW });
+    expect(await chatHistory(db, "user-1", NOW)).toEqual([{ role: "tess", text: "Morning, John." }, { role: "john", text: "Do you see the posts?" }]);
   });
 });
 

@@ -12,8 +12,10 @@ import type { Agent, Run } from "./types";
  *
  * A conversation is one `chat` run. Each thing John says is appended to that
  * run's transcript and the engine carries it forward, so Tess remembers the
- * sitting. The brief goes in once, ahead of the first message; later turns
- * add only what John said, which keeps everything before them cached.
+ * sitting. The brief goes in ahead of the first message; later turns add
+ * only what John said, which keeps everything before them cached. When the
+ * brief is more than ten minutes old and the business has changed since, a
+ * newer one goes in ahead of what he says next (see newerBrief).
  *
  * Who John is and how he wants to be answered (his profile, the mode, the
  * dials) travel the same way: as blocks ahead of what he said, sent at the
@@ -60,6 +62,58 @@ function changedContext(transcript: Anthropic.MessageParam[], context: string[])
 
 const asText = (text: string): Anthropic.TextBlockParam => ({ type: "text", text });
 
+/** How long a brief is trusted before the next thing John says triggers a fresh look. */
+const BRIEF_REFRESH_MS = 10 * 60_000;
+const BRIEF_NEWER_NOTE = "This is a newer brief than the one earlier in this conversation. Where they differ, this one is current.";
+
+/**
+ * When a brief was written, and what it says apart from that. Two things are
+ * left out of "what it says": the time stamp on its first line, and Tess's
+ * own AI spend, which moves on every turn and is not news.
+ */
+function briefParts(brief: string): { at: number | null; body: string } {
+  const lines = brief.split("\n").filter((line) => line !== BRIEF_OPEN && line !== "</brief>" && line !== BRIEF_NEWER_NOTE);
+  const stamp = /^Brief as of (\S+?)\.(\s|$)/.exec(lines[0] ?? "");
+  const at = stamp ? Date.parse(stamp[1]) : NaN;
+  const body = (stamp ? lines.slice(1) : lines).filter((line) => !line.startsWith("AI spend today:")).join("\n").trim();
+  return { at: Number.isFinite(at) ? at : null, body };
+}
+
+/** The newest brief Tess was given in this conversation. */
+function lastBrief(transcript: Anthropic.MessageParam[]): string | undefined {
+  let last: string | undefined;
+  for (const message of transcript) {
+    if (message.role !== "user") continue;
+    for (const text of textsOf(message)) if (text.startsWith(BRIEF_OPEN)) last = text;
+  }
+  return last;
+}
+
+/**
+ * A newer brief to put ahead of what John is about to say, or nothing.
+ *
+ * A conversation can run for hours, and the business moves while it does: a
+ * lead comes in, posts get scheduled, an invoice is paid. Without this, Tess
+ * would answer from the picture she was given when the conversation began.
+ * Once the brief she has is more than ten minutes old, the business is read
+ * again, and she is given the result only if something in it changed.
+ */
+async function newerBrief(transcript: Anthropic.MessageParam[], startedAt: string, now: number, brief: () => Promise<string>): Promise<string[]> {
+  const had = lastBrief(transcript);
+  const parts = had ? briefParts(had) : null;
+  const sentAt = parts?.at ?? Date.parse(startedAt);
+  if (Number.isFinite(sentAt) && now - sentAt < BRIEF_REFRESH_MS) return [];
+  try {
+    const fresh = await brief();
+    if (parts && briefParts(fresh).body === parts.body) return [];
+    return [`${BRIEF_OPEN}\n${fresh}\n\n${BRIEF_NEWER_NOTE}\n</brief>`];
+  } catch (err) {
+    // A stale brief is better than no answer. She can still read his screen.
+    console.error("[tess] could not refresh the brief:", err instanceof Error ? err.message : err);
+    return [];
+  }
+}
+
 /** Tess as the code has her today (see tess-current.ts). */
 export type TessCurrent = { prompt: string; toolNames: string[] };
 
@@ -99,7 +153,8 @@ async function currentRun(sb: SupabaseClient, userId: string, now: number, curre
 
 /**
  * Add what John said to his conversation and return the run to advance.
- * `brief` is only called when a new conversation starts.
+ * `brief` is called when a new conversation starts, and again in a running
+ * one once the brief Tess has is more than ten minutes old.
  */
 export async function openChatTurn(
   sb: SupabaseClient,
@@ -112,7 +167,8 @@ export async function openChatTurn(
 
   if (existing) {
     const before = (existing.transcript ?? []) as Anthropic.MessageParam[];
-    const transcript: Anthropic.MessageParam[] = [...before, { role: "user", content: [...changedContext(before, context).map(asText), asText(said)] }];
+    const refreshed = await newerBrief(before, existing.started_at, now, input.brief);
+    const transcript: Anthropic.MessageParam[] = [...before, { role: "user", content: [...refreshed.map(asText), ...changedContext(before, context).map(asText), asText(said)] }];
     const { error } = await sb.from("ai_runs").update({ transcript, status: "running", finished_at: null, error: null }).eq("id", existing.id);
     if (error) fail("Could not add to the conversation", error);
     return existing.id;
