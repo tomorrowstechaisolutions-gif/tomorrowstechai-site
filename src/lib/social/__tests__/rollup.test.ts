@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rollUpPost, shouldPauseDestination } from "../rollup";
+import { mayUseFallbackAccount, rollUpPost, shouldPauseDestination } from "../rollup";
 
 const STAMP = "2026-11-19T14:00:00.000Z";
 const dest = (platform: string, platform_status: string, extra: Record<string, string> = {}) => ({ platform, platform_status, ...extra });
@@ -55,5 +55,17 @@ describe("shouldPauseDestination", () => {
 
   it("ignores attempts that never finished", () => {
     expect(shouldPauseDestination([at(0, "publishing"), at(1, "failed"), at(2, "failed")], now)).toBe(false);
+  });
+});
+
+describe("mayUseFallbackAccount", () => {
+  it("allows a lookup for a destination saved with no account", () => {
+    expect(mayUseFallbackAccount(null)).toBe(true);
+  });
+
+  it("never swaps in another account for a destination that named one", () => {
+    // The named account went offline. Posting to whichever other page is
+    // connected could put one brand's post on another brand's page.
+    expect(mayUseFallbackAccount("acct-1")).toBe(false);
   });
 });

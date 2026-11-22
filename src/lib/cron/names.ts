@@ -19,6 +19,7 @@ export const CRON_NAMES = [
   "blog-publish",
   "ai-insights",
   "crew",
+  "social-runway",
 ] as const;
 
 export type CronName = (typeof CRON_NAMES)[number];

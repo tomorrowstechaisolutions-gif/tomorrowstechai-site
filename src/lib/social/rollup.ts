@@ -86,3 +86,14 @@ export function shouldPauseDestination(attempts: readonly AttemptLike[], now: nu
     .slice(0, PAUSE_AFTER_FAILURES);
   return recent.length === PAUSE_AFTER_FAILURES && recent.every((a) => a.status === "failed");
 }
+
+/**
+ * Whether the publisher may look for "the one connected account" on a
+ * platform. Only for a destination saved with no account at all. When a
+ * destination names an account and that account has gone offline, the post
+ * fails instead: with several brands' pages connected, the one still working
+ * may belong to a different brand.
+ */
+export function mayUseFallbackAccount(savedAccountId: string | null | undefined): boolean {
+  return !savedAccountId;
+}

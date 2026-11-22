@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { SITE_URL } from "./taxonomy";
 import type { ArticleRecord } from "./types";
 import { publishDueSocialPosts } from "@/lib/social/publisher";
+import { DESTINATIONS } from "@/lib/social/destinations";
 
 /**
  * "Publish to Social": when a Field Notes article goes live, a DRAFT post is
@@ -34,14 +35,6 @@ async function autopostEnabled(db: SupabaseClient): Promise<boolean> {
   return Boolean(data?.enabled);
 }
 
-/** Tomorrow's Tech AI's own accounts, matched by display name or handle. */
-const DESTINATIONS: { platform: "linkedin" | "facebook" | "instagram" | "x"; match: RegExp; needsImage?: boolean }[] = [
-  { platform: "linkedin", match: /^john c\.? hockinson/i },
-  { platform: "facebook", match: /^tomorrows tech ai solutions$/i },
-  { platform: "instagram", match: /^@?tomorrowstechai$/i, needsImage: true },
-  // John's personal X account; the publisher fits the caption to 280 characters.
-  { platform: "x", match: /hockinson/i },
-];
 
 export const SOCIAL_CAMPAIGN = "Field Notes";
 
