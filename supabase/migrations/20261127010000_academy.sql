@@ -43,3 +43,10 @@ alter table public.academy_certificates enable row level security;
 --   insert into public.academy_enrollments (email, course_slug, status)
 --   values ('student@example.com', 'speak-method', 'comp');
 -- They then use "Get access" on the Academy with that email.
+
+-- The site looks students up by exact, lowercased email. Store them that way
+-- (so a hand-entered 'comp' row must use a lowercase address).
+alter table public.academy_enrollments
+  add constraint academy_enrollments_email_lower check (email = lower(btrim(email)));
+alter table public.academy_certificates
+  add constraint academy_certificates_email_lower check (email = lower(btrim(email)));

@@ -46,7 +46,7 @@ export async function coursesFor(email: string): Promise<string[]> {
   const { data, error } = await supabaseAdmin()
     .from("academy_enrollments")
     .select("course_slug")
-    .ilike("email", normalizeEmail(email))
+    .eq("email", normalizeEmail(email))
     .neq("status", "refunded");
   if (error) {
     console.error("Academy: enrollment lookup failed:", error.message);
@@ -203,7 +203,7 @@ export async function issueCertificate(email: string, name: string, courseSlug: 
   const existing = await db
     .from("academy_certificates")
     .select("id, name, course_slug, score, issued_at")
-    .ilike("email", normalized)
+    .eq("email", normalized)
     .eq("course_slug", courseSlug)
     .maybeSingle();
   if (existing.data) return existing.data as Certificate;
