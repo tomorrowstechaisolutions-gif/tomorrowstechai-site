@@ -191,7 +191,6 @@ const NAV: NavEntry[] = [
   { label: "Our Work", href: "/work" },
   { label: "Products", href: "/services", items: PRODUCTS, cols: 1 },
   { label: "Academy", href: "/academy" },
-  { label: "About", href: "/about" },
   { label: "Resources", href: "/blog", items: RESOURCES, cols: 1 },
 ];
 
