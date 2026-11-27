@@ -23,9 +23,9 @@ openItems:
   - group: "AI Academy (PR 50, branch feat/academy, not merged)"
     items:
       - "Built 2026-11-27: /academy with 9 courses, both methods, the free Business AI Series (all four volumes now, Vol 04 The Human Advantage added), founding-student and corporate forms, Stripe checkout for paid courses, password-free student access (signed cookie + emailed sign-in link), a 10-question knowledge check graded on the server, and certificates with public verification pages. All 10 S.P.E.A.K. lessons are written. 750 tests, typecheck, lint and a production build pass."
-      - "BLOCKER for sales and certificates: run supabase/migrations/20261127010000_academy.sql (two tables, row security on, no policies)."
+      - "Academy tables are live in production (created 2026-11-27: academy_enrollments and academy_certificates, row security on, no policies, lowercase-email check; a rolled-back dry run confirmed the duplicate, replay and lowercase rules; both tables empty)."
       - "To start selling the S.P.E.A.K. course: set status to open in src/lib/academy/courses/speak-method.ts. It is still on founding students (waitlist)."
-      - "Not tested end to end: a real Stripe purchase, the purchase and sign-in emails, and issuing a real certificate (needs the tables). Access gating, quiz grading and API guards were tested locally with a test access pass."
+      - "Not tested end to end: a real Stripe purchase, the purchase and sign-in emails, and issuing a real certificate (the tables now exist; still untested live). Access gating, quiz grading and API guards were tested locally with a test access pass."
       - "Record the S.P.E.A.K. videos and add each YouTube id. How-to: src/lib/academy/README.md."
       - "Trademark: run a USPTO search on S.P.E.A.K. (a company called Speak filed The Speak Method, serial 99766402)."
   - group: "Tess and the AI crew (slice 1, live, waiting on setup)"
@@ -178,7 +178,7 @@ openItems:
       - "Cross-check paid and MRR against each Stripe dashboard once either product has a paying subscriber."
 
 nextMoves:
-  - "AI Academy (PR 50): run the academy SQL, merge, then on the live site do one real sign-up, one PDF download and one test purchase with a 100% promo code before opening S.P.E.A.K. for sale."
+  - "AI Academy (PR 50): tables are created; merge, then on the live site do one real sign-up, one PDF download and one test purchase with a 100% promo code before opening S.P.E.A.K. for sale."
   - "Listen to Tess's new sounds on the live site and say what to tune. Paste the two profile texts from Documents/01 - Personal into Settings (My profile for Tess), set her Pushback dial to Light on the Tess tab Profile view, then talk to her in each mode and report what to tune. Still open: what the Sound on/off button does for John, and how her sounds feel. Paste the starter profile into Settings, My profile for Tess."
   - "Tess is built on feat/tess-ai-crew. Tess is live. Add ELEVENLABS_API_KEY in Vercel (then redeploy) so she can speak, then open /admin/ai and do the setup conversation with her."
   - "Audit fixes are live and a real test payment passed. Check INTEGRATION_ENCRYPTION_KEY in Vercel production, then test one recurring invoice."
