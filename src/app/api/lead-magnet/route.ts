@@ -7,8 +7,73 @@ import {
 } from "@/lib/forms/email-content";
 import { isBotSubmission } from "@/lib/spam-trap";
 import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
+import { intakeLead } from "@/lib/campaign/intake";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
+
+/**
+ * Records a download as a CRM lead: source "lead_magnet", tagged with the
+ * guide, and attributed to the page and UTM tags it came from (so a LinkedIn
+ * post linking to /free/<guide>?utm_source=linkedin shows up as such).
+ * Best effort: a CRM hiccup never costs the visitor their download.
+ */
+async function recordDownloadLead(opts: {
+  email: string;
+  firstName: string;
+  magnetId: string;
+  magnetTitle: string;
+  ip: string;
+  req: NextRequest;
+}) {
+  try {
+    let landing: URL | null = null;
+    try {
+      const ref = opts.req.headers.get("referer");
+      landing = ref ? new URL(ref) : null;
+    } catch {
+      landing = null;
+    }
+    const utm = (k: string) => landing?.searchParams.get(k)?.slice(0, 200) || null;
+
+    const result = await intakeLead({
+      first_name: opts.firstName,
+      last_name: "",
+      email: opts.email,
+      services_interested: [`Free guide: ${opts.magnetTitle}`],
+      source: "lead_magnet",
+      campaign: opts.magnetTitle,
+      landing_page: landing ? landing.pathname : null,
+      utm_source: utm("utm_source"),
+      utm_medium: utm("utm_medium"),
+      utm_campaign: utm("utm_campaign"),
+      utm_content: utm("utm_content"),
+      utm_term: utm("utm_term"),
+      email_consent: true,
+      sms_consent: false,
+      consent_text: "Requested a free guide by email and joined the Tomorrow’s Tech AI email list.",
+      ip_address: opts.ip,
+      user_agent: opts.req.headers.get("user-agent"),
+      schedule_followups: false,
+    });
+    if (!result.stored || !result.leadId || !supabaseConfigured()) return;
+
+    const db = supabaseAdmin();
+    const tags = ["lead_magnet", `magnet:${opts.magnetId}`];
+    const { data: current } = await db.from("leads").select("tags").eq("id", result.leadId).maybeSingle();
+    const existing = ((current as { tags?: string[] | null } | null)?.tags ?? []) as string[];
+    await db.from("leads").update({ tags: Array.from(new Set([...existing, ...tags])) }).eq("id", result.leadId);
+    await db.from("lead_events").insert({
+      lead_id: result.leadId,
+      type: "form_submit",
+      body: `Downloaded the free guide: ${opts.magnetTitle}.`,
+      actor: "system",
+      meta: { magnet: opts.magnetId, landing_page: landing?.pathname ?? null, utm_source: utm("utm_source"), duplicate: result.duplicate },
+    });
+  } catch (err) {
+    console.error("Lead magnet CRM record failed:", err);
+  }
+}
 
 const DEFAULT_AUDIENCE_ID = "47085ffe-414f-4530-a900-9d4ff86ad98d";
 
@@ -123,7 +188,10 @@ export async function POST(req: NextRequest) {
       console.error("User email exception:", err);
     }
 
-    // 3. Notify John of the new lead
+    // 3. Save them in the CRM as a lead, tagged with the guide.
+    await recordDownloadLead({ email, firstName, magnetId: magnet.id, magnetTitle: magnet.title, ip, req });
+
+    // 4. Notify John of the new lead
     if (audienceResult === "added") {
       try {
         await notifyOwner("lead.magnet_download", `${magnet.title}: ${email}`, async () => {

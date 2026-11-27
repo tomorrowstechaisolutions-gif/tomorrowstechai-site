@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
 import { IconDownload } from "@/components/Icons";
@@ -28,7 +29,15 @@ export function LibraryCard({ volume }: { volume: Volume }) {
           Vol {volume.number} · {volume.teaches}
           {volume.pages ? ` · ${volume.pages} pages` : ""}
         </div>
-        <h3 className="text-lg font-medium leading-snug mb-1">{volume.title}</h3>
+        <h3 className="text-lg font-medium leading-snug mb-1">
+          {live ? (
+            <Link href={`/free/${volume.slug}`} className="hover:text-[color:var(--color-blue-bright)]">
+              {volume.title}
+            </Link>
+          ) : (
+            volume.title
+          )}
+        </h3>
         <p className="text-sm text-[color:var(--color-text-secondary)] leading-relaxed mb-4">{volume.subtitle}</p>
         <ul className="ac-ticks mb-5">
           {volume.highlights.map((h) => (
