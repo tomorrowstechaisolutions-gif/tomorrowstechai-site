@@ -48,7 +48,50 @@ export const MAGNETS: Record<string, Magnet> = {
     shortName: "AI Field Guide",
     slotPrefix: "guide",
   },
+  // The Business AI Series — the Academy's free library (src/lib/academy/library.ts).
+  "ai-business-bot-playbook": {
+    id: "ai-business-bot-playbook",
+    title: "The AI Business Bot Playbook",
+    pdfPath: "/downloads/ai-business-bot-playbook.pdf",
+    shortName: "Vol 01 Bot Playbook",
+    slotPrefix: "vol01",
+  },
+  "art-of-voice-prompting": {
+    id: "art-of-voice-prompting",
+    title: "The Art of Voice Prompting",
+    pdfPath: "/downloads/the-art-of-voice-prompting.pdf",
+    shortName: "Vol 02 Voice Prompting",
+    slotPrefix: "vol02",
+  },
+  "ai-business-blueprint": {
+    id: "ai-business-blueprint",
+    title: "The AI Business Blueprint",
+    pdfPath: "/downloads/the-ai-business-blueprint.pdf",
+    shortName: "Vol 03 Blueprint",
+    slotPrefix: "vol03",
+  },
+  "human-advantage": {
+    id: "human-advantage",
+    title: "The Human Advantage",
+    pdfPath: "/downloads/the-human-advantage.pdf",
+    shortName: "Vol 04 Human Advantage",
+    slotPrefix: "vol04",
+  },
 };
+
+/** The three Business AI Series emails share one shape; only the wording differs. */
+function seriesSlots(prefix: string, name: string, subject: string, body: string): CopySlot[] {
+  return [
+    { key: `${prefix}_subject`, label: `${name}: subject`, default: subject },
+    { key: `${prefix}_greeting`, label: `${name}: greeting (name known)`, default: "Hey {first_name}," },
+    { key: `${prefix}_greeting_anon`, label: `${name}: greeting (no name)`, default: "Hey," },
+    {
+      key: `${prefix}_body`, label: `${name}: email`, multiline: true,
+      help: "{download_url} is the PDF link, {contact_url} the booking page. The sign-off is added after this.",
+      default: body,
+    },
+  ];
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // Editable wording (System emails page). Defaults are the shipped text.
@@ -94,6 +137,52 @@ If you want a guide to walk the path with you — the right tools for your busin
 
 Build smarter. Scale faster.`,
     },
+    ...seriesSlots("vol01", "Vol 01 Bot Playbook", "Your AI Business Bot Playbook · Tomorrow’s Tech AI", `{greeting}
+
+Here's Volume 01, The AI Business Bot Playbook:
+
+{download_url}
+
+15 assistant blueprints you can copy into ChatGPT, Claude or whatever you use. Start with one. Pick a task you repeat every week, paste the blueprint, add your business details from page 4, and test it on something real.
+
+If you want to go further than a prompt, the Academy is where I teach the whole process: tomorrowstechai.com/academy
+
+And if you'd rather have it built for you, reply here or grab a slot: {contact_url}`),
+    ...seriesSlots("vol02", "Vol 02 Voice Prompting", "The Art of Voice Prompting · Tomorrow’s Tech AI", `{greeting}
+
+Here's Volume 02, The Art of Voice Prompting:
+
+{download_url}
+
+The whole thing comes down to the S.P.E.A.K. Method: State your objective, Provide context, Express your expectations, Ask for clarification, Keep refining.
+
+Try the 15-minute experiment on page 19. Same task, typed short and then spoken out loud with S.P.E.A.K. Compare the two. That's usually all it takes.
+
+The full S.P.E.A.K. course lives in the Academy: tomorrowstechai.com/academy
+
+Better communication. Better intelligence.`),
+    ...seriesSlots("vol03", "Vol 03 Blueprint", "Your AI Business Blueprint · Tomorrow’s Tech AI", `{greeting}
+
+Here's Volume 03, The AI Business Blueprint:
+
+{download_url}
+
+Start with the readiness score on page 5, then the opportunity worksheet on page 19. One workflow, one owner, one measurable problem. That's the whole trick.
+
+If you fill in the worksheet and want a second set of eyes on it, bring it to a call: {contact_url}
+
+More training at tomorrowstechai.com/academy`),
+    ...seriesSlots("vol04", "Vol 04 Human Advantage", "The Human Advantage · Tomorrow’s Tech AI", `{greeting}
+
+Here's Volume 04, The Human Advantage:
+
+{download_url}
+
+This one is for founders and consultants. No titles, no hype. Start with the 30-day action plan on page 17 and the opener on page 12, then go have real conversations with real owners.
+
+If you want to talk through what you're building, reply here or grab a slot: {contact_url}
+
+Less hype. More substance.`),
   ],
   ownerMagnet: [
     { key: "subject", label: "Subject", default: "New lead magnet download ({magnet_name})" },

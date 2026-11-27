@@ -26,6 +26,7 @@ const PAGES: [string, string, string][] = [
   ["About", "/about", "Who we are"],
   ["FAQ", "/faq", "Common questions"],
   ["AI field guide", "/ai-field-guide", "Practical guide to AI for operators"],
+  ["AI Academy", "/academy", "Practical AI training: free Introduction to AI course, the S.P.E.A.K. Method flagship course, the free Business AI Series PDFs, and corporate team training"],
   ["Contact", "/contact", "Book a discovery call or send a message"],
 ];
 

@@ -158,6 +158,12 @@ const PRODUCTS: MegaItem[] = [
 
 const RESOURCES: MegaItem[] = [
   {
+    href: "/academy",
+    label: "AI Academy",
+    blurb: "Courses, the S.P.E.A.K. Method and the free Business AI Series.",
+    Icon: IconGuide,
+  },
+  {
     href: "/blog",
     label: "Blog",
     blurb: "Notes from the field on systems and AI.",
@@ -184,6 +190,7 @@ const NAV: NavEntry[] = [
   { label: "Logo Studio", href: "/logo-studio" },
   { label: "Our Work", href: "/work" },
   { label: "Products", href: "/services", items: PRODUCTS, cols: 1 },
+  { label: "Academy", href: "/academy" },
   { label: "About", href: "/about" },
   { label: "Resources", href: "/blog", items: RESOURCES, cols: 1 },
 ];
@@ -250,7 +257,7 @@ export function Header() {
           {/* Desktop nav */}
           <nav className="hidden xl:flex items-center gap-5 2xl:gap-7" aria-label="Main">
             {NAV.map((entry) => {
-              const active = pathname === entry.href;
+              const active = pathname === entry.href || (entry.href === "/academy" && pathname.startsWith("/academy/"));
               if (!entry.items) {
                 return (
                   <Link

@@ -8,6 +8,7 @@ import { sendBillingChangeAlert } from "@/lib/portal/emails";
 import { notifyAdminInvoice } from "@/lib/invoices/emails";
 import type { Invoice } from "@/lib/invoices/types";
 import { becomeClient } from "@/lib/clients/become-client";
+import { recordEnrollment } from "@/lib/academy/enrollments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -133,6 +134,23 @@ async function handleCheckoutCompleted(event: StripeEvent) {
 
   if (m.kind === "sticker_order") {
     await handleStickerOrderPaid(event);
+    return;
+  }
+
+  // An Academy course. The success redirect usually records it first; this is
+  // the backup for a buyer who closed the tab. Either way it is recorded once.
+  if (m.kind === "academy_course") {
+    const details = session.customer_details as Record<string, unknown> | undefined;
+    const email = (details ? str(details, "email") : null) || str(session, "customer_email");
+    if (sessionId && email && m.course) {
+      await recordEnrollment({
+        email,
+        courseSlug: m.course,
+        stripeSessionId: sessionId,
+        stripePaymentIntent: str(session, "payment_intent"),
+        amountCents: num(session, "amount_total"),
+      });
+    }
     return;
   }
 
