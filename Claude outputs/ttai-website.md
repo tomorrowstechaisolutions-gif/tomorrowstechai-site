@@ -20,13 +20,14 @@ checklist:
   - { id: w8, label: "Nightly jobs: app health, AI provider checks, threshold alerts", done: false, partial: true }
 
 openItems:
-  - group: "AI Academy (built 2026-11-27, on feat/academy, not merged)"
+  - group: "AI Academy (PR 50, branch feat/academy, not merged)"
     items:
-      - "Review and merge feat/academy, then check /academy live. Nothing is committed yet."
-      - "Send one real founding-student sign-up and one Vol 02 download on the live site; confirm the CRM lead (tags academy, academy:speak-method), the owner alert and the PDF email."
-      - "Record the S.P.E.A.K. lessons and drop each YouTube id into src/lib/academy/courses/speak-method.ts (video field). How-to: src/lib/academy/README.md."
-      - "Not built: Stripe checkout and student accounts for paid courses, quizzes, certificates with verification pages, Volume 04 PDF (The Human Advantage). Progress is saved in the visitor's browser only."
-      - "Trademark: S.P.E.A.K. and H.U.M.A.N. are shown with a no-exclusive-claim notice; run a USPTO search before investing in the names (a company called Speak filed for The Speak Method, serial 99766402)."
+      - "Built 2026-11-27: /academy with 9 courses, both methods, the free Business AI Series (all four volumes now, Vol 04 The Human Advantage added), founding-student and corporate forms, Stripe checkout for paid courses, password-free student access (signed cookie + emailed sign-in link), a 10-question knowledge check graded on the server, and certificates with public verification pages. All 10 S.P.E.A.K. lessons are written. 750 tests, typecheck, lint and a production build pass."
+      - "BLOCKER for sales and certificates: run supabase/migrations/20261127010000_academy.sql (two tables, row security on, no policies)."
+      - "To start selling the S.P.E.A.K. course: set status to open in src/lib/academy/courses/speak-method.ts. It is still on founding students (waitlist)."
+      - "Not tested end to end: a real Stripe purchase, the purchase and sign-in emails, and issuing a real certificate (needs the tables). Access gating, quiz grading and API guards were tested locally with a test access pass."
+      - "Record the S.P.E.A.K. videos and add each YouTube id. How-to: src/lib/academy/README.md."
+      - "Trademark: run a USPTO search on S.P.E.A.K. (a company called Speak filed The Speak Method, serial 99766402)."
   - group: "Tess and the AI crew (slice 1, live, waiting on setup)"
     items:
       - "Merged 2026-11-20 as pull request 44 (merge commit 8d8521f) and deployed: every owner notification can also go to John's phone as a free push alert (not SMS), with a panel under System, Notifications to turn it on per device and send a test. 669 tests pass. NOT working yet: it needs its SQL run (20261121020000_push_subscriptions.sql, one table) and two VAPID keys added in Vercel, then a redeploy; no alert has been sent to a real device."
@@ -177,7 +178,7 @@ openItems:
       - "Cross-check paid and MRR against each Stripe dashboard once either product has a paying subscriber."
 
 nextMoves:
-  - "AI Academy is built on feat/academy: review it locally, merge, then send one real sign-up and one PDF download on the live site."
+  - "AI Academy (PR 50): run the academy SQL, merge, then on the live site do one real sign-up, one PDF download and one test purchase with a 100% promo code before opening S.P.E.A.K. for sale."
   - "Listen to Tess's new sounds on the live site and say what to tune. Paste the two profile texts from Documents/01 - Personal into Settings (My profile for Tess), set her Pushback dial to Light on the Tess tab Profile view, then talk to her in each mode and report what to tune. Still open: what the Sound on/off button does for John, and how her sounds feel. Paste the starter profile into Settings, My profile for Tess."
   - "Tess is built on feat/tess-ai-crew. Tess is live. Add ELEVENLABS_API_KEY in Vercel (then redeploy) so she can speak, then open /admin/ai and do the setup conversation with her."
   - "Audit fixes are live and a real test payment passed. Check INTEGRATION_ENCRYPTION_KEY in Vercel production, then test one recurring invoice."
