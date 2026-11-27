@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getListedArticles } from "@/lib/blog/repository";
 import { CATEGORIES, categoryPath } from "@/lib/blog/taxonomy";
+import { COURSES, allLessons, canRead } from "@/lib/academy/catalog";
 
 // Refreshed every 5 minutes, and immediately when an article is published
 // from the Admin Center (which revalidates these paths).
@@ -108,6 +109,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/academy`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    // Every course page, and every lesson people can actually read.
+    ...COURSES.flatMap((course) => [
+      { url: `${BASE_URL}/academy/${course.slug}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.8 },
+      ...allLessons(course)
+        .filter((lesson) => canRead(course, lesson))
+        .map((lesson) => ({ url: `${BASE_URL}/academy/${course.slug}/${lesson.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.6 })),
+    ]),
     {
       url: `${BASE_URL}/ai-field-guide`,
       lastModified: now,
