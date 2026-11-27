@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
-import { COURSES, STATUS_LABEL, allLessons, canRead, getCourse, priceLabel, totalMinutes } from "@/lib/academy/catalog";
+import { COURSES, STATUS_LABEL, allLessons, canRead, forSale, getCourse, hasFullAccess, priceLabel, totalMinutes } from "@/lib/academy/catalog";
+import { currentAccess } from "@/lib/academy/enrollments";
+import { EnrollButton } from "@/components/academy/EnrollButton";
 import { LEVELS, METHOD_NOTICE, METHODS } from "@/lib/academy/brand";
 import { VOLUMES } from "@/lib/academy/library";
 import { CourseProgress, Curriculum, type CurriculumModule } from "@/components/academy/progress";
@@ -34,8 +36,15 @@ export async function generateMetadata({ params }: { params: Promise<{ course: s
   };
 }
 
-export default async function CoursePage({ params }: { params: Promise<{ course: string }> }) {
+export default async function CoursePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ course: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   const { course: slug } = await params;
+  const query = await searchParams;
   const course = getCourse(slug);
   if (!course) notFound();
 
@@ -43,8 +52,10 @@ export default async function CoursePage({ params }: { params: Promise<{ course:
   const level = LEVELS.find((l) => l.id === course.level);
   const method = METHODS.find((m) => m.id === course.framework);
   const volume = VOLUMES.find((v) => v.number === course.volume);
-  const firstReadable = lessons.find((l) => canRead(course, l));
-  const isFreeOpen = course.price.kind === "free" && course.status === "open";
+  const access = await currentAccess();
+  const enrolled = access.courses.has(course.slug);
+  const fullAccess = hasFullAccess(course, access.courses);
+  const firstReadable = lessons.find((l) => canRead(course, l, access.courses));
 
   const curriculum: CurriculumModule[] = (course.modules ?? []).map((m) => ({
     title: m.title,
@@ -53,7 +64,7 @@ export default async function CoursePage({ params }: { params: Promise<{ course:
       slug: l.slug,
       title: l.title,
       minutes: l.minutes,
-      readable: canRead(course, l),
+      readable: canRead(course, l, access.courses),
       preview: Boolean(l.preview),
     })),
   }));
@@ -62,6 +73,17 @@ export default async function CoursePage({ params }: { params: Promise<{ course:
     <>
       <section className="ac-hero">
         <div className="relative max-w-6xl mx-auto px-6 pt-10 pb-14">
+          {query.welcome && enrolled && (
+            <div className="ac-success mb-8" role="status">
+              <div className="ac-kicker">✓ You&apos;re enrolled</div>
+              <p className="text-sm text-[color:var(--color-text-secondary)]">
+                Welcome in. Every lesson is open below. We also emailed you a link so you can get back in from any device.
+              </p>
+            </div>
+          )}
+          {query.checkout === "cancelled" && (
+            <div className="ac-callout mb-8 text-sm" role="status">Checkout was cancelled. You weren&apos;t charged.</div>
+          )}
           <Link href="/academy#courses" className="inline-flex items-center gap-1 text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] mb-8">
             <IconChevronLeft size={15} /> All courses
           </Link>
@@ -91,15 +113,39 @@ export default async function CoursePage({ params }: { params: Promise<{ course:
                 <p className="text-xs text-[color:var(--color-blue-bright)] mb-4">{course.price.note}</p>
               )}
 
-              {isFreeOpen && firstReadable ? (
+              {fullAccess && firstReadable ? (
                 <>
-                  <p className="text-sm text-[color:var(--color-text-secondary)] mb-5">Free. No account needed. Your progress is saved in this browser.</p>
+                  <p className="text-sm text-[color:var(--color-text-secondary)] mb-5">
+                    {enrolled
+                      ? `You're enrolled${access.email ? ` as ${access.email}` : ""}. Your progress is saved in this browser.`
+                      : "Free. No account needed. Your progress is saved in this browser."}
+                  </p>
                   <div className="mb-5">
                     <CourseProgress course={course.slug} lessons={lessons.map((l) => l.slug)} />
                   </div>
                   <Link href={`/academy/${course.slug}/${firstReadable.slug}`} className="btn-primary w-full justify-center">
-                    Start the course <IconArrowRight size={16} />
+                    {enrolled ? "Go to the lessons" : "Start the course"} <IconArrowRight size={16} />
                   </Link>
+                  {course.quiz && (
+                    <Link href={`/academy/${course.slug}/check`} className="btn-secondary w-full justify-center mt-3">
+                      Take the knowledge check
+                    </Link>
+                  )}
+                </>
+              ) : forSale(course) && course.price.kind === "paid" ? (
+                <>
+                  <p className="text-sm text-[color:var(--color-text-secondary)] mb-5 mt-3">
+                    One payment, yours to keep. Every lesson, the knowledge check and your certificate.
+                  </p>
+                  <EnrollButton course={course.slug} label={`Enroll for $${course.price.amount} →`} />
+                  {firstReadable && (
+                    <Link href={`/academy/${course.slug}/${firstReadable.slug}`} className="mt-4 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-blue-bright)] hover:underline">
+                      Try the free preview lesson <IconArrowRight size={14} />
+                    </Link>
+                  )}
+                  <p className="text-xs text-[color:var(--color-text-muted)] mt-4">
+                    Already enrolled? <Link href="/academy/access" className="text-[color:var(--color-blue-bright)] hover:underline">Get access on this device</Link>.
+                  </p>
                 </>
               ) : (
                 <>

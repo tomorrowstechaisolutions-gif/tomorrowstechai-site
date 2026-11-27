@@ -500,6 +500,59 @@ export async function createInvoiceCheckoutSession(opts: {
   );
 }
 
+// ── Academy courses ──────────────────────────────────────────────────────────
+
+/**
+ * One course, paid once. Inline price_data so the amount always comes from
+ * the course file (src/lib/academy/courses/*), the same number the page shows.
+ * Stripe collects the email; it is how the student gets back in later.
+ */
+export async function createAcademyCheckoutSession(opts: {
+  courseSlug: string;
+  courseTitle: string;
+  amountCents: number;
+}): Promise<CheckoutSession> {
+  const origin = siteOrigin();
+  const metadata = { kind: "academy_course", course: opts.courseSlug };
+  return stripeRequest<CheckoutSession>("POST", "/checkout/sessions", {
+    mode: "payment",
+    line_items: [
+      {
+        price_data: {
+          currency: "usd",
+          unit_amount: opts.amountCents,
+          product_data: {
+            name: opts.courseTitle.slice(0, 250),
+            description: "Tomorrow’s Tech AI Academy · online course",
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    metadata,
+    payment_intent_data: { metadata },
+    allow_promotion_codes: true,
+    success_url: `${origin}/api/academy/claim?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/academy/${opts.courseSlug}?checkout=cancelled`,
+  });
+}
+
+export type RetrievedCheckoutSession = {
+  id: string;
+  payment_status: string;
+  status: string | null;
+  amount_total: number | null;
+  payment_intent: string | null;
+  metadata: Record<string, string> | null;
+  customer_details: { email?: string | null; name?: string | null } | null;
+  customer_email: string | null;
+};
+
+/** Reads a Checkout Session back from Stripe, so a success redirect is never trusted on its own. */
+export async function retrieveCheckoutSession(id: string): Promise<RetrievedCheckoutSession> {
+  return stripeRequest<RetrievedCheckoutSession>("GET", `/checkout/sessions/${encodeURIComponent(id)}`);
+}
+
 // ── Member portal billing (Stripe Customer Portal) ───────────────────────────
 
 type PortalConfiguration = { id: string; active: boolean; metadata?: Record<string, string> };

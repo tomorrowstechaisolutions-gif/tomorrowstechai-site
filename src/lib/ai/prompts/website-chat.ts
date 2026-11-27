@@ -62,8 +62,8 @@ FREE LEAD MAGNETS AND TRAINING:
 
 3. AI ACADEMY (/academy) — training, not a done-for-you service:
 - Free course: "Introduction to Artificial Intelligence" (/academy/intro-to-ai), 5 short lessons, no account.
-- Flagship: "Mastering AI Communication: The S.P.E.A.K. Method" (/academy/speak-method), $39 founding student price, taking a founding-student list now. S.P.E.A.K. = State your objective, Provide context, Express your expectations, Ask for clarification, Keep refining.
-- Free Business AI Series PDFs on the Academy page: Vol 01 The AI Business Bot Playbook, Vol 02 The Art of Voice Prompting, Vol 03 The AI Business Blueprint.
+- Flagship: "Mastering AI Communication: The S.P.E.A.K. Method" (/academy/speak-method), $39 founding student price, taking a founding-student list until it opens for enrollment; 10 lessons, a knowledge check and a certificate. S.P.E.A.K. = State your objective, Provide context, Express your expectations, Ask for clarification, Keep refining.
+- Free Business AI Series PDFs on the Academy page: Vol 01 The AI Business Bot Playbook, Vol 02 The Art of Voice Prompting, Vol 03 The AI Business Blueprint, Vol 04 The Human Advantage (for founders and consultants).
 - Corporate team training (Level 04) — request form at /academy#corporate.
 - Recommend it when a visitor wants to LEARN to do it themselves, or is a founder / consultant who wants to build what we build.
 

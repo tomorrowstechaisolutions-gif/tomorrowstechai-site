@@ -48,6 +48,24 @@ Create `courses/my-course.ts` exporting a `Course`, import it in `catalog.ts`, a
 
 Founding-student and corporate-training forms post to `/api/academy/waitlist`. They land in the CRM as leads with `source: "academy"` and tags `academy` + `academy:<course-slug>` (or `academy:corporate`). Owner alert key: `lead.academy`.
 
-## Not built yet
+## Selling a course
 
-Payments and student accounts. Paid lessons stay locked (except previews) until they exist. When they do, change `canRead()` in `catalog.ts` and the progress store in `src/components/academy/progress.tsx` (it uses the browser's localStorage today).
+1. Run `supabase/migrations/20261127010000_academy.sql` once in Supabase (enrollments + certificates tables).
+2. Set the course's `status` to `"open"`. A paid open course shows **Enroll for $X**, which goes to Stripe Checkout (price comes from the course file; promo codes allowed).
+3. After paying, Stripe returns the buyer to `/api/academy/claim`, which reads the session back from Stripe, records the enrollment, sets their access cookie and opens the course. The Stripe webhook records it too, in case they close the tab. The buyer gets an email with a sign-in link either way, and you get an `academy.sale` alert. The sale is booked in `revenue_events` (category `other`, campaign `Academy`).
+
+## Student access (no passwords)
+
+- Access is a signed cookie holding the buyer's email and course slugs. Signing key: `ACADEMY_ACCESS_SECRET`, falling back to the Supabase service-role key.
+- New device: `/academy/access` emails a one-hour sign-in link to the address they paid with.
+- Give a course for free: insert a row with `status = 'comp'` (example at the bottom of the migration), then have them use `/academy/access`.
+- Refund: set the row's `status` to `'refunded'`. Their existing cookie still works until it's replaced; the next sign-in link won't include that course.
+
+## Knowledge check and certificates
+
+A course with `quiz` gets `/academy/<course>/check`. Answers are graded on the server and never sent to the browser. A pass issues a certificate with a code like `TTA-7K2M-QX9P` and a public page at `/academy/certificates/<code>`, printable to PDF. One certificate per email per course.
+
+## Still to do
+
+- Record the lesson videos and drop each YouTube id into `video`.
+- Lesson progress is still kept in the browser (localStorage), not on the server.

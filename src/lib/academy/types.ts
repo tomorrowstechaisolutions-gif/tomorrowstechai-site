@@ -60,6 +60,22 @@ export type CourseStatus = "open" | "waitlist" | "planned";
 
 export type Price = { kind: "free" } | { kind: "paid"; amount: number; note?: string } | { kind: "tbd" };
 
+export type QuizQuestion = {
+  q: string;
+  options: string[];
+  /** Index into options. Never sent to the browser. */
+  answer: number;
+  /** Shown after grading, so a wrong answer still teaches something. */
+  why: string;
+};
+
+/** The final knowledge check. Passing it issues a certificate. */
+export type Quiz = {
+  /** Percent needed to pass, e.g. 80. */
+  pass: number;
+  questions: QuizQuestion[];
+};
+
 export type Course = {
   slug: string;
   title: string;
@@ -85,6 +101,8 @@ export type Course = {
   modules?: Module[];
   /** Plain list of topics for a planned course with no lessons yet. */
   outline?: string[];
+  /** Final knowledge check; passing it issues a certificate of completion. */
+  quiz?: Quiz;
 };
 
 export type Level = {

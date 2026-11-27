@@ -1,12 +1,12 @@
 import type { Course } from "../types";
 
 /**
- * The flagship. Ten short video lessons, roughly 60–90 minutes, built on
- * Volume 02 (The Art of Voice Prompting).
+ * The flagship. Ten lessons, roughly 60–90 minutes, built on Volume 02
+ * (The Art of Voice Prompting).
  *
- * Lessons 1 and 2 are previews: anyone can read them. The rest show their
- * summary and "build this" until the course opens. Drop a YouTube id into
- * `video` as each lesson is recorded.
+ * Lessons 1 and 2 are previews: anyone can read them. The rest open to
+ * enrolled students. Drop a YouTube id into `video` as each lesson is
+ * recorded; the written lesson stays underneath it.
  */
 export const speakMethod: Course = {
   slug: "speak-method",
@@ -28,11 +28,11 @@ export const speakMethod: Course = {
     "Measure whether your prompts are actually getting better",
   ],
   includes: [
-    "10 short video lessons",
-    "About 60–90 minutes",
-    "Real screen-recorded demonstrations",
-    "Downloadable workbook",
-    "Practical assignments",
+    "10 lessons, about 60–90 minutes",
+    "Video demonstrations as they're recorded",
+    "Copy-ready prompts in every lesson",
+    "A build assignment after each lesson",
+    "Companion guide: The Art of Voice Prompting",
     "Final knowledge check",
     "Certificate of completion",
   ],
@@ -75,13 +75,21 @@ export const speakMethod: Course = {
     },
     {
       title: "Module 2 · The five steps",
-      summary: "One lesson per letter, each with a live demonstration.",
+      summary: "One lesson per letter, each with a worked example.",
       lessons: [
         {
           slug: "s-state-your-objective",
           title: "S · State your objective",
           minutes: 7,
           summary: "Lead with the outcome and the reason. The difference between \"write an email\" and \"get this client to approve the change order by Friday.\"",
+          body: [
+            { kind: "p", text: "Every good request starts with what you're actually trying to get done. Not the task, the outcome. \"Write an email\" is a task. \"Get this client to approve the change order by Friday without souring the relationship\" is an objective." },
+            { kind: "p", text: "The reason matters as much as the goal. When the AI knows why, it can make better calls on everything you didn't spell out: tone, length, what to leave out." },
+            { kind: "compare", weak: "Write an email to my client.", strong: "I need my client to approve a $1,800 change order by Friday so the crew isn't sitting idle Monday. They've been easy to work with, so I want to keep it friendly and clear, not pushy.", note: "One sentence of objective and one sentence of why. That's all S needs." },
+            { kind: "h", text: "A quick test" },
+            { kind: "p", text: "Read your first sentence out loud. If someone heard only that sentence, would they know what done looks like? If not, you haven't stated the objective yet." },
+            { kind: "prompt", label: "Objective starter", text: "Here's what I want to accomplish: [the outcome].\nIt matters because: [the reason].\nI'll know it worked when: [what done looks like]." },
+          ],
           build: "Write the objective line for three real tasks. One sentence each: what you want and why.",
         },
         {
@@ -89,28 +97,63 @@ export const speakMethod: Course = {
           title: "P · Provide context",
           minutes: 8,
           summary: "What the AI can't know unless you say it: your business, your people, your constraints, what you already tried.",
-          build: "Talk through the background for one task for two minutes. Have AI separate it into facts, assumptions and open questions.",
+          body: [
+            { kind: "p", text: "Context is the step people skip the most, and it's the one that changes the result the most. The AI doesn't know your business, your customers, your budget, your history or the thing that went wrong last time. You do." },
+            { kind: "p", text: "This is where your voice earns its keep. Talking for two minutes about the background is easy. Typing it is a chore, so people don't." },
+            { kind: "h", text: "What to cover" },
+            { kind: "list", items: ["Who you are and what you do.", "Who the work is for.", "The situation right now, including what's broken.", "Constraints: budget, time, tools, people, rules.", "What you already tried and how it went."] },
+            { kind: "compare", weak: "Fix our scheduling.", strong: "Our crews get assignments by text, and when something changes it's hard to track who knows. We need one schedule with owners, due dates and a daily exception report. We already pay for Google Workspace. Map our current process, show me the bottlenecks, and suggest a low-cost pilot." },
+            { kind: "h", text: "Let it sort the mess" },
+            { kind: "p", text: "You don't have to organize your context before you give it. Talk freely, then ask the AI to sort it." },
+            { kind: "prompt", label: "Sort my rough notes", text: "I'm going to explain a project in my own words. Separate my goals, confirmed facts, assumptions, constraints and open questions. Don't invent details. Then turn it into a short brief I can approve." },
+          ],
+          build: "Talk through the background for one task for two minutes. Use the prompt above to have AI separate it into facts, assumptions and open questions. Correct anything it got wrong.",
         },
         {
           slug: "e-express-your-expectations",
           title: "E · Express your expectations",
           minutes: 7,
           summary: "Format, audience, tone, length, and what \"done\" looks like. Also what you don't want.",
-          build: "Add a clear expectations section to one prompt, including at least one thing to avoid. Compare the output to your last attempt.",
+          body: [
+            { kind: "p", text: "If you don't say what good looks like, the AI picks for you. Usually that's a long, polite, generic answer in a format you didn't need." },
+            { kind: "h", text: "Spell out" },
+            { kind: "list", items: ["Format: a checklist, a table, a two-paragraph email, a page plan.", "Audience: who reads it and what they already know.", "Tone: friendly, direct, formal, plain English.", "Length: short is a choice. Say it.", "Success: what has to be true for you to use it."] },
+            { kind: "h", text: "Say what you don't want" },
+            { kind: "p", text: "This is the most underused part of the whole method. \"No exaggerated claims.\" \"Don't make it sound like a template.\" \"No robots or neon in the design.\" One line of what to avoid often fixes more than a paragraph of what you want." },
+            { kind: "compare", weak: "Make my website look good.", strong: "I want a clean, premium site in navy and white, with a clear estimate request and real project photos. Mobile matters most. Give me a page plan and acceptance criteria first. Don't publish or change anything without my approval." },
+          ],
+          build: "Add an expectations section to one of your prompts, including at least one thing to avoid. Run it and compare the output to your last attempt.",
         },
         {
           slug: "a-ask-for-clarification",
           title: "A · Ask for clarification",
           minutes: 8,
           summary: "Turn the AI into the one asking questions. One question at a time, most important first, before it guesses.",
-          build: "Use the interview prompt on a decision you've been putting off. Answer five questions, then ask for a one-page decision brief.",
+          body: [
+            { kind: "p", text: "Most bad AI output comes from a guess. The AI didn't know something, so it filled the gap with something plausible. The fix is simple: tell it to ask before it assumes." },
+            { kind: "p", text: "This flips the conversation. Instead of you trying to think of every detail up front, the AI interviews you. That works especially well for decisions you've been putting off, because you don't have to have it figured out to start." },
+            { kind: "prompt", label: "Let AI interview you", text: "Act as a business planning facilitator. Interview me one question at a time about my customer, offer, budget and capacity. Ask the most important missing question first. Summarize what we know before recommending anything. Flag assumptions, and don't invent market demand." },
+            { kind: "h", text: "Why one at a time" },
+            { kind: "p", text: "Ask for ten questions and you'll get a wall of them, answer three and lose the thread. One at a time keeps it a conversation. Voice makes this feel natural: it asks, you talk, it asks again." },
+            { kind: "callout", title: "Check its understanding", text: "After five or so questions, ask for a short summary of what it understood. Correct the misunderstandings before it builds anything on top of them." },
+          ],
+          build: "Use the interview prompt on a decision you've been putting off. Answer five questions, correct its summary, then ask for a one-page decision brief.",
         },
         {
           slug: "k-keep-refining",
           title: "K · Keep refining",
           minutes: 8,
           summary: "How to fix a draft without starting over: say what's right, say exactly what to change, and protect what you already approved.",
-          build: "Take a draft through three rounds of refinement. Write down what you changed each round.",
+          body: [
+            { kind: "p", text: "The first draft is a starting point, not a verdict. The people who get great results from AI aren't writing better first prompts. They're better at the second, third and fourth message." },
+            { kind: "compare", weak: "Try again.", strong: "Keep the structure, the audience and the professional tone. Shorten the introduction, swap the generic examples for contractor examples, and leave the call to action exactly as it is. Show me the new version and list what you changed.", note: "Name what's right first, then the exact changes, then what must not change." },
+            { kind: "h", text: "Three rules for a good revision" },
+            { kind: "list", ordered: true, items: ["Say what's working so it doesn't get thrown away.", "Be specific about the change: which part, and how.", "Protect what you approved: \"don't touch the pricing section.\""] },
+            { kind: "p", text: "Judge the new version against your requirements, not against whether it feels new. Different isn't the same as better." },
+            { kind: "h", text: "When to start over" },
+            { kind: "p", text: "If the AI keeps drifting after three or four rounds, the conversation has too much baggage. Start a new chat, paste the best version so far plus your full S.P.E.A.K. briefing, and continue from there." },
+          ],
+          build: "Take one draft through three rounds of refinement using the three rules. Write down what you changed each round and whether it got better.",
         },
       ],
     },
@@ -123,23 +166,147 @@ export const speakMethod: Course = {
           title: "Dictation vs. live voice conversation",
           minutes: 7,
           summary: "When to dictate an exact request, when to talk it out live, and how to check what the transcript got wrong.",
-          build: "Do one task with dictation and one with live voice. Note which fit which job.",
+          body: [
+            { kind: "p", text: "There are two ways to use your voice with AI, and they're good at different things." },
+            { kind: "h", text: "Dictation" },
+            { kind: "p", text: "The microphone in the chat box, or your phone's keyboard mic, turns your speech into text you can read before you send it. Use it when you want an exact deliverable: a proposal, an email, a brief. You get to fix the transcript first." },
+            { kind: "h", text: "Live voice conversation" },
+            { kind: "p", text: "Voice mode in ChatGPT, Gemini and others lets you talk back and forth out loud. Use it for brainstorming, thinking through a decision, or being interviewed. It's faster and more natural, but there's nothing to review before it answers." },
+            { kind: "callout", title: "Always ask for it in writing", text: "After a live voice conversation, ask for a written summary of what you decided. Spoken conversations are easy to lose, and you want the decisions somewhere you can check them." },
+            { kind: "h", text: "Check the transcript" },
+            { kind: "list", items: ["Names of people, companies and products.", "Numbers, prices, dates and quantities.", "Industry terms the speech engine may not know.", "Anything sensitive you said out loud by accident."] },
+            { kind: "p", text: "Features differ by platform, device and plan, and they change often. If one tool doesn't have voice, your device's built-in dictation works with any of them." },
+          ],
+          build: "Do one task with dictation and one with live voice. Note which fit which job, and what the transcript got wrong.",
         },
         {
           slug: "speak-at-work",
           title: "S.P.E.A.K. at work: ops, projects, marketing, websites",
           minutes: 10,
-          summary: "Watch the method applied to real jobs: scheduling crews, planning a launch, a sales post, a website brief, and troubleshooting.",
-          build: "Build S.P.E.A.K. prompts for the five tasks that eat the most of your week. These become your prompt library.",
+          summary: "The method applied to real jobs: scheduling crews, planning a launch, a sales post, a website brief, and troubleshooting.",
+          body: [
+            { kind: "p", text: "Here's the same five-step method on five real kinds of work. Steal any of these and swap in your own details." },
+            { kind: "prompt", label: "Operations", text: "S: I want fewer missed crew assignments.\nP: Assignments go out by text and changes get lost. We have 4 crews and use Google Workspace.\nE: Map our current process, show the bottlenecks, and propose a low-cost pilot with one measure of success.\nA: Ask me about our current tools before recommending anything.\nK: I'll tell you what doesn't fit our crews and we'll adjust." },
+            { kind: "prompt", label: "Project planning", text: "S: Plan a customer website launch in six weeks.\nP: Discovery, design approval, development, testing and client sign-off are all required. We have two developers.\nE: A draft work breakdown with owners, dependencies, milestones and risks. Mark any duration you're guessing as an estimate.\nA: Ask me which dates are fixed.\nK: We'll check every milestone has a predecessor and an owner." },
+            { kind: "prompt", label: "Marketing", text: "S: A LinkedIn post that starts conversations with contractors who hate updating their websites.\nP: We sell managed websites for local contractors.\nE: Short. Lead with the problem. No exaggerated claims. End with a low-pressure invite. Give me two angles.\nA: Ask what results I can actually back up.\nK: I'll pick one and we'll tighten it." },
+            { kind: "prompt", label: "Troubleshooting", text: "S: Our contact form stopped sending email after a website update.\nP: The form still shows a success message. Nothing changed on the email account.\nE: Help me troubleshoot one step at a time, starting with checks that can't break anything. Explain what each test rules out.\nA: Ask me for error messages before guessing.\nK: We'll record the actual cause once we find it." },
+            { kind: "callout", title: "Never paste secrets", text: "When troubleshooting, describe the problem and the error messages. Don't paste passwords, API keys or login codes into any AI tool." },
+          ],
+          build: "Build S.P.E.A.K. prompts for the five tasks that eat the most of your week. Test each one on real work. These five become your prompt library.",
         },
         {
           slug: "measure-and-certify",
           title: "The 15-minute experiment and your final check",
           minutes: 9,
           summary: "Prove it to yourself: same task, short prompt vs. S.P.E.A.K., scored on the same criteria. Then the knowledge check and your certificate.",
-          build: "Run the experiment on one real task, record time and revisions for both, then complete the knowledge check.",
+          body: [
+            { kind: "p", text: "Don't take the method on faith. Test it on your own work." },
+            { kind: "h", text: "The experiment" },
+            { kind: "list", ordered: true, items: ["Pick one real business task.", "Send the short version you'd normally type. Save the answer.", "Start a new conversation with the same tool. Speak a full S.P.E.A.K. prompt for the same task. Save that answer.", "Score both on the same four things, below.", "Note how long each took and how many revisions it needed."] },
+            { kind: "h", text: "Score both on" },
+            { kind: "list", items: ["Relevance to the actual business goal.", "Accuracy and completeness of the requirements.", "Usefulness of the next steps it suggests.", "How much rework it needs before you'd use it."] },
+            { kind: "callout", title: "Keep it honest", text: "This is a personal workflow experiment, not a scientific study. Results vary with the tool, the task and the day. The point is to see what extra details changed the result, so you include them next time." },
+            { kind: "h", text: "Your final check" },
+            { kind: "p", text: "When you've done the experiment, take the knowledge check from the course page. Pass it and you'll get your Tomorrow's Tech AI certificate of completion, with a link anyone can use to verify it." },
+          ],
+          build: "Run the experiment on one real task, record time and revisions for both versions, then take the knowledge check.",
         },
       ],
     },
   ],
+  quiz: {
+    pass: 80,
+    questions: [
+      {
+        q: "What does the S in S.P.E.A.K. stand for?",
+        options: ["Summarize the problem", "State your objective", "Start with a template", "Speak slowly"],
+        answer: 1,
+        why: "S is State your objective: what you want to accomplish and why it matters.",
+      },
+      {
+        q: "Why does using your voice tend to produce better AI results?",
+        options: [
+          "Voice mode uses a smarter model",
+          "The AI trusts spoken requests more",
+          "It's easier to give the context and detail you'd leave out when typing",
+          "Spoken prompts skip the AI's safety rules",
+        ],
+        answer: 2,
+        why: "Voice doesn't make the AI smarter. It makes it easier for you to explain more, and a detailed typed prompt works just as well.",
+      },
+      {
+        q: "Which of these is an objective, not just a task?",
+        options: [
+          "Write an email",
+          "Get the client to approve the change order by Friday without souring the relationship",
+          "Make it professional",
+          "Use bullet points",
+        ],
+        answer: 1,
+        why: "An objective names the outcome and the reason. \"Write an email\" is only the task.",
+      },
+      {
+        q: "Which belongs in P, Provide context?",
+        options: [
+          "The format you want back",
+          "What you already tried and how it went",
+          "A request to keep refining",
+          "The length limit",
+        ],
+        answer: 1,
+        why: "Context is what the AI can't know unless you say it: your situation, constraints and history. Format and length belong in E.",
+      },
+      {
+        q: "What's the most underused part of Express your expectations?",
+        options: ["Asking for more words", "Saying what you don't want", "Using formal language", "Adding emojis"],
+        answer: 1,
+        why: "One line of what to avoid often fixes more than a paragraph describing what you want.",
+      },
+      {
+        q: "When you ask AI to interview you, how should it ask its questions?",
+        options: ["All at once in a numbered list", "One at a time, most important first", "Only yes or no questions", "It shouldn't ask questions"],
+        answer: 1,
+        why: "One at a time keeps it a conversation and puts the most consequential gap first.",
+      },
+      {
+        q: "A draft is mostly right. What's the best next message?",
+        options: [
+          "\"Try again.\"",
+          "Start a brand new chat with the same one-line request",
+          "Say what's working, name the exact changes, and protect what you approved",
+          "Ask it to make it better",
+        ],
+        answer: 2,
+        why: "Good refinement names what's right, what to change, and what must not change.",
+      },
+      {
+        q: "When is dictation the better choice than a live voice conversation?",
+        options: [
+          "Brainstorming out loud",
+          "When you want an exact deliverable you can review before sending",
+          "When you don't want a written record",
+          "Never, live voice is always better",
+        ],
+        answer: 1,
+        why: "Dictation gives you a transcript to check before it goes. Live voice suits brainstorming and being interviewed.",
+      },
+      {
+        q: "Which should you never paste or say into an AI tool?",
+        options: ["Your business's general services", "A rough description of a problem", "Passwords, API keys or login codes", "The tone you want"],
+        answer: 2,
+        why: "Secrets never go into AI tools. Describe the problem and the error messages instead.",
+      },
+      {
+        q: "What does the 15-minute experiment compare?",
+        options: [
+          "Two different AI companies",
+          "A short prompt and a S.P.E.A.K. prompt for the same task, scored the same way",
+          "Typing speed and speaking speed",
+          "Free and paid AI plans",
+        ],
+        answer: 1,
+        why: "Same task, same tool, two approaches, scored on relevance, accuracy, usefulness and rework.",
+      },
+    ],
+  },
 };

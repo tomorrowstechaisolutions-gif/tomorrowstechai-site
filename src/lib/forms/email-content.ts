@@ -70,6 +70,13 @@ export const MAGNETS: Record<string, Magnet> = {
     shortName: "Vol 03 Blueprint",
     slotPrefix: "vol03",
   },
+  "human-advantage": {
+    id: "human-advantage",
+    title: "The Human Advantage",
+    pdfPath: "/downloads/the-human-advantage.pdf",
+    shortName: "Vol 04 Human Advantage",
+    slotPrefix: "vol04",
+  },
 };
 
 /** The three Business AI Series emails share one shape; only the wording differs. */
@@ -165,6 +172,17 @@ Start with the readiness score on page 5, then the opportunity worksheet on page
 If you fill in the worksheet and want a second set of eyes on it, bring it to a call: {contact_url}
 
 More training at tomorrowstechai.com/academy`),
+    ...seriesSlots("vol04", "Vol 04 Human Advantage", "The Human Advantage · Tomorrow’s Tech AI", `{greeting}
+
+Here's Volume 04, The Human Advantage:
+
+{download_url}
+
+This one is for founders and consultants. No titles, no hype. Start with the 30-day action plan on page 17 and the opener on page 12, then go have real conversations with real owners.
+
+If you want to talk through what you're building, reply here or grab a slot: {contact_url}
+
+Less hype. More substance.`),
   ],
   ownerMagnet: [
     { key: "subject", label: "Subject", default: "New lead magnet download ({magnet_name})" },

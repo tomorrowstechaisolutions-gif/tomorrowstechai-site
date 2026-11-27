@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
-import { COURSES, allLessons, canRead, findLesson, getCourse } from "@/lib/academy/catalog";
+import { COURSES, allLessons, canRead, findLesson, forSale, getCourse } from "@/lib/academy/catalog";
+import { currentAccess } from "@/lib/academy/enrollments";
+import { EnrollButton } from "@/components/academy/EnrollButton";
 import { CompleteButton, Curriculum, type CurriculumModule } from "@/components/academy/progress";
 import { LessonBody, LessonVideo } from "@/components/academy/parts";
 import { WaitlistForm } from "@/components/academy/WaitlistForm";
@@ -44,7 +46,8 @@ export default async function LessonPage({ params }: Params) {
   if (!course || !pos) notFound();
 
   const { lesson, module, index, total, prev, next } = pos;
-  const readable = canRead(course, lesson);
+  const access = await currentAccess();
+  const readable = canRead(course, lesson, access.courses);
 
   const curriculum: CurriculumModule[] = (course.modules ?? []).map((m) => ({
     title: m.title,
@@ -52,7 +55,7 @@ export default async function LessonPage({ params }: Params) {
       slug: l.slug,
       title: l.title,
       minutes: l.minutes,
-      readable: canRead(course, l),
+      readable: canRead(course, l, access.courses),
       preview: Boolean(l.preview),
     })),
   }));
@@ -88,27 +91,40 @@ export default async function LessonPage({ params }: Params) {
               )}
               <div className="mt-10 pt-8 border-t border-[color:var(--color-border)] flex flex-wrap items-center justify-between gap-4">
                 <CompleteButton course={course.slug} lesson={lesson.slug} />
-                {next && (
+                {next ? (
                   <Link href={`/academy/${course.slug}/${next.slug}`} className="btn-secondary text-sm">
                     Next: {next.title} <IconArrowRight size={15} />
                   </Link>
-                )}
+                ) : course.quiz ? (
+                  <Link href={`/academy/${course.slug}/check`} className="btn-secondary text-sm">
+                    Take the knowledge check <IconArrowRight size={15} />
+                  </Link>
+                ) : null}
               </div>
             </>
           ) : (
             <div className="ac-locked">
               <div className="flex items-center gap-2 ac-kicker mb-3">
-                <IconLock size={13} /> {course.status === "planned" ? "In development" : "Founding students"}
+                <IconLock size={13} /> {forSale(course) ? "Students only" : course.status === "planned" ? "In development" : "Founding students"}
               </div>
-              <h2 className="text-xl font-medium mb-2">This lesson opens with the full course.</h2>
+              <h2 className="text-xl font-medium mb-2">{forSale(course) ? "Enroll to open this lesson." : "This lesson opens with the full course."}</h2>
               {lesson.build && (
                 <p className="text-[color:var(--color-text-secondary)] leading-relaxed mb-6">
                   <span className="text-[color:var(--color-text)]">What you&apos;ll build here:</span> {lesson.build}
                 </p>
               )}
-              <div className="max-w-xl">
-                <WaitlistForm course={course.slug} />
-              </div>
+              {forSale(course) && course.price.kind === "paid" ? (
+                <div className="max-w-xs">
+                  <EnrollButton course={course.slug} label={`Enroll for $${course.price.amount} →`} />
+                  <p className="text-xs text-[color:var(--color-text-muted)] mt-3">
+                    Already enrolled? <Link href="/academy/access" className="text-[color:var(--color-blue-bright)] hover:underline">Get access on this device</Link>.
+                  </p>
+                </div>
+              ) : (
+                <div className="max-w-xl">
+                  <WaitlistForm course={course.slug} />
+                </div>
+              )}
             </div>
           )}
 

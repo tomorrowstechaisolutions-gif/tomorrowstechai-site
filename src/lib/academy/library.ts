@@ -68,6 +68,9 @@ export const VOLUMES: Volume[] = [
     title: "The Human Advantage",
     subtitle: "Building trust, not titles, in the age of artificial intelligence.",
     teaches: "How to earn trust",
+    pages: 21,
+    cover: "/academy/covers/vol-04.webp",
+    magnet: "human-advantage",
     highlights: [
       "Credibility over credentials",
       "The H.U.M.A.N. Method",

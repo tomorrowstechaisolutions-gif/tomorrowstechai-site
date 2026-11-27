@@ -62,15 +62,37 @@ export function findLesson(course: Course, slug: string): LessonPosition | undef
 }
 
 /**
- * Who can read a lesson's body.
- *
- * Today: preview lessons, and every lesson in a free course that is open.
- * Paid lessons stay locked until enrollment and payment are switched on; that
- * check belongs here, so every page that shows a lesson gets it at once.
+ * Who can read a lesson's body: preview lessons, every lesson in a free
+ * course that is open, and every lesson in a course the visitor bought
+ * (`access` holds the course slugs from their signed Academy cookie).
+ * Leave `access` out for the public view (sitemap, search).
  */
-export function canRead(course: Course, lesson: Lesson): boolean {
+export function canRead(course: Course, lesson: Lesson, access?: ReadonlySet<string>): boolean {
   if (lesson.preview) return true;
+  if (access?.has(course.slug)) return true;
   return course.price.kind === "free" && course.status === "open";
+}
+
+/** True when the visitor can open every lesson (and so take the knowledge check). */
+export function hasFullAccess(course: Course, access?: ReadonlySet<string>): boolean {
+  if (access?.has(course.slug)) return true;
+  return course.price.kind === "free" && course.status === "open";
+}
+
+/** Can people buy this course right now? */
+export function forSale(course: Course): boolean {
+  return course.price.kind === "paid" && course.status === "open";
+}
+
+export type GradedAnswer = { correct: boolean; answer: number; why: string };
+
+/** Grades a knowledge check. `answers[i]` is the option index chosen for question i. */
+export function gradeQuiz(course: Course, answers: unknown): { score: number; passed: boolean; results: GradedAnswer[] } | null {
+  const quiz = course.quiz;
+  if (!quiz || !Array.isArray(answers) || answers.length !== quiz.questions.length) return null;
+  const results = quiz.questions.map((q, i) => ({ correct: answers[i] === q.answer, answer: q.answer, why: q.why }));
+  const score = Math.round((results.filter((r) => r.correct).length / quiz.questions.length) * 100);
+  return { score, passed: score >= quiz.pass, results };
 }
 
 export function totalMinutes(course: Course): number {
