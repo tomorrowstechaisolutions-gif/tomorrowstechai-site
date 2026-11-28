@@ -116,6 +116,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    { url: `${BASE_URL}/free`, lastModified: now, changeFrequency: "monthly", priority: 0.85 },
     // Each free guide's landing page (the links used in social posts).
     ...VOLUMES.filter((v) => v.magnet).map((v) => ({
       url: `${BASE_URL}/free/${v.slug}`,

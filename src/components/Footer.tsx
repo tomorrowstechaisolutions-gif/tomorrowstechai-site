@@ -39,8 +39,7 @@ const COLUMNS: { head: string; links: { label: string; href: string; external?: 
       { label: "AI Academy", href: "/academy" },
       { label: "Blog", href: "/blog" },
       { label: "FAQ", href: "/faq" },
-      { label: "Operations audit checklist", href: "/operations-audit" },
-      { label: "AI field guide", href: "/ai-field-guide" },
+      { label: "Free guides", href: "/free" },
     ],
   },
   {
