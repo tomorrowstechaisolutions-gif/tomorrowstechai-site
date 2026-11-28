@@ -165,16 +165,10 @@ const RESOURCES: MegaItem[] = [
   },
   { href: "/faq", label: "FAQ", blurb: "How we scope, price, and build.", Icon: IconHelp },
   {
-    href: "/operations-audit",
-    label: "Operations audit checklist",
-    blurb: "Free 3-page PDF — 12 questions before adding AI.",
+    href: "/free",
+    label: "Free guides",
+    blurb: "Six free PDFs: the Business AI Series, the operations audit and more.",
     Icon: IconChecklist,
-  },
-  {
-    href: "/ai-field-guide",
-    label: "AI field guide",
-    blurb: "Free guide: your best next hire is AI.",
-    Icon: IconGuide,
   },
 ];
 

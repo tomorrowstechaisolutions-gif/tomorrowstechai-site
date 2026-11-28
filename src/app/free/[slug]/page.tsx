@@ -128,7 +128,12 @@ export default async function FreeGuidePage({ params }: Params) {
       {others.length > 0 && (
         <section className="border-t border-[color:var(--color-border)] bg-[color:var(--color-surface)]/30">
           <div className="max-w-6xl mx-auto px-6 py-14">
-            <div className="ac-kicker mb-5">More free guides in {SERIES_NAME}</div>
+            <div className="flex flex-wrap items-baseline justify-between gap-3 mb-5">
+              <div className="ac-kicker">More free guides in {SERIES_NAME}</div>
+              <Link href="/free" className="inline-flex items-center gap-1.5 text-sm text-[color:var(--color-blue-bright)] hover:underline">
+                See all free guides <IconArrowRight size={14} />
+              </Link>
+            </div>
             <div className="grid sm:grid-cols-3 gap-4">
               {others.map((v) => (
                 <Link key={v.slug} href={`/free/${v.slug}`} className="card !p-4 flex gap-4 items-center">
